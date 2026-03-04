@@ -34,9 +34,17 @@ def crear_reserva(request, funcion_id):
 
 @login_required
 def mis_reservas(request):
-    reservas = Reserva.objects.filter(usuario=request.user).select_related('funcion__pelicula', 'funcion__sala')
+    # Filtro para mostrar/ocultar canceladas
+    mostrar_canceladas = request.GET.get('mostrar_canceladas', 'si')
+    
+    if mostrar_canceladas == 'no':
+        reservas = Reserva.objects.filter(usuario=request.user).exclude(estado='cancelada').select_related('funcion__pelicula', 'funcion__sala')
+    else:
+        reservas = Reserva.objects.filter(usuario=request.user).select_related('funcion__pelicula', 'funcion__sala')
+    
     contexto = {
-        'reservas': reservas
+        'reservas': reservas,
+        'mostrar_canceladas': mostrar_canceladas,
     }
     return render(request, 'reservas/mis_reservas.html', contexto)
 
@@ -58,5 +66,19 @@ def cancelar_reserva(request, reserva_id):
         messages.success(request, 'Reserva cancelada exitosamente.')
     else:
         messages.error(request, 'No se puede cancelar esta reserva.')
+    
+    return redirect('reservas:mis_reservas')
+
+@login_required
+def eliminar_reserva(request, reserva_id):
+    reserva = get_object_or_404(Reserva, id=reserva_id, usuario=request.user)
+    
+    # Solo permitir eliminar reservas canceladas
+    if reserva.estado == 'cancelada':
+        codigo = reserva.codigo_reserva
+        reserva.delete()
+        messages.success(request, f'Reserva {codigo} eliminada del historial.')
+    else:
+        messages.error(request, 'Solo se pueden eliminar reservas canceladas.')
     
     return redirect('reservas:mis_reservas')

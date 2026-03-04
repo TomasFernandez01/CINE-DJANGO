@@ -3,15 +3,18 @@
 {% block titulo %}Mis Reservas{% endblock %}
 
 {% block contenido %}
-<h1>Mis Reservas</h1>
-
-{% if messages %}
-    {% for message in messages %}
-        <div style="padding: 1rem; margin-bottom: 1rem; border-radius: 4px; {% if message.tags == 'success' %}background-color: #d4edda; color: #155724; border: 1px solid #c3e6cb;{% elif message.tags == 'error' %}background-color: #f8d7da; color: #721c24; border: 1px solid #f5c6cb;{% endif %}">
-            {{ message }}
-        </div>
-    {% endfor %}
-{% endif %}
+<div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+    <h1 style="margin: 0;">Mis Reservas</h1>
+    
+    <div style="display: flex; gap: 0.5rem;">
+        <a href="?mostrar_canceladas=si" style="padding: 0.5rem 1rem; {% if mostrar_canceladas == 'si' %}background-color: #007bff; color: white;{% else %}background-color: #e9ecef; color: #333;{% endif %} border-radius: 4px; text-decoration: none; font-weight: bold;">
+            Todas
+        </a>
+        <a href="?mostrar_canceladas=no" style="padding: 0.5rem 1rem; {% if mostrar_canceladas == 'no' %}background-color: #007bff; color: white;{% else %}background-color: #e9ecef; color: #333;{% endif %} border-radius: 4px; text-decoration: none; font-weight: bold;">
+            Solo Activas
+        </a>
+    </div>
+</div>
 
 {% if reservas %}
     <div style="margin-top: 1.5rem;">
@@ -49,8 +52,13 @@
                             Ver Detalle
                         </a>
                         {% if reserva.estado == 'pendiente' %}
-                            <a href="{% url 'reservas:cancelar_reserva' reserva.id %}" onclick="return confirm('¿Estás seguro de cancelar esta reserva?')" style="padding: 0.5rem 1rem; background-color: #dc3545; color: white; border-radius: 4px; text-decoration: none; text-align: center; font-weight: bold;">
+                            <a href="{% url 'reservas:cancelar_reserva' reserva.id %}" onclick="return confirm('¿Estás seguro de cancelar esta reserva?')" style="padding: 0.5rem 1rem; background-color: #ffc107; color: #333; border-radius: 4px; text-decoration: none; text-align: center; font-weight: bold;">
                                 Cancelar
+                            </a>
+                        {% endif %}
+                        {% if reserva.estado == 'cancelada' %}
+                            <a href="{% url 'reservas:eliminar_reserva' reserva.id %}" onclick="return confirm('¿Estás seguro de eliminar esta reserva del historial?')" style="padding: 0.5rem 1rem; background-color: #dc3545; color: white; border-radius: 4px; text-decoration: none; text-align: center; font-weight: bold;">
+                                Eliminar
                             </a>
                         {% endif %}
                     </div>
@@ -60,7 +68,11 @@
     </div>
 {% else %}
     <p style="background-color: #fff3cd; padding: 1rem; border-radius: 4px; border-left: 4px solid #ffc107; margin-top: 1.5rem;">
-        No tenés reservas todavía. <a href="{% url 'salas:lista_funciones' %}" style="color: #007bff; font-weight: bold;">Ver funciones disponibles</a>
+        {% if mostrar_canceladas == 'no' %}
+            No tenés reservas activas. <a href="{% url 'salas:lista_funciones' %}" style="color: #007bff; font-weight: bold;">Ver funciones disponibles</a>
+        {% else %}
+            No tenés reservas todavía. <a href="{% url 'salas:lista_funciones' %}" style="color: #007bff; font-weight: bold;">Ver funciones disponibles</a>
+        {% endif %}
     </p>
 {% endif %}
 
