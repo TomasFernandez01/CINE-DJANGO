@@ -52,23 +52,44 @@ def crear_reserva(request, funcion_id):
 
 @login_required
 def mis_reservas(request):
-    # Filtro para mostrar/ocultar canceladas
+    # Filtros
     mostrar_canceladas = request.GET.get('mostrar_canceladas', 'si')
+    mostrar_expiradas = request.GET.get('mostrar_expiradas', 'si')
     
+    # Obtener todas las reservas del usuario
+    reservas = Reserva.objects.filter(usuario=request.user).select_related('funcion__pelicula', 'funcion__sala')
+    
+    # Auto-expirar reservas que ya pasaron
+    expiradas_count = 0
+    for reserva in reservas:
+        if reserva.actualizar_estado_si_expiro():
+            expiradas_count += 1
+    
+    if expiradas_count > 0:
+        messages.info(request, f'{expiradas_count} reserva(s) expirada(s) automáticamente.')
+    
+    # Aplicar filtros
     if mostrar_canceladas == 'no':
-        reservas = Reserva.objects.filter(usuario=request.user).exclude(estado='cancelada').select_related('funcion__pelicula', 'funcion__sala')
-    else:
-        reservas = Reserva.objects.filter(usuario=request.user).select_related('funcion__pelicula', 'funcion__sala')
+        reservas = reservas.exclude(estado='cancelada')
+    
+    if mostrar_expiradas == 'no':
+        reservas = reservas.exclude(estado='expirada')
     
     contexto = {
         'reservas': reservas,
         'mostrar_canceladas': mostrar_canceladas,
+        'mostrar_expiradas': mostrar_expiradas,
     }
     return render(request, 'reservas/mis_reservas.html', contexto)
 
 @login_required
 def detalle_reserva(request, reserva_id):
     reserva = get_object_or_404(Reserva, id=reserva_id, usuario=request.user)
+    
+    # Auto-expirar si corresponde
+    if reserva.actualizar_estado_si_expiro():
+        messages.info(request, 'Esta reserva ha expirado porque la función ya pasó.')
+    
     contexto = {
         'reserva': reserva
     }
@@ -77,6 +98,9 @@ def detalle_reserva(request, reserva_id):
 @login_required
 def cancelar_reserva(request, reserva_id):
     reserva = get_object_or_404(Reserva, id=reserva_id, usuario=request.user)
+    
+    # Auto-expirar si corresponde
+    reserva.actualizar_estado_si_expiro()
     
     # VALIDACIÓN 5: Verificar que se pueda cancelar (al menos 2 horas antes)
     if not reserva.funcion.puede_cancelarse():
@@ -96,12 +120,12 @@ def cancelar_reserva(request, reserva_id):
 def eliminar_reserva(request, reserva_id):
     reserva = get_object_or_404(Reserva, id=reserva_id, usuario=request.user)
     
-    # Solo permitir eliminar reservas canceladas
-    if reserva.estado == 'cancelada':
+    # Permitir eliminar reservas canceladas O expiradas
+    if reserva.estado in ['cancelada', 'expirada']:
         codigo = reserva.codigo_reserva
         reserva.delete()
         messages.success(request, f'Reserva {codigo} eliminada del historial.')
     else:
-        messages.error(request, 'Solo se pueden eliminar reservas canceladas.')
+        messages.error(request, 'Solo se pueden eliminar reservas canceladas o expiradas.')
     
     return redirect('reservas:mis_reservas')
