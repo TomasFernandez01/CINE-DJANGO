@@ -1,4 +1,6 @@
 from django.db import models
+from django.utils import timezone
+from datetime import timedelta
 from peliculas.models import Pelicula
 
 class Sala(models.Model):
@@ -27,16 +29,36 @@ class Funcion(models.Model):
     
     def asientos_disponibles(self):
         """Calcula cuántos asientos quedan disponibles"""
-        # Por ahora retorna la capacidad total
-        # Cuando creemos la app reservas, calcularemos los reservados
         try:
-            reservados = self.reservas.aggregate(
+            reservados = self.reservas.filter(estado__in=['pendiente', 'confirmada']).aggregate(
                 total=models.Sum('cantidad_entradas')
             )['total'] or 0
             return self.sala.capacidad - reservados
         except AttributeError:
-            # Si todavía no existe la app reservas
             return self.sala.capacidad
+    
+    def esta_disponible(self):
+        """Verifica si la función está disponible (no pasó y está marcada como disponible)"""
+        return self.disponible and self.fecha_hora > timezone.now()
+    
+    def puede_cancelarse(self):
+        """Verifica si falta al menos 2 horas para la función"""
+        return self.fecha_hora - timezone.now() > timedelta(hours=2)
+    
+    def tiempo_restante(self):
+        """Retorna el tiempo restante hasta la función"""
+        if self.fecha_hora > timezone.now():
+            delta = self.fecha_hora - timezone.now()
+            horas = delta.total_seconds() / 3600
+            if horas < 1:
+                minutos = int(delta.total_seconds() / 60)
+                return f"{minutos} minutos"
+            elif horas < 24:
+                return f"{int(horas)} horas"
+            else:
+                dias = int(horas / 24)
+                return f"{dias} días"
+        return "Función pasada"
     
     class Meta:
         verbose_name = 'Función'

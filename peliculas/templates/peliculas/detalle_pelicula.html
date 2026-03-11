@@ -1,0 +1,113 @@
+{% extends 'base.html' %}
+
+{% block titulo %}{{ pelicula.titulo }}{% endblock %}
+
+{% block contenido %}
+<div style="max-width: 1200px; margin: 0 auto;">
+    <!-- Botón volver -->
+    <a href="{% url 'peliculas:lista_peliculas' %}" style="display: inline-block; margin-bottom: 1rem; padding: 0.5rem 1rem; background-color: #6c757d; color: white; border-radius: 4px; text-decoration: none;">
+        ← Volver a películas
+    </a>
+    
+    <!-- Información de la película -->
+    <div style="background-color: white; padding: 2rem; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); margin-bottom: 2rem;">
+        <h1 style="color: #333; margin-bottom: 1rem;">{{ pelicula.titulo }}</h1>
+        
+        <div style="display: flex; gap: 1rem; margin-bottom: 1.5rem; flex-wrap: wrap;">
+            {% if pelicula.clasificacion %}
+                <span style="padding: 0.25rem 0.75rem; background-color: #007bff; color: white; border-radius: 4px; font-weight: bold; font-size: 0.9rem;">
+                    {{ pelicula.get_clasificacion_display }}
+                </span>
+            {% endif %}
+            
+            {% if pelicula.genero %}
+                <span style="padding: 0.25rem 0.75rem; background-color: #28a745; color: white; border-radius: 4px; font-size: 0.9rem;">
+                    {{ pelicula.get_genero_display }}
+                </span>
+            {% endif %}
+            
+            {% if pelicula.duracion %}
+                <span style="padding: 0.25rem 0.75rem; background-color: #6c757d; color: white; border-radius: 4px; font-size: 0.9rem;">
+                    ⏱ {{ pelicula.duracion_formato }}
+                </span>
+            {% endif %}
+            
+            {% if pelicula.año %}
+                <span style="padding: 0.25rem 0.75rem; background-color: #17a2b8; color: white; border-radius: 4px; font-size: 0.9rem;">
+                    {{ pelicula.año }}
+                </span>
+            {% endif %}
+        </div>
+        
+        {% if pelicula.sinopsis %}
+            <div style="margin-bottom: 1.5rem;">
+                <h3 style="color: #333; margin-bottom: 0.5rem;">Sinopsis</h3>
+                <p style="color: #666; line-height: 1.6;">{{ pelicula.sinopsis }}</p>
+            </div>
+        {% endif %}
+        
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 1.5rem;">
+            {% if pelicula.director %}
+                <div>
+                    <h4 style="color: #333; margin-bottom: 0.25rem;">Director</h4>
+                    <p style="color: #666; margin: 0;">{{ pelicula.director }}</p>
+                </div>
+            {% endif %}
+            
+            {% if pelicula.actores %}
+                <div>
+                    <h4 style="color: #333; margin-bottom: 0.25rem;">Actores Principales</h4>
+                    <p style="color: #666; margin: 0;">{{ pelicula.actores }}</p>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+    
+    <!-- Funciones disponibles -->
+    <div style="background-color: white; padding: 2rem; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
+        <h2 style="color: #333; margin-bottom: 1.5rem;">Funciones Disponibles</h2>
+        
+        {% if funciones %}
+            <div style="display: grid; gap: 1rem;">
+                {% for funcion in funciones %}
+                    <div style="border: 1px solid #ddd; padding: 1.5rem; border-radius: 8px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem;">
+                        <div style="flex: 1; min-width: 200px;">
+                            <p style="margin: 0 0 0.5rem 0; font-size: 1.1rem; font-weight: bold; color: #333;">
+                                📅 {{ funcion.fecha_hora|date:"l, d 'de' F 'de' Y" }}
+                            </p>
+                            <p style="margin: 0; color: #666;">
+                                <strong>Horario:</strong> {{ funcion.fecha_hora|date:"H:i" }} hs
+                            </p>
+                            <p style="margin: 0; color: #666;">
+                                <strong>Sala:</strong> {{ funcion.sala.nombre }}
+                            </p>
+                            <p style="margin: 0; color: #666;">
+                                <strong>Asientos disponibles:</strong> {{ funcion.asientos_disponibles }}
+                            </p>
+                        </div>
+                        
+                        <div style="text-align: right;">
+                            <p style="font-size: 1.5rem; color: #28a745; font-weight: bold; margin: 0 0 0.5rem 0;">
+                                ${{ funcion.precio }}
+                            </p>
+                            {% if user.is_authenticated %}
+                                <a href="{% url 'reservas:crear_reserva' funcion.id %}" style="display: inline-block; padding: 0.75rem 1.5rem; background-color: #007bff; color: white; border-radius: 4px; text-decoration: none; font-weight: bold;">
+                                    Reservar
+                                </a>
+                            {% else %}
+                                <a href="{% url 'usuarios:login' %}?next={% url 'reservas:crear_reserva' funcion.id %}" style="display: inline-block; padding: 0.75rem 1.5rem; background-color: #007bff; color: white; border-radius: 4px; text-decoration: none; font-weight: bold;">
+                                    Reservar
+                                </a>
+                            {% endif %}
+                        </div>
+                    </div>
+                {% endfor %}
+            </div>
+        {% else %}
+            <p style="background-color: #fff3cd; padding: 1rem; border-radius: 4px; border-left: 4px solid #ffc107; color: #856404;">
+                No hay funciones disponibles para esta película en este momento.
+            </p>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

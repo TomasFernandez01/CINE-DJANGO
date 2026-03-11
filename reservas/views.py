@@ -1,20 +1,38 @@
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth.decorators import login_required
 from django.contrib import messages
+from django.utils import timezone
+from datetime import timedelta
 from .models import Reserva
 from salas.models import Funcion
 
 @login_required
 def crear_reserva(request, funcion_id):
-    funcion = get_object_or_404(Funcion, id=funcion_id, disponible=True)
+    funcion = get_object_or_404(Funcion, id=funcion_id)
+    
+    # VALIDACIÓN 1: Verificar que la función no haya pasado
+    if funcion.fecha_hora <= timezone.now():
+        messages.error(request, 'No se puede reservar esta función porque ya pasó.')
+        return redirect('salas:lista_funciones')
+    
+    # VALIDACIÓN 2: Verificar que la función esté disponible
+    if not funcion.disponible:
+        messages.error(request, 'Esta función no está disponible.')
+        return redirect('salas:lista_funciones')
     
     if request.method == 'POST':
         cantidad = int(request.POST.get('cantidad_entradas', 1))
         
-        # Verificar que hay asientos disponibles
-        if cantidad > funcion.asientos_disponibles():
-            messages.error(request, 'No hay suficientes asientos disponibles.')
-            return redirect('salas:lista_funciones')
+        # VALIDACIÓN 3: Verificar límite de entradas (1-10)
+        if cantidad < 1 or cantidad > 10:
+            messages.error(request, 'Debes reservar entre 1 y 10 entradas.')
+            return redirect('reservas:crear_reserva', funcion_id=funcion.id)
+        
+        # VALIDACIÓN 4: Verificar que hay asientos disponibles
+        asientos_disponibles = funcion.asientos_disponibles()
+        if cantidad > asientos_disponibles:
+            messages.error(request, f'Solo hay {asientos_disponibles} asientos disponibles.')
+            return redirect('reservas:crear_reserva', funcion_id=funcion.id)
         
         # Crear la reserva
         reserva = Reserva.objects.create(
@@ -59,6 +77,11 @@ def detalle_reserva(request, reserva_id):
 @login_required
 def cancelar_reserva(request, reserva_id):
     reserva = get_object_or_404(Reserva, id=reserva_id, usuario=request.user)
+    
+    # VALIDACIÓN 5: Verificar que se pueda cancelar (al menos 2 horas antes)
+    if not reserva.funcion.puede_cancelarse():
+        messages.error(request, 'No se puede cancelar esta reserva. Debe hacerlo al menos 2 horas antes de la función.')
+        return redirect('reservas:mis_reservas')
     
     if reserva.estado == 'pendiente':
         reserva.estado = 'cancelada'
