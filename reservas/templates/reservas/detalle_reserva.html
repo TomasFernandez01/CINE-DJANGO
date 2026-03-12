@@ -53,8 +53,14 @@
             <div style="background-color: #fff3cd; padding: 1rem; border-radius: 4px; border-left: 4px solid #ffc107; margin-bottom: 1rem;">
                 <p style="margin: 0; color: #856404;">
                     <strong>⚠️ Reserva pendiente de pago</strong><br>
-                    Por favor, dirigirse a la boletería antes de la función para completar el pago.
+                    Completá el pago para confirmar tu reserva.
                 </p>
+            </div>
+            
+            <div style="margin-bottom: 1.5rem;">
+                <a href="{% url 'pagos:procesar_pago' reserva.id %}" style="display: block; padding: 1rem; background-color: #28a745; color: white; border-radius: 4px; text-decoration: none; text-align: center; font-weight: bold; font-size: 1.1rem;">
+                    💳 Pagar Ahora
+                </a>
             </div>
         {% endif %}
         

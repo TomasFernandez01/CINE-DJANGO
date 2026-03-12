@@ -1,0 +1,153 @@
+{% extends 'base.html' %}
+
+{% block titulo %}Procesar Pago{% endblock %}
+
+{% block contenido %}
+<div style="max-width: 600px; margin: 0 auto;">
+    <h1 style="text-align: center;">Procesar Pago</h1>
+    
+    <!-- Resumen de la Reserva -->
+    <div style="background-color: white; padding: 1.5rem; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); margin-top: 1.5rem; margin-bottom: 1.5rem;">
+        <h3 style="color: #333; margin-bottom: 1rem; border-bottom: 2px solid #007bff; padding-bottom: 0.5rem;">
+            Resumen de la Reserva
+        </h3>
+        <p style="margin: 0.5rem 0;"><strong>Código:</strong> {{ reserva.codigo_reserva }}</p>
+        <p style="margin: 0.5rem 0;"><strong>Película:</strong> {{ reserva.funcion.pelicula.titulo }}</p>
+        <p style="margin: 0.5rem 0;"><strong>Fecha y Hora:</strong> {{ reserva.funcion.fecha_hora|date:"d/m/Y H:i" }}</p>
+        <p style="margin: 0.5rem 0;"><strong>Sala:</strong> {{ reserva.funcion.sala.nombre }}</p>
+        <p style="margin: 0.5rem 0;"><strong>Entradas:</strong> {{ reserva.cantidad_entradas }}</p>
+        
+        <div style="margin-top: 1rem; padding: 1rem; background-color: #e7f3ff; border-radius: 4px;">
+            <p style="margin: 0; font-size: 1.5rem; font-weight: bold; color: #333;">
+                Total a Pagar: ${{ reserva.total }}
+            </p>
+        </div>
+    </div>
+    
+    <!-- Formulario de Pago -->
+    <div style="background-color: white; padding: 2rem; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
+        <h3 style="color: #333; margin-bottom: 1.5rem;">Método de Pago</h3>
+        
+        <form method="post" id="pagoForm">
+            {% csrf_token %}
+            
+            <!-- Selección de Método -->
+            <div style="margin-bottom: 1.5rem;">
+                <label style="display: block; margin-bottom: 1rem; font-weight: bold;">
+                    Seleccionar método de pago:
+                </label>
+                
+                <div style="display: flex; flex-direction: column; gap: 1rem;">
+                    <label style="display: flex; align-items: center; padding: 1rem; border: 2px solid #ddd; border-radius: 4px; cursor: pointer; transition: all 0.2s;" onclick="this.querySelector('input').checked = true; actualizarFormulario()">
+                        <input type="radio" name="metodo_pago" value="efectivo" required style="margin-right: 1rem;">
+                        <div>
+                            <strong>💵 Efectivo</strong>
+                            <p style="margin: 0.25rem 0 0 0; font-size: 0.9rem; color: #666;">Pagar en boletería</p>
+                        </div>
+                    </label>
+                    
+                    <label style="display: flex; align-items: center; padding: 1rem; border: 2px solid #ddd; border-radius: 4px; cursor: pointer; transition: all 0.2s;" onclick="this.querySelector('input').checked = true; actualizarFormulario()">
+                        <input type="radio" name="metodo_pago" value="tarjeta_debito" style="margin-right: 1rem;">
+                        <div>
+                            <strong>💳 Tarjeta de Débito</strong>
+                            <p style="margin: 0.25rem 0 0 0; font-size: 0.9rem; color: #666;">Visa, Mastercard</p>
+                        </div>
+                    </label>
+                    
+                    <label style="display: flex; align-items: center; padding: 1rem; border: 2px solid #ddd; border-radius: 4px; cursor: pointer; transition: all 0.2s;" onclick="this.querySelector('input').checked = true; actualizarFormulario()">
+                        <input type="radio" name="metodo_pago" value="tarjeta_credito" style="margin-right: 1rem;">
+                        <div>
+                            <strong>💳 Tarjeta de Crédito</strong>
+                            <p style="margin: 0.25rem 0 0 0; font-size: 0.9rem; color: #666;">Visa, Mastercard, Amex</p>
+                        </div>
+                    </label>
+                    
+                    <label style="display: flex; align-items: center; padding: 1rem; border: 2px solid #ddd; border-radius: 4px; cursor: pointer; transition: all 0.2s;" onclick="this.querySelector('input').checked = true; actualizarFormulario()">
+                        <input type="radio" name="metodo_pago" value="transferencia" style="margin-right: 1rem;">
+                        <div>
+                            <strong>🏦 Transferencia Bancaria</strong>
+                            <p style="margin: 0.25rem 0 0 0; font-size: 0.9rem; color: #666;">Débito inmediato</p>
+                        </div>
+                    </label>
+                </div>
+            </div>
+            
+            <!-- Campos de Tarjeta (aparecen solo si se elige tarjeta) -->
+            <div id="camposTarjeta" style="display: none; margin-bottom: 1.5rem; padding: 1rem; background-color: #f8f9fa; border-radius: 4px;">
+                <p style="margin: 0 0 1rem 0; font-size: 0.9rem; color: #666;">
+                    <strong>ℹ️ Simulación:</strong> Ingresá cualquier número de tarjeta (solo para demo)
+                </p>
+                
+                <div style="margin-bottom: 1rem;">
+                    <label for="numero_tarjeta" style="display: block; margin-bottom: 0.5rem; font-weight: bold;">
+                        Número de Tarjeta:
+                    </label>
+                    <input 
+                        type="text" 
+                        id="numero_tarjeta" 
+                        name="numero_tarjeta" 
+                        placeholder="1234 5678 9012 3456"
+                        maxlength="16"
+                        style="width: 100%; padding: 0.5rem; border: 1px solid #ddd; border-radius: 4px; font-size: 1rem;"
+                    >
+                </div>
+            </div>
+            
+            <!-- Aviso -->
+            <div style="background-color: #e7f3ff; padding: 1rem; border-radius: 4px; margin-bottom: 1.5rem;">
+                <p style="margin: 0; font-size: 0.9rem; color: #004085;">
+                    <strong>ℹ️ Simulación de Pago</strong><br>
+                    Este es un pago simulado para demostración. No se procesará ningún cargo real.
+                </p>
+            </div>
+            
+            <!-- Botones -->
+            <div style="display: flex; gap: 1rem;">
+                <button type="submit" style="flex: 1; padding: 0.75rem; background-color: #28a745; color: white; border: none; border-radius: 4px; font-weight: bold; cursor: pointer; font-size: 1rem;">
+                    💳 Confirmar Pago
+                </button>
+                <a href="{% url 'reservas:mis_reservas' %}" style="flex: 1; padding: 0.75rem; background-color: #6c757d; color: white; border-radius: 4px; text-align: center; text-decoration: none; font-weight: bold; font-size: 1rem; display: flex; align-items: center; justify-content: center;">
+                    Cancelar
+                </a>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script>
+    function actualizarFormulario() {
+        const metodoSeleccionado = document.querySelector('input[name="metodo_pago"]:checked');
+        const camposTarjeta = document.getElementById('camposTarjeta');
+        const numeroTarjeta = document.getElementById('numero_tarjeta');
+        
+        if (metodoSeleccionado) {
+            // Resaltar opción seleccionada
+            document.querySelectorAll('input[name="metodo_pago"]').forEach(radio => {
+                const label = radio.closest('label');
+                if (radio.checked) {
+                    label.style.borderColor = '#007bff';
+                    label.style.backgroundColor = '#e7f3ff';
+                } else {
+                    label.style.borderColor = '#ddd';
+                    label.style.backgroundColor = 'white';
+                }
+            });
+            
+            // Mostrar campos de tarjeta si es necesario
+            if (metodoSeleccionado.value === 'tarjeta_debito' || metodoSeleccionado.value === 'tarjeta_credito') {
+                camposTarjeta.style.display = 'block';
+                numeroTarjeta.required = true;
+            } else {
+                camposTarjeta.style.display = 'none';
+                numeroTarjeta.required = false;
+            }
+        }
+    }
+    
+    // Actualizar cuando cambie la selección
+    document.querySelectorAll('input[name="metodo_pago"]').forEach(radio => {
+        radio.addEventListener('change', actualizarFormulario);
+    });
+</script>
+
+{% endblock %}

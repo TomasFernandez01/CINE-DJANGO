@@ -63,6 +63,9 @@
                             Ver Detalle
                         </a>
                         {% if reserva.estado == 'pendiente' %}
+                            <a href="{% url 'pagos:procesar_pago' reserva.id %}" style="padding: 0.5rem 1rem; background-color: #28a745; color: white; border-radius: 4px; text-decoration: none; text-align: center; font-weight: bold;">
+                                💳 Pagar Ahora
+                            </a>
                             <a href="{% url 'reservas:cancelar_reserva' reserva.id %}" onclick="return confirm('¿Estás seguro de cancelar esta reserva?')" style="padding: 0.5rem 1rem; background-color: #ffc107; color: #333; border-radius: 4px; text-decoration: none; text-align: center; font-weight: bold;">
                                 Cancelar
                             </a>
