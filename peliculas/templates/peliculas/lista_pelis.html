@@ -5,6 +5,101 @@
 {% block contenido %}
 <h1>Catálogo de Películas</h1>
 
+<!-- Barra de Búsqueda y Filtros -->
+<div style="background-color: white; padding: 1.5rem; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); margin-top: 1.5rem; margin-bottom: 1.5rem;">
+    <form method="get" action="{% url 'peliculas:lista_peliculas' %}">
+        <!-- Búsqueda -->
+        <div style="margin-bottom: 1rem;">
+            <label for="buscar" style="display: block; margin-bottom: 0.5rem; font-weight: bold;">
+                🔍 Buscar por título, director o actor:
+            </label>
+            <input 
+                type="text" 
+                id="buscar" 
+                name="buscar" 
+                value="{{ busqueda }}"
+                placeholder="Ej: Matrix, Tarantino, Tom Hanks..."
+                style="width: 100%; padding: 0.75rem; border: 1px solid #ddd; border-radius: 4px; font-size: 1rem;"
+            >
+        </div>
+        
+        <!-- Filtros en una fila -->
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem; margin-bottom: 1rem;">
+            <!-- Filtro Género -->
+            <div>
+                <label for="genero" style="display: block; margin-bottom: 0.5rem; font-weight: bold;">
+                    🎭 Género:
+                </label>
+                <select 
+                    id="genero" 
+                    name="genero"
+                    style="width: 100%; padding: 0.5rem; border: 1px solid #ddd; border-radius: 4px; font-size: 1rem;"
+                >
+                    <option value="">Todos los géneros</option>
+                    {% for valor, nombre in generos_disponibles %}
+                        <option value="{{ valor }}" {% if genero_seleccionado == valor %}selected{% endif %}>
+                            {{ nombre }}
+                        </option>
+                    {% endfor %}
+                </select>
+            </div>
+            
+            <!-- Filtro Clasificación -->
+            <div>
+                <label for="clasificacion" style="display: block; margin-bottom: 0.5rem; font-weight: bold;">
+                    🎫 Clasificación:
+                </label>
+                <select 
+                    id="clasificacion" 
+                    name="clasificacion"
+                    style="width: 100%; padding: 0.5rem; border: 1px solid #ddd; border-radius: 4px; font-size: 1rem;"
+                >
+                    <option value="">Todas</option>
+                    {% for valor, nombre in clasificaciones_disponibles %}
+                        <option value="{{ valor }}" {% if clasificacion_seleccionada == valor %}selected{% endif %}>
+                            {{ valor }}
+                        </option>
+                    {% endfor %}
+                </select>
+            </div>
+            
+            <!-- Orden -->
+            <div>
+                <label for="orden" style="display: block; margin-bottom: 0.5rem; font-weight: bold;">
+                    📊 Ordenar por:
+                </label>
+                <select 
+                    id="orden" 
+                    name="orden"
+                    style="width: 100%; padding: 0.5rem; border: 1px solid #ddd; border-radius: 4px; font-size: 1rem;"
+                >
+                    <option value="titulo" {% if orden_seleccionado == 'titulo' %}selected{% endif %}>Título (A-Z)</option>
+                    <option value="año" {% if orden_seleccionado == 'año' %}selected{% endif %}>Año (Nuevas primero)</option>
+                    <option value="genero" {% if orden_seleccionado == 'genero' %}selected{% endif %}>Género</option>
+                </select>
+            </div>
+        </div>
+        
+        <!-- Botones -->
+        <div style="display: flex; gap: 1rem;">
+            <button type="submit" style="flex: 1; padding: 0.75rem; background-color: #007bff; color: white; border: none; border-radius: 4px; font-weight: bold; cursor: pointer;">
+                Aplicar Filtros
+            </button>
+            <a href="{% url 'peliculas:lista_peliculas' %}" style="flex: 1; padding: 0.75rem; background-color: #6c757d; color: white; border-radius: 4px; text-align: center; text-decoration: none; font-weight: bold;">
+                Limpiar
+            </a>
+        </div>
+    </form>
+</div>
+
+<!-- Resultados -->
+{% if busqueda or genero_seleccionado or clasificacion_seleccionada %}
+    <p style="color: #666; margin-bottom: 1rem;">
+        <strong>{{ total_resultados }}</strong> resultado(s) encontrado(s)
+        {% if busqueda %}para "{{ busqueda }}"{% endif %}
+    </p>
+{% endif %}
+
 {% if peliculas %}
     <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 1.5rem; margin-top: 1.5rem;">
         {% for pelicula in peliculas %}
@@ -46,8 +141,22 @@
         {% endfor %}
     </div>
 {% else %}
-    <p style="background-color: #fff3cd; padding: 1rem; border-radius: 4px; border-left: 4px solid #ffc107;">
-        No hay películas en cartelera en este momento.
-    </p>
+    <div style="background-color: #fff3cd; padding: 1.5rem; border-radius: 4px; border-left: 4px solid #ffc107;">
+        <p style="margin: 0; color: #856404;">
+            <strong>No se encontraron películas</strong>
+            {% if busqueda or genero_seleccionado or clasificacion_seleccionada %}
+                con los filtros aplicados.
+            {% else %}
+                en cartelera en este momento.
+            {% endif %}
+        </p>
+        {% if busqueda or genero_seleccionado or clasificacion_seleccionada %}
+            <p style="margin: 0.5rem 0 0 0;">
+                <a href="{% url 'peliculas:lista_peliculas' %}" style="color: #007bff; font-weight: bold;">
+                    Ver todas las películas
+                </a>
+            </p>
+        {% endif %}
+    </div>
 {% endif %}
 {% endblock %}

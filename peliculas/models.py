@@ -40,7 +40,7 @@ class Pelicula(models.Model):
     fecha_estreno = models.DateField(blank=True, null=True)
     
     # Imagen (opcional - requiere Pillow)
-    # poster = models.ImageField(upload_to='posters/', blank=True, null=True)
+    poster = models.ImageField(upload_to='posters/', blank=True, null=True)
     
     def __str__(self):
         return self.titulo
