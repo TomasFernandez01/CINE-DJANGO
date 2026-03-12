@@ -1,0 +1,106 @@
+{% extends 'base.html' %}
+
+{% block titulo %}Comprobante de Reserva{% endblock %}
+
+{% block contenido %}
+<div style="max-width: 600px; margin: 0 auto;">
+    <h1 style="text-align: center;">Comprobante de Reserva</h1>
+    
+    <div style="background-color: white; padding: 2rem; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); margin-top: 1.5rem;">
+        
+        <div style="text-align: center; padding: 1.5rem; background-color: #f8f9fa; border-radius: 4px; margin-bottom: 1.5rem;">
+            <h2 style="margin: 0; color: #333; font-size: 2rem;">{{ reserva.codigo_reserva }}</h2>
+            <p style="margin: 0.5rem 0 0 0; color: #666;">Código de Reserva</p>
+        </div>
+        
+        <div style="margin-bottom: 1.5rem;">
+            <h3 style="color: #333; border-bottom: 2px solid #007bff; padding-bottom: 0.5rem; margin-bottom: 1rem;">
+                Detalles de la Función
+            </h3>
+            <p style="margin: 0.5rem 0;"><strong>Película:</strong> {{ reserva.funcion.pelicula.titulo }}</p>
+            <p style="margin: 0.5rem 0;"><strong>Sala:</strong> {{ reserva.funcion.sala.nombre }}</p>
+            <p style="margin: 0.5rem 0;"><strong>Fecha:</strong> {{ reserva.funcion.fecha_hora|date:"l, d de F de Y" }}</p>
+            <p style="margin: 0.5rem 0;"><strong>Horario:</strong> {{ reserva.funcion.fecha_hora|date:"H:i" }} hs</p>
+        </div>
+        
+        <div style="margin-bottom: 1.5rem;">
+            <h3 style="color: #333; border-bottom: 2px solid #007bff; padding-bottom: 0.5rem; margin-bottom: 1rem;">
+                Información de la Reserva
+            </h3>
+            <p style="margin: 0.5rem 0;"><strong>Titular:</strong> {{ reserva.usuario.get_full_name|default:reserva.usuario.username }}</p>
+            <p style="margin: 0.5rem 0;"><strong>Email:</strong> {{ reserva.usuario.email }}</p>
+            <p style="margin: 0.5rem 0;"><strong>Fecha de reserva:</strong> {{ reserva.fecha_reserva|date:"d/m/Y H:i" }}</p>
+            <p style="margin: 0.5rem 0;"><strong>Cantidad de entradas:</strong> {{ reserva.cantidad_entradas }}</p>
+            <p style="margin: 0.5rem 0;"><strong>Estado:</strong> 
+                <span style="padding: 0.25rem 0.75rem; border-radius: 4px; font-weight: bold;
+                    {% if reserva.estado == 'confirmada' %}background-color: #d4edda; color: #155724;
+                    {% elif reserva.estado == 'pendiente' %}background-color: #fff3cd; color: #856404;
+                    {% elif reserva.estado == 'expirada' %}background-color: #e2e3e5; color: #383d41;
+                    {% else %}background-color: #f8d7da; color: #721c24;{% endif %}">
+                    {{ reserva.get_estado_display }}
+                </span>
+            </p>
+        </div>
+        
+        <div style="background-color: #e7f3ff; padding: 1.5rem; border-radius: 4px; margin-bottom: 1.5rem;">
+            <p style="margin: 0 0 0.5rem 0; font-size: 0.9rem; color: #666;">Precio por entrada: ${{ reserva.funcion.precio }}</p>
+            <p style="margin: 0; font-size: 1.5rem; font-weight: bold; color: #333;">
+                Total: ${{ reserva.total }}
+            </p>
+        </div>
+        
+        {% if reserva.estado == 'pendiente' %}
+            <div style="background-color: #fff3cd; padding: 1rem; border-radius: 4px; border-left: 4px solid #ffc107; margin-bottom: 1rem;">
+                <p style="margin: 0; color: #856404;">
+                    <strong>⚠️ Reserva pendiente de pago</strong><br>
+                    Completá el pago para confirmar tu reserva.
+                </p>
+            </div>
+            
+            <div style="margin-bottom: 1.5rem;">
+                <a href="{% url 'pagos:procesar_pago' reserva.id %}" style="display: block; padding: 1rem; background-color: #28a745; color: white; border-radius: 4px; text-decoration: none; text-align: center; font-weight: bold; font-size: 1.1rem;">
+                    💳 Pagar Ahora
+                </a>
+            </div>
+        {% endif %}
+        
+        {% if reserva.estado == 'expirada' %}
+            <div style="background-color: #e2e3e5; padding: 1rem; border-radius: 4px; border-left: 4px solid #6c757d; margin-bottom: 1rem;">
+                <p style="margin: 0; color: #383d41;">
+                    <strong>⏱️ Reserva expirada</strong><br>
+                    Esta función ya pasó. La reserva expiró automáticamente.
+                </p>
+            </div>
+        {% endif %}
+        
+        {% if reserva.estado == 'cancelada' %}
+            <div style="background-color: #f8d7da; padding: 1rem; border-radius: 4px; border-left: 4px solid #dc3545; margin-bottom: 1rem;">
+                <p style="margin: 0; color: #721c24;">
+                    <strong>❌ Reserva cancelada</strong><br>
+                    Esta reserva fue cancelada.
+                </p>
+            </div>
+        {% endif %}
+        
+        <div style="margin-top: 1.5rem; display: flex; gap: 1rem; flex-wrap: wrap;">
+            <a href="{% url 'reservas:mis_reservas' %}" style="flex: 1; min-width: 150px; padding: 0.75rem; background-color: #007bff; color: white; border-radius: 4px; text-decoration: none; text-align: center; font-weight: bold;">
+                Mis Reservas
+            </a>
+            {% if reserva.estado == 'confirmada' or reserva.estado == 'pendiente' %}
+                <button onclick="window.print()" style="flex: 1; min-width: 150px; padding: 0.75rem; background-color: #28a745; color: white; border: none; border-radius: 4px; font-weight: bold; cursor: pointer;">
+                    Imprimir
+                </button>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<style>
+    @media print {
+        nav, .container > h1:first-child, button {
+            display: none !important;
+        }
+    }
+</style>
+
+{% endblock %}

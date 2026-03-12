@@ -1,0 +1,81 @@
+{% extends 'base.html' %}
+
+{% block titulo %}Mi Perfil{% endblock %}
+
+{% block contenido %}
+<div style="max-width: 800px; margin: 0 auto;">
+    <h1>Mi Perfil</h1>
+    
+    <div style="background-color: white; padding: 2rem; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); margin-top: 1.5rem;">
+        <div style="display: flex; justify-content: space-between; align-items: start; margin-bottom: 2rem; border-bottom: 2px solid #007bff; padding-bottom: 1rem;">
+            <h2 style="margin: 0; color: #333;">Información Personal</h2>
+            <a href="{% url 'usuarios:editar_perfil' %}" style="padding: 0.5rem 1rem; background-color: #007bff; color: white; border-radius: 4px; text-decoration: none; font-weight: bold;">
+                Editar Perfil
+            </a>
+        </div>
+        
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 2rem;">
+            <div>
+                <div style="margin-bottom: 1.5rem;">
+                    <p style="margin: 0 0 0.25rem 0; color: #666; font-size: 0.9rem;">Nombre de usuario</p>
+                    <p style="margin: 0; font-size: 1.1rem; font-weight: bold;">{{ usuario.username }}</p>
+                </div>
+                
+                <div style="margin-bottom: 1.5rem;">
+                    <p style="margin: 0 0 0.25rem 0; color: #666; font-size: 0.9rem;">Nombre completo</p>
+                    <p style="margin: 0; font-size: 1.1rem; font-weight: bold;">
+                        {{ usuario.get_full_name|default:"No especificado" }}
+                    </p>
+                </div>
+                
+                <div style="margin-bottom: 1.5rem;">
+                    <p style="margin: 0 0 0.25rem 0; color: #666; font-size: 0.9rem;">Email</p>
+                    <p style="margin: 0; font-size: 1.1rem; font-weight: bold;">{{ usuario.email|default:"No especificado" }}</p>
+                </div>
+            </div>
+            
+            <div>
+                <div style="margin-bottom: 1.5rem;">
+                    <p style="margin: 0 0 0.25rem 0; color: #666; font-size: 0.9rem;">Teléfono</p>
+                    <p style="margin: 0; font-size: 1.1rem; font-weight: bold;">{{ usuario.perfil.telefono|default:"No especificado" }}</p>
+                </div>
+                
+                <div style="margin-bottom: 1.5rem;">
+                    <p style="margin: 0 0 0.25rem 0; color: #666; font-size: 0.9rem;">Fecha de nacimiento</p>
+                    <p style="margin: 0; font-size: 1.1rem; font-weight: bold;">
+                        {{ usuario.perfil.fecha_nacimiento|date:"d/m/Y"|default:"No especificado" }}
+                    </p>
+                </div>
+                
+                <div style="margin-bottom: 1.5rem;">
+                    <p style="margin: 0 0 0.25rem 0; color: #666; font-size: 0.9rem;">Dirección</p>
+                    <p style="margin: 0; font-size: 1.1rem; font-weight: bold;">{{ usuario.perfil.direccion|default:"No especificado" }}</p>
+                </div>
+            </div>
+        </div>
+        
+        <div style="margin-top: 2rem; padding-top: 2rem; border-top: 1px solid #ddd;">
+            <h3 style="color: #333; margin-bottom: 1rem;">Seguridad</h3>
+            <a href="{% url 'usuarios:cambiar_password' %}" style="display: inline-block; padding: 0.5rem 1rem; background-color: #6c757d; color: white; border-radius: 4px; text-decoration: none; font-weight: bold;">
+                Cambiar Contraseña
+            </a>
+        </div>
+        
+        <div style="margin-top: 2rem; padding-top: 2rem; border-top: 1px solid #ddd;">
+            <h3 style="color: #333; margin-bottom: 1rem;">Estadísticas</h3>
+            <p style="color: #666; margin: 0.5rem 0;">
+                <strong>Miembro desde:</strong> {{ usuario.date_joined|date:"F Y" }}
+            </p>
+            <p style="color: #666; margin: 0.5rem 0;">
+                <strong>Total de reservas:</strong> {{ total_reservas }}
+            </p>
+            <p style="color: #666; margin: 0.5rem 0;">
+                <strong>Reservas confirmadas:</strong> {{ reservas_activas }}
+            </p>
+            <p style="color: #666; margin: 0.5rem 0;">
+                <strong>Reservas pendientes:</strong> {{ reservas_pendientes }}
+            </p>
+        </div>
+    </div>
+</div>
+{% endblock %}
