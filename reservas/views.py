@@ -6,6 +6,15 @@ from datetime import timedelta
 from .models import Reserva
 from salas.models import Funcion
 
+# IMPORTAR LA FUNCIÓN DE EMAIL
+try:
+    from utils.email_utils import enviar_email_confirmacion_reserva, enviar_email_cancelacion_reserva
+    EMAIL_DISPONIBLE = True
+except ImportError:
+    # Si no existe el módulo, funcionará sin emails
+    EMAIL_DISPONIBLE = False
+    print("⚠️ Módulo de emails no encontrado. Las notificaciones por email están deshabilitadas.")
+
 @login_required
 def crear_reserva(request, funcion_id):
     funcion = get_object_or_404(Funcion, id=funcion_id)
@@ -41,7 +50,17 @@ def crear_reserva(request, funcion_id):
             cantidad_entradas=cantidad
         )
         
-        messages.success(request, f'Reserva creada exitosamente. Código: {reserva.codigo_reserva}')
+        # ENVIAR EMAIL DE CONFIRMACIÓN
+        if EMAIL_DISPONIBLE:
+            try:
+                enviar_email_confirmacion_reserva(reserva, request)
+                messages.success(request, f'✅ Reserva creada exitosamente. Código: {reserva.codigo_reserva}. Te enviamos un email de confirmación.')
+            except Exception as e:
+                messages.success(request, f'✅ Reserva creada exitosamente. Código: {reserva.codigo_reserva}')
+                messages.warning(request, 'No pudimos enviar el email de confirmación, pero tu reserva está activa.')
+        else:
+            messages.success(request, f'✅ Reserva creada exitosamente. Código: {reserva.codigo_reserva}')
+        
         return redirect('reservas:detalle_reserva', reserva_id=reserva.id)
     
     contexto = {
@@ -110,7 +129,16 @@ def cancelar_reserva(request, reserva_id):
     if reserva.estado == 'pendiente':
         reserva.estado = 'cancelada'
         reserva.save()
-        messages.success(request, 'Reserva cancelada exitosamente.')
+        
+        # ENVIAR EMAIL DE CANCELACIÓN
+        if EMAIL_DISPONIBLE:
+            try:
+                enviar_email_cancelacion_reserva(reserva)
+                messages.success(request, '✅ Reserva cancelada exitosamente. Te enviamos un email de confirmación.')
+            except Exception as e:
+                messages.success(request, '✅ Reserva cancelada exitosamente.')
+        else:
+            messages.success(request, '✅ Reserva cancelada exitosamente.')
     else:
         messages.error(request, 'No se puede cancelar esta reserva.')
     
