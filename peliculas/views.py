@@ -1,47 +1,54 @@
-from django.shortcuts import render, get_object_or_404
+# peliculas/views.py - Agregar estas vistas al archivo existente
+
+from django.shortcuts import render, redirect, get_object_or_404
+from django.contrib.admin.views.decorators import staff_member_required
+from django.contrib import messages
 from django.utils import timezone
 from django.db.models import Q
 from .models import Pelicula
+from django.core.files.base import ContentFile
+import requests
+
+# Importar cliente TMDB
+try:
+    from utils.tmdb_api import TMDBClient, buscar_pelicula_tmdb, importar_pelicula_tmdb
+    TMDB_DISPONIBLE = True
+except ImportError:
+    TMDB_DISPONIBLE = False
+
+
+# ============================================
+# VISTAS EXISTENTES (mantener como están)
+# ============================================
 
 def inicio(request):
     return render(request, 'inicio.html')
 
 def lista_peliculas(request):
-    # Obtener todas las películas en cartelera
+    # ... código existente ...
     peliculas = Pelicula.objects.filter(en_cartelera=True)
     
-    # BÚSQUEDA por título (solo si existe)
     busqueda = request.GET.get('buscar', '')
     if busqueda:
-        # Búsqueda solo en campos que existen
         query = Q(titulo__icontains=busqueda)
-        
-        # Agregar búsqueda en director si el campo existe
         if hasattr(Pelicula, 'director') and Pelicula._meta.get_field('director'):
             query |= Q(director__icontains=busqueda)
-        
-        # Agregar búsqueda en actores si el campo existe
         if hasattr(Pelicula, 'actores') and Pelicula._meta.get_field('actores'):
             query |= Q(actores__icontains=busqueda)
-        
         peliculas = peliculas.filter(query)
     
-    # FILTRO por género
     genero = request.GET.get('genero', '')
     if genero:
         peliculas = peliculas.filter(genero=genero)
     
-    # FILTRO por clasificación
     clasificacion = request.GET.get('clasificacion', '')
     if clasificacion:
         peliculas = peliculas.filter(clasificacion=clasificacion)
     
-    # ORDEN
     orden = request.GET.get('orden', 'titulo')
     if orden == 'titulo':
         peliculas = peliculas.order_by('titulo')
     elif orden == 'año':
-        # Solo ordenar por año si el campo existe
         if hasattr(Pelicula, 'año'):
             peliculas = peliculas.order_by('-año', 'titulo')
         else:
@@ -49,7 +56,6 @@ def lista_peliculas(request):
     elif orden == 'genero':
         peliculas = peliculas.order_by('genero', 'titulo')
     
-    # Obtener opciones para los filtros
     generos_disponibles = Pelicula.GENERO_CHOICES
     clasificaciones_disponibles = Pelicula.CLASIFICACION_CHOICES
     
@@ -67,7 +73,6 @@ def lista_peliculas(request):
 
 def detalle_pelicula(request, pelicula_id):
     pelicula = get_object_or_404(Pelicula, id=pelicula_id)
-    # Obtener solo funciones disponibles y futuras para esta película
     ahora = timezone.now()
     funciones = pelicula.funciones.filter(
         disponible=True,
@@ -79,3 +84,281 @@ def detalle_pelicula(request, pelicula_id):
         'funciones': funciones,
     }
     return render(request, 'peliculas/detalle_pelicula.html', contexto)
+
+
+# ============================================
+# UTILIDAD PARA DESCARGAR POSTERS
+# ============================================
+
+############################################################# V 1
+def descargar_poster(poster_url, titulo):
+    """
+    Descarga el poster desde TMDB y retorna un ContentFile.
+    """
+    try:
+        response = requests.get(poster_url, timeout=10)
+        response.raise_for_status()
+        
+        # Crear nombre de archivo seguro
+        nombre_archivo = f"{titulo.lower().replace(' ', '_')[:50]}.jpg"
+        
+        # Retornar ContentFile que Django puede guardar
+        return ContentFile(response.content, name=nombre_archivo)
+    except Exception as e:
+        print(f"Error descargando poster: {e}")
+        return None
+############################################################# V 2
+
+# ============================================
+# NUEVAS VISTAS PARA TMDB
+# ============================================
+
+@staff_member_required  # Solo staff puede acceder
+def buscar_tmdb(request):
+    """
+    Vista para buscar películas en TMDB y agregarlas a la base de datos.
+    Accesible solo para staff/admin.
+    """
+    if not TMDB_DISPONIBLE:
+        messages.error(request, 'La integración con TMDB no está configurada.')
+        return redirect('admin:index')
+    
+    resultados = []
+    query = ''
+    
+    if request.method == 'GET' and 'q' in request.GET:
+        query = request.GET.get('q', '').strip()
+        
+        if query:
+            response = buscar_pelicula_tmdb(query)
+            
+            if response['success']:
+                resultados = response['results']
+                if not resultados:
+                    messages.info(request, f'No se encontraron resultados para "{query}"')
+            else:
+                messages.error(request, f'Error al buscar: {response.get("error")}')
+    
+    contexto = {
+        'query': query,
+        'resultados': resultados,
+        'tmdb_disponible': TMDB_DISPONIBLE,
+    }
+    return render(request, 'peliculas/buscar_tmdb.html', contexto)
+
+
+@staff_member_required
+def importar_tmdb(request, tmdb_id):
+    """
+    Importa una película desde TMDB y la guarda en la base de datos.
+
+    NUEVO:
+    Importa una película desde TMDB con POSTER incluido.
+    CORREGIDO: Guarda primero la película, DESPUÉS el poster.
+
+    """
+    if not TMDB_DISPONIBLE:
+        messages.error(request, 'La integración con TMDB no está configurada.')
+        return redirect('admin:index')
+    
+    # Obtener detalles de TMDB
+    response = importar_pelicula_tmdb(tmdb_id)
+    
+    if not response['success']:
+        messages.error(request, f'Error al obtener detalles: {response.get("error")}')
+        return redirect('peliculas:buscar_tmdb')
+    
+    data = response['data']
+    
+    # Verificar si ya existe
+    pelicula_existente = Pelicula.objects.filter(titulo__iexact=data['titulo']).first()
+    
+    if pelicula_existente:
+        messages.warning(request, f'La película "{data["titulo"]}" ya existe en la base de datos.')
+        return redirect('admin:peliculas_pelicula_change', pelicula_existente.id)
+    
+    # ============================================
+    # CORRECCIÓN: Crear y guardar SIN poster primero
+    # ============================================
+
+    ################################################## V1 : Crear nueva película antes conectado con laárte de POSTER
+    # pelicula = Pelicula.objects.create(
+    #     titulo=data['titulo'][:50],  # Respetar el límite de caracteres
+    #     sinopsis=data.get('sinopsis', ''),
+    #     duracion=data.get('duracion'),
+    #     genero=data.get('genero'),
+    #     clasificacion=data.get('clasificacion', 'ATP'),
+    #     director=data.get('director', ''),
+    #     actores=data.get('actores', ''),
+    #     año=data.get('año'),
+    #     en_cartelera=False,  # Por defecto no en cartelera
+    # )
+    ################################################## V 2
+    try:
+        pelicula = Pelicula.objects.create(
+            titulo=data['titulo'][:50],
+            sinopsis=data.get('sinopsis', ''),
+            duracion=data.get('duracion'),
+            genero=data.get('genero'),
+            clasificacion=data.get('clasificacion', 'ATP'),
+            director=data.get('director', ''),
+            actores=data.get('actores', ''),
+            año=data.get('año'),
+            en_cartelera=False,
+        )
+        
+        # AHORA sí, descargar y agregar el poster
+        poster_url = data.get('poster_url')
+        poster_descargado = False
+        
+        if poster_url:
+            try:
+                poster_file = descargar_poster(poster_url, data['titulo'])
+                if poster_file:
+                    # Guardar el poster en la película YA EXISTENTE en la BD
+                    pelicula.poster.save(poster_file.name, poster_file, save=True)
+                    poster_descargado = True
+            except Exception as e:
+                print(f"Error descargando poster: {e}")
+        
+        # Mensaje de éxito
+        if poster_descargado:
+            messages.success(
+                request,
+                f'✅ Película "{pelicula.titulo}" importada con poster incluido.'
+            )
+        else:
+            messages.success(
+                request,
+                f'✅ Película "{pelicula.titulo}" importada (poster no disponible o falló descarga).'
+            )
+        
+        # Redirigir al admin para editar
+        return redirect('admin:peliculas_pelicula_change', pelicula.id)
+        
+    except Exception as e:
+        messages.error(request, f'Error al crear la película: {str(e)}')
+        return redirect('peliculas:buscar_tmdb')
+    ####################################################################### esto era funcional
+    # messages.success(
+    #     request,
+    #     f'✅ Película "{pelicula.titulo}" importada exitosamente. '
+    #     f'Ahora podés editarla y subir el poster manualmente.'
+    # )
+    # # Redirigir al admin para editar
+    # return redirect('admin:peliculas_pelicula_change', pelicula.id)
+    #######################################################################
+    
+    # ########################################################## POSTER <--------
+    # # NUEVO: Descargar y guardar el poster automáticamente
+    poster_url = data.get('poster_url')
+    if poster_url:
+        try:
+            poster_file = descargar_poster(poster_url, data['titulo'])
+            if poster_file:
+                pelicula.poster.save(poster_file.name, poster_file, save=False)
+                messages.success(
+                    request,
+                    f'✅ Película "{pelicula.titulo}" importada con poster incluido.'
+                )
+            else:
+                messages.success(
+                    request,
+                    f'✅ Película "{pelicula.titulo}" importada (poster no disponible).'
+                )
+        except Exception as e:
+            messages.warning(
+                request,
+                f'✅ Película "{pelicula.titulo}" importada pero no se pudo descargar el poster: {str(e)}'
+            )
+    else:
+        messages.success(
+            request,
+            f'✅ Película "{pelicula.titulo}" importada (sin poster en TMDB).'
+        )
+    
+    # Guardar la película
+    pelicula.save()
+    
+    # Redirigir al admin para editar
+    return redirect('admin:peliculas_pelicula_change', pelicula.id)
+
+@staff_member_required
+def actualizar_desde_tmdb(request, pelicula_id):
+    """
+    Actualiza una película existente con datos de TMDB.
+    NUEVO:
+    Actualiza una película existente con datos de TMDB (incluyendo poster).
+    """
+    if not TMDB_DISPONIBLE:
+        messages.error(request, 'La integración con TMDB no está configurada.')
+        return redirect('admin:peliculas_pelicula_change', pelicula_id)
+    
+    pelicula = get_object_or_404(Pelicula, id=pelicula_id)
+    
+    if request.method == 'POST':
+        tmdb_id = request.POST.get('tmdb_id')
+        
+        if not tmdb_id:
+            messages.error(request, 'Debes proporcionar un ID de TMDB')
+            return redirect('admin:peliculas_pelicula_change', pelicula_id)
+        
+        # Obtener datos de TMDB
+        response = importar_pelicula_tmdb(tmdb_id)
+        
+        if not response['success']:
+            messages.error(request, f'Error: {response.get("error")}')
+            return redirect('admin:peliculas_pelicula_change', pelicula_id)
+        
+        data = response['data']
+        
+        # Actualizar campos vacíos o si el usuario lo confirma
+        campos_actualizados = []
+        
+        if not pelicula.sinopsis and data.get('sinopsis'):
+            pelicula.sinopsis = data['sinopsis']
+            campos_actualizados.append('sinopsis')
+        
+        if not pelicula.duracion and data.get('duracion'):
+            pelicula.duracion = data['duracion']
+            campos_actualizados.append('duración')
+        
+        if not pelicula.director and data.get('director'):
+            pelicula.director = data['director']
+            campos_actualizados.append('director')
+        
+        if not pelicula.actores and data.get('actores'):
+            pelicula.actores = data['actores']
+            campos_actualizados.append('actores')
+        
+        if not pelicula.año and data.get('año'):
+            pelicula.año = data['año']
+            campos_actualizados.append('año')
+        
+        if not pelicula.genero and data.get('genero'):
+            pelicula.genero = data['genero']
+            campos_actualizados.append('género')
+        
+        # NUEVO: Descargar poster si no tiene
+        if not pelicula.poster and data.get('poster_url'):
+            try:
+                poster_file = descargar_poster(data['poster_url'], pelicula.titulo)
+                if poster_file:
+                    pelicula.poster.save(poster_file.name, poster_file, save=False)
+                    campos_actualizados.append('poster')
+            except Exception as e:
+                print(f"Error descargando poster: {e}")
+
+        if campos_actualizados:
+            pelicula.save()
+            messages.success(
+                request,
+                f'✅ Película actualizada. Campos completados: {", ".join(campos_actualizados)}'
+            )
+        else:
+            messages.info(request, 'No había campos vacíos para actualizar.')
+        
+        return redirect('admin:peliculas_pelicula_change', pelicula_id)
+    
+    # GET: Mostrar formulario de búsqueda
+    return redirect('admin:peliculas_pelicula_change', pelicula_id)
