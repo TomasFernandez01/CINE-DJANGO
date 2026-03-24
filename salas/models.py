@@ -66,8 +66,7 @@ class Funcion(models.Model):
     
     def calcular_hora_fin(self):
         """
-        Calcula la hora de fin de la función.
-        Duración de película + 30 minutos de margen (limpieza/publicidad)
+        Calcula la hora de fin de la función. Duración de película + 30 minutos de margen (limpieza/publicidad)
         """
         if not self.pelicula.duracion:
             # Si no hay duración, asumir 2 horas por defecto
@@ -79,8 +78,7 @@ class Funcion(models.Model):
     
     def hay_solapamiento(self):
         """
-        Verifica si esta función se solapa con otra en la misma sala.
-        Retorna (bool, lista_de_funciones_solapadas)
+        Verifica si esta función se solapa con otra en la misma sala. Retorna (bool, lista_de_funciones_solapadas)
         """
         hora_inicio = self.fecha_hora
         hora_fin = self.calcular_hora_fin()
@@ -114,8 +112,7 @@ class Funcion(models.Model):
     
     def clean(self):
         """
-        Validación personalizada del modelo.
-        Django llama a esto antes de guardar si se usa en forms/admin.
+        Validación personalizada del modelo. Django llama a esto antes de guardar si se usa en forms/admin.
         """
         super().clean()
         

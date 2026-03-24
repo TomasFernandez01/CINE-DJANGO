@@ -1,11 +1,8 @@
 {% extends "admin/change_list.html" %}
 {% load i18n admin_urls static %}
-
 {% block object-tools-items %}
   {{ block.super }}
     <li>
-        <a href="{% url 'peliculas:buscar_tmdb' %}" class="addlink" style="background-color: #01b4e4;">🎬 Buscar en TMDB
-
-        </a>
+        <a href="{% url 'peliculas:buscar_tmdb' %}" class="addlink" style="background-color: #01b4e4;">🎬 Buscar en TMDB</a>
     </li>
 {% endblock %}

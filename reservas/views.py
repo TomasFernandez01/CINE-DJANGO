@@ -33,8 +33,8 @@ def crear_reserva(request, funcion_id):
         cantidad = int(request.POST.get('cantidad_entradas', 1))
         
         # VALIDACIÓN 3: Verificar límite de entradas (1-10)
-        if cantidad < 1 or cantidad > 10:
-            messages.error(request, 'Debes reservar entre 1 y 10 entradas.')
+        if cantidad < 1 or cantidad > 4:
+            messages.error(request, 'Debes reservar entre 1 y 4 entradas.')
             return redirect('reservas:crear_reserva', funcion_id=funcion.id)
         
         # VALIDACIÓN 4: Verificar que hay asientos disponibles
@@ -44,6 +44,7 @@ def crear_reserva(request, funcion_id):
             return redirect('reservas:crear_reserva', funcion_id=funcion.id)
         
         # Crear la reserva
+        # NUEVO : (fecha_limite_pago se establece automáticamente en el modelo)
         reserva = Reserva.objects.create(
             usuario=request.user,
             funcion=funcion,
@@ -54,12 +55,16 @@ def crear_reserva(request, funcion_id):
         if EMAIL_DISPONIBLE:
             try:
                 enviar_email_confirmacion_reserva(reserva, request)
-                messages.success(request, f'✅ Reserva creada exitosamente. Código: {reserva.codigo_reserva}. Te enviamos un email de confirmación.')
+                #messages.success(request, f'✅ Reserva creada exitosamente. Código: {reserva.codigo_reserva}. Te enviamos un email de confirmación.')
+                messages.success(request, f'✅ Reserva creada exitosamente. Código: {reserva.codigo_reserva}. Tenés 4 minutos para completar el pago.')
             except Exception as e:
-                messages.success(request, f'✅ Reserva creada exitosamente. Código: {reserva.codigo_reserva}')
+                # messages.success(request, f'✅ Reserva creada exitosamente. Código: {reserva.codigo_reserva}')
+                # messages.warning(request, 'No pudimos enviar el email de confirmación, pero tu reserva está activa.')
+                messages.success(request, f'✅ Reserva creada exitosamente. Código: {reserva.codigo_reserva}. Tenés 4 minutos para completar el pago.')
                 messages.warning(request, 'No pudimos enviar el email de confirmación, pero tu reserva está activa.')
         else:
             messages.success(request, f'✅ Reserva creada exitosamente. Código: {reserva.codigo_reserva}')
+            messages.success(request, f'✅ Reserva creada exitosamente. Código: {reserva.codigo_reserva}. Tenés 4 minutos para completar el pago.')
         
         return redirect('reservas:detalle_reserva', reserva_id=reserva.id)
     
@@ -78,6 +83,15 @@ def mis_reservas(request):
     # Obtener todas las reservas del usuario
     reservas = Reserva.objects.filter(usuario=request.user).select_related('funcion__pelicula', 'funcion__sala')
     
+    # NUEVO: Auto-cancelar reservas que expiraron por tiempo
+    canceladas_tiempo = 0
+    for reserva in reservas:
+        if reserva.cancelar_por_tiempo_expirado():
+            canceladas_tiempo += 1
+    
+    if canceladas_tiempo > 0:
+        messages.warning(request, f'⏰ {canceladas_tiempo} reserva(s) cancelada(s) automáticamente por expiración del tiempo de pago.')
+
     # Auto-expirar reservas que ya pasaron
     expiradas_count = 0
     for reserva in reservas:
@@ -105,6 +119,10 @@ def mis_reservas(request):
 def detalle_reserva(request, reserva_id):
     reserva = get_object_or_404(Reserva, id=reserva_id, usuario=request.user)
     
+    # NUEVO: Verificar si expiró el tiempo de pago
+    if reserva.cancelar_por_tiempo_expirado():
+        messages.warning(request, '⏰ Esta reserva fue cancelada automáticamente porque expiró el tiempo de pago (4 minutos).')
+
     # Auto-expirar si corresponde
     if reserva.actualizar_estado_si_expiro():
         messages.info(request, 'Esta reserva ha expirado porque la función ya pasó.')
@@ -117,7 +135,10 @@ def detalle_reserva(request, reserva_id):
 @login_required
 def cancelar_reserva(request, reserva_id):
     reserva = get_object_or_404(Reserva, id=reserva_id, usuario=request.user)
-    
+
+    # NUEVO: Verificar tiempo de pago primero
+    reserva.cancelar_por_tiempo_expirado()
+
     # Auto-expirar si corresponde
     reserva.actualizar_estado_si_expiro()
     

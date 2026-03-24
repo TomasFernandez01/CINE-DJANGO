@@ -16,6 +16,11 @@ except ImportError:
 def procesar_pago(request, reserva_id):
     reserva = get_object_or_404(Reserva, id=reserva_id, usuario=request.user)
     
+    # NUEVO: Verificar si expiró el tiempo de pago
+    if reserva.cancelar_por_tiempo_expirado():
+        messages.error(request, '⏰ Esta reserva fue cancelada automáticamente porque expiró el tiempo de pago (4 minutos). Los asientos han sido liberados.')
+        return redirect('reservas:mis_reservas')
+
     # Verificar que la reserva esté pendiente
     if reserva.estado != 'pendiente':
         messages.error(request, 'Esta reserva no está pendiente de pago.')
@@ -27,6 +32,14 @@ def procesar_pago(request, reserva_id):
         return redirect('reservas:detalle_reserva', reserva_id=reserva.id)
     
     if request.method == 'POST':
+
+        # DOBLE VERIFICACIÓN antes de procesar el pago
+        if reserva.expiro_tiempo_pago():
+            reserva.estado = 'cancelada'
+            reserva.save()
+            messages.error(request, '⏰ Lo sentimos, el tiempo de pago expiró mientras procesabas la transacción. Por favor, creá una nueva reserva.')
+            return redirect('salas:lista_funciones')
+
         metodo_pago = request.POST.get('metodo_pago')
         
         # Crear el pago
