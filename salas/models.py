@@ -9,8 +9,33 @@ class Sala(models.Model):
     capacidad = models.IntegerField()
     activa = models.BooleanField(default=True)
     
+    # NUEVO: Configuración del mapa de asientos
+    filas = models.IntegerField(default=10, help_text="Cantidad de filas (A, B, C, ...)")
+    columnas = models.IntegerField(default=12, help_text="Cantidad de columnas (1, 2, 3, ...)")
+    
     def __str__(self):
         return f"{self.nombre} (Cap: {self.capacidad})"
+    
+    def layout_asientos(self):
+        """Retorna el layout de asientos como lista de listas"""
+        letras = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'
+        layout = []
+        for i in range(self.filas):
+            fila = []
+            for j in range(1, self.columnas + 1):
+                fila.append(f"{letras[i]}{j}")
+            layout.append(fila)
+        return layout
+    
+    def total_asientos(self):
+        """Calcula el total de asientos según filas x columnas"""
+        return self.filas * self.columnas
+    
+    def save(self, *args, **kwargs):
+        # Auto-ajustar capacidad si no está definida
+        if not self.capacidad or self.capacidad != self.total_asientos():
+            self.capacidad = self.total_asientos()
+        super().save(*args, **kwargs)
     
     class Meta:
         verbose_name = 'Sala'
@@ -28,15 +53,43 @@ class Funcion(models.Model):
     def __str__(self):
         return f"{self.pelicula.titulo} - {self.sala.nombre} - {self.fecha_hora.strftime('%d/%m/%Y %H:%M')}"
     
-    def asientos_disponibles(self):
-        try:
-            reservados = self.reservas.filter(estado__in=['pendiente', 'confirmada']).aggregate(
-                total=models.Sum('cantidad_entradas')
-            )['total'] or 0
-            return self.sala.capacidad - reservados
-        except AttributeError:
-            return self.sala.capacidad
+    # NUEVO: ahora los metodos orbitan a a funcion asienos_ocupados
+    def asientos_ocupados(self):
+        """
+        Retorna una lista de códigos de asientos ocupados (confirmados o pendientes).
+        Ejemplo: ['A1', 'A2', 'B5', 'C3']
+        """
+        from reservas.models import Reserva
+        reservas = self.reservas.filter(estado__in=['pendiente', 'confirmada'])
+        
+        asientos = []
+        for reserva in reservas:
+            if reserva.asientos_seleccionados:
+                # asientos_seleccionados es un string: "A1,A2,B5"
+                asientos.extend(reserva.asientos_seleccionados.split(','))
+        
+        return asientos
+    
+    ###################################################
+    # def asientos_disponibles(self):
+    #     try:
+    #         reservados = self.reservas.filter(estado__in=['pendiente', 'confirmada']).aggregate(
+    #             total=models.Sum('cantidad_entradas')
+    #         )['total'] or 0
+    #         return self.sala.capacidad - reservados
+    #     except AttributeError:
+    #         return self.sala.capacidad
 
+    def asientos_disponibles(self):
+        """Retorna la cantidad de asientos disponibles"""
+        ocupados = len(self.asientos_ocupados())
+        return self.sala.capacidad - ocupados
+    
+    def esta_asiento_disponible(self, asiento_codigo):
+        """Verifica si un asiento específico está disponible"""
+        return asiento_codigo not in self.asientos_ocupados()
+    
+    ###################################################
     def esta_disponible(self):
         """Verifica si la función está disponible (no pasó y está marcada como disponible)"""
         return self.disponible and self.fecha_hora > timezone.now()

@@ -4,117 +4,119 @@
 
 {% block contenido %}
 <div style="max-width: 1200px; margin: 0 auto;">
-    <!-- Botón volver -->
-    <a href="{% url 'peliculas:lista_peliculas' %}" style="display: inline-block; margin-bottom: 1rem; padding: 0.5rem 1rem; background-color: #6c757d; color: white; border-radius: 4px; text-decoration: none;">
-        ← Volver a películas
-    </a>
-    
-    <!-- Información de la película -->
-    <div style="background-color: white; padding: 2rem; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); margin-bottom: 2rem;">
-        <div style="display: grid; grid-template-columns: 300px 1fr; gap: 2rem; margin-bottom: 1.5rem;">
-            <!-- Poster -->
-            <div>
-                {% if pelicula.poster %}
-                    <img src="{{ pelicula.poster.url }}" alt="{{ pelicula.titulo }}" style="width: 100%; border-radius: 8px; box-shadow: 0 4px 8px rgba(0,0,0,0.2);">
-                {% else %}
-                    <div style="width: 100%; aspect-ratio: 2/3; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); border-radius: 8px; display: flex; align-items: center; justify-content: center; color: white; font-size: 1.2rem; text-align: center; padding: 1rem;">
-                        🎬<br>{{ pelicula.titulo }}
-                    </div>
+    <div style="display: grid; grid-template-columns: 300px 1fr; gap: 2rem; margin-bottom: 2rem;">
+        <!-- Poster -->
+        <div>
+            {% if pelicula.poster %}
+                <img src="{{ pelicula.poster.url }}" alt="{{ pelicula.titulo }}" style="width: 100%; border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.2);">
+            {% else %}
+                <div style="width: 100%; aspect-ratio: 2/3; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); border-radius: 8px; display: flex; align-items: center; justify-content: center; color: white; font-size: 80px;">
+                    🎬
+                </div>
+            {% endif %}
+        </div>
+        
+        <!-- Información -->
+        <div>
+            <h1 style="margin: 0 0 1rem 0; color: #333;">{{ pelicula.titulo }}</h1>
+            
+            <!-- Badges -->
+            <div style="display: flex; gap: 0.5rem; margin-bottom: 1rem; flex-wrap: wrap;">
+                <span style="display: inline-block; padding: 0.25rem 0.75rem; background-color: #007bff; color: white; border-radius: 20px; font-size: 0.875rem; font-weight: bold;">
+                    {{ pelicula.get_clasificacion_display }}
+                </span>
+                <span style="display: inline-block; padding: 0.25rem 0.75rem; background-color: #28a745; color: white; border-radius: 20px; font-size: 0.875rem;">
+                    {{ pelicula.get_genero_display }}
+                </span>
+                <span style="display: inline-block; padding: 0.25rem 0.75rem; background-color: #6c757d; color: white; border-radius: 20px; font-size: 0.875rem;">
+                    {{ pelicula.duracion }} min
+                </span>
+                {% if pelicula.año %}
+                <span style="display: inline-block; padding: 0.25rem 0.75rem; background-color: #ffc107; color: #333; border-radius: 20px; font-size: 0.875rem;">
+                    {{ pelicula.año }}
+                </span>
                 {% endif %}
             </div>
             
-            <!-- Información principal -->
-            <div>
-                <h1 style="color: #333; margin-bottom: 1rem;">{{ pelicula.titulo }}</h1>
-                
-                <div style="display: flex; gap: 0.75rem; margin-bottom: 1.5rem; flex-wrap: wrap;">
-                    {% if pelicula.clasificacion %}
-                        <span style="padding: 0.35rem 0.85rem; background-color: #007bff; color: white; border-radius: 4px; font-weight: bold; font-size: 0.95rem;">
-                            {{ pelicula.get_clasificacion_display }}
-                        </span>
-                    {% endif %}
-                    
-                    {% if pelicula.genero %}
-                        <span style="padding: 0.35rem 0.85rem; background-color: #28a745; color: white; border-radius: 4px; font-size: 0.95rem;">
-                            {{ pelicula.get_genero_display }}
-                        </span>
-                    {% endif %}
-                    
-                    {% if pelicula.duracion %}
-                        <span style="padding: 0.35rem 0.85rem; background-color: #6c757d; color: white; border-radius: 4px; font-size: 0.95rem;">
-                            ⏱ {{ pelicula.duracion_formato }}
-                        </span>
-                    {% endif %}
-                    
-                    {% if pelicula.año %}
-                        <span style="padding: 0.35rem 0.85rem; background-color: #17a2b8; color: white; border-radius: 4px; font-size: 0.95rem;">
-                            📅 {{ pelicula.año }}
-                        </span>
-                    {% endif %}
+            <!-- Sinopsis -->
+            {% if pelicula.sinopsis %}
+            <div style="margin-bottom: 1.5rem;">
+                <h3 style="color: #333; margin-bottom: 0.5rem;">Sinopsis</h3>
+                <p style="color: #666; line-height: 1.6; text-align: justify;">
+                    {{ pelicula.sinopsis }}
+                </p>
+            </div>
+            {% endif %}
+            
+            <!-- Director y Actores -->
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 1rem; margin-bottom: 1.5rem;">
+                {% if pelicula.director %}
+                <div style="padding: 1rem; background-color: #f8f9fa; border-radius: 6px; border-left: 3px solid #007bff;">
+                    <div style="font-size: 0.875rem; color: #666; margin-bottom: 0.25rem;">Director</div>
+                    <div style="font-weight: bold; color: #333;">{{ pelicula.director }}</div>
                 </div>
-                
-                {% if pelicula.sinopsis %}
-                    <div style="margin-bottom: 1.5rem;">
-                        <h3 style="color: #333; margin-bottom: 0.5rem; font-size: 1.2rem;">📖 Sinopsis</h3>
-                        <p style="color: #555; line-height: 1.8; text-align: justify;">{{ pelicula.sinopsis }}</p>
-                    </div>
                 {% endif %}
                 
-                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 1.5rem; margin-top: 1.5rem;">
-                    {% if pelicula.director %}
-                        <div style="background-color: #f8f9fa; padding: 1rem; border-radius: 6px; border-left: 4px solid #007bff;">
-                            <h4 style="color: #333; margin-bottom: 0.5rem; font-size: 0.95rem;">🎬 Director</h4>
-                            <p style="color: #666; margin: 0; font-weight: 500;">{{ pelicula.director }}</p>
-                        </div>
-                    {% endif %}
-                    
-                    {% if pelicula.actores %}
-                        <div style="background-color: #f8f9fa; padding: 1rem; border-radius: 6px; border-left: 4px solid #28a745;">
-                            <h4 style="color: #333; margin-bottom: 0.5rem; font-size: 0.95rem;">🎭 Actores Principales</h4>
-                            <p style="color: #666; margin: 0; font-weight: 500;">{{ pelicula.actores }}</p>
-                        </div>
-                    {% endif %}
+                {% if pelicula.actores %}
+                <div style="padding: 1rem; background-color: #f8f9fa; border-radius: 6px; border-left: 3px solid #28a745;">
+                    <div style="font-size: 0.875rem; color: #666; margin-bottom: 0.25rem;">Actores principales</div>
+                    <div style="font-weight: bold; color: #333;">{{ pelicula.actores }}</div>
                 </div>
+                {% endif %}
             </div>
         </div>
     </div>
     
     <!-- Funciones disponibles -->
     <div style="background-color: white; padding: 2rem; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
-        <h2 style="color: #333; margin-bottom: 1.5rem; font-size: 1.8rem;">🎟️ Funciones Disponibles</h2>
+        <h2 style="color: #333; margin-bottom: 1.5rem;">🎟️ Funciones Disponibles</h2>
         
         {% if funciones %}
             <div style="display: grid; gap: 1rem;">
                 {% for funcion in funciones %}
-                    <div style="border: 2px solid #e9ecef; padding: 1.5rem; border-radius: 8px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem; transition: all 0.2s;" onmouseover="this.style.borderColor='#007bff'; this.style.boxShadow='0 4px 8px rgba(0,123,255,0.1)'" onmouseout="this.style.borderColor='#e9ecef'; this.style.boxShadow='none'">
-                        <div style="flex: 1; min-width: 200px;">
-                            <p style="margin: 0 0 0.75rem 0; font-size: 1.1rem; font-weight: bold; color: #333;">
-                                📅 {{ funcion.fecha_hora|date:"l, d 'de' F 'de' Y" }}
-                            </p>
-                            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 0.5rem;">
-                                <p style="margin: 0; color: #666;">
-                                    <strong>⏰ Horario:</strong> {{ funcion.fecha_hora|date:"H:i" }} hs
-                                </p>
-                                <p style="margin: 0; color: #666;">
-                                    <strong>🎪 Sala:</strong> {{ funcion.sala.nombre }}
-                                </p>
-                                <p style="margin: 0; color: {% if funcion.asientos_disponibles < 10 %}#dc3545{% else %}#28a745{% endif %};">
-                                    <strong>💺 Disponibles:</strong> {{ funcion.asientos_disponibles }}
-                                </p>
+                    <div style="display: flex; justify-content: space-between; align-items: center; padding: 1.5rem; background-color: #f8f9fa; border-radius: 8px; border-left: 4px solid #007bff; transition: transform 0.2s, box-shadow 0.2s;" onmouseover="this.style.transform='translateX(4px)'; this.style.boxShadow='0 4px 12px rgba(0,0,0,0.15)';" onmouseout="this.style.transform='translateX(0)'; this.style.boxShadow='none';">
+                        <div style="flex: 1;">
+                            <div style="display: flex; gap: 1.5rem; flex-wrap: wrap; align-items: center;">
+                                <div>
+                                    <div style="font-size: 0.875rem; color: #666; margin-bottom: 0.25rem;">Fecha</div>
+                                    <div style="font-weight: bold; color: #333;">{{ funcion.fecha_hora|date:"d/m/Y" }}</div>
+                                </div>
+                                <div>
+                                    <div style="font-size: 0.875rem; color: #666; margin-bottom: 0.25rem;">Horario</div>
+                                    <div style="font-weight: bold; color: #333; font-size: 1.25rem;">{{ funcion.fecha_hora|date:"H:i" }} hs</div>
+                                </div>
+                                <div>
+                                    <div style="font-size: 0.875rem; color: #666; margin-bottom: 0.25rem;">Sala</div>
+                                    <div style="font-weight: bold; color: #333;">{{ funcion.sala.nombre }}</div>
+                                </div>
+                                <div>
+                                    <div style="font-size: 0.875rem; color: #666; margin-bottom: 0.25rem;">Disponibles</div>
+                                    <div style="font-weight: bold; color: {% if funcion.asientos_disponibles > 10 %}#28a745{% elif funcion.asientos_disponibles > 0 %}#ffc107{% else %}#dc3545{% endif %};">
+                                        {{ funcion.asientos_disponibles }} asientos
+                                    </div>
+                                </div>
+                                <div>
+                                    <div style="font-size: 0.875rem; color: #666; margin-bottom: 0.25rem;">Precio</div>
+                                    <div style="font-weight: bold; color: #28a745; font-size: 1.25rem;">${{ funcion.precio }}</div>
+                                </div>
                             </div>
                         </div>
                         
-                        <div style="text-align: right;">
-                            <p style="font-size: 2rem; color: #28a745; font-weight: bold; margin: 0 0 0.75rem 0;">
-                                ${{ funcion.precio }}
-                            </p>
+                        <div>
                             {% if user.is_authenticated %}
-                                <a href="{% url 'reservas:crear_reserva' funcion.id %}" style="display: inline-block; padding: 0.75rem 1.5rem; background-color: #007bff; color: white; border-radius: 6px; text-decoration: none; font-weight: bold; transition: background-color 0.2s;" onmouseover="this.style.backgroundColor='#0056b3'" onmouseout="this.style.backgroundColor='#007bff'">
-                                    🎫 Reservar Ahora
-                                </a>
+                                {% if funcion.asientos_disponibles > 0 %}
+                                    <!-- ACTUALIZADO: Enlace a selección de asientos -->
+                                    <a href="{% url 'reservas:seleccionar_asientos' funcion.id %}" style="display: inline-block; padding: 0.75rem 1.5rem; background-color: #007bff; color: white; text-decoration: none; border-radius: 6px; font-weight: bold; transition: background-color 0.2s;" onmouseover="this.style.backgroundColor='#0056b3'" onmouseout="this.style.backgroundColor='#007bff'">
+                                        🪑 Elegir Asientos
+                                    </a>
+                                {% else %}
+                                    <span style="display: inline-block; padding: 0.75rem 1.5rem; background-color: #6c757d; color: white; border-radius: 6px; font-weight: bold;">
+                                        ❌ Agotado
+                                    </span>
+                                {% endif %}
                             {% else %}
-                                <a href="{% url 'usuarios:login' %}?next={% url 'reservas:crear_reserva' funcion.id %}" style="display: inline-block; padding: 0.75rem 1.5rem; background-color: #007bff; color: white; border-radius: 6px; text-decoration: none; font-weight: bold; transition: background-color 0.2s;" onmouseover="this.style.backgroundColor='#0056b3'" onmouseout="this.style.backgroundColor='#007bff'">
-                                    🎫 Reservar Ahora
+                                <a href="{% url 'usuarios:login' %}?next={{ request.path }}" style="display: inline-block; padding: 0.75rem 1.5rem; background-color: #28a745; color: white; text-decoration: none; border-radius: 6px; font-weight: bold;">
+                                    Iniciar Sesión
                                 </a>
                             {% endif %}
                         </div>
@@ -122,21 +124,18 @@
                 {% endfor %}
             </div>
         {% else %}
-            <div style="background-color: #fff3cd; padding: 1.5rem; border-radius: 8px; border-left: 4px solid #ffc107;">
-                <p style="margin: 0; color: #856404; font-size: 1.1rem;">
-                    <strong>⚠️ No hay funciones disponibles</strong><br>
-                    <span style="font-size: 0.95rem;">No hay funciones programadas para esta película en este momento. Volvé pronto para ver las próximas fechas.</span>
+            <div style="text-align: center; padding: 3rem; background-color: #f8f9fa; border-radius: 8px;">
+                <p style="font-size: 1.25rem; color: #666; margin: 0;">
+                    No hay funciones disponibles para esta película en este momento.
                 </p>
             </div>
         {% endif %}
     </div>
+    
+    <div style="margin-top: 2rem;">
+        <a href="{% url 'peliculas:lista_peliculas' %}" style="color: #007bff; text-decoration: none; font-weight: bold;">
+            ← Volver al listado de películas
+        </a>
+    </div>
 </div>
-
-<style>
-    @media (max-width: 768px) {
-        div[style*="grid-template-columns: 300px 1fr"] {
-            grid-template-columns: 1fr !important;
-        }
-    }
-</style>
 {% endblock %}

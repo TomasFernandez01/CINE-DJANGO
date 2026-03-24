@@ -22,6 +22,14 @@ class Reserva(models.Model):
     # NUEVO: Fecha límite para completar el pago
     fecha_limite_pago = models.DateTimeField(null=True, blank=True)
 
+    # NUEVO: Campo para guardar los asientos seleccionados
+    asientos_seleccionados = models.CharField(
+        max_length=500, 
+        blank=True, 
+        null=True,
+        help_text="Asientos separados por coma. Ej: A1,A2,B5"
+    )
+
     def __str__(self):
         return f"Reserva {self.codigo_reserva} - {self.usuario.username} - {self.funcion.pelicula.titulo}"
     
@@ -29,6 +37,24 @@ class Reserva(models.Model):
         """Calcula el total a pagar"""
         return self.funcion.precio * self.cantidad_entradas
     
+    ##############################################################3
+    def lista_asientos(self):
+        """Retorna los asientos como lista"""
+        if self.asientos_seleccionados:
+            return self.asientos_seleccionados.split(',')
+        return []
+    
+    def asientos_formateados(self):
+        """Retorna los asientos en formato legible"""
+        if self.asientos_seleccionados:
+            asientos = self.asientos_seleccionados.split(',')
+            if len(asientos) <= 5:
+                return ', '.join(asientos)
+            else:
+                return f"{', '.join(asientos[:5])} y {len(asientos) - 5} más"
+        return "Sin asientos asignados"
+    ################################################################
+
     def esta_expirada(self):
         """Verifica si la función ya pasó y la reserva debería expirar"""
         if self.estado in ['pendiente', 'confirmada']:
@@ -122,6 +148,12 @@ class Reserva(models.Model):
             # 15 minutos desde ahora para pagar
             self.fecha_limite_pago = timezone.now() + timedelta(minutes=5)
         
+        # NUEVO: Validar que la cantidad de asientos coincida
+        if self.asientos_seleccionados:
+            cantidad_seleccionados = len(self.asientos_seleccionados.split(','))
+            if cantidad_seleccionados != self.cantidad_entradas:
+                self.cantidad_entradas = cantidad_seleccionados
+
         super().save(*args, **kwargs)
 
 

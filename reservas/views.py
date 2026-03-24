@@ -5,6 +5,7 @@ from django.utils import timezone
 from datetime import timedelta
 from .models import Reserva
 from salas.models import Funcion
+from django.http import JsonResponse
 
 # IMPORTAR LA FUNCIÓN DE EMAIL
 try:
@@ -15,64 +16,190 @@ except ImportError:
     EMAIL_DISPONIBLE = False
     print("⚠️ Módulo de emails no encontrado. Las notificaciones por email están deshabilitadas.")
 
+#################################################################################
+# ============================================
+# NUEVA VISTA: Selección de Asientos
+# ============================================
+ 
 @login_required
-def crear_reserva(request, funcion_id):
+def seleccionar_asientos(request, funcion_id):
+    """
+    Vista para seleccionar asientos específicos antes de crear la reserva.
+    """
     funcion = get_object_or_404(Funcion, id=funcion_id)
     
-    # VALIDACIÓN 1: Verificar que la función no haya pasado
+    # Validar que la función esté disponible
     if funcion.fecha_hora <= timezone.now():
         messages.error(request, 'No se puede reservar esta función porque ya pasó.')
         return redirect('salas:lista_funciones')
     
-    # VALIDACIÓN 2: Verificar que la función esté disponible
     if not funcion.disponible:
         messages.error(request, 'Esta función no está disponible.')
         return redirect('salas:lista_funciones')
     
-    if request.method == 'POST':
-        cantidad = int(request.POST.get('cantidad_entradas', 1))
-        
-        # VALIDACIÓN 3: Verificar límite de entradas (1-10)
-        if cantidad < 1 or cantidad > 4:
-            messages.error(request, 'Debes reservar entre 1 y 4 entradas.')
-            return redirect('reservas:crear_reserva', funcion_id=funcion.id)
-        
-        # VALIDACIÓN 4: Verificar que hay asientos disponibles
-        asientos_disponibles = funcion.asientos_disponibles()
-        if cantidad > asientos_disponibles:
-            messages.error(request, f'Solo hay {asientos_disponibles} asientos disponibles.')
-            return redirect('reservas:crear_reserva', funcion_id=funcion.id)
-        
-        # Crear la reserva
-        # NUEVO : (fecha_limite_pago se establece automáticamente en el modelo)
-        reserva = Reserva.objects.create(
-            usuario=request.user,
-            funcion=funcion,
-            cantidad_entradas=cantidad
-        )
-        
-        # ENVIAR EMAIL DE CONFIRMACIÓN
-        if EMAIL_DISPONIBLE:
-            try:
-                enviar_email_confirmacion_reserva(reserva, request)
-                #messages.success(request, f'✅ Reserva creada exitosamente. Código: {reserva.codigo_reserva}. Te enviamos un email de confirmación.')
-                messages.success(request, f'✅ Reserva creada exitosamente. Código: {reserva.codigo_reserva}. Tenés 4 minutos para completar el pago.')
-            except Exception as e:
-                # messages.success(request, f'✅ Reserva creada exitosamente. Código: {reserva.codigo_reserva}')
-                # messages.warning(request, 'No pudimos enviar el email de confirmación, pero tu reserva está activa.')
-                messages.success(request, f'✅ Reserva creada exitosamente. Código: {reserva.codigo_reserva}. Tenés 4 minutos para completar el pago.')
-                messages.warning(request, 'No pudimos enviar el email de confirmación, pero tu reserva está activa.')
-        else:
-            messages.success(request, f'✅ Reserva creada exitosamente. Código: {reserva.codigo_reserva}')
-            messages.success(request, f'✅ Reserva creada exitosamente. Código: {reserva.codigo_reserva}. Tenés 4 minutos para completar el pago.')
-        
-        return redirect('reservas:detalle_reserva', reserva_id=reserva.id)
+    # Obtener asientos ocupados
+    asientos_ocupados = funcion.asientos_ocupados()
+    
+    # Obtener layout de la sala
+    layout = funcion.sala.layout_asientos()
     
     contexto = {
         'funcion': funcion,
+        'sala': funcion.sala,
+        'layout': layout,
+        'asientos_ocupados': asientos_ocupados,
         'asientos_disponibles': funcion.asientos_disponibles(),
     }
-    return render(request, 'reservas/crear_reserva.html', contexto)
+    
+    return render(request, 'reservas/seleccionar_asientos.html', contexto)
+ 
+ 
+@login_required
+def confirmar_reserva_con_asientos(request, funcion_id):
+    """
+    Procesa la reserva con los asientos seleccionados.
+    """
+    if request.method != 'POST':
+        return redirect('reservas:seleccionar_asientos', funcion_id=funcion_id)
+    
+    funcion = get_object_or_404(Funcion, id=funcion_id)
+    
+    # Obtener asientos seleccionados del POST
+    asientos_seleccionados = request.POST.get('asientos_seleccionados', '')
+    
+    if not asientos_seleccionados:
+        messages.error(request, 'Debes seleccionar al menos un asiento.')
+        return redirect('reservas:seleccionar_asientos', funcion_id=funcion_id)
+    
+    # Convertir a lista
+    asientos_lista = asientos_seleccionados.split(',')
+    cantidad = len(asientos_lista)
+    
+    # VALIDACIÓN: Verificar que los asientos estén disponibles
+    asientos_ocupados = funcion.asientos_ocupados()
+    
+    for asiento in asientos_lista:
+        if asiento in asientos_ocupados:
+            messages.error(request, f'El asiento {asiento} ya no está disponible. Por favor, seleccioná otros asientos.')
+            return redirect('reservas:seleccionar_asientos', funcion_id=funcion_id)
+    
+    # VALIDACIÓN: Límite de entradas (1-10)
+    if cantidad < 1 or cantidad > 10:
+        messages.error(request, 'Debes seleccionar entre 1 y 10 asientos.')
+        return redirect('reservas:seleccionar_asientos', funcion_id=funcion_id)
+    
+    # Crear la reserva con los asientos seleccionados
+    reserva = Reserva.objects.create(
+        usuario=request.user,
+        funcion=funcion,
+        cantidad_entradas=cantidad,
+        asientos_seleccionados=asientos_seleccionados
+    )
+    
+    # Enviar email si está disponible
+    if EMAIL_DISPONIBLE:
+        try:
+            enviar_email_confirmacion_reserva(reserva, request)
+            messages.success(
+                request, 
+                f'✅ Reserva creada exitosamente. Asientos: {reserva.asientos_formateados()}. '
+                f'Código: {reserva.codigo_reserva}. Tenés 15 minutos para completar el pago.'
+            )
+        except Exception:
+            messages.success(
+                request,
+                f'✅ Reserva creada exitosamente. Asientos: {reserva.asientos_formateados()}. '
+                f'Código: {reserva.codigo_reserva}. Tenés 15 minutos para completar el pago.'
+            )
+    else:
+        messages.success(
+            request,
+            f'✅ Reserva creada exitosamente. Asientos: {reserva.asientos_formateados()}. '
+            f'Código: {reserva.codigo_reserva}. Tenés 15 minutos para completar el pago.'
+        )
+    
+    return redirect('reservas:detalle_reserva', reserva_id=reserva.id)
+ 
+ 
+@login_required
+def verificar_asientos_disponibles(request, funcion_id):
+    """
+    API endpoint para verificar en tiempo real qué asientos están disponibles. Retorna JSON con lista de asientos ocupados.
+    """
+    funcion = get_object_or_404(Funcion, id=funcion_id)
+    asientos_ocupados = funcion.asientos_ocupados()
+    
+    return JsonResponse({
+        'success': True,
+        'asientos_ocupados': asientos_ocupados,
+        'total_disponibles': funcion.asientos_disponibles()
+    })
+#################################################################################
+
+@login_required
+def crear_reserva(request, funcion_id):
+    # funcion = get_object_or_404(Funcion, id=funcion_id)
+    
+    # # VALIDACIÓN 1: Verificar que la función no haya pasado
+    # if funcion.fecha_hora <= timezone.now():
+    #     messages.error(request, 'No se puede reservar esta función porque ya pasó.')
+    #     return redirect('salas:lista_funciones')
+    
+    # # VALIDACIÓN 2: Verificar que la función esté disponible
+    # if not funcion.disponible:
+    #     messages.error(request, 'Esta función no está disponible.')
+    #     return redirect('salas:lista_funciones')
+    
+    # if request.method == 'POST':
+    #     cantidad = int(request.POST.get('cantidad_entradas', 1))
+        
+    #     # VALIDACIÓN 3: Verificar límite de entradas (1-10)
+    #     if cantidad < 1 or cantidad > 4:
+    #         messages.error(request, 'Debes reservar entre 1 y 4 entradas.')
+    #         return redirect('reservas:crear_reserva', funcion_id=funcion.id)
+        
+    #     # VALIDACIÓN 4: Verificar que hay asientos disponibles
+    #     asientos_disponibles = funcion.asientos_disponibles()
+    #     if cantidad > asientos_disponibles:
+    #         messages.error(request, f'Solo hay {asientos_disponibles} asientos disponibles.')
+    #         return redirect('reservas:crear_reserva', funcion_id=funcion.id)
+        
+    #     # Crear la reserva
+    #     # NUEVO : (fecha_limite_pago se establece automáticamente en el modelo)
+    #     reserva = Reserva.objects.create(
+    #         usuario=request.user,
+    #         funcion=funcion,
+    #         cantidad_entradas=cantidad
+    #     )
+        
+    #     # ENVIAR EMAIL DE CONFIRMACIÓN
+    #     if EMAIL_DISPONIBLE:
+    #         try:
+    #             enviar_email_confirmacion_reserva(reserva, request)
+    #             #messages.success(request, f'✅ Reserva creada exitosamente. Código: {reserva.codigo_reserva}. Te enviamos un email de confirmación.')
+    #             messages.success(request, f'✅ Reserva creada exitosamente. Código: {reserva.codigo_reserva}. Tenés 4 minutos para completar el pago.')
+    #         except Exception as e:
+    #             # messages.success(request, f'✅ Reserva creada exitosamente. Código: {reserva.codigo_reserva}')
+    #             # messages.warning(request, 'No pudimos enviar el email de confirmación, pero tu reserva está activa.')
+    #             messages.success(request, f'✅ Reserva creada exitosamente. Código: {reserva.codigo_reserva}. Tenés 4 minutos para completar el pago.')
+    #             messages.warning(request, 'No pudimos enviar el email de confirmación, pero tu reserva está activa.')
+    #     else:
+    #         messages.success(request, f'✅ Reserva creada exitosamente. Código: {reserva.codigo_reserva}')
+    #         messages.success(request, f'✅ Reserva creada exitosamente. Código: {reserva.codigo_reserva}. Tenés 4 minutos para completar el pago.')
+        
+    #     return redirect('reservas:detalle_reserva', reserva_id=reserva.id)
+    
+    # contexto = {
+    #     'funcion': funcion,
+    #     'asientos_disponibles': funcion.asientos_disponibles(),
+    # }
+    # return render(request, 'reservas/crear_reserva.html', contexto)
+    """
+    Vista antigua - ahora redirige a selección de asientos.
+    Mantener para compatibilidad con URLs antiguas.
+    """
+    # Redirigir a la nueva vista de selección de asientos
+    return redirect('reservas:seleccionar_asientos', funcion_id=funcion_id)
 
 @login_required
 def mis_reservas(request):
