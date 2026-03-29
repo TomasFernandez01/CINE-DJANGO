@@ -5,15 +5,19 @@
 {% block contenido %}
 <h1>🎫 Mis Reservas</h1>
 
-<!-- Filtros -->
+<!-- Filtros ARREGLADOS -->
 <div style="background-color: white; padding: 1rem; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); margin-bottom: 1.5rem;">
-    <form method="get" style="display: flex; gap: 1rem; flex-wrap: wrap; align-items: center;">
-        <label style="display: flex; align-items: center; gap: 0.5rem;">
-            <input type="checkbox" name="mostrar_canceladas" value="si" {% if mostrar_canceladas == 'si' %}checked{% endif %} onchange="this.form.submit()">
+    <form method="get" id="filtrosForm" style="display: flex; gap: 1rem; flex-wrap: wrap; align-items: center;">
+        <label style="display: flex; align-items: center; gap: 0.5rem; cursor: pointer;">
+            <input type="checkbox" name="mostrar_canceladas" value="si" 
+                   {% if mostrar_canceladas == 'si' %}checked{% endif %}
+                   onchange="document.getElementById('filtrosForm').submit()">
             Mostrar canceladas
         </label>
-        <label style="display: flex; align-items: center; gap: 0.5rem;">
-            <input type="checkbox" name="mostrar_expiradas" value="si" {% if mostrar_expiradas == 'si' %}checked{% endif %} onchange="this.form.submit()">
+        <label style="display: flex; align-items: center; gap: 0.5rem; cursor: pointer;">
+            <input type="checkbox" name="mostrar_expiradas" value="si" 
+                   {% if mostrar_expiradas == 'si' %}checked{% endif %}
+                   onchange="document.getElementById('filtrosForm').submit()">
             Mostrar expiradas
         </label>
     </form>
@@ -53,7 +57,7 @@
                             </div>
                         </div>
                         
-                        <!-- NUEVO: Mostrar asientos seleccionados -->
+                        <!-- Mostrar asientos seleccionados -->
                         {% if reserva.asientos_seleccionados %}
                         <div style="margin-bottom: 1rem;">
                             <div style="font-size: 0.875rem; color: #666; margin-bottom: 0.25rem;">🪑 Asientos</div>

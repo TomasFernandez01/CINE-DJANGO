@@ -204,9 +204,22 @@ def crear_reserva(request, funcion_id):
 @login_required
 def mis_reservas(request):
     # Filtros
+    # mostrar_canceladas = request.GET.get('mostrar_canceladas', 'si')
+    # mostrar_expiradas = request.GET.get('mostrar_expiradas', 'si')
+    
+    # FILTROS CORREGIDOS: Si el checkbox NO está marcado, no viene en request.GET
+    # Por defecto, mostrar todo (si=canceladas, si=expiradas)
     mostrar_canceladas = request.GET.get('mostrar_canceladas', 'si')
     mostrar_expiradas = request.GET.get('mostrar_expiradas', 'si')
     
+    # Si el parámetro NO viene en la URL, significa que el checkbox está desmarcado
+    # En ese caso, cambiamos a 'no'
+    if 'mostrar_canceladas' not in request.GET and request.GET:
+        mostrar_canceladas = 'no'
+    if 'mostrar_expiradas' not in request.GET and request.GET:
+        mostrar_expiradas = 'no'
+
+
     # Obtener todas las reservas del usuario
     reservas = Reserva.objects.filter(usuario=request.user).select_related('funcion__pelicula', 'funcion__sala')
     

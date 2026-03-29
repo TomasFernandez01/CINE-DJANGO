@@ -6,7 +6,13 @@ from django.core.exceptions import ValidationError
 
 class Sala(models.Model):
     nombre = models.CharField(max_length=100)
-    capacidad = models.IntegerField()
+    # cambiar a default 1 y bloquear interaccion porque se calcula solo la capacidad , solo se debe modificar filasxcolumnas
+    capacidad = models.IntegerField(
+        default=0,
+        editable=False,  # No se puede editar manualmente
+        help_text="Se calcula automáticamente: filas*columnas"
+        ) 
+
     activa = models.BooleanField(default=True)
     
     # NUEVO: Configuración del mapa de asientos
@@ -36,6 +42,12 @@ class Sala(models.Model):
         if not self.capacidad or self.capacidad != self.total_asientos():
             self.capacidad = self.total_asientos()
         super().save(*args, **kwargs)
+
+    # PROBAR si no anda
+    # def save(self, *args, **kwargs):
+    #     # SIEMPRE auto-calcular capacidad
+    #     self.capacidad = self.total_asientos()
+    #     super().save(*args, **kwargs)
     
     class Meta:
         verbose_name = 'Sala'
