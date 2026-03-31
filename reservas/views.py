@@ -84,8 +84,8 @@ def confirmar_reserva_con_asientos(request, funcion_id):
             return redirect('reservas:seleccionar_asientos', funcion_id=funcion_id)
     
     # VALIDACIÓN: Límite de entradas (1-10)
-    if cantidad < 1 or cantidad > 10:
-        messages.error(request, 'Debes seleccionar entre 1 y 10 asientos.')
+    if cantidad < 1 or cantidad > 4:
+        messages.error(request, 'Debes seleccionar entre 1 y 4 asientos.')
         return redirect('reservas:seleccionar_asientos', funcion_id=funcion_id)
     
     # Crear la reserva con los asientos seleccionados
@@ -103,19 +103,19 @@ def confirmar_reserva_con_asientos(request, funcion_id):
             messages.success(
                 request, 
                 f'✅ Reserva creada exitosamente. Asientos: {reserva.asientos_formateados()}. '
-                f'Código: {reserva.codigo_reserva}. Tenés 15 minutos para completar el pago.'
+                f'Código: {reserva.codigo_reserva}. Tenés 4 minutos para completar el pago.'
             )
         except Exception:
             messages.success(
                 request,
                 f'✅ Reserva creada exitosamente. Asientos: {reserva.asientos_formateados()}. '
-                f'Código: {reserva.codigo_reserva}. Tenés 15 minutos para completar el pago.'
+                f'Código: {reserva.codigo_reserva}. Tenés 4 minutos para completar el pago.'
             )
     else:
         messages.success(
             request,
             f'✅ Reserva creada exitosamente. Asientos: {reserva.asientos_formateados()}. '
-            f'Código: {reserva.codigo_reserva}. Tenés 15 minutos para completar el pago.'
+            f'Código: {reserva.codigo_reserva}. Tenés 4 minutos para completar el pago.'
         )
     
     return redirect('reservas:detalle_reserva', reserva_id=reserva.id)
@@ -283,10 +283,18 @@ def cancelar_reserva(request, reserva_id):
     reserva.actualizar_estado_si_expiro()
     
     # VALIDACIÓN 5: Verificar que se pueda cancelar (al menos 2 horas antes)
-    if not reserva.funcion.puede_cancelarse():
-        messages.error(request, 'No se puede cancelar esta reserva. Debe hacerlo al menos 2 horas antes de la función.')
+    # if not reserva.funcion.puede_cancelarse():
+    #     messages.error(request, 'No se puede cancelar esta reserva. Debe hacerlo al menos 2 horas antes de la función.')
+    #     return redirect('reservas:mis_reservas')
+    
+    # ============================================
+    # FIX APLICADO: Solo validar 2 horas si está CONFIRMADA (pagada)
+    # ============================================
+    if reserva.estado == 'confirmada' and not reserva.funcion.puede_cancelarse():
+        messages.error(request, 'No se puede cancelar esta reserva pagada. Debe hacerlo al menos 2 horas antes de la función.')
         return redirect('reservas:mis_reservas')
     
+    # Permitir cancelar si es PENDIENTE (no pagada) en cualquier momento
     if reserva.estado == 'pendiente':
         reserva.estado = 'cancelada'
         reserva.save()
