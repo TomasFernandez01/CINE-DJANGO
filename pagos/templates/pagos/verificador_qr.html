@@ -1,0 +1,342 @@
+{% extends 'base.html' %}
+
+{% block titulo %}Verificador de QR - Personal{% endblock %}
+
+{% block contenido %}
+<div style="max-width: 600px; margin: 0 auto;">
+    <h1 style="text-align: center; margin-bottom: 1.5rem;">📱 Verificador de Códigos QR</h1>
+    
+    <!-- Indicador de estado -->
+    <div id="statusIndicator" style="background-color: #6c757d; padding: 1rem; border-radius: 8px; margin-bottom: 1.5rem; text-align: center; color: white; font-weight: bold; transition: all 0.3s;">
+        Esperando escaneo...
+    </div>
+    
+    <!-- Formulario de verificación manual -->
+    <div style="background-color: white; padding: 2rem; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); margin-bottom: 1.5rem;">
+        <h3 style="margin: 0 0 1rem 0; color: #333;">Verificar Código Manualmente</h3>
+        
+        <form id="formVerificar" onsubmit="return false;">
+            <div style="margin-bottom: 1rem;">
+                <label for="codigoQR" style="display: block; margin-bottom: 0.5rem; font-weight: bold; color: #666;">
+                    Código QR:
+                </label>
+                <input 
+                    type="text" 
+                    id="codigoQR" 
+                    name="codigo_qr"
+                    placeholder="CINE-XXXXXXXX-YYYYYYYYYY"
+                    style="width: 100%; padding: 0.75rem; border: 2px solid #ddd; border-radius: 6px; font-size: 1rem; font-family: monospace;"
+                    autofocus
+                >
+            </div>
+            
+            <button 
+                type="button"
+                onclick="verificarCodigo()"
+                style="width: 100%; padding: 1rem; background-color: #007bff; color: white; border: none; border-radius: 6px; font-weight: bold; font-size: 1.1rem; cursor: pointer;">
+                🔍 Verificar Código
+            </button>
+        </form>
+    </div>
+    
+    <!-- Botón para escanear con cámara -->
+    <div style="background-color: white; padding: 2rem; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); margin-bottom: 1.5rem; text-align: center;">
+        <h3 style="margin: 0 0 1rem 0; color: #333;">Escanear con Cámara</h3>
+        
+        <button 
+            id="btnEscanear"
+            onclick="iniciarEscaneo()"
+            style="padding: 1rem 2rem; background-color: #28a745; color: white; border: none; border-radius: 6px; font-weight: bold; font-size: 1.1rem; cursor: pointer;">
+            📷 Iniciar Escáner
+        </button>
+        
+        <!-- Contenedor de video para la cámara -->
+        <div id="videoContainer" style="display: none; margin-top: 1rem;">
+            <video id="video" style="width: 100%; max-width: 400px; border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.2);"></video>
+            <button 
+                onclick="detenerEscaneo()"
+                style="margin-top: 1rem; padding: 0.75rem 1.5rem; background-color: #dc3545; color: white; border: none; border-radius: 6px; font-weight: bold; cursor: pointer;">
+                ⏹️ Detener
+            </button>
+        </div>
+    </div>
+    
+    <!-- Resultado de la verificación -->
+    <div id="resultado" style="display: none;">
+        <!-- Se llenará dinámicamente con JavaScript -->
+    </div>
+    
+    <!-- Historial de escaneos -->
+    <div style="background-color: white; padding: 2rem; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.1);">
+        <h3 style="margin: 0 0 1rem 0; color: #333;">📊 Historial de Escaneos</h3>
+        <div id="historial" style="max-height: 400px; overflow-y: auto;">
+            <p style="text-align: center; color: #999; padding: 2rem;">
+                No hay escaneos aún
+            </p>
+        </div>
+    </div>
+</div>
+
+<!-- Script para verificación y escaneo -->
+<script src="https://unpkg.com/html5-qrcode"></script>
+<script>
+let html5QrCode = null;
+const historialEscaneos = [];
+
+// Función para verificar código
+async function verificarCodigo() {
+    const input = document.getElementById('codigoQR');
+    const codigo = input.value.trim();
+    
+    if (!codigo) {
+        mostrarStatus('Ingresá un código', 'warning');
+        return;
+    }
+    
+    mostrarStatus('Verificando...', 'info');
+    
+    try {
+        const formData = new FormData();
+        formData.append('codigo_qr', codigo);
+        
+        const response = await fetch('{% url "pagos:verificar_qr_api" %}', {
+            method: 'POST',
+            body: formData
+        });
+        
+        const data = await response.json();
+        
+        if (data.success && data.valido) {
+            mostrarResultadoValido(data.reserva, codigo);
+            agregarAHistorial(codigo, data.reserva, true);
+        } else {
+            mostrarResultadoInvalido(data.error || 'Código inválido', data);
+            agregarAHistorial(codigo, null, false, data.error);
+        }
+        
+        input.value = '';
+        
+    } catch (error) {
+        console.error('Error:', error);
+        mostrarStatus('Error de conexión', 'error');
+    }
+}
+
+// Función para mostrar resultado válido
+function mostrarResultadoValido(reserva, codigo) {
+    mostrarStatus('✅ Código Válido', 'success');
+    
+    const resultado = document.getElementById('resultado');
+    resultado.style.display = 'block';
+    resultado.innerHTML = `
+        <div style="background-color: #d4edda; padding: 2rem; border-radius: 8px; border-left: 4px solid #28a745; margin-bottom: 1.5rem;">
+            <h2 style="margin: 0 0 1rem 0; color: #155724; text-align: center;">✅ ENTRADA VÁLIDA</h2>
+            
+            <div style="background-color: white; padding: 1.5rem; border-radius: 6px; margin-bottom: 1rem;">
+                <div style="margin-bottom: 0.75rem;">
+                    <strong style="color: #666;">Película:</strong>
+                    <div style="font-size: 1.25rem; color: #333; font-weight: bold;">${reserva.pelicula}</div>
+                </div>
+                <div style="margin-bottom: 0.75rem;">
+                    <strong style="color: #666;">Sala:</strong>
+                    <span style="color: #333; font-weight: bold;">${reserva.sala}</span>
+                </div>
+                <div style="margin-bottom: 0.75rem;">
+                    <strong style="color: #666;">Fecha y Hora:</strong>
+                    <span style="color: #333; font-weight: bold;">${reserva.fecha_hora}</span>
+                </div>
+                <div style="margin-bottom: 0.75rem;">
+                    <strong style="color: #666;">Entradas:</strong>
+                    <span style="color: #333; font-weight: bold;">${reserva.cantidad_entradas}</span>
+                </div>
+                ${reserva.asientos ? `
+                    <div style="margin-bottom: 0.75rem;">
+                        <strong style="color: #666;">Asientos:</strong>
+                        <div style="color: #333; font-weight: bold;">${reserva.asientos}</div>
+                    </div>
+                ` : ''}
+                <div style="margin-bottom: 0.75rem;">
+                    <strong style="color: #666;">Usuario:</strong>
+                    <span style="color: #333; font-weight: bold;">${reserva.usuario}</span>
+                </div>
+                <div>
+                    <strong style="color: #666;">Código de Reserva:</strong>
+                    <span style="color: #333; font-weight: bold; font-family: monospace;">${reserva.codigo}</span>
+                </div>
+            </div>
+            
+            <button 
+                onclick="marcarComoEscaneado('${codigo}')"
+                style="width: 100%; padding: 1rem; background-color: #28a745; color: white; border: none; border-radius: 6px; font-weight: bold; font-size: 1.1rem; cursor: pointer;">
+                ✓ Marcar como Ingresado
+            </button>
+        </div>
+    `;
+    
+    // Scroll al resultado
+    resultado.scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
+
+// Función para mostrar resultado inválido
+function mostrarResultadoInvalido(mensaje, data) {
+    mostrarStatus('❌ Código Inválido', 'error');
+    
+    const resultado = document.getElementById('resultado');
+    resultado.style.display = 'block';
+    resultado.innerHTML = `
+        <div style="background-color: #f8d7da; padding: 2rem; border-radius: 8px; border-left: 4px solid #dc3545; margin-bottom: 1.5rem;">
+            <h2 style="margin: 0 0 1rem 0; color: #721c24; text-align: center;">❌ ENTRADA NO VÁLIDA</h2>
+            
+            <div style="background-color: white; padding: 1.5rem; border-radius: 6px; text-align: center;">
+                <p style="margin: 0; color: #721c24; font-size: 1.125rem; font-weight: bold;">
+                    ${mensaje}
+                </p>
+                ${data.ya_escaneado && data.fecha_escaneo ? `
+                    <p style="margin: 1rem 0 0 0; color: #666;">
+                        Escaneado el: ${new Date(data.fecha_escaneo).toLocaleString('es-AR')}
+                    </p>
+                ` : ''}
+            </div>
+        </div>
+    `;
+    
+    resultado.scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
+
+// Función para marcar como escaneado
+async function marcarComoEscaneado(codigo) {
+    mostrarStatus('Marcando como ingresado...', 'info');
+    
+    try {
+        const formData = new FormData();
+        formData.append('codigo_qr', codigo);
+        formData.append('usuario', '{{ user.username }}');
+        
+        const response = await fetch('{% url "pagos:marcar_qr_escaneado" %}', {
+            method: 'POST',
+            body: formData
+        });
+        
+        const data = await response.json();
+        
+        if (data.success) {
+            mostrarStatus('✅ Ingreso Registrado', 'success');
+            document.getElementById('resultado').innerHTML = `
+                <div style="background-color: #d4edda; padding: 2rem; border-radius: 8px; text-align: center;">
+                    <h2 style="margin: 0; color: #155724;">✅ Ingreso Registrado</h2>
+                    <p style="margin: 1rem 0 0 0; color: #155724;">El cliente puede ingresar a la sala</p>
+                </div>
+            `;
+            
+            setTimeout(() => {
+                document.getElementById('resultado').style.display = 'none';
+                document.getElementById('codigoQR').focus();
+            }, 3000);
+        } else {
+            mostrarStatus('❌ Error al registrar', 'error');
+            alert(data.error);
+        }
+        
+    } catch (error) {
+        console.error('Error:', error);
+        mostrarStatus('Error de conexión', 'error');
+    }
+}
+
+// Funciones para escaneo con cámara
+function iniciarEscaneo() {
+    const videoContainer = document.getElementById('videoContainer');
+    videoContainer.style.display = 'block';
+    
+    html5QrCode = new Html5Qrcode("video");
+    
+    html5QrCode.start(
+        { facingMode: "environment" },
+        {
+            fps: 10,
+            qrbox: 250
+        },
+        (decodedText) => {
+            document.getElementById('codigoQR').value = decodedText;
+            detenerEscaneo();
+            verificarCodigo();
+        },
+        (errorMessage) => {
+            // Ignorar errores de escaneo
+        }
+    ).catch(err => {
+        console.error('Error iniciando cámara:', err);
+        alert('No se pudo acceder a la cámara');
+        videoContainer.style.display = 'none';
+    });
+}
+
+function detenerEscaneo() {
+    if (html5QrCode) {
+        html5QrCode.stop().then(() => {
+            document.getElementById('videoContainer').style.display = 'none';
+        });
+    }
+}
+
+// Función para mostrar status
+function mostrarStatus(mensaje, tipo) {
+    const status = document.getElementById('statusIndicator');
+    const colores = {
+        'success': '#28a745',
+        'error': '#dc3545',
+        'warning': '#ffc107',
+        'info': '#007bff'
+    };
+    
+    status.style.backgroundColor = colores[tipo] || '#6c757d';
+    status.textContent = mensaje;
+}
+
+// Función para agregar al historial
+function agregarAHistorial(codigo, reserva, valido, error = null) {
+    const historial = document.getElementById('historial');
+    
+    const item = {
+        codigo: codigo,
+        reserva: reserva,
+        valido: valido,
+        error: error,
+        fecha: new Date()
+    };
+    
+    historialEscaneos.unshift(item);
+    
+    if (historialEscaneos.length === 1) {
+        historial.innerHTML = '';
+    }
+    
+    const itemHTML = `
+        <div style="padding: 1rem; border-bottom: 1px solid #ddd; background-color: ${valido ? '#d4edda' : '#f8d7da'};">
+            <div style="display: flex; justify-content: space-between; align-items: start;">
+                <div style="flex: 1;">
+                    <div style="font-weight: bold; color: ${valido ? '#155724' : '#721c24'};">
+                        ${valido ? '✅ VÁLIDO' : '❌ INVÁLIDO'}
+                    </div>
+                    <div style="font-size: 0.875rem; color: #666; margin-top: 0.25rem;">
+                        ${item.fecha.toLocaleTimeString('es-AR')}
+                    </div>
+                    ${reserva ? `<div style="margin-top: 0.5rem; font-size: 0.875rem;"><strong>${reserva.pelicula}</strong> - ${reserva.sala}</div>` : ''}
+                    ${error ? `<div style="margin-top: 0.5rem; font-size: 0.875rem; color: #721c24;">${error}</div>` : ''}
+                </div>
+            </div>
+        </div>
+    `;
+    
+    historial.insertAdjacentHTML('afterbegin', itemHTML);
+}
+
+// Permitir Enter en el input
+document.getElementById('codigoQR').addEventListener('keypress', function(e) {
+    if (e.key === 'Enter') {
+        verificarCodigo();
+    }
+});
+</script>
+
+{% endblock %}
