@@ -1,7 +1,11 @@
 from django.db import models
 from reservas.models import Reserva
 from django.utils import timezone
+from django.conf import settings
 import uuid
+
+def get_qr_minutos():
+    return getattr(settings, 'QR_MINUTOS_ANTES_FUNCION', 120)
 
 class Pago(models.Model):
     METODO_PAGO_CHOICES = [
@@ -93,15 +97,32 @@ class Pago(models.Model):
         # Verificar que la función no haya pasado
         if self.reserva.funcion.fecha_hora < timezone.now():
             return False, "La función ya pasó"
-        
+
+        # CAMBIO ESTO
         # Verificar que no falte mucho para la función (máximo 2 horas antes)
-        tiempo_restante = self.reserva.funcion.fecha_hora - timezone.now()
-        if tiempo_restante.total_seconds() > 7200:  # 2 horas
-            horas = int(tiempo_restante.total_seconds() / 3600)
-            return False, f"Falta {horas} horas para la función. Llegá 30 min antes."
+        #tiempo_restante = self.reserva.funcion.fecha_hora - timezone.now()
+        #if tiempo_restante.total_seconds() > 7200:  # 2 horas
+        #    horas = int(tiempo_restante.total_seconds() / 3600)
+        #    return False, f"Falta {horas} horas para la función. Llegá 30 min antes."
+        #return True, "QR válido"
         
+        # POR ESTO
+        # Ventana configurable: se puede escanear hasta N minutos antes
+        ahora = timezone.now()
+        minutos_antes = get_qr_minutos()
+        tiempo_restante = self.reserva.funcion.fecha_hora - ahora
+        segundos_limite = minutos_antes * 60
+ 
+        if tiempo_restante.total_seconds() > segundos_limite:
+            horas = int(tiempo_restante.total_seconds() / 3600)
+            minutos_config = minutos_antes // 60
+            return False, (
+                f"Falta {horas} horas para la función. "
+                f"El QR se habilita {minutos_config} hora(s) antes."
+            )
+ 
         return True, "QR válido"
-    
+
     def save(self, *args, **kwargs):
         if not self.numero_transaccion:
             import random

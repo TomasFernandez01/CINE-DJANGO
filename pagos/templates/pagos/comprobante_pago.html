@@ -5,152 +5,260 @@
 {% block contenido %}
 <div style="max-width: 800px; margin: 0 auto;">
     <h1 style="text-align: center; color: #28a745; margin-bottom: 1.5rem;">✅ ¡Pago Exitoso!</h1>
-    
-    <!-- Código QR -->
-    {% if qr_imagen %}
-    <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); padding: 2rem; border-radius: 12px; margin-bottom: 2rem; text-align: center; color: white;">
-        <h2 style="margin: 0 0 1rem 0; font-size: 1.5rem;">🎫 Tu Entrada</h2>
-        <div style="background-color: white; padding: 1.5rem; border-radius: 8px; display: inline-block; margin-bottom: 1rem;">
-            <img src="{{ qr_imagen }}" alt="Código QR" style="display: block; max-width: 250px;">
+
+    <!-- ============================================================ -->
+    <!-- TICKET IMPRIMIBLE                                            -->
+    <!-- ============================================================ -->
+    <div id="ticket"
+         style="background: white; border-radius: 12px;
+                box-shadow: 0 4px 20px rgba(0,0,0,0.15);
+                overflow: hidden; margin-bottom: 2rem;">
+
+        <!-- Header del ticket -->
+        <div style="background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
+                    padding: 2rem; text-align: center; color: white;">
+            <div style="font-size: 2.5rem; margin-bottom: 0.5rem;">🎬</div>
+            <div style="font-size: 1.8rem; font-weight: bold; letter-spacing: 2px;
+                        margin-bottom: 0.25rem;">CINE ONLINE</div>
+            <div style="font-size: 1rem; opacity: 0.7; letter-spacing: 4px;">ENTRADA OFICIAL</div>
         </div>
-        <div style="background-color: rgba(255,255,255,0.2); padding: 1rem; border-radius: 6px; margin: 0 auto; max-width: 400px;">
-            <p style="margin: 0 0 0.5rem 0; font-size: 0.9rem; opacity: 0.9;">Código QR:</p>
-            <p style="margin: 0; font-size: 1.25rem; font-weight: bold; font-family: monospace; letter-spacing: 1px;">{{ pago.codigo_qr }}</p>
-        </div>
-        <p style="margin: 1rem 0 0 0; font-size: 0.9rem; opacity: 0.95;">
-            📱 Mostrá este código en el cine o presentá el código impreso
-        </p>
-    </div>
-    {% endif %}
-    
-    <div style="background-color: white; padding: 2rem; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); margin-bottom: 1.5rem;">
-        
-        <!-- Información del Pago -->
-        <div style="margin-bottom: 2rem;">
-            <h3 style="color: #333; border-bottom: 2px solid #28a745; padding-bottom: 0.5rem; margin-bottom: 1rem;">
-                💳 Información del Pago
-            </h3>
-            
-            <div style="background-color: #d4edda; padding: 1rem; border-radius: 6px; margin-bottom: 1rem; text-align: center;">
-                <p style="margin: 0 0 0.5rem 0; color: #155724; font-size: 0.9rem;">Número de Transacción</p>
-                <p style="margin: 0; color: #155724; font-size: 1.5rem; font-weight: bold; font-family: monospace;">{{ pago.numero_transaccion }}</p>
-            </div>
-            
-            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem;">
-                <div>
-                    <p style="margin: 0; color: #666; font-size: 0.875rem;">Método de Pago:</p>
-                    <p style="margin: 0; color: #333; font-weight: bold;">{{ pago.get_metodo_pago_display }}</p>
+
+        <!-- Línea punteada superior (efecto perforado) -->
+        <div style="border-top: 3px dashed #dee2e6; margin: 0;
+                    background: repeating-linear-gradient(
+                        90deg,
+                        #f8f9fa 0px, #f8f9fa 8px,
+                        white 8px, white 16px
+                    ); height: 16px;"></div>
+
+        <!-- Contenido principal del ticket -->
+        <div style="padding: 1.5rem 2rem;">
+
+            <!-- Película destacada -->
+            <div style="text-align: center; margin-bottom: 1.5rem; padding-bottom: 1.5rem;
+                        border-bottom: 1px solid #e9ecef;">
+                <div style="font-size: 0.8rem; color: #999; letter-spacing: 2px;
+                            text-transform: uppercase; margin-bottom: 0.5rem;">
+                    PELÍCULA
                 </div>
-                {% if pago.ultimos_4_digitos %}
-                <div>
-                    <p style="margin: 0; color: #666; font-size: 0.875rem;">Tarjeta:</p>
-                    <p style="margin: 0; color: #333; font-weight: bold;">**** **** **** {{ pago.ultimos_4_digitos }}</p>
-                </div>
-                {% endif %}
-                <div>
-                    <p style="margin: 0; color: #666; font-size: 0.875rem;">Fecha:</p>
-                    <p style="margin: 0; color: #333; font-weight: bold;">{{ pago.fecha_pago|date:"d/m/Y H:i" }}</p>
-                </div>
-                <div>
-                    <p style="margin: 0; color: #666; font-size: 0.875rem;">Monto Pagado:</p>
-                    <p style="margin: 0; color: #28a745; font-weight: bold; font-size: 1.5rem;">${{ pago.monto }}</p>
+                <div style="font-size: 1.6rem; font-weight: bold; color: #1a1a2e;">
+                    {{ reserva.funcion.pelicula.titulo }}
                 </div>
             </div>
-        </div>
-        
-        <!-- Información de la Función -->
-        <div style="margin-bottom: 2rem;">
-            <h3 style="color: #333; border-bottom: 2px solid #007bff; padding-bottom: 0.5rem; margin-bottom: 1rem;">
-                🎬 Tu Función
-            </h3>
-            
-            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem;">
-                <div>
-                    <p style="margin: 0; color: #666; font-size: 0.875rem;">Código de Reserva:</p>
-                    <p style="margin: 0; color: #333; font-weight: bold; font-size: 1.125rem; font-family: monospace;">{{ reserva.codigo_reserva }}</p>
+
+            <!-- Grid de detalles -->
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;
+                        margin-bottom: 1.5rem;">
+                <div style="background: #f8f9fa; padding: 1rem; border-radius: 8px;
+                            border-left: 3px solid #007bff;">
+                    <div style="font-size: 0.75rem; color: #999; letter-spacing: 1px;
+                                text-transform: uppercase;">FECHA</div>
+                    <div style="font-size: 1.1rem; font-weight: bold; color: #333; margin-top: 0.25rem;">
+                        {{ reserva.funcion.fecha_hora|date:"d/m/Y" }}
+                    </div>
                 </div>
-                <div>
-                    <p style="margin: 0; color: #666; font-size: 0.875rem;">Película:</p>
-                    <p style="margin: 0; color: #333; font-weight: bold; font-size: 1.125rem;">{{ reserva.funcion.pelicula.titulo }}</p>
+                <div style="background: #f8f9fa; padding: 1rem; border-radius: 8px;
+                            border-left: 3px solid #007bff;">
+                    <div style="font-size: 0.75rem; color: #999; letter-spacing: 1px;
+                                text-transform: uppercase;">HORARIO</div>
+                    <div style="font-size: 1.4rem; font-weight: bold; color: #1a1a2e;
+                                margin-top: 0.25rem;">
+                        {{ reserva.funcion.fecha_hora|date:"H:i" }} hs
+                    </div>
                 </div>
-                <div>
-                    <p style="margin: 0; color: #666; font-size: 0.875rem;">Sala:</p>
-                    <p style="margin: 0; color: #333; font-weight: bold;">{{ reserva.funcion.sala.nombre }}</p>
+                <div style="background: #f8f9fa; padding: 1rem; border-radius: 8px;
+                            border-left: 3px solid #28a745;">
+                    <div style="font-size: 0.75rem; color: #999; letter-spacing: 1px;
+                                text-transform: uppercase;">SALA</div>
+                    <div style="font-size: 1.1rem; font-weight: bold; color: #333; margin-top: 0.25rem;">
+                        {{ reserva.funcion.sala.nombre }}
+                    </div>
                 </div>
-                <div>
-                    <p style="margin: 0; color: #666; font-size: 0.875rem;">Fecha:</p>
-                    <p style="margin: 0; color: #333; font-weight: bold;">{{ reserva.funcion.fecha_hora|date:"l, d 'de' F 'de' Y" }}</p>
-                </div>
-                <div>
-                    <p style="margin: 0; color: #666; font-size: 0.875rem;">Horario:</p>
-                    <p style="margin: 0; color: #333; font-weight: bold; font-size: 1.25rem;">{{ reserva.funcion.fecha_hora|date:"H:i" }} hs</p>
-                </div>
-                <div>
-                    <p style="margin: 0; color: #666; font-size: 0.875rem;">Entradas:</p>
-                    <p style="margin: 0; color: #333; font-weight: bold;">{{ reserva.cantidad_entradas }}</p>
+                <div style="background: #f8f9fa; padding: 1rem; border-radius: 8px;
+                            border-left: 3px solid #28a745;">
+                    <div style="font-size: 0.75rem; color: #999; letter-spacing: 1px;
+                                text-transform: uppercase;">ENTRADAS</div>
+                    <div style="font-size: 1.4rem; font-weight: bold; color: #1a1a2e;
+                                margin-top: 0.25rem;">
+                        {{ reserva.cantidad_entradas }}
+                    </div>
                 </div>
             </div>
-            
-            <!-- Asientos si están seleccionados -->
+
+            <!-- Asientos si aplica -->
             {% if reserva.asientos_seleccionados %}
-            <div style="margin-top: 1rem; padding: 1rem; background-color: #e7f3ff; border-radius: 6px; border-left: 4px solid #007bff;">
-                <p style="margin: 0 0 0.5rem 0; color: #004085; font-weight: bold;">🪑 Tus Asientos:</p>
+            <div style="background: #e7f3ff; padding: 1rem; border-radius: 8px;
+                        margin-bottom: 1.5rem; border: 1px solid #b8d8f8;">
+                <div style="font-size: 0.75rem; color: #004085; letter-spacing: 1px;
+                            text-transform: uppercase; margin-bottom: 0.5rem;">
+                    🪑 ASIENTOS ASIGNADOS
+                </div>
                 <div style="display: flex; gap: 0.5rem; flex-wrap: wrap;">
                     {% for asiento in reserva.lista_asientos %}
-                        <span style="display: inline-block; padding: 0.25rem 0.75rem; background-color: #007bff; color: white; border-radius: 4px; font-weight: bold;">
+                        <span style="display: inline-block; padding: 0.4rem 0.9rem;
+                                     background-color: #007bff; color: white;
+                                     border-radius: 6px; font-weight: bold; font-size: 1rem;">
                             {{ asiento }}
                         </span>
                     {% endfor %}
                 </div>
             </div>
             {% endif %}
+
+            <!-- Código de reserva -->
+            <div style="background: linear-gradient(135deg, #d4edda, #c3e6cb);
+                        padding: 1rem; border-radius: 8px; text-align: center;
+                        margin-bottom: 1.5rem; border: 1px solid #b1dfbb;">
+                <div style="font-size: 0.75rem; color: #155724; letter-spacing: 2px;
+                            text-transform: uppercase;">CÓDIGO DE RESERVA</div>
+                <div style="font-size: 1.75rem; font-weight: bold; color: #155724;
+                            font-family: 'Courier New', monospace; letter-spacing: 3px;
+                            margin-top: 0.25rem;">
+                    {{ reserva.codigo_reserva }}
+                </div>
+            </div>
+
+            <!-- Info de pago -->
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;
+                        margin-bottom: 1rem;">
+                <div>
+                    <div style="font-size: 0.75rem; color: #999; text-transform: uppercase;">
+                        MÉTODO DE PAGO
+                    </div>
+                    <div style="font-weight: bold; color: #333;">
+                        {{ pago.get_metodo_pago_display }}
+                        {% if pago.ultimos_4_digitos %}
+                            (*{{ pago.ultimos_4_digitos }})
+                        {% endif %}
+                    </div>
+                </div>
+                <div>
+                    <div style="font-size: 0.75rem; color: #999; text-transform: uppercase;">
+                        TRANSACCIÓN
+                    </div>
+                    <div style="font-weight: bold; color: #333; font-family: monospace;
+                                font-size: 0.9rem;">
+                        {{ pago.numero_transaccion }}
+                    </div>
+                </div>
+                <div>
+                    <div style="font-size: 0.75rem; color: #999; text-transform: uppercase;">
+                        FECHA DE PAGO
+                    </div>
+                    <div style="font-weight: bold; color: #333;">
+                        {{ pago.fecha_pago|date:"d/m/Y H:i" }}
+                    </div>
+                </div>
+                <div>
+                    <div style="font-size: 0.75rem; color: #999; text-transform: uppercase;">
+                        TOTAL ABONADO
+                    </div>
+                    <div style="font-size: 1.4rem; font-weight: bold; color: #28a745;">
+                        ${{ pago.monto }}
+                    </div>
+                </div>
+            </div>
         </div>
-        
-        <!-- Información Importante -->
-        <div style="background-color: #fff3cd; padding: 1.5rem; border-radius: 6px; border-left: 4px solid #ffc107; margin-bottom: 2rem;">
-            <h4 style="margin: 0 0 1rem 0; color: #856404;">ℹ️ Información Importante</h4>
-            <ul style="margin: 0; padding-left: 20px; color: #856404;">
-                <li style="margin-bottom: 0.5rem;">Presentá este comprobante (impreso o en el celular) en boletería</li>
-                <li style="margin-bottom: 0.5rem;">También podés mostrar el código QR para acceso rápido</li>
-                <li style="margin-bottom: 0.5rem;">Llegá al menos <strong>15 minutos antes</strong> de la función</li>
-                <li style="margin-bottom: 0.5rem;">Las entradas <strong>no son reembolsables</strong></li>
-                <li>Conservá este comprobante hasta finalizar la función</li>
-            </ul>
+
+        <!-- Línea punteada inferior (efecto perforado) -->
+        <div style="border-top: 3px dashed #dee2e6;
+                    background: repeating-linear-gradient(
+                        90deg,
+                        #f8f9fa 0px, #f8f9fa 8px,
+                        white 8px, white 16px
+                    ); height: 16px;"></div>
+
+        <!-- Sección QR -->
+        {% if qr_imagen %}
+        <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+                    padding: 2rem; text-align: center; color: white;">
+            <div style="font-size: 1.1rem; font-weight: bold; margin-bottom: 1rem;
+                        letter-spacing: 1px;">
+                🎫 PRESENTÁ ESTE QR AL INGRESAR
+            </div>
+            <div style="background: white; padding: 1.25rem; border-radius: 10px;
+                        display: inline-block; margin-bottom: 1rem;
+                        box-shadow: 0 4px 12px rgba(0,0,0,0.3);">
+                <img src="{{ qr_imagen }}" alt="Código QR"
+                     style="display: block; width: 220px; height: 220px;">
+            </div>
+            <div style="font-family: monospace; font-size: 1rem; letter-spacing: 2px;
+                        background: rgba(255,255,255,0.15); display: inline-block;
+                        padding: 0.5rem 1.5rem; border-radius: 6px;">
+                {{ pago.codigo_qr }}
+            </div>
         </div>
-        
-        <!-- Botones de Acción -->
-        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem;">
-            <button onclick="window.print()" style="padding: 1rem; background-color: #28a745; color: white; border: none; border-radius: 6px; font-weight: bold; cursor: pointer; font-size: 1rem;">
-                🖨️ Imprimir Comprobante
-            </button>
-            <a href="{% url 'reservas:mis_reservas' %}" style="padding: 1rem; background-color: #007bff; color: white; border-radius: 6px; font-weight: bold; text-decoration: none; text-align: center; font-size: 1rem; display: flex; align-items: center; justify-content: center;">
-                🎫 Mis Reservas
-            </a>
-            <a href="{% url 'peliculas:lista_peliculas' %}" style="padding: 1rem; background-color: #6c757d; color: white; border-radius: 6px; font-weight: bold; text-decoration: none; text-align: center; font-size: 1rem; display: flex; align-items: center; justify-content: center;">
-                🎬 Ver Más Películas
-            </a>
+        {% endif %}
+
+        <!-- Footer del ticket -->
+        <div style="background: #1a1a2e; padding: 1rem 2rem; text-align: center;
+                    color: rgba(255,255,255,0.6); font-size: 0.8rem;">
+            <div style="margin-bottom: 0.25rem;">
+                Llegá al menos <strong style="color: white;">15 minutos antes</strong> de la función
+            </div>
+            <div>Las entradas no son reembolsables · Conservá este comprobante</div>
         </div>
     </div>
-    
-    <!-- Mensaje de Agradecimiento -->
-    <div style="background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%); padding: 2rem; border-radius: 12px; text-align: center; color: white;">
-        <h2 style="margin: 0 0 0.5rem 0; font-size: 1.75rem;">¡Gracias por tu compra!</h2>
-        <p style="margin: 0; font-size: 1.125rem; opacity: 0.95;">
-            Te esperamos en el cine. ¡Disfrutá la película! 🍿🎬
-        </p>
+
+    <!-- Botones de acción (no se imprimen) -->
+    <div class="no-print"
+         style="display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+                gap: 1rem; margin-bottom: 2rem;">
+        <button onclick="window.print()"
+                style="padding: 1rem; background-color: #1a1a2e; color: white;
+                       border: none; border-radius: 8px; font-weight: bold;
+                       cursor: pointer; font-size: 1rem;">
+            🖨️ Imprimir Ticket
+        </button>
+        <a href="{% url 'reservas:mis_reservas' %}"
+           style="padding: 1rem; background-color: #007bff; color: white;
+                  border-radius: 8px; font-weight: bold; text-decoration: none;
+                  text-align: center; font-size: 1rem;">
+            🎫 Mis Reservas
+        </a>
+        <a href="{% url 'peliculas:lista_peliculas' %}"
+           style="padding: 1rem; background-color: #6c757d; color: white;
+                  border-radius: 8px; font-weight: bold; text-decoration: none;
+                  text-align: center; font-size: 1rem;">
+            🎬 Ver Más Películas
+        </a>
+    </div>
+
+    <!-- Agradecimiento -->
+    <div class="no-print"
+         style="background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);
+                padding: 1.5rem 2rem; border-radius: 12px; text-align: center; color: white;">
+        <div style="font-size: 1.5rem; font-weight: bold;">¡Gracias por tu compra!</div>
+        <div style="opacity: 0.9; margin-top: 0.25rem;">¡Disfrutá la película! 🍿🎬</div>
     </div>
 </div>
 
 <style>
     @media print {
-        nav, .container > h1:first-child, button:not(.no-print) {
+        /* Ocultar todo excepto el ticket */
+        nav,
+        h1,
+        .no-print {
             display: none !important;
         }
-        
+
         body {
             background: white !important;
+            padding: 0 !important;
+            margin: 0 !important;
+        }
+
+        .container {
+            max-width: 100% !important;
+            margin: 0 !important;
+            padding: 0 !important;
+        }
+
+        #ticket {
+            box-shadow: none !important;
+            border: 1px solid #333 !important;
+            page-break-inside: avoid;
         }
     }
 </style>
-
 {% endblock %}

@@ -4,95 +4,109 @@
 
 {% block contenido %}
 <div style="max-width: 1000px; margin: 0 auto;">
-    <h1 style="text-align: center; margin-bottom: 1rem;">🎬 Seleccionar Asientos</h1>
-    
-    <!-- Información de la función -->
-    <div style="background-color: white; padding: 1.5rem; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); margin-bottom: 1.5rem;">
-        <h2 style="margin: 0 0 1rem 0; color: #333;">{{ funcion.pelicula.titulo }}</h2>
-        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem;">
-            <div>
-                <strong>📅 Fecha:</strong> {{ funcion.fecha_hora|date:"d/m/Y" }}
+
+    <!-- ============================================================ -->
+    <!-- CONTADOR GLOBAL (empieza desde que el usuario entró aquí)   -->
+    <!-- ============================================================ -->
+    <div id="countdownBanner"
+         style="background: linear-gradient(135deg, #ff6b6b 0%, #ff8e53 100%);
+                padding: 1rem 1.5rem; border-radius: 10px; margin-bottom: 1.5rem;
+                display: flex; justify-content: space-between; align-items: center;
+                flex-wrap: wrap; gap: 1rem; box-shadow: 0 4px 12px rgba(255,107,107,0.35);">
+        <div style="color: white;">
+            <div style="font-size: 0.85rem; opacity: 0.9; margin-bottom: 0.2rem;">
+                ⏰ Tiempo para completar reserva y pago:
             </div>
-            <div>
-                <strong>🕐 Horario:</strong> {{ funcion.fecha_hora|date:"H:i" }} hs
-            </div>
-            <div>
-                <strong>🏢 Sala:</strong> {{ sala.nombre }}
-            </div>
-            <div>
-                <strong>💰 Precio:</strong> ${{ funcion.precio }} por entrada
+            <div style="font-size: 0.8rem; opacity: 0.75;">
+                El contador inició cuando abriste esta página
             </div>
         </div>
+        <div id="countdown"
+             data-segundos="{{ segundos_restantes }}"
+             style="font-size: 2.5rem; font-weight: bold; font-family: 'Courier New', monospace;
+                    color: white; letter-spacing: 0.1em; min-width: 90px; text-align: center;">
+            {{ tiempo_limite_minutos }}:00
+        </div>
     </div>
-    
+
+    <h1 style="text-align: center; margin-bottom: 1rem;">🎬 Seleccionar Asientos</h1>
+
+    <!-- Información de la función -->
+    <div style="background-color: white; padding: 1.5rem; border-radius: 8px;
+                box-shadow: 0 2px 4px rgba(0,0,0,0.1); margin-bottom: 1.5rem;">
+        <h2 style="margin: 0 0 1rem 0; color: #333;">{{ funcion.pelicula.titulo }}</h2>
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem;">
+            <div><strong>📅 Fecha:</strong> {{ funcion.fecha_hora|date:"d/m/Y" }}</div>
+            <div><strong>🕐 Horario:</strong> {{ funcion.fecha_hora|date:"H:i" }} hs</div>
+            <div><strong>🏢 Sala:</strong> {{ sala.nombre }}</div>
+            <div><strong>💰 Precio:</strong> ${{ funcion.precio }} por entrada</div>
+        </div>
+    </div>
+
     <!-- Leyenda -->
-    <div style="background-color: white; padding: 1rem; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); margin-bottom: 1.5rem;">
+    <div style="background-color: white; padding: 1rem; border-radius: 8px;
+                box-shadow: 0 2px 4px rgba(0,0,0,0.1); margin-bottom: 1.5rem;">
         <div style="display: flex; justify-content: center; gap: 2rem; flex-wrap: wrap;">
             <div style="display: flex; align-items: center; gap: 0.5rem;">
-                <div style="width: 30px; height: 30px; background-color: #28a745; border-radius: 4px; border: 2px solid #1e7e34;"></div>
+                <div style="width: 30px; height: 30px; background-color: #28a745;
+                            border-radius: 4px; border: 2px solid #1e7e34;"></div>
                 <span>Disponible</span>
             </div>
             <div style="display: flex; align-items: center; gap: 0.5rem;">
-                <div style="width: 30px; height: 30px; background-color: #007bff; border-radius: 4px; border: 2px solid #0056b3;"></div>
+                <div style="width: 30px; height: 30px; background-color: #007bff;
+                            border-radius: 4px; border: 2px solid #0056b3;"></div>
                 <span>Seleccionado</span>
             </div>
             <div style="display: flex; align-items: center; gap: 0.5rem;">
-                <div style="width: 30px; height: 30px; background-color: #dc3545; border-radius: 4px; border: 2px solid #bd2130;"></div>
+                <div style="width: 30px; height: 30px; background-color: #dc3545;
+                            border-radius: 4px; border: 2px solid #bd2130;"></div>
                 <span>Ocupado</span>
             </div>
         </div>
     </div>
-    
+
     <!-- Pantalla -->
     <div style="text-align: center; margin-bottom: 2rem;">
-        <div style="background: linear-gradient(to bottom, #333 0%, #666 100%); color: white; padding: 0.75rem; border-radius: 8px 8px 0 0; max-width: 80%; margin: 0 auto; box-shadow: 0 4px 12px rgba(0,0,0,0.3);">
+        <div style="background: linear-gradient(to bottom, #333 0%, #666 100%);
+                    color: white; padding: 0.75rem; border-radius: 8px 8px 0 0;
+                    max-width: 80%; margin: 0 auto;
+                    box-shadow: 0 4px 12px rgba(0,0,0,0.3);">
             🎬 PANTALLA
         </div>
     </div>
-    
+
     <!-- Mapa de Asientos -->
-    <div id="mapaAsientos" style="background-color: white; padding: 2rem; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); margin-bottom: 1.5rem; overflow-x: auto;">
+    <div id="mapaAsientos" style="background-color: white; padding: 2rem; border-radius: 8px;
+                                   box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+                                   margin-bottom: 1.5rem; overflow-x: auto;">
         <div style="display: inline-block; min-width: 100%;">
             {% for fila in layout %}
-                <div style="display: flex; justify-content: center; gap: 8px; margin-bottom: 8px; align-items: center;">
-                    <!-- Letra de fila -->
+                <div style="display: flex; justify-content: center; gap: 8px;
+                            margin-bottom: 8px; align-items: center;">
                     <div style="width: 30px; text-align: center; font-weight: bold; color: #666;">
                         {{ fila.0|slice:":1" }}
                     </div>
-                    
-                    <!-- Asientos -->
                     {% for asiento in fila %}
-                        <button 
+                        <button
                             type="button"
                             class="asiento {% if asiento in asientos_ocupados %}ocupado{% else %}disponible{% endif %}"
                             data-asiento="{{ asiento }}"
                             {% if asiento in asientos_ocupados %}disabled{% endif %}
                             style="
-                                width: 40px;
-                                height: 40px;
-                                border: 2px solid;
-                                border-radius: 6px;
-                                cursor: pointer;
-                                font-size: 11px;
-                                font-weight: bold;
+                                width: 40px; height: 40px; border: 2px solid;
+                                border-radius: 6px; cursor: pointer;
+                                font-size: 11px; font-weight: bold;
                                 transition: all 0.2s;
                                 {% if asiento in asientos_ocupados %}
-                                    background-color: #dc3545;
-                                    border-color: #bd2130;
-                                    color: white;
-                                    cursor: not-allowed;
-                                    opacity: 0.7;
+                                    background-color: #dc3545; border-color: #bd2130;
+                                    color: white; cursor: not-allowed; opacity: 0.7;
                                 {% else %}
-                                    background-color: #28a745;
-                                    border-color: #1e7e34;
-                                    color: white;
+                                    background-color: #28a745; border-color: #1e7e34; color: white;
                                 {% endif %}
                             ">
                             {{ asiento }}
                         </button>
                     {% endfor %}
-                    
-                    <!-- Letra de fila (derecha) -->
                     <div style="width: 30px; text-align: center; font-weight: bold; color: #666;">
                         {{ fila.0|slice:":1" }}
                     </div>
@@ -100,57 +114,68 @@
             {% endfor %}
         </div>
     </div>
-    
+
     <!-- Resumen de selección -->
-    <div style="background-color: white; padding: 1.5rem; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); margin-bottom: 1.5rem;">
-        <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem;">
+    <div style="background-color: white; padding: 1.5rem; border-radius: 8px;
+                box-shadow: 0 2px 4px rgba(0,0,0,0.1); margin-bottom: 1.5rem;">
+        <div style="display: flex; justify-content: space-between; align-items: center;
+                    flex-wrap: wrap; gap: 1rem;">
             <div>
-                <div style="font-size: 0.9rem; color: #666; margin-bottom: 0.25rem;">Asientos seleccionados:</div>
-                <div id="asientosSeleccionadosTexto" style="font-size: 1.25rem; font-weight: bold; color: #333;">
+                <div style="font-size: 0.9rem; color: #666; margin-bottom: 0.25rem;">
+                    Asientos seleccionados (máx. {{ max_asientos }}):
+                </div>
+                <div id="asientosSeleccionadosTexto"
+                     style="font-size: 1.25rem; font-weight: bold; color: #333;">
                     Ninguno
                 </div>
             </div>
             <div>
                 <div style="font-size: 0.9rem; color: #666; margin-bottom: 0.25rem;">Cantidad:</div>
-                <div id="cantidadSeleccionada" style="font-size: 1.25rem; font-weight: bold; color: #333;">
-                    0
-                </div>
+                <div id="cantidadSeleccionada"
+                     style="font-size: 1.25rem; font-weight: bold; color: #333;">0</div>
             </div>
             <div>
-                <div style="font-size: 0.9rem; color: #666; margin-bottom: 0.25rem;">Total a pagar:</div>
-                <div id="totalPagar" style="font-size: 1.5rem; font-weight: bold; color: #28a745;">
-                    $0
-                </div>
+                <div style="font-size: 0.9rem; color: #666; margin-bottom: 0.25rem;">Total:</div>
+                <div id="totalPagar"
+                     style="font-size: 1.5rem; font-weight: bold; color: #28a745;">$0</div>
             </div>
         </div>
     </div>
-    
+
     <!-- Formulario -->
-    <form method="post" action="{% url 'reservas:confirmar_reserva_asientos' funcion.id %}" id="formReserva">
+    <form method="post"
+          action="{% url 'reservas:confirmar_reserva_asientos' funcion.id %}"
+          id="formReserva">
         {% csrf_token %}
-        <input type="hidden" name="asientos_seleccionados" id="asientosSeleccionadosInput" value="">
-        
+        <input type="hidden" name="asientos_seleccionados"
+               id="asientosSeleccionadosInput" value="">
+
         <div style="display: flex; gap: 1rem; flex-wrap: wrap;">
-            <button 
-                type="submit" 
-                id="btnConfirmar"
-                disabled
-                style="flex: 1; min-width: 200px; padding: 1rem; background-color: #28a745; color: white; border: none; border-radius: 6px; font-weight: bold; font-size: 1.1rem; cursor: not-allowed; opacity: 0.5;">
+            <button type="submit" id="btnConfirmar" disabled
+                    style="flex: 1; min-width: 200px; padding: 1rem;
+                           background-color: #28a745; color: white; border: none;
+                           border-radius: 6px; font-weight: bold; font-size: 1.1rem;
+                           cursor: not-allowed; opacity: 0.5;">
                 🎫 Confirmar Reserva
             </button>
-            <a 
-                href="{% url 'peliculas:detalle_pelicula' funcion.pelicula.id %}" 
-                style="flex: 1; min-width: 200px; padding: 1rem; background-color: #6c757d; color: white; border-radius: 6px; font-weight: bold; font-size: 1.1rem; text-align: center; text-decoration: none; display: flex; align-items: center; justify-content: center;">
+            <a href="{% url 'peliculas:detalle_pelicula' funcion.pelicula.id %}"
+               style="flex: 1; min-width: 200px; padding: 1rem;
+                      background-color: #6c757d; color: white; border-radius: 6px;
+                      font-weight: bold; font-size: 1.1rem; text-align: center;
+                      text-decoration: none; display: flex;
+                      align-items: center; justify-content: center;">
                 Cancelar
             </a>
         </div>
     </form>
-    
-    <!-- Información adicional -->
-    <div style="background-color: #fff3cd; padding: 1rem; border-radius: 6px; border-left: 4px solid #ffc107; margin-top: 1.5rem;">
+
+    <div style="background-color: #fff3cd; padding: 1rem; border-radius: 6px;
+                border-left: 4px solid #ffc107; margin-top: 1.5rem;">
         <p style="margin: 0; color: #856404;">
-            <strong>ℹ️ Información:</strong> Seleccioná los asientos haciendo click sobre ellos. 
-            Podés seleccionar entre 1 y 4 asientos. Tendrás 4 minutos para completar el pago una vez confirmada la reserva.
+            <strong>ℹ️ Información:</strong> Podés seleccionar entre 1 y
+            <strong>{{ max_asientos }}</strong> asientos. El contador ya está corriendo:
+            tenés <strong>{{ tiempo_limite_minutos }} minutos en total</strong>
+            (desde que abriste esta página) para seleccionar asientos Y completar el pago.
         </p>
     </div>
 </div>
@@ -158,10 +183,59 @@
 <script>
 (function() {
     const precioEntrada = {{ funcion.precio }};
+    const maxAsientos = {{ max_asientos }};
     const asientosSeleccionados = new Set();
-    const maxAsientos = 4;
-    
-    // Elementos del DOM
+
+    // ============================================================
+    // CONTADOR — arranca con los segundos que vienen del servidor
+    // (calculados desde que el usuario entró a la vista)
+    // ============================================================
+    const countdownEl = document.getElementById('countdown');
+    const countdownBanner = document.getElementById('countdownBanner');
+    let tiempoRestante = parseInt(countdownEl.dataset.segundos);
+
+    function formatTime(s) {
+        const m = Math.floor(s / 60);
+        const sec = s % 60;
+        return `${String(m).padStart(2, '0')}:${String(sec).padStart(2, '0')}`;
+    }
+
+    function actualizarContador() {
+        if (tiempoRestante <= 0) {
+            countdownEl.textContent = '00:00';
+            countdownBanner.style.background = 'linear-gradient(135deg, #6c757d 0%, #495057 100%)';
+            document.getElementById('btnConfirmar').disabled = true;
+            document.getElementById('btnConfirmar').style.opacity = '0.4';
+            document.getElementById('btnConfirmar').textContent = '⏰ Tiempo Expirado';
+            document.getElementById('formReserva').style.pointerEvents = 'none';
+            setTimeout(() => {
+                alert('⏰ El tiempo de reserva expiró. Volvé a intentarlo.');
+                window.location.href = "{% url 'salas:lista_funciones' %}";
+            }, 800);
+            return;
+        }
+        countdownEl.textContent = formatTime(tiempoRestante);
+
+        // Alertas visuales según tiempo restante
+        if (tiempoRestante <= 120) {
+            countdownBanner.style.background = 'linear-gradient(135deg, #dc3545 0%, #c82333 100%)';
+            countdownEl.style.animation = 'pulso 0.8s infinite';
+        } else if (tiempoRestante <= 300) {
+            countdownBanner.style.background = 'linear-gradient(135deg, #e67e22 0%, #d35400 100%)';
+        }
+
+        tiempoRestante--;
+    }
+
+    actualizarContador();
+    const intervalo = setInterval(() => {
+        actualizarContador();
+        if (tiempoRestante < 0) clearInterval(intervalo);
+    }, 1000);
+
+    // ============================================================
+    // LÓGICA DE ASIENTOS
+    // ============================================================
     const asientos = document.querySelectorAll('.asiento.disponible');
     const asientosTexto = document.getElementById('asientosSeleccionadosTexto');
     const cantidadTexto = document.getElementById('cantidadSeleccionada');
@@ -169,145 +243,103 @@
     const inputHidden = document.getElementById('asientosSeleccionadosInput');
     const btnConfirmar = document.getElementById('btnConfirmar');
     const formReserva = document.getElementById('formReserva');
-    
-    // Agregar event listeners
+
     asientos.forEach(asiento => {
-        asiento.addEventListener('click', function() {
+        asiento.addEventListener('click', function () {
             const codigo = this.dataset.asiento;
-            
+
             if (asientosSeleccionados.has(codigo)) {
-                // Deseleccionar
                 asientosSeleccionados.delete(codigo);
                 this.style.backgroundColor = '#28a745';
                 this.style.borderColor = '#1e7e34';
             } else {
-                // Seleccionar (si no se excede el límite)
                 if (asientosSeleccionados.size >= maxAsientos) {
                     alert(`Solo podés seleccionar hasta ${maxAsientos} asientos`);
                     return;
                 }
-                
                 asientosSeleccionados.add(codigo);
                 this.style.backgroundColor = '#007bff';
                 this.style.borderColor = '#0056b3';
             }
-            
             actualizarResumen();
         });
-        
-        // Hover effect
-        asiento.addEventListener('mouseenter', function() {
-            if (!asientosSeleccionados.has(this.dataset.asiento)) {
+
+        asiento.addEventListener('mouseenter', function () {
+            if (!asientosSeleccionados.has(this.dataset.asiento))
                 this.style.transform = 'scale(1.1)';
-            }
         });
-        
-        asiento.addEventListener('mouseleave', function() {
+        asiento.addEventListener('mouseleave', function () {
             this.style.transform = 'scale(1)';
         });
     });
-    
+
     function actualizarResumen() {
         const cantidad = asientosSeleccionados.size;
-        const total = cantidad * precioEntrada;
-        
-        // Actualizar textos
         if (cantidad === 0) {
             asientosTexto.textContent = 'Ninguno';
             btnConfirmar.disabled = true;
             btnConfirmar.style.cursor = 'not-allowed';
             btnConfirmar.style.opacity = '0.5';
         } else {
-            const asientosArray = Array.from(asientosSeleccionados).sort();
-            asientosTexto.textContent = asientosArray.join(', ');
+            asientosTexto.textContent = Array.from(asientosSeleccionados).sort().join(', ');
             btnConfirmar.disabled = false;
             btnConfirmar.style.cursor = 'pointer';
             btnConfirmar.style.opacity = '1';
         }
-        
         cantidadTexto.textContent = cantidad;
-        totalTexto.textContent = `$${total}`;
-        
-        // Actualizar input hidden
+        totalTexto.textContent = `$${(cantidad * precioEntrada).toFixed(0)}`;
         inputHidden.value = Array.from(asientosSeleccionados).sort().join(',');
     }
-    
-    // Validar antes de enviar
-    formReserva.addEventListener('submit', function(e) {
+
+    formReserva.addEventListener('submit', function (e) {
         if (asientosSeleccionados.size === 0) {
             e.preventDefault();
-            alert('Debes seleccionar al menos un asiento');
+            alert('Debés seleccionar al menos un asiento');
             return false;
         }
-        
         if (asientosSeleccionados.size > maxAsientos) {
             e.preventDefault();
             alert(`Solo podés seleccionar hasta ${maxAsientos} asientos`);
             return false;
         }
-        
-        // Confirmar
-        const cantidad = asientosSeleccionados.size;
-        const asientos = Array.from(asientosSeleccionados).sort().join(', ');
-        const total = cantidad * precioEntrada;
-        
-        const confirmacion = confirm(
-            `¿Confirmar reserva?\n\n` +
-            `Asientos: ${asientos}\n` +
-            `Cantidad: ${cantidad}\n` +
-            `Total: $${total}\n\n` +
-            `Tendrás 4 minutos para completar el pago.`
+        const asientosStr = Array.from(asientosSeleccionados).sort().join(', ');
+        const total = asientosSeleccionados.size * precioEntrada;
+        const ok = confirm(
+            `¿Confirmar reserva?\n\nAsientos: ${asientosStr}\nCantidad: ${asientosSeleccionados.size}\nTotal: $${total}\n\nEl tiempo restante seguirá corriendo hasta que completes el pago.`
         );
-        
-        if (!confirmacion) {
-            e.preventDefault();
-            return false;
-        }
-        
+        if (!ok) { e.preventDefault(); return false; }
         return true;
     });
-    
-    // Actualización periódica de disponibilidad (cada 10 segundos)
-    setInterval(function() {
-        verificarDisponibilidad();
-    }, 10000);
-    
-    function verificarDisponibilidad() {
+
+    // Verificación periódica de disponibilidad (cada 10 segundos)
+    setInterval(function () {
         fetch(`/reservas/funcion/{{ funcion.id }}/verificar-asientos/`)
-            .then(response => response.json())
+            .then(r => r.json())
             .then(data => {
-                if (data.success) {
-                    const ocupadosNuevos = data.asientos_ocupados;
-                    
-                    // Verificar si algún asiento seleccionado fue ocupado
-                    let conflicto = false;
-                    asientosSeleccionados.forEach(asiento => {
-                        if (ocupadosNuevos.includes(asiento)) {
-                            conflicto = true;
-                            asientosSeleccionados.delete(asiento);
-                        }
-                    });
-                    
-                    if (conflicto) {
-                        alert('⚠️ Algunos asientos que seleccionaste fueron reservados por otro usuario. Por favor, elegí otros.');
-                        actualizarResumen();
-                        location.reload();
-                    }
+                if (!data.success) return;
+                const ocupados = data.asientos_ocupados;
+                let conflicto = false;
+                asientosSeleccionados.forEach(a => {
+                    if (ocupados.includes(a)) { conflicto = true; asientosSeleccionados.delete(a); }
+                });
+                if (conflicto) {
+                    alert('⚠️ Algunos asientos que elegiste fueron reservados por otro usuario. Elegí otros.');
+                    actualizarResumen();
+                    location.reload();
                 }
             })
-            .catch(error => console.error('Error al verificar disponibilidad:', error));
-    }
+            .catch(() => {});
+    }, 10000);
 })();
 </script>
 
 <style>
-    /* Responsive */
+    @keyframes pulso {
+        0%, 100% { transform: scale(1); }
+        50% { transform: scale(1.05); }
+    }
     @media (max-width: 768px) {
-        .asiento {
-            width: 32px !important;
-            height: 32px !important;
-            font-size: 9px !important;
-        }
+        .asiento { width: 32px !important; height: 32px !important; font-size: 9px !important; }
     }
 </style>
 

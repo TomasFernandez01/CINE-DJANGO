@@ -6,6 +6,7 @@ from django.http import JsonResponse
 from datetime import timedelta
 from .models import Reserva
 from salas.models import Funcion
+from django.conf import settings
 
 try:
     from utils.email_utils import enviar_email_confirmacion_reserva, enviar_email_cancelacion_reserva
@@ -18,6 +19,14 @@ try:
     QR_DISPONIBLE = True
 except ImportError:
     QR_DISPONIBLE = False
+
+
+def get_max_asientos():
+    return getattr(settings, 'MAX_ASIENTOS_POR_RESERVA', 6)
+ 
+ 
+def get_tiempo_limite():
+    return getattr(settings, 'TIEMPO_LIMITE_PAGO_MINUTOS', 15)
 
 # ============================================
 # VISTAS DE SELECCIÓN DE ASIENTOS
@@ -35,9 +44,38 @@ def seleccionar_asientos(request, funcion_id):
     if not funcion.disponible:
         messages.error(request, 'Esta función no está disponible.')
         return redirect('salas:lista_funciones')
-    
+
+    ############################################################################
+    # Guardar el momento en que el usuario entró a seleccionar asientos
+    # Esto define el inicio del contador de tiempo
+    clave_sesion = f'inicio_seleccion_{funcion_id}'
+    if clave_sesion not in request.session:
+        request.session[clave_sesion] = timezone.now().isoformat()
+ 
+    inicio_seleccion_iso = request.session[clave_sesion]
+    tiempo_limite = get_tiempo_limite()
+ 
+    # Calcular segundos restantes desde que entró a la página
+    from datetime import datetime
+    inicio_dt = datetime.fromisoformat(inicio_seleccion_iso)
+    # Hacer aware si es naive
+    if timezone.is_naive(inicio_dt):
+        inicio_dt = timezone.make_aware(inicio_dt)
+ 
+    tiempo_transcurrido = (timezone.now() - inicio_dt).total_seconds()
+    segundos_restantes = max(0, int(tiempo_limite * 60 - tiempo_transcurrido))
+ 
+    # Si ya expiró antes de confirmar, reiniciar sesión y avisar
+    if segundos_restantes <= 0:
+        del request.session[clave_sesion]
+        messages.warning(request, '⏰ El tiempo expiró. El contador se reinició.')
+        request.session[clave_sesion] = timezone.now().isoformat()
+        segundos_restantes = tiempo_limite * 60
+    ############################################################################
+
     asientos_ocupados = funcion.asientos_ocupados()
     layout = funcion.sala.layout_asientos()
+    max_asientos = get_max_asientos()
     
     contexto = {
         'funcion': funcion,
@@ -45,6 +83,9 @@ def seleccionar_asientos(request, funcion_id):
         'layout': layout,
         'asientos_ocupados': asientos_ocupados,
         'asientos_disponibles': funcion.asientos_disponibles(),
+        'max_asientos': max_asientos,
+        'tiempo_limite_minutos': tiempo_limite,
+        'segundos_restantes': segundos_restantes,
     }
     
     return render(request, 'reservas/seleccionar_asientos.html', contexto)
@@ -57,57 +98,83 @@ def confirmar_reserva_con_asientos(request, funcion_id):
         return redirect('reservas:seleccionar_asientos', funcion_id=funcion_id)
     
     funcion = get_object_or_404(Funcion, id=funcion_id)
-    
     asientos_seleccionados = request.POST.get('asientos_seleccionados', '')
-    
+    max_asientos = get_max_asientos()
+    tiempo_limite = get_tiempo_limite()
+
+
     if not asientos_seleccionados:
         messages.error(request, 'Debes seleccionar al menos un asiento.')
         return redirect('reservas:seleccionar_asientos', funcion_id=funcion_id)
     
     asientos_lista = asientos_seleccionados.split(',')
     cantidad = len(asientos_lista)
-    
+    ################################################################################
+    """
+    # Validar cantidad
+    if cantidad < 1 or cantidad > max_asientos:
+        messages.error(request, f'Debés seleccionar entre 1 y {max_asientos} asientos.')
+        return redirect('reservas:seleccionar_asientos', funcion_id=funcion_id)
+ 
+    # Validar disponibilidad
+    asientos_ocupados = funcion.asientos_ocupados()
+    for asiento in asientos_lista:
+        if asiento in asientos_ocupados:
+            messages.error(request, f'El asiento {asiento} ya no está disponible.')
+            return redirect('reservas:seleccionar_asientos', funcion_id=funcion_id)
+    """
     # VALIDACIÓN: Verificar que los asientos estén disponibles
     asientos_ocupados = funcion.asientos_ocupados()
-    
     for asiento in asientos_lista:
         if asiento in asientos_ocupados:
             messages.error(request, f'El asiento {asiento} ya no está disponible. Por favor, seleccioná otros asientos.')
             return redirect('reservas:seleccionar_asientos', funcion_id=funcion_id)
-    
-    if cantidad < 1 or cantidad > 4:
-        messages.error(request, 'Debes seleccionar entre 1 y 4 asientos.')
+                        # FIJARSE ACA QUE LA CANTIDAD DEBE IR PRIMERO 
+    # Validar cantidad
+    if cantidad < 1 or cantidad > max_asientos:
+        messages.error(request, f'Debés seleccionar entre 1 y {max_asientos} asientos.')
         return redirect('reservas:seleccionar_asientos', funcion_id=funcion_id)
+    ################################################################################
+
+    # Calcular fecha_limite_pago desde el inicio de la sesión de selección
+    clave_sesion = f'inicio_seleccion_{funcion_id}'
+    fecha_limite_pago = None
+
+    if clave_sesion in request.session:
+        from datetime import datetime
+        inicio_iso = request.session.pop(clave_sesion)
+        inicio_dt = datetime.fromisoformat(inicio_iso)
+        if timezone.is_naive(inicio_dt):
+            inicio_dt = timezone.make_aware(inicio_dt)
+        fecha_limite_calculada = inicio_dt + timedelta(minutes=tiempo_limite)
+        # Garantizar al menos 1 minuto para confirmar
+        fecha_limite_pago = max(fecha_limite_calculada, timezone.now() + timedelta(minutes=1))
+    else:
+        fecha_limite_pago = timezone.now() + timedelta(minutes=tiempo_limite)
+
     
     # Crear la reserva con los asientos seleccionados
     reserva = Reserva.objects.create(
         usuario=request.user,
         funcion=funcion,
         cantidad_entradas=cantidad,
-        asientos_seleccionados=asientos_seleccionados
+        asientos_seleccionados=asientos_seleccionados,
+        fecha_limite_pago=fecha_limite_pago,
     )
     
+    msg_base = (
+        f'✅ Reserva creada. Asientos: {reserva.asientos_formateados()}. '
+        f'Código: {reserva.codigo_reserva}. '
+        f'Tenés {tiempo_limite} minutos en total para completar el pago.'
+    )
     if EMAIL_DISPONIBLE:
         try:
             enviar_email_confirmacion_reserva(reserva, request)
-            messages.success(
-                request, 
-                f'✅ Reserva creada exitosamente. Asientos: {reserva.asientos_formateados()}. '
-                f'Código: {reserva.codigo_reserva}. Tenés 4 minutos para completar el pago.'
-            )
+            messages.success(request, msg_base)
         except Exception:
-            messages.success(
-                request,
-                f'✅ Reserva creada exitosamente. Asientos: {reserva.asientos_formateados()}. '
-                f'Código: {reserva.codigo_reserva}. Tenés 4 minutos para completar el pago.'
-            )
+            messages.success(request, msg_base)
     else:
-        messages.success(
-            request,
-            f'✅ Reserva creada exitosamente. Asientos: {reserva.asientos_formateados()}. '
-            f'Código: {reserva.codigo_reserva}. Tenés 4 minutos para completar el pago.'
-        )
-    
+        messages.success(request, msg_base)
     return redirect('reservas:detalle_reserva', reserva_id=reserva.id)
 
 

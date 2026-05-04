@@ -3,6 +3,10 @@ from django.contrib.auth.models import User
 from django.utils import timezone
 from datetime import timedelta
 from salas.models import Funcion
+from django.conf import settings
+
+def get_tiempo_limite():
+    return getattr(settings, 'TIEMPO_LIMITE_PAGO_MINUTOS', 15)
 
 class Reserva(models.Model):
     ESTADO_CHOICES = [
@@ -81,11 +85,14 @@ class Reserva(models.Model):
             return None
         
         ahora = timezone.now()
+
         if ahora >= self.fecha_limite_pago:
             return 0
         
-        delta = self.fecha_limite_pago - ahora
-        return int(delta.total_seconds())
+        return int((self.fecha_limite_pago - ahora).total_seconds())
+        #antes
+        #delta = self.fecha_limite_pago - ahora
+        #return int(delta.total_seconds())
     
     def tiempo_restante_formato(self):
         """Retorna el tiempo restante en formato legible (ej: '14:32')"""
@@ -144,18 +151,27 @@ class Reserva(models.Model):
             self.codigo_reserva = ''.join(random.choices(string.ascii_uppercase + string.digits, k=10))
         
         # NUEVO: Establecer fecha límite de pago al crear la reserva
-        if not self.pk and not self.fecha_limite_pago:
+        #if not self.pk and not self.fecha_limite_pago:
             # 15 minutos desde ahora para pagar
-            self.fecha_limite_pago = timezone.now() + timedelta(minutes=5)
-        
+            #self.fecha_limite_pago = timezone.now() + timedelta(minutes=5)
         # NUEVO: Validar que la cantidad de asientos coincida
+        #if self.asientos_seleccionados:
+            #cantidad_seleccionados = len(self.asientos_seleccionados.split(','))
+            #if cantidad_seleccionados != self.cantidad_entradas:
+                #self.cantidad_entradas = cantidad_seleccionados
+
+        # Establecer fecha límite usando la constante de settings
+        # Si se pasa fecha_limite_pago desde la view (calculada desde inicio de selección) se respeta,
+        # si no existe, se calcula desde ahora como fallback
+        if not self.pk and not self.fecha_limite_pago:
+            self.fecha_limite_pago = timezone.now() + timedelta(minutes=get_tiempo_limite()) 
+        # Sincronizar cantidad_entradas con asientos_seleccionados
         if self.asientos_seleccionados:
             cantidad_seleccionados = len(self.asientos_seleccionados.split(','))
             if cantidad_seleccionados != self.cantidad_entradas:
                 self.cantidad_entradas = cantidad_seleccionados
 
         super().save(*args, **kwargs)
-
 
     class Meta:
         verbose_name = 'Reserva'
