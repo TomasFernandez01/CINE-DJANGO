@@ -209,6 +209,9 @@
                     <li>
                         <a href="{% url 'pagos:verificador_qr' %}">📱 Verificador QR</a>
                     </li>
+                    <li>
+                        <a href="{% url 'pagos:estadisticas_staff' %}">📊 Estadísticas</a>
+                    </li>
                 {% endif %}
             {% else %}
                 <li style="margin-left: auto;"><a href="{% url 'usuarios:login' %}">Iniciar Sesión</a></li>

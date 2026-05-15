@@ -12,4 +12,7 @@ urlpatterns = [
     path('verificador/', views.verificador_qr, name='verificador_qr'),
     path('api/verificar-qr/', views.verificar_qr_api, name='verificar_qr_api'),
     path('api/marcar-escaneado/', views.marcar_qr_escaneado, name='marcar_qr_escaneado'),
+
+    # Estadísticas staff
+    path('estadisticas/', views.estadisticas_staff, name='estadisticas_staff'),
 ]
