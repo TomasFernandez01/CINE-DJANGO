@@ -1,0 +1,213 @@
+{% extends 'panel/base_panel.html' %}
+
+{% block titulo %}Reserva {{ reserva.codigo_reserva }} — Panel{% endblock %}
+
+{% block breadcrumb %}
+<span class="sep">›</span>
+<a href="{% url 'panel:reservas_lista' %}">Reservas</a>
+<span class="sep">›</span>
+<span class="current">{{ reserva.codigo_reserva }}</span>
+{% endblock %}
+
+{% block contenido %}
+
+<div style="display:flex; justify-content:space-between; align-items:center;
+            flex-wrap:wrap; gap:1rem; margin-bottom:1.5rem;">
+    <div>
+        <h1 style="font-size:1.4rem; color:#1a1a2e; margin:0; font-family:monospace;">
+            {{ reserva.codigo_reserva }}
+        </h1>
+        <div style="margin-top:0.35rem;">
+            <span class="badge badge-{{ reserva.estado }}" style="font-size:0.85rem;">
+                {{ reserva.get_estado_display }}
+            </span>
+        </div>
+    </div>
+    <a href="{% url 'admin:reservas_reserva_change' reserva.id %}"
+       class="btn btn-primary">✏️ Editar en admin</a>
+</div>
+
+<div style="display:grid; grid-template-columns:1fr 1fr; gap:1.5rem;">
+
+    <!-- Datos de la reserva -->
+    <div style="display:flex; flex-direction:column; gap:1rem;">
+
+        <div class="card">
+            <div class="card-header"><h3>🎫 Datos de la Reserva</h3></div>
+            <div class="card-body">
+                <div style="display:flex; flex-direction:column; gap:0.85rem;">
+                    <div style="display:grid; grid-template-columns:140px 1fr; gap:0.5rem; align-items:start;">
+                        <span style="font-size:0.75rem; color:#999; text-transform:uppercase; padding-top:2px;">
+                            Usuario
+                        </span>
+                        <div>
+                            <div style="font-weight:600;">
+                                {{ reserva.usuario.get_full_name|default:reserva.usuario.username }}
+                            </div>
+                            <div style="font-size:0.8rem; color:#999;">{{ reserva.usuario.email }}</div>
+                        </div>
+                    </div>
+                    <div style="display:grid; grid-template-columns:140px 1fr; gap:0.5rem;">
+                        <span style="font-size:0.75rem; color:#999; text-transform:uppercase;">Película</span>
+                        <span style="font-weight:600;">{{ reserva.funcion.pelicula.titulo }}</span>
+                    </div>
+                    <div style="display:grid; grid-template-columns:140px 1fr; gap:0.5rem;">
+                        <span style="font-size:0.75rem; color:#999; text-transform:uppercase;">Sala</span>
+                        <span>{{ reserva.funcion.sala.nombre }}</span>
+                    </div>
+                    <div style="display:grid; grid-template-columns:140px 1fr; gap:0.5rem;">
+                        <span style="font-size:0.75rem; color:#999; text-transform:uppercase;">Función</span>
+                        <span style="font-weight:600;">
+                            {{ reserva.funcion.fecha_hora|date:"d/m/Y H:i" }} hs
+                        </span>
+                    </div>
+                    <div style="display:grid; grid-template-columns:140px 1fr; gap:0.5rem;">
+                        <span style="font-size:0.75rem; color:#999; text-transform:uppercase;">Entradas</span>
+                        <span style="font-weight:600;">{{ reserva.cantidad_entradas }}</span>
+                    </div>
+                    {% if reserva.asientos_seleccionados %}
+                    <div style="display:grid; grid-template-columns:140px 1fr; gap:0.5rem; align-items:start;">
+                        <span style="font-size:0.75rem; color:#999; text-transform:uppercase; padding-top:4px;">
+                            Asientos
+                        </span>
+                        <div style="display:flex; gap:0.4rem; flex-wrap:wrap;">
+                            {% for asiento in reserva.lista_asientos %}
+                            <span style="background:#1a1a2e; color:white; padding:0.2rem 0.55rem;
+                                         border-radius:4px; font-size:0.8rem; font-weight:700;">
+                                {{ asiento }}
+                            </span>
+                            {% endfor %}
+                        </div>
+                    </div>
+                    {% endif %}
+                    <div style="border-top:1px solid #f0f0f0; padding-top:0.85rem;
+                                display:grid; grid-template-columns:140px 1fr; gap:0.5rem;">
+                        <span style="font-size:0.75rem; color:#999; text-transform:uppercase;">Total</span>
+                        <span style="font-size:1.4rem; font-weight:700; color:#27ae60;">
+                            ${{ reserva.total|floatformat:0 }}
+                        </span>
+                    </div>
+                    <div style="display:grid; grid-template-columns:140px 1fr; gap:0.5rem;">
+                        <span style="font-size:0.75rem; color:#999; text-transform:uppercase;">
+                            Fecha reserva
+                        </span>
+                        <span style="color:#666;">{{ reserva.fecha_reserva|date:"d/m/Y H:i" }}</span>
+                    </div>
+                    {% if reserva.fecha_limite_pago %}
+                    <div style="display:grid; grid-template-columns:140px 1fr; gap:0.5rem;">
+                        <span style="font-size:0.75rem; color:#999; text-transform:uppercase;">
+                            Límite de pago
+                        </span>
+                        <span style="color:#666;">{{ reserva.fecha_limite_pago|date:"d/m/Y H:i" }}</span>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <!-- Links rápidos -->
+        <div style="display:flex; gap:0.75rem; flex-wrap:wrap;">
+            <a href="{% url 'panel:funciones_detalle' reserva.funcion.id %}"
+               class="btn btn-ghost" style="font-size:0.85rem;">
+                📅 Ver función
+            </a>
+            {% if reserva.usuario %}
+            <a href="{% url 'panel:usuarios_detalle' reserva.usuario.id %}"
+               class="btn btn-ghost" style="font-size:0.85rem;">
+                👤 Ver usuario
+            </a>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- Pago -->
+    <div class="card">
+        <div class="card-header"><h3>💳 Información de Pago</h3></div>
+        <div class="card-body">
+            {% if pago %}
+            <div style="display:flex; flex-direction:column; gap:0.85rem;">
+                <div style="background:#d4edda; padding:0.85rem; border-radius:8px; text-align:center;">
+                    <div style="font-size:0.75rem; color:#155724; text-transform:uppercase; letter-spacing:1px;">
+                        Transacción
+                    </div>
+                    <div style="font-size:1.2rem; font-weight:700; color:#155724; font-family:monospace;">
+                        {{ pago.numero_transaccion }}
+                    </div>
+                </div>
+                <div style="display:grid; grid-template-columns:1fr 1fr; gap:0.75rem;">
+                    <div>
+                        <div style="font-size:0.75rem; color:#999; margin-bottom:0.2rem;">ESTADO</div>
+                        <span class="badge badge-{{ pago.estado }}">{{ pago.get_estado_display }}</span>
+                    </div>
+                    <div>
+                        <div style="font-size:0.75rem; color:#999; margin-bottom:0.2rem;">MONTO</div>
+                        <div style="font-size:1.3rem; font-weight:700; color:#27ae60;">
+                            ${{ pago.monto|floatformat:0 }}
+                        </div>
+                    </div>
+                    <div>
+                        <div style="font-size:0.75rem; color:#999; margin-bottom:0.2rem;">MÉTODO</div>
+                        <div style="font-weight:600;">{{ pago.get_metodo_pago_display }}</div>
+                    </div>
+                    <div>
+                        <div style="font-size:0.75rem; color:#999; margin-bottom:0.2rem;">FECHA</div>
+                        <div>{{ pago.fecha_pago|date:"d/m/Y H:i" }}</div>
+                    </div>
+                    {% if pago.ultimos_4_digitos %}
+                    <div>
+                        <div style="font-size:0.75rem; color:#999; margin-bottom:0.2rem;">TARJETA</div>
+                        <div>**** {{ pago.ultimos_4_digitos }}</div>
+                    </div>
+                    {% endif %}
+                </div>
+
+                <!-- QR -->
+                <div style="border-top:1px solid #f0f0f0; padding-top:0.85rem;">
+                    <div style="font-size:0.75rem; color:#999; text-transform:uppercase;
+                                margin-bottom:0.5rem;">
+                        Código QR
+                    </div>
+                    {% if pago.codigo_qr %}
+                    <div style="font-family:monospace; font-size:0.85rem; background:#f8f9fa;
+                                padding:0.5rem 0.75rem; border-radius:6px; margin-bottom:0.5rem;">
+                        {{ pago.codigo_qr }}
+                    </div>
+                    <div style="display:flex; align-items:center; gap:0.5rem;">
+                        {% if pago.qr_escaneado %}
+                        <span style="background:#d4edda; color:#155724; padding:0.3rem 0.75rem;
+                                     border-radius:20px; font-size:0.8rem; font-weight:600;">
+                            ✅ Escaneado
+                        </span>
+                        <span style="color:#999; font-size:0.8rem;">
+                            {{ pago.fecha_escaneo|date:"d/m H:i" }}
+                            {% if pago.escaneado_por %} por {{ pago.escaneado_por }}{% endif %}
+                        </span>
+                        {% else %}
+                        <span style="background:#fff3cd; color:#856404; padding:0.3rem 0.75rem;
+                                     border-radius:20px; font-size:0.8rem; font-weight:600;">
+                            ⏳ Pendiente de escaneo
+                        </span>
+                        {% endif %}
+                    </div>
+                    {% else %}
+                    <span style="color:#999; font-size:0.85rem;">QR no generado</span>
+                    {% endif %}
+                </div>
+            </div>
+            {% else %}
+            <div style="text-align:center; padding:2rem; color:#999;">
+                <div style="font-size:2rem; margin-bottom:0.5rem;">💳</div>
+                Esta reserva no tiene pago registrado aún.
+                {% if reserva.estado == 'pendiente' %}
+                <div style="margin-top:0.5rem; font-size:0.85rem; color:#f39c12;">
+                    Esperando que el usuario complete el pago.
+                </div>
+                {% endif %}
+            </div>
+            {% endif %}
+        </div>
+    </div>
+
+</div>
+
+{% endblock %}

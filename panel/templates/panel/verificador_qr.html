@@ -1,0 +1,299 @@
+{% extends 'panel/base_panel.html' %}
+
+{% block titulo %}Verificador QR — Panel{% endblock %}
+
+{% block breadcrumb %}
+<span class="sep">›</span>
+<span class="current">Verificador QR</span>
+{% endblock %}
+
+{% block contenido %}
+
+<div style="max-width:640px; margin:0 auto;">
+
+    <div style="display:flex; justify-content:space-between; align-items:center;
+                flex-wrap:wrap; gap:1rem; margin-bottom:1.5rem;">
+        <h1 style="font-size:1.4rem; color:#1a1a2e; margin:0;">📱 Verificador de QR</h1>
+        <a href="{% url 'panel:pagos_estadisticas' %}" class="btn btn-ghost">
+            📊 Ver estadísticas
+        </a>
+    </div>
+
+    <!-- Indicador de estado -->
+    <div id="statusIndicator"
+         style="background:#6c757d; padding:1rem 1.5rem; border-radius:10px;
+                margin-bottom:1.5rem; text-align:center; color:white;
+                font-weight:700; font-size:1.05rem; transition:background 0.3s;">
+        Esperando código...
+    </div>
+
+    <!-- Verificación manual -->
+    <div class="card" style="margin-bottom:1.25rem;">
+        <div class="card-header"><h3>🔍 Ingresar Código Manualmente</h3></div>
+        <div class="card-body">
+            <div style="display:flex; gap:0.75rem;">
+                <input type="text" id="codigoQR" placeholder="CINE-XXXXXXXX-YYYYYYYYYY"
+                       class="input"
+                       style="flex:1; font-family:monospace; font-size:1rem; letter-spacing:1px;"
+                       autofocus>
+                <button onclick="verificarCodigo()" class="btn btn-dark" style="white-space:nowrap;">
+                    Verificar
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Escáner de cámara -->
+    <div class="card" style="margin-bottom:1.25rem;">
+        <div class="card-header"><h3>📷 Escanear con Cámara</h3></div>
+        <div class="card-body" style="text-align:center;">
+            <button id="btnEscanear" onclick="iniciarEscaneo()"
+                    class="btn btn-success" style="font-size:1rem; padding:0.75rem 2rem;">
+                📷 Iniciar Escáner de Cámara
+            </button>
+            <div id="videoContainer" style="display:none; margin-top:1rem;">
+                <video id="video" style="width:100%; max-width:400px;
+                                         border-radius:8px; box-shadow:0 4px 12px rgba(0,0,0,0.2);">
+                </video>
+                <div style="margin-top:0.75rem;">
+                    <button onclick="detenerEscaneo()" class="btn btn-danger">
+                        ⏹️ Detener
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Resultado -->
+    <div id="resultado" style="display:none; margin-bottom:1.25rem;"></div>
+
+    <!-- Historial -->
+    <div class="card">
+        <div class="card-header">
+            <h3>📋 Historial de Esta Sesión</h3>
+            <button onclick="limpiarHistorial()" class="btn btn-ghost"
+                    style="font-size:0.75rem;">Limpiar</button>
+        </div>
+        <div id="historial">
+            <div style="padding:2rem; text-align:center; color:#999; font-size:0.9rem;">
+                No hay escaneos en esta sesión
+            </div>
+        </div>
+    </div>
+</div>
+
+<script src="https://unpkg.com/html5-qrcode"></script>
+<script>
+let html5QrCode = null;
+let historialItems = [];
+
+async function verificarCodigo() {
+    const input = document.getElementById('codigoQR');
+    const codigo = input.value.trim();
+    if (!codigo) { mostrarStatus('Ingresá un código', '#f39c12'); return; }
+
+    mostrarStatus('Verificando...', '#3498db');
+
+    try {
+        const fd = new FormData();
+        fd.append('codigo_qr', codigo);
+
+        const res = await fetch('{% url "pagos:verificar_qr_api" %}', {
+            method: 'POST', body: fd
+        });
+        const data = await res.json();
+
+        if (data.success && data.valido) {
+            mostrarResultadoValido(data.reserva, codigo);
+            agregarHistorial(codigo, data.reserva, true);
+        } else {
+            mostrarResultadoInvalido(data.error || 'Código inválido', data);
+            agregarHistorial(codigo, null, false, data.error);
+        }
+
+        input.value = '';
+        input.focus();
+
+    } catch (e) {
+        mostrarStatus('Error de conexión', '#e74c3c');
+    }
+}
+
+function mostrarResultadoValido(reserva, codigo) {
+    mostrarStatus('✅ Código Válido — Listo para ingresar', '#27ae60');
+    const r = document.getElementById('resultado');
+    r.style.display = 'block';
+    r.innerHTML = `
+        <div style="background:#d4edda; padding:1.5rem; border-radius:10px;
+                    border-left:4px solid #27ae60;">
+            <h2 style="margin:0 0 1rem; color:#155724; font-size:1.3rem;">
+                ✅ ENTRADA VÁLIDA
+            </h2>
+            <div style="background:white; padding:1.25rem; border-radius:8px; margin-bottom:1rem;">
+                <div style="display:grid; grid-template-columns:1fr 1fr; gap:0.75rem; font-size:0.9rem;">
+                    <div>
+                        <div style="font-size:0.7rem; color:#999; text-transform:uppercase;">Película</div>
+                        <div style="font-weight:700; font-size:1.1rem;">${reserva.pelicula}</div>
+                    </div>
+                    <div>
+                        <div style="font-size:0.7rem; color:#999; text-transform:uppercase;">Sala</div>
+                        <div style="font-weight:600;">${reserva.sala}</div>
+                    </div>
+                    <div>
+                        <div style="font-size:0.7rem; color:#999; text-transform:uppercase;">Fecha y Hora</div>
+                        <div style="font-weight:600;">${reserva.fecha_hora}</div>
+                    </div>
+                    <div>
+                        <div style="font-size:0.7rem; color:#999; text-transform:uppercase;">Entradas</div>
+                        <div style="font-weight:600;">${reserva.cantidad_entradas}</div>
+                    </div>
+                    ${reserva.asientos ? `
+                    <div style="grid-column:1/-1;">
+                        <div style="font-size:0.7rem; color:#999; text-transform:uppercase;">Asientos</div>
+                        <div style="font-weight:600;">${reserva.asientos}</div>
+                    </div>` : ''}
+                    <div>
+                        <div style="font-size:0.7rem; color:#999; text-transform:uppercase;">Usuario</div>
+                        <div>${reserva.usuario}</div>
+                    </div>
+                    <div>
+                        <div style="font-size:0.7rem; color:#999; text-transform:uppercase;">Código</div>
+                        <div style="font-family:monospace;">${reserva.codigo}</div>
+                    </div>
+                </div>
+            </div>
+            <button onclick="marcarComoEscaneado('${codigo}')"
+                    style="width:100%; padding:0.9rem; background:#27ae60; color:white;
+                           border:none; border-radius:8px; font-weight:700;
+                           font-size:1.05rem; cursor:pointer;">
+                ✅ Confirmar Ingreso
+            </button>
+        </div>`;
+    r.scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
+
+function mostrarResultadoInvalido(mensaje, data) {
+    mostrarStatus('❌ Código No Válido', '#e74c3c');
+    const r = document.getElementById('resultado');
+    r.style.display = 'block';
+    r.innerHTML = `
+        <div style="background:#f8d7da; padding:1.5rem; border-radius:10px;
+                    border-left:4px solid #e74c3c; text-align:center;">
+            <h2 style="margin:0 0 0.75rem; color:#721c24;">❌ ENTRADA NO VÁLIDA</h2>
+            <p style="color:#721c24; font-size:1.05rem; font-weight:600; margin:0;">${mensaje}</p>
+            ${data.ya_escaneado && data.fecha_escaneo
+                ? `<p style="color:#999; font-size:0.85rem; margin:0.75rem 0 0;">
+                    Escaneado el: ${new Date(data.fecha_escaneo).toLocaleString('es-AR')}</p>`
+                : ''}
+        </div>`;
+    r.scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
+
+async function marcarComoEscaneado(codigo) {
+    mostrarStatus('Registrando ingreso...', '#3498db');
+    try {
+        const fd = new FormData();
+        fd.append('codigo_qr', codigo);
+        fd.append('usuario', '{{ user.username }}');
+
+        const res = await fetch('{% url "pagos:marcar_qr_escaneado" %}', {
+            method: 'POST', body: fd
+        });
+        const data = await res.json();
+
+        if (data.success) {
+            mostrarStatus('✅ Ingreso Registrado Correctamente', '#27ae60');
+            document.getElementById('resultado').innerHTML = `
+                <div style="background:#d4edda; padding:1.5rem; border-radius:10px;
+                            text-align:center; border-left:4px solid #27ae60;">
+                    <h2 style="margin:0 0 0.5rem; color:#155724; font-size:1.3rem;">
+                        ✅ Ingreso Registrado
+                    </h2>
+                    <p style="margin:0; color:#155724;">El cliente puede ingresar a la sala</p>
+                </div>`;
+            setTimeout(() => {
+                document.getElementById('resultado').style.display = 'none';
+                document.getElementById('codigoQR').focus();
+                mostrarStatus('Esperando código...', '#6c757d');
+            }, 3000);
+        } else {
+            mostrarStatus('❌ Error al registrar', '#e74c3c');
+            alert(data.error);
+        }
+    } catch (e) {
+        mostrarStatus('Error de conexión', '#e74c3c');
+    }
+}
+
+function iniciarEscaneo() {
+    document.getElementById('videoContainer').style.display = 'block';
+    html5QrCode = new Html5Qrcode("video");
+    html5QrCode.start(
+        { facingMode: "environment" },
+        { fps: 10, qrbox: 250 },
+        (decoded) => {
+            document.getElementById('codigoQR').value = decoded;
+            detenerEscaneo();
+            verificarCodigo();
+        },
+        () => {}
+    ).catch(() => {
+        alert('No se pudo acceder a la cámara');
+        document.getElementById('videoContainer').style.display = 'none';
+    });
+}
+
+function detenerEscaneo() {
+    if (html5QrCode) {
+        html5QrCode.stop().then(() => {
+            document.getElementById('videoContainer').style.display = 'none';
+        });
+    }
+}
+
+function mostrarStatus(msg, color) {
+    const el = document.getElementById('statusIndicator');
+    el.style.background = color;
+    el.textContent = msg;
+}
+
+function agregarHistorial(codigo, reserva, valido, error = null) {
+    const h = document.getElementById('historial');
+    if (historialItems.length === 0) h.innerHTML = '';
+
+    historialItems.unshift({ codigo, reserva, valido, error, hora: new Date() });
+
+    const item = document.createElement('div');
+    item.style.cssText = `padding:0.75rem 1.25rem; border-bottom:1px solid #f0f0f0;
+        display:flex; justify-content:space-between; align-items:center;
+        background:${valido ? 'rgba(39,174,96,0.05)' : 'rgba(231,76,60,0.05)'};`;
+    item.innerHTML = `
+        <div>
+            <div style="font-weight:700; color:${valido ? '#27ae60' : '#e74c3c'}; font-size:0.9rem;">
+                ${valido ? '✅ VÁLIDO' : '❌ INVÁLIDO'}
+            </div>
+            <div style="font-family:monospace; font-size:0.8rem; color:#666;">${codigo}</div>
+            ${reserva ? `<div style="font-size:0.8rem; color:#555; margin-top:0.2rem;">
+                ${reserva.pelicula} — ${reserva.sala}</div>` : ''}
+            ${error ? `<div style="font-size:0.8rem; color:#e74c3c;">${error}</div>` : ''}
+        </div>
+        <div style="font-size:0.75rem; color:#999; text-align:right;">
+            ${new Date().toLocaleTimeString('es-AR', {hour:'2-digit', minute:'2-digit'})}
+        </div>`;
+    h.insertAdjacentElement('afterbegin', item);
+}
+
+function limpiarHistorial() {
+    historialItems = [];
+    document.getElementById('historial').innerHTML = `
+        <div style="padding:2rem; text-align:center; color:#999; font-size:0.9rem;">
+            No hay escaneos en esta sesión
+        </div>`;
+}
+
+document.getElementById('codigoQR').addEventListener('keypress', (e) => {
+    if (e.key === 'Enter') verificarCodigo();
+});
+</script>
+
+{% endblock %}

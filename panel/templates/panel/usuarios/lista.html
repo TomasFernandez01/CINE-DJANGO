@@ -1,0 +1,126 @@
+{% extends 'panel/base_panel.html' %}
+
+{% block titulo %}Usuarios — Panel{% endblock %}
+
+{% block breadcrumb %}
+<span class="sep">›</span>
+<span class="current">Usuarios</span>
+{% endblock %}
+
+{% block contenido %}
+
+<div style="display:flex; justify-content:space-between; align-items:center;
+            flex-wrap:wrap; gap:1rem; margin-bottom:1.5rem;">
+    <div>
+        <h1 style="font-size:1.4rem; color:#1a1a2e; margin:0;">👥 Usuarios</h1>
+        <div style="font-size:0.8rem; color:#f39c12; margin-top:0.2rem;">
+            🔒 Solo visible para administradores
+        </div>
+    </div>
+    <a href="{% url 'admin:auth_user_add' %}" class="btn btn-success">+ Agregar usuario</a>
+</div>
+
+<!-- Filtros -->
+<div class="card" style="margin-bottom:1.25rem;">
+    <div class="card-body" style="padding:1rem 1.25rem;">
+        <form method="get" style="display:flex; gap:0.75rem; flex-wrap:wrap; align-items:center;">
+            <input type="text" name="q" value="{{ busqueda }}" class="input"
+                   placeholder="Username, nombre o email..."
+                   style="flex:1; min-width:200px;">
+            <select name="tipo" class="select">
+                <option value="">Todos</option>
+                <option value="normales"  {% if tipo == 'normales'  %}selected{% endif %}>Usuarios normales</option>
+                <option value="staff"     {% if tipo == 'staff'     %}selected{% endif %}>Staff</option>
+                <option value="superuser" {% if tipo == 'superuser' %}selected{% endif %}>Superusuarios</option>
+            </select>
+            <button type="submit" class="btn btn-dark">Filtrar</button>
+            <a href="{% url 'panel:usuarios_lista' %}" class="btn btn-ghost">Limpiar</a>
+        </form>
+    </div>
+</div>
+
+<div style="font-size:0.85rem; color:#666; margin-bottom:0.75rem;">
+    {{ total }} usuario(s)
+</div>
+
+<div class="card">
+    {% if usuarios %}
+    <table class="tabla">
+        <thead>
+            <tr>
+                <th>Usuario</th>
+                <th>Nombre</th>
+                <th>Email</th>
+                <th>Rol</th>
+                <th>Reservas</th>
+                <th>Miembro desde</th>
+                <th></th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for u in usuarios %}
+            <tr>
+                <td>
+                    <a href="{% url 'panel:usuarios_detalle' u.id %}"
+                       style="font-weight:700; color:#1a1a2e; text-decoration:none;">
+                        {{ u.username }}
+                    </a>
+                </td>
+                <td style="color:#555;">
+                    {{ u.get_full_name|default:"—" }}
+                </td>
+                <td style="color:#666; font-size:0.85rem;">
+                    {{ u.email|default:"—" }}
+                </td>
+                <td>
+                    {% if u.is_superuser %}
+                    <span style="background:rgba(226,185,111,0.2); color:#c9973a;
+                                 padding:0.2rem 0.6rem; border-radius:20px;
+                                 font-size:0.75rem; font-weight:700;">
+                        Superusuario
+                    </span>
+                    {% elif u.is_staff %}
+                    <span style="background:#d4edda; color:#155724;
+                                 padding:0.2rem 0.6rem; border-radius:20px;
+                                 font-size:0.75rem; font-weight:700;">
+                        Staff
+                    </span>
+                    {% else %}
+                    <span style="background:#f0f0f0; color:#666;
+                                 padding:0.2rem 0.6rem; border-radius:20px;
+                                 font-size:0.75rem;">
+                        Usuario
+                    </span>
+                    {% endif %}
+                </td>
+                <td style="font-weight:600; text-align:center;">
+                    {{ u.reservas.count }}
+                </td>
+                <td style="color:#999; font-size:0.8rem;">
+                    {{ u.date_joined|date:"d/m/Y" }}
+                </td>
+                <td>
+                    <div style="display:flex; gap:0.4rem;">
+                        <a href="{% url 'panel:usuarios_detalle' u.id %}"
+                           class="btn btn-ghost" style="font-size:0.75rem; padding:0.3rem 0.7rem;">
+                            Ver
+                        </a>
+                        <a href="{% url 'admin:auth_user_change' u.id %}"
+                           class="btn btn-ghost" style="font-size:0.75rem; padding:0.3rem 0.7rem;"
+                           title="Editar en admin">
+                            ✏️
+                        </a>
+                    </div>
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    {% else %}
+    <div class="card-body" style="text-align:center; padding:3rem; color:#999;">
+        No se encontraron usuarios.
+    </div>
+    {% endif %}
+</div>
+
+{% endblock %}

@@ -202,10 +202,19 @@ def funciones_lista(request):
     elif filtro == 'todas':
         funciones = funciones.order_by('-fecha_hora')
 
+    # NUEVO
+    filtros_tabs = [
+        ('hoy',      '📅 Hoy'),
+        ('proximas', '⏭️ Próximas'),
+        ('pasadas',  '⏮️ Pasadas'),
+        ('todas',    '📋 Todas'),
+        ]
+
     contexto = {
         'funciones': funciones[:50],
         'filtro': filtro,
         'total': funciones.count(),
+        'filtros_tabs': filtros_tabs,
         'seccion_activa': 'funciones',
     }
     return render(request, 'panel/funciones/lista.html', contexto)

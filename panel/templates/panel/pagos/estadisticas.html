@@ -1,0 +1,167 @@
+{% extends 'panel/base_panel.html' %}
+
+{% block titulo %}Estadísticas — Panel{% endblock %}
+
+{% block breadcrumb %}
+<span class="sep">›</span>
+<a href="{% url 'panel:pagos_lista' %}">Pagos</a>
+<span class="sep">›</span>
+<span class="current">Estadísticas</span>
+{% endblock %}
+
+{% block contenido %}
+
+<div style="display:flex; justify-content:space-between; align-items:center;
+            flex-wrap:wrap; gap:1rem; margin-bottom:1.5rem;">
+    <h1 style="font-size:1.4rem; color:#1a1a2e; margin:0;">📊 Estadísticas</h1>
+    <span style="font-size:0.85rem; color:#666;">
+        Actualizado: {{ ahora|date:"d/m/Y H:i" }} hs
+    </span>
+</div>
+
+<!-- Stats -->
+<div class="stat-grid">
+    <div class="stat-card green">
+        <div class="stat-label">Recaudado hoy</div>
+        <div class="stat-value">${{ recaudado_hoy|floatformat:0 }}</div>
+        <div class="stat-sub">{{ entradas_hoy }} entradas vendidas</div>
+    </div>
+    <div class="stat-card blue">
+        <div class="stat-label">Total histórico</div>
+        <div class="stat-value">${{ total_recaudado|floatformat:0 }}</div>
+        <div class="stat-sub">todos los pagos aprobados</div>
+    </div>
+    <div class="stat-card purple">
+        <div class="stat-label">QR escaneados hoy</div>
+        <div class="stat-value">{{ qr_escaneados_hoy }}</div>
+        <div class="stat-sub">{{ qr_total }} en total histórico</div>
+    </div>
+    <div class="stat-card gold">
+        <div class="stat-label">QR pendientes</div>
+        <div class="stat-value">{{ qr_pendientes }}</div>
+        <div class="stat-sub">entradas confirmadas sin escanear</div>
+    </div>
+</div>
+
+<!-- Funciones de hoy -->
+<div class="card" style="margin-bottom:1.5rem;">
+    <div class="card-header">
+        <h3>🎬 Funciones de Hoy — Ocupación</h3>
+    </div>
+    {% if funciones_con_stats %}
+    <table class="tabla">
+        <thead>
+            <tr>
+                <th>Película</th>
+                <th>Sala</th>
+                <th>Horario</th>
+                <th>Ocupación</th>
+                <th>QR Escaneados</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for item in funciones_con_stats %}
+            <tr>
+                <td style="font-weight:600;">{{ item.funcion.pelicula.titulo }}</td>
+                <td style="color:#666;">{{ item.funcion.sala.nombre }}</td>
+                <td style="font-weight:600;">{{ item.funcion.fecha_hora|date:"H:i" }} hs</td>
+                <td style="min-width:180px;">
+                    <div style="display:flex; align-items:center; gap:0.75rem;">
+                        <div style="flex:1;">
+                            <div class="ocupacion-bar">
+                                <div class="ocupacion-fill
+                                    {% if item.ocupacion_pct > 75 %}lleno
+                                    {% elif item.ocupacion_pct > 40 %}medio
+                                    {% endif %}"
+                                     style="width:{{ item.ocupacion_pct }}%;"></div>
+                            </div>
+                        </div>
+                        <span style="font-size:0.85rem; font-weight:600; white-space:nowrap;
+                                     color:{% if item.ocupacion_pct > 75 %}#e74c3c{% elif item.ocupacion_pct > 40 %}#f39c12{% else %}#27ae60{% endif %};">
+                            {{ item.entradas_vendidas }}/{{ item.capacidad }}
+                            ({{ item.ocupacion_pct }}%)
+                        </span>
+                    </div>
+                </td>
+                <td style="text-align:center; font-weight:700;">
+                    {{ item.qr_escaneados }}
+                    <span style="color:#999; font-weight:400; font-size:0.8rem;">
+                        / {{ item.entradas_vendidas }}
+                    </span>
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    {% else %}
+    <div class="card-body" style="text-align:center; color:#999; padding:2rem;">
+        No hay funciones programadas para hoy.
+    </div>
+    {% endif %}
+</div>
+
+<!-- Dos columnas -->
+<div style="display:grid; grid-template-columns:1fr 1fr; gap:1.5rem;">
+
+    <!-- Últimos pagos -->
+    <div class="card">
+        <div class="card-header">
+            <h3>💳 Últimos Pagos</h3>
+            <a href="{% url 'panel:pagos_lista' %}" class="btn btn-ghost"
+               style="font-size:0.75rem;">Ver todos</a>
+        </div>
+        {% for pago in ultimos_pagos %}
+        <div style="padding:0.75rem 1.25rem; border-bottom:1px solid #f0f0f0;
+                    display:flex; justify-content:space-between; align-items:center;">
+            <div>
+                <div style="font-weight:600; font-size:0.875rem;">
+                    {{ pago.reserva.usuario.get_full_name|default:pago.reserva.usuario.username }}
+                </div>
+                <div style="font-size:0.75rem; color:#999;">
+                    {{ pago.reserva.funcion.pelicula.titulo }} ·
+                    {{ pago.fecha_pago|date:"d/m H:i" }}
+                </div>
+            </div>
+            <div style="font-weight:700; color:#27ae60;">
+                ${{ pago.monto|floatformat:0 }}
+            </div>
+        </div>
+        {% empty %}
+        <div class="card-body" style="text-align:center; color:#999;">Sin pagos.</div>
+        {% endfor %}
+    </div>
+
+    <!-- Últimos escaneos -->
+    <div class="card">
+        <div class="card-header">
+            <h3>📱 Últimos Escaneos QR</h3>
+            <a href="{% url 'panel:verificador_qr' %}" class="btn btn-ghost"
+               style="font-size:0.75rem;">Ir al verificador</a>
+        </div>
+        {% for pago in ultimos_escaneos %}
+        <div style="padding:0.75rem 1.25rem; border-bottom:1px solid #f0f0f0;
+                    display:flex; justify-content:space-between; align-items:center;">
+            <div>
+                <div style="font-weight:600; font-size:0.875rem;">
+                    {{ pago.reserva.usuario.get_full_name|default:pago.reserva.usuario.username }}
+                </div>
+                <div style="font-size:0.75rem; color:#999;">
+                    {{ pago.reserva.funcion.pelicula.titulo }} ·
+                    Sala {{ pago.reserva.funcion.sala.nombre }}
+                </div>
+            </div>
+            <div style="text-align:right;">
+                <div style="color:#27ae60; font-weight:600; font-size:0.8rem;">✅ Ingresó</div>
+                <div style="color:#999; font-size:0.75rem;">
+                    {{ pago.fecha_escaneo|date:"H:i" }} hs
+                </div>
+            </div>
+        </div>
+        {% empty %}
+        <div class="card-body" style="text-align:center; color:#999;">Sin escaneos.</div>
+        {% endfor %}
+    </div>
+
+</div>
+
+{% endblock %}

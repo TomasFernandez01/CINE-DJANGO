@@ -1,0 +1,116 @@
+{% extends 'panel/base_panel.html' %}
+
+{% block titulo %}Funciones — Panel{% endblock %}
+
+{% block breadcrumb %}
+<span class="sep">›</span>
+<span class="current">Funciones</span>
+{% endblock %}
+
+{% block contenido %}
+
+<div style="display:flex; justify-content:space-between; align-items:center;
+            flex-wrap:wrap; gap:1rem; margin-bottom:1.5rem;">
+    <h1 style="font-size:1.4rem; color:#1a1a2e; margin:0;">📅 Funciones</h1>
+    <a href="{% url 'admin:salas_funcion_add' %}" class="btn btn-success">+ Agregar función</a>
+</div>
+
+<!-- Filtros por tipo -->
+<div style="display:flex; gap:0.5rem; margin-bottom:1.25rem; flex-wrap:wrap;">
+    {% for valor, label in filtros_tabs %}
+    <a href="?filtro={{ valor }}"
+       style="padding:0.5rem 1rem; border-radius:20px; text-decoration:none;
+              font-size:0.85rem; font-weight:600; transition:all 0.2s;
+              {% if filtro == valor %}
+                  background:#1a1a2e; color:white;
+              {% else %}
+                  background:white; color:#666;
+                  box-shadow:0 1px 4px rgba(0,0,0,0.1);
+              {% endif %}">
+        {{ label }}
+    </a>
+    {% endfor %}
+</div>
+
+<!-- Contador -->
+<div style="font-size:0.85rem; color:#666; margin-bottom:0.75rem;">
+    {{ total }} función(es)
+</div>
+
+<!-- Tabla -->
+<div class="card">
+    {% if funciones %}
+    <table class="tabla">
+        <thead>
+            <tr>
+                <th>Película</th>
+                <th>Sala</th>
+                <th>Fecha y Hora</th>
+                <th>Precio</th>
+                <th>Ocupación</th>
+                <th>Estado</th>
+                <th></th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for f in funciones %}
+            {% with disp=f.asientos_disponibles cap=f.sala.capacidad %}
+            {% if cap > 0 %}
+                {% widthratio disp cap 100 as pct_disp %}
+                {% widthratio f.asientos_disponibles|add:0 cap 100 as pct_libre %}
+            {% endif %}
+            <tr>
+                <td>
+                    <div style="font-weight:600; color:#1a1a2e;">{{ f.pelicula.titulo }}</div>
+                </td>
+                <td style="color:#666;">{{ f.sala.nombre }}</td>
+                <td style="font-weight:600;">
+                    {{ f.fecha_hora|date:"d/m/Y" }}
+                    <span style="color:#999; font-size:0.8rem;">
+                        {{ f.fecha_hora|date:"H:i" }} hs
+                    </span>
+                </td>
+                <td style="color:#27ae60; font-weight:600;">${{ f.precio }}</td>
+                <td style="min-width:120px;">
+                    {% with vendidos=cap|add:"-"|add:disp|add:"0" %}
+                    <div style="font-size:0.8rem; margin-bottom:3px;">
+                        <span style="font-weight:600;">
+                            {{ disp }}
+                        </span>
+                        <span style="color:#999;">/ {{ cap }} libres</span>
+                    </div>
+                    {% endwith %}
+                    <div class="ocupacion-bar">
+                        {% if cap > 0 %}
+                        {% widthratio disp cap 100 as pct %}
+                        <div class="ocupacion-fill {% if pct < 30 %}lleno{% elif pct < 60 %}medio{% endif %}"
+                             style="width:{{ pct }}%;"></div>
+                        {% endif %}
+                    </div>
+                </td>
+                <td>
+                    <span style="font-size:0.75rem; padding:0.2rem 0.6rem; border-radius:20px; font-weight:600;
+                                 {% if f.disponible %}background:#d4edda; color:#155724;
+                                 {% else %}background:#e2e3e5; color:#383d41;{% endif %}">
+                        {% if f.disponible %}Disponible{% else %}No disponible{% endif %}
+                    </span>
+                </td>
+                <td>
+                    <a href="{% url 'panel:funciones_detalle' f.id %}"
+                       class="btn btn-ghost" style="font-size:0.75rem; padding:0.3rem 0.7rem;">
+                        Ver detalle
+                    </a>
+                </td>
+            </tr>
+            {% endwith %}
+            {% endfor %}
+        </tbody>
+    </table>
+    {% else %}
+    <div class="card-body" style="text-align:center; padding:3rem; color:#999;">
+        No hay funciones en esta categoría.
+    </div>
+    {% endif %}
+</div>
+
+{% endblock %}
