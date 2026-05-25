@@ -11,9 +11,298 @@ from salas.models import Sala, Funcion
 from reservas.models import Reserva
 from pagos.models import Pago
 from django.contrib.auth.models import User
+# ============================================================
+                                                                # V2
+from .forms import (
+    PeliculaForm, SalaForm, FuncionForm,
+    CrearUsuarioForm, EditarUsuarioForm, ReservaForm
+)
+from django.core.files.base import ContentFile
+import requests
+
+try:
+    from utils.tmdb_api import buscar_pelicula_tmdb, importar_pelicula_tmdb
+    TMDB_DISPONIBLE = True
+except ImportError:
+    TMDB_DISPONIBLE = False
 
 
 # ============================================================
+# PELÍCULAS — CRUD
+# ============================================================
+
+@staff_required
+def peliculas_crear(request):
+    if request.method == 'POST':
+        form = PeliculaForm(request.POST, request.FILES)
+        if form.is_valid():
+            pelicula = form.save()
+            messages.success(request, f'✅ Película "{pelicula.titulo}" creada exitosamente.')
+            return redirect('panel:peliculas_detalle', pelicula_id=pelicula.id)
+    else:
+        form = PeliculaForm()
+
+    return render(request, 'panel/peliculas/form.html', {
+        'form': form,
+        'titulo_pagina': 'Agregar Película',
+        'accion': 'crear',
+        'seccion_activa': 'peliculas',
+    })
+
+
+@staff_required
+def peliculas_editar(request, pelicula_id):
+    pelicula = get_object_or_404(Pelicula, id=pelicula_id)
+
+    if request.method == 'POST':
+        form = PeliculaForm(request.POST, request.FILES, instance=pelicula)
+        if form.is_valid():
+            form.save()
+            messages.success(request, f'✅ Película "{pelicula.titulo}" actualizada.')
+            return redirect('panel:peliculas_detalle', pelicula_id=pelicula.id)
+    else:
+        form = PeliculaForm(instance=pelicula)
+
+    return render(request, 'panel/peliculas/form.html', {
+        'form': form,
+        'objeto': pelicula,
+        'titulo_pagina': f'Editar: {pelicula.titulo}',
+        'accion': 'editar',
+        'seccion_activa': 'peliculas',
+    })
+
+
+@staff_required
+def peliculas_buscar_tmdb(request):
+    """Búsqueda TMDB integrada en el panel."""
+    resultados = []
+    query = ''
+
+    if request.method == 'GET' and 'q' in request.GET:
+        query = request.GET.get('q', '').strip()
+        if query and TMDB_DISPONIBLE:
+            response = buscar_pelicula_tmdb(query)
+            if response['success']:
+                resultados = response['results']
+                if not resultados:
+                    messages.info(request, f'Sin resultados para "{query}"')
+            else:
+                messages.error(request, f'Error al buscar: {response.get("error")}')
+
+    return render(request, 'panel/peliculas/buscar_tmdb.html', {
+        'query': query,
+        'resultados': resultados,
+        'tmdb_disponible': TMDB_DISPONIBLE,
+        'seccion_activa': 'peliculas',
+    })
+
+
+@staff_required
+def peliculas_importar_tmdb(request, tmdb_id):
+    """Importa una película desde TMDB y redirige al formulario de edición."""
+    if not TMDB_DISPONIBLE:
+        messages.error(request, 'TMDB no está configurado.')
+        return redirect('panel:peliculas_buscar_tmdb')
+
+    response = importar_pelicula_tmdb(tmdb_id)
+    if not response['success']:
+        messages.error(request, f'Error: {response.get("error")}')
+        return redirect('panel:peliculas_buscar_tmdb')
+
+    data = response['data']
+
+    # Verificar duplicado
+    existente = Pelicula.objects.filter(titulo__iexact=data['titulo']).first()
+    if existente:
+        messages.warning(request, f'"{data["titulo"]}" ya existe. Podés editarla.')
+        return redirect('panel:peliculas_editar', pelicula_id=existente.id)
+
+    # Crear película
+    pelicula = Pelicula.objects.create(
+        titulo=data['titulo'][:50],
+        sinopsis=data.get('sinopsis', ''),
+        duracion=data.get('duracion'),
+        genero=data.get('genero'),
+        clasificacion=data.get('clasificacion', 'ATP'),
+        director=data.get('director', ''),
+        actores=data.get('actores', ''),
+        año=data.get('año'),
+        en_cartelera=False,
+    )
+
+    # Descargar poster
+    poster_url = data.get('poster_url')
+    if poster_url:
+        try:
+            resp = requests.get(poster_url, timeout=10)
+            resp.raise_for_status()
+            nombre = f"{data['titulo'].lower().replace(' ', '_')[:40]}.jpg"
+            pelicula.poster.save(nombre, ContentFile(resp.content), save=True)
+            messages.success(request, f'✅ "{pelicula.titulo}" importada con poster.')
+        except Exception:
+            pelicula.save()
+            messages.success(request, f'✅ "{pelicula.titulo}" importada (sin poster).')
+    else:
+        pelicula.save()
+        messages.success(request, f'✅ "{pelicula.titulo}" importada.')
+
+    return redirect('panel:peliculas_editar', pelicula_id=pelicula.id)
+
+
+# ============================================================
+# SALAS — CRUD
+# ============================================================
+
+@staff_required
+def salas_crear(request):
+    if request.method == 'POST':
+        form = SalaForm(request.POST)
+        if form.is_valid():
+            sala = form.save()
+            messages.success(request, f'✅ Sala "{sala.nombre}" creada.')
+            return redirect('panel:salas_lista')
+    else:
+        form = SalaForm()
+
+    return render(request, 'panel/salas/form.html', {
+        'form': form,
+        'titulo_pagina': 'Agregar Sala',
+        'accion': 'crear',
+        'seccion_activa': 'salas',
+    })
+
+
+@staff_required
+def salas_editar(request, sala_id):
+    sala = get_object_or_404(Sala, id=sala_id)
+
+    if request.method == 'POST':
+        form = SalaForm(request.POST, instance=sala)
+        if form.is_valid():
+            form.save()
+            messages.success(request, f'✅ Sala "{sala.nombre}" actualizada.')
+            return redirect('panel:salas_lista')
+    else:
+        form = SalaForm(instance=sala)
+
+    return render(request, 'panel/salas/form.html', {
+        'form': form,
+        'objeto': sala,
+        'titulo_pagina': f'Editar sala: {sala.nombre}',
+        'accion': 'editar',
+        'seccion_activa': 'salas',
+    })
+
+
+# ============================================================
+# FUNCIONES — CRUD
+# ============================================================
+
+@staff_required
+def funciones_crear(request):
+    if request.method == 'POST':
+        form = FuncionForm(request.POST)
+        if form.is_valid():
+            try:
+                funcion = form.save()
+                messages.success(
+                    request,
+                    f'✅ Función de "{funcion.pelicula.titulo}" creada el '
+                    f'{funcion.fecha_hora.strftime("%d/%m/%Y a las %H:%M")}.'
+                )
+                return redirect('panel:funciones_detalle', funcion_id=funcion.id)
+            except Exception as e:
+                messages.error(request, f'Error al guardar: {str(e)}')
+    else:
+        # Pre-seleccionar pelicula/sala si vienen como parámetros
+        initial = {}
+        if request.GET.get('pelicula'):
+            initial['pelicula'] = request.GET.get('pelicula')
+        if request.GET.get('sala'):
+            initial['sala'] = request.GET.get('sala')
+        form = FuncionForm(initial=initial)
+
+    return render(request, 'panel/funciones/form.html', {
+        'form': form,
+        'titulo_pagina': 'Agregar Función',
+        'accion': 'crear',
+        'seccion_activa': 'funciones',
+    })
+
+
+@staff_required
+def funciones_editar(request, funcion_id):
+    funcion = get_object_or_404(Funcion, id=funcion_id)
+
+    if request.method == 'POST':
+        form = FuncionForm(request.POST, instance=funcion)
+        if form.is_valid():
+            try:
+                form.save()
+                messages.success(request, '✅ Función actualizada.')
+                return redirect('panel:funciones_detalle', funcion_id=funcion.id)
+            except Exception as e:
+                messages.error(request, f'Error: {str(e)}')
+    else:
+        form = FuncionForm(instance=funcion)
+
+    return render(request, 'panel/funciones/form.html', {
+        'form': form,
+        'objeto': funcion,
+        'titulo_pagina': f'Editar: {funcion.pelicula.titulo}',
+        'accion': 'editar',
+        'seccion_activa': 'funciones',
+    })
+
+
+# ============================================================
+# USUARIOS — CRUD (solo superuser)
+# ============================================================
+
+@superuser_required
+def usuarios_crear(request):
+    if request.method == 'POST':
+        form = CrearUsuarioForm(request.POST)
+        if form.is_valid():
+            user = form.save()
+            messages.success(request, f'✅ Usuario "{user.username}" creado.')
+            return redirect('panel:usuarios_detalle', usuario_id=user.id)
+    else:
+        form = CrearUsuarioForm()
+
+    return render(request, 'panel/usuarios/form.html', {
+        'form': form,
+        'titulo_pagina': 'Crear Usuario',
+        'accion': 'crear',
+        'seccion_activa': 'usuarios',
+    })
+
+
+@superuser_required
+def usuarios_editar(request, usuario_id):
+    usuario = get_object_or_404(User, id=usuario_id)
+
+    if request.method == 'POST':
+        form = EditarUsuarioForm(request.POST, instance=usuario)
+        if form.is_valid():
+            form.save()
+            messages.success(request, f'✅ Usuario "{usuario.username}" actualizado.')
+            return redirect('panel:usuarios_detalle', usuario_id=usuario.id)
+    else:
+        form = EditarUsuarioForm(instance=usuario)
+
+    return render(request, 'panel/usuarios/form.html', {
+        'form': form,
+        'objeto': usuario,
+        'titulo_pagina': f'Editar: {usuario.username}',
+        'accion': 'editar',
+        'seccion_activa': 'usuarios',
+    })
+                                                                # V2
+# ============================================================
+
+# ============================================================
+                                                                # V1
 # HELPERS
 # ============================================================
 
@@ -483,3 +772,38 @@ def verificador_qr(request):
         'seccion_activa': 'verificador',
     }
     return render(request, 'panel/verificador_qr.html', contexto)
+
+                                                                # V1
+# ============================================================
+
+# ============================================================
+# AGREGAR AL BLOQUE DE IMPORTS DE panel/views.py:
+#   from .forms import (..., ReservaForm)
+#
+# AGREGAR ESTA VISTA AL FINAL DE LA SECCIÓN "RESERVAS" EN panel/views.py
+# ============================================================
+
+@staff_required
+def reservas_editar(request, reserva_id):
+    reserva = get_object_or_404(Reserva, id=reserva_id)
+
+    if request.method == 'POST':
+        form = ReservaForm(request.POST, instance=reserva)
+        if form.is_valid():
+            form.save()
+            messages.success(
+                request,
+                f'✅ Reserva {reserva.codigo_reserva} actualizada.'
+            )
+            return redirect('panel:reservas_detalle', reserva_id=reserva.id)
+    else:
+        form = ReservaForm(instance=reserva)
+
+    pago = getattr(reserva, 'pago', None)
+
+    return render(request, 'panel/reservas/form.html', {
+        'form': form,
+        'reserva': reserva,
+        'pago': pago,
+        'seccion_activa': 'reservas',
+    })

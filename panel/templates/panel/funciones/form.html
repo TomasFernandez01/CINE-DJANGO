@@ -1,0 +1,187 @@
+{% extends 'panel/base_panel.html' %}
+
+{% block titulo %}{{ titulo_pagina }} — Panel{% endblock %}
+
+{% block breadcrumb %}
+<span class="sep">›</span>
+<a href="{% url 'panel:funciones_lista' %}">Funciones</a>
+{% if objeto %}
+<span class="sep">›</span>
+<a href="{% url 'panel:funciones_detalle' objeto.id %}">Detalle</a>
+{% endif %}
+<span class="sep">›</span>
+<span class="current">{% if accion == 'crear' %}Agregar{% else %}Editar{% endif %}</span>
+{% endblock %}
+
+{% block contenido %}
+{% include 'panel/_form_styles.html' %}
+
+<div style="max-width:720px;">
+
+    <div style="display:flex; justify-content:space-between; align-items:center;
+                margin-bottom:1.5rem;">
+        <h1 style="font-size:1.4rem; color:#1a1a2e; margin:0;">{{ titulo_pagina }}</h1>
+        {% if objeto %}
+        <a href="{% url 'panel:funciones_detalle' objeto.id %}" class="btn btn-ghost">← Volver</a>
+        {% else %}
+        <a href="{% url 'panel:funciones_lista' %}" class="btn btn-ghost">← Volver</a>
+        {% endif %}
+    </div>
+
+    <!-- Aviso de validación de solapamiento -->
+    <div style="background:#e7f3ff; border-left:4px solid #3498db; padding:0.85rem 1rem;
+                border-radius:6px; margin-bottom:1.25rem; font-size:0.875rem; color:#1a5276;">
+        <strong>ℹ️ Validación automática:</strong> El sistema verificará que la función no se
+        solape con otras en la misma sala (considera duración de la película + 30 min de margen).
+    </div>
+
+    <form method="post" id="formFuncion">
+        {% csrf_token %}
+
+        <div class="card">
+            <div class="card-header"><h3>📅 Datos de la Función</h3></div>
+            <div class="card-body" style="display:flex; flex-direction:column; gap:1.1rem;">
+
+                <!-- Película -->
+                <div>
+                    <label class="form-label">
+                        Película <span class="required">*</span>
+                    </label>
+                    {{ form.pelicula }}
+                    {% if form.pelicula.errors %}
+                    <div class="field-error">{{ form.pelicula.errors.0 }}</div>
+                    {% endif %}
+                    <div class="form-help">Solo se muestran películas en cartelera</div>
+                </div>
+
+                <!-- Sala -->
+                <div>
+                    <label class="form-label">
+                        Sala <span class="required">*</span>
+                    </label>
+                    {{ form.sala }}
+                    {% if form.sala.errors %}
+                    <div class="field-error">{{ form.sala.errors.0 }}</div>
+                    {% endif %}
+                </div>
+
+                <!-- Fecha y hora + precio -->
+                <div style="display:grid; grid-template-columns:2fr 1fr; gap:1rem;">
+                    <div>
+                        <label class="form-label">
+                            Fecha y Hora <span class="required">*</span>
+                        </label>
+                        {{ form.fecha_hora }}
+                        {% if form.fecha_hora.errors %}
+                        <div class="field-error">{{ form.fecha_hora.errors.0 }}</div>
+                        {% endif %}
+                    </div>
+                    <div>
+                        <label class="form-label">
+                            Precio ($) <span class="required">*</span>
+                        </label>
+                        {{ form.precio }}
+                        {% if form.precio.errors %}
+                        <div class="field-error">{{ form.precio.errors.0 }}</div>
+                        {% endif %}
+                    </div>
+                </div>
+
+                <!-- Disponible -->
+                <div class="checkbox-row">
+                    {{ form.disponible }}
+                    <label for="{{ form.disponible.id_for_label }}">
+                        Disponible para reservas
+                    </label>
+                </div>
+
+            </div>
+        </div>
+
+        <!-- Preview de la función -->
+        <div class="card" style="margin-top:1rem;" id="previewCard">
+            <div class="card-header"><h3>👁️ Vista previa</h3></div>
+            <div class="card-body">
+                <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(150px,1fr));
+                            gap:1rem; font-size:0.875rem;">
+                    <div>
+                        <div style="font-size:0.7rem; color:#999; text-transform:uppercase;">Película</div>
+                        <div style="font-weight:600;" id="prev-pelicula">—</div>
+                    </div>
+                    <div>
+                        <div style="font-size:0.7rem; color:#999; text-transform:uppercase;">Sala</div>
+                        <div style="font-weight:600;" id="prev-sala">—</div>
+                    </div>
+                    <div>
+                        <div style="font-size:0.7rem; color:#999; text-transform:uppercase;">Fecha</div>
+                        <div style="font-weight:600;" id="prev-fecha">—</div>
+                    </div>
+                    <div>
+                        <div style="font-size:0.7rem; color:#999; text-transform:uppercase;">Precio</div>
+                        <div style="font-weight:600; color:#27ae60;" id="prev-precio">—</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        {% if form.non_field_errors %}
+        <div style="background:#f8d7da; border-left:4px solid #e74c3c;
+                    padding:1rem; border-radius:6px; margin-top:1rem; color:#721c24;">
+            {% for error in form.non_field_errors %}
+            <p style="margin:0; margin-bottom:0.25rem;">⚠️ {{ error }}</p>
+            {% endfor %}
+        </div>
+        {% endif %}
+
+        <div style="display:flex; gap:1rem; margin-top:1.5rem;">
+            <button type="submit" class="btn btn-success"
+                    style="font-size:1rem; padding:0.75rem 2rem;">
+                {% if accion == 'crear' %}✅ Crear Función{% else %}💾 Guardar Cambios{% endif %}
+            </button>
+            {% if objeto %}
+            <a href="{% url 'panel:funciones_detalle' objeto.id %}" class="btn btn-ghost">
+                Cancelar
+            </a>
+            {% else %}
+            <a href="{% url 'panel:funciones_lista' %}" class="btn btn-ghost">Cancelar</a>
+            {% endif %}
+        </div>
+    </form>
+</div>
+
+<script>
+// Preview dinámico
+const pelSelect   = document.getElementById('id_pelicula');
+const salaSelect  = document.getElementById('id_sala');
+const fechaInput  = document.getElementById('id_fecha_hora');
+const precioInput = document.getElementById('id_precio');
+
+function actualizarPreview() {
+    const pelOpt  = pelSelect?.options[pelSelect.selectedIndex];
+    const salaOpt = salaSelect?.options[salaSelect.selectedIndex];
+    const fecha   = fechaInput?.value;
+    const precio  = precioInput?.value;
+
+    document.getElementById('prev-pelicula').textContent =
+        (pelOpt && pelSelect.value) ? pelOpt.text : '—';
+    document.getElementById('prev-sala').textContent =
+        (salaOpt && salaSelect.value) ? salaOpt.text : '—';
+    document.getElementById('prev-fecha').textContent = fecha
+        ? new Date(fecha).toLocaleString('es-AR', {
+            day:'2-digit', month:'2-digit', year:'numeric',
+            hour:'2-digit', minute:'2-digit'
+          })
+        : '—';
+    document.getElementById('prev-precio').textContent =
+        precio ? `$${parseFloat(precio).toFixed(0)}` : '—';
+}
+
+pelSelect?.addEventListener('change', actualizarPreview);
+salaSelect?.addEventListener('change', actualizarPreview);
+fechaInput?.addEventListener('change', actualizarPreview);
+precioInput?.addEventListener('input', actualizarPreview);
+
+actualizarPreview();
+</script>
+
+{% endblock %}

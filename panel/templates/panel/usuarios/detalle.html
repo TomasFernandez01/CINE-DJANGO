@@ -21,8 +21,8 @@
             @{{ usuario_detalle.username }}
         </div>
     </div>
-    <a href="{% url 'admin:auth_user_change' usuario_detalle.id %}"
-       class="btn btn-primary">✏️ Editar en admin</a>
+    {% comment %} <a href="{% url 'admin:auth_user_change' usuario_detalle.id %}" class="btn btn-primary">✏️ Editar en admin</a> {% endcomment %}
+    <a href="{% url 'panel:usuarios_editar' usuario_detalle.id %}" class="btn btn-primary">Editar User</a>
 </div>
 
 <div style="display:grid; grid-template-columns:280px 1fr; gap:1.5rem; align-items:start;">

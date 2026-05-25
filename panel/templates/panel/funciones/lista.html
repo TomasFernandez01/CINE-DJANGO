@@ -12,7 +12,8 @@
 <div style="display:flex; justify-content:space-between; align-items:center;
             flex-wrap:wrap; gap:1rem; margin-bottom:1.5rem;">
     <h1 style="font-size:1.4rem; color:#1a1a2e; margin:0;">📅 Funciones</h1>
-    <a href="{% url 'admin:salas_funcion_add' %}" class="btn btn-success">+ Agregar función</a>
+    {% comment %} <a href="{% url 'admin:salas_funcion_add' %}" class="btn btn-success">+ Agregar función</a> {% endcomment %}
+    <a href="{% url 'panel:funciones_crear' %}" class="btn btn-success">+ Agregar función</a>
 </div>
 
 <!-- Filtros por tipo -->

@@ -1,0 +1,134 @@
+{% extends 'panel/base_panel.html' %}
+
+{% block titulo %}{{ titulo_pagina }} — Panel{% endblock %}
+
+{% block breadcrumb %}
+<span class="sep">›</span>
+<a href="{% url 'panel:salas_lista' %}">Salas</a>
+<span class="sep">›</span>
+<span class="current">{% if accion == 'crear' %}Agregar{% else %}Editar{% endif %}</span>
+{% endblock %}
+
+{% block contenido %}
+{% include 'panel/_form_styles.html' %}
+
+<div style="max-width:680px;">
+
+    <div style="display:flex; justify-content:space-between; align-items:center;
+                margin-bottom:1.5rem;">
+        <h1 style="font-size:1.4rem; color:#1a1a2e; margin:0;">{{ titulo_pagina }}</h1>
+        <a href="{% url 'panel:salas_lista' %}" class="btn btn-ghost">← Volver</a>
+    </div>
+
+    <form method="post" id="formSala">
+        {% csrf_token %}
+
+        <div style="display:grid; grid-template-columns:1fr 1fr; gap:1.5rem; align-items:start;">
+
+            <!-- Formulario -->
+            <div class="card" style="grid-column:1/-1;">
+                <div class="card-header"><h3>🏢 Datos de la Sala</h3></div>
+                <div class="card-body" style="display:flex; flex-direction:column; gap:1.1rem;">
+
+                    <div>
+                        <label class="form-label">
+                            Nombre <span class="required">*</span>
+                        </label>
+                        {{ form.nombre }}
+                        {% if form.nombre.errors %}
+                        <div class="field-error">{{ form.nombre.errors.0 }}</div>
+                        {% endif %}
+                    </div>
+
+                    <div style="display:grid; grid-template-columns:1fr 1fr; gap:1rem;">
+                        <div>
+                            <label class="form-label">
+                                Filas <span class="required">*</span>
+                            </label>
+                            {{ form.filas }}
+                            <div class="form-help">{{ form.filas.help_text }}</div>
+                            {% if form.filas.errors %}
+                            <div class="field-error">{{ form.filas.errors.0 }}</div>
+                            {% endif %}
+                        </div>
+                        <div>
+                            <label class="form-label">
+                                Columnas <span class="required">*</span>
+                            </label>
+                            {{ form.columnas }}
+                            <div class="form-help">{{ form.columnas.help_text }}</div>
+                            {% if form.columnas.errors %}
+                            <div class="field-error">{{ form.columnas.errors.0 }}</div>
+                            {% endif %}
+                        </div>
+                    </div>
+
+                    <div class="checkbox-row">
+                        {{ form.activa }}
+                        <label for="{{ form.activa.id_for_label }}">
+                            Sala activa (visible para reservas)
+                        </label>
+                    </div>
+
+                </div>
+            </div>
+
+            <!-- Preview calculado -->
+            <div class="card" style="grid-column:1/-1;">
+                <div class="card-header"><h3>📐 Capacidad Calculada</h3></div>
+                <div class="card-body" style="text-align:center;">
+                    <div style="font-size:3rem; font-weight:800; color:#1a1a2e;" id="capacidadCalc">
+                        {% if objeto %}{{ objeto.capacidad }}{% else %}—{% endif %}
+                    </div>
+                    <div style="color:#666; font-size:0.9rem; margin-top:0.25rem;">
+                        asientos totales (<span id="filasVal">
+                            {% if objeto %}{{ objeto.filas }}{% else %}?{% endif %}
+                        </span> filas ×
+                        <span id="colsVal">
+                            {% if objeto %}{{ objeto.columnas }}{% else %}?{% endif %}
+                        </span> columnas)
+                    </div>
+                </div>
+            </div>
+
+        </div>
+
+        {% if form.non_field_errors %}
+        <div style="background:#f8d7da; border-left:4px solid #e74c3c;
+                    padding:1rem; border-radius:6px; margin-top:1rem; color:#721c24;">
+            {% for error in form.non_field_errors %}
+            <p style="margin:0;">{{ error }}</p>
+            {% endfor %}
+        </div>
+        {% endif %}
+
+        <div style="display:flex; gap:1rem; margin-top:1.5rem;">
+            <button type="submit" class="btn btn-success"
+                    style="font-size:1rem; padding:0.75rem 2rem;">
+                {% if accion == 'crear' %}✅ Crear Sala{% else %}💾 Guardar Cambios{% endif %}
+            </button>
+            <a href="{% url 'panel:salas_lista' %}" class="btn btn-ghost">Cancelar</a>
+        </div>
+    </form>
+</div>
+
+<script>
+const filasInput = document.getElementById('id_filas');
+const colsInput  = document.getElementById('id_columnas');
+const capEl   = document.getElementById('capacidadCalc');
+const filasEl = document.getElementById('filasVal');
+const colsEl  = document.getElementById('colsVal');
+
+function actualizarCapacidad() {
+    const f = parseInt(filasInput.value) || 0;
+    const c = parseInt(colsInput.value)  || 0;
+    capEl.textContent   = f * c || '—';
+    filasEl.textContent = f || '?';
+    colsEl.textContent  = c || '?';
+}
+
+filasInput?.addEventListener('input', actualizarCapacidad);
+colsInput?.addEventListener('input', actualizarCapacidad);
+</script>
+
+{% endblock %}

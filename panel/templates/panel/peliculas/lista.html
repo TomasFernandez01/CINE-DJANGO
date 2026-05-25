@@ -13,12 +13,10 @@
             flex-wrap:wrap; gap:1rem; margin-bottom:1.5rem;">
     <h1 style="font-size:1.4rem; color:#1a1a2e; margin:0;">🎬 Películas</h1>
     <div style="display:flex; gap:0.5rem;">
-        <a href="{% url 'admin:peliculas_pelicula_add' %}" class="btn btn-success">
-            + Agregar película
-        </a>
-        <a href="{% url 'peliculas:buscar_tmdb' %}" class="btn btn-primary">
-            🔍 Buscar en TMDB
-        </a>
+        {% comment %} <a href="{% url 'admin:peliculas_pelicula_add' %}" class="btn btn-success">+ Agregar Admin</a> {% endcomment %}
+        <a href="{% url 'panel:peliculas_crear' %}" class="btn btn-success">+ Agregar película</a>
+        {% comment %} <a href="{% url 'peliculas:buscar_tmdb' %}" class="btn btn-primary">🔍 Admin</a> {% endcomment %}
+        <a href="{% url 'panel:peliculas_buscar_tmdb' %}" class="btn btn-primary">🔍 Buscar en TMDB</a>
     </div>
 </div>
 
@@ -85,14 +83,11 @@
                 {% if p.duracion %} · {{ p.duracion_formato }}{% endif %}
             </div>
             <div style="display:flex; gap:0.5rem;">
-                <a href="{% url 'panel:peliculas_detalle' p.id %}"
-                   class="btn btn-dark" style="flex:1; text-align:center; font-size:0.8rem;">
-                    Ver
-                </a>
-                <a href="{% url 'admin:peliculas_pelicula_change' p.id %}"
-                   class="btn btn-ghost" style="font-size:0.8rem;" title="Editar en admin">
-                    ✏️
-                </a>
+                <a href="{% url 'panel:peliculas_detalle' p.id %}" class="btn btn-dark" style="flex:1; text-align:center; font-size:0.8rem;">Ver</a>
+                {% comment %} 
+                <a href="{% url 'admin:peliculas_pelicula_change' p.id %}" class="btn btn-ghost" style="font-size:0.8rem;" title="Editar en admin">✏️</a> 
+                {% endcomment %}
+                <a href="{% url 'panel:peliculas_editar' p.id %}" class="btn btn-ghost" style="font-size:0.8rem;" title="Editar en admin">✏️</a>
             </div>
         </div>
     </div>

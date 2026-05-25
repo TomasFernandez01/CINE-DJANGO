@@ -21,8 +21,8 @@
             {{ funcion.sala.nombre }} · {{ funcion.fecha_hora|date:"d/m/Y H:i" }} hs
         </div>
     </div>
-    <a href="{% url 'admin:salas_funcion_change' funcion.id %}"
-       class="btn btn-primary">✏️ Editar función</a>
+    {% comment %} <a href="{% url 'admin:salas_funcion_change' funcion.id %}" class="btn btn-primary">✏️ Editar función</a> {% endcomment %}
+    <a href="{% url 'panel:funciones_editar' funcion.id %}" class="btn btn-primary">✏️ Editar función</a>
 </div>
 
 <!-- Stats de la función -->

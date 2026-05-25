@@ -17,7 +17,8 @@
             🔒 Solo visible para administradores
         </div>
     </div>
-    <a href="{% url 'admin:auth_user_add' %}" class="btn btn-success">+ Agregar usuario</a>
+    {% comment %} <a href="{% url 'admin:auth_user_add' %}" class="btn btn-success">+ Agregar usuario</a> {% endcomment %}
+    <a href="{% url 'panel:usuarios_crear' %}" class="btn btn-success">+ Agregar usuario</a>
 </div>
 
 <!-- Filtros -->
@@ -105,11 +106,8 @@
                            class="btn btn-ghost" style="font-size:0.75rem; padding:0.3rem 0.7rem;">
                             Ver
                         </a>
-                        <a href="{% url 'admin:auth_user_change' u.id %}"
-                           class="btn btn-ghost" style="font-size:0.75rem; padding:0.3rem 0.7rem;"
-                           title="Editar en admin">
-                            ✏️
-                        </a>
+                        {% comment %} <a href="{% url 'admin:auth_user_change' u.id %}" class="btn btn-ghost" style="font-size:0.75rem; padding:0.3rem 0.7rem;" title="Editar en admin">✏️</a> {% endcomment %}
+                        <a href="{% url 'panel:usuarios_editar' u.id %}" class="btn btn-ghost" style="font-size:0.75rem; padding:0.3rem 0.7rem;" title="Editar en admin">✏️</a>
                     </div>
                 </td>
             </tr>

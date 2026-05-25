@@ -15,10 +15,14 @@
             flex-wrap:wrap; gap:1rem; margin-bottom:1.5rem;">
     <h1 style="font-size:1.4rem; color:#1a1a2e; margin:0;">{{ pelicula.titulo }}</h1>
     <div style="display:flex; gap:0.5rem;">
-        <a href="{% url 'peliculas:detalle_pelicula' pelicula.id %}"
-           class="btn btn-ghost" target="_blank">🌐 Ver en sitio</a>
-        <a href="{% url 'admin:peliculas_pelicula_change' pelicula.id %}"
-           class="btn btn-primary">✏️ Editar</a>
+        <a href="{% url 'peliculas:detalle_pelicula' pelicula.id %}" class="btn btn-ghost" target="_blank">🌐 Ver en sitio</a>
+        {% comment %} Asi para el Admin
+        <a href="{% url 'admin:peliculas_pelicula_change' pelicula.id %}" class="btn btn-primary">✏️ Editar</a> 
+        {% endcomment %}
+        {% comment %} Como las rutas/URLs tienen namespace "panel:" en este caso se escriben asi {% endcomment %}
+        <a href="{% url 'panel:peliculas_editar' pelicula.id %}" class="btn btn-primary">✏️ Editar</a>
+        {% comment %} y no asi {% url 'peliculas_editar' pelicula.id %} {% endcomment %}
+           
     </div>
 </div>
 

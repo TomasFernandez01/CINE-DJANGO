@@ -7,26 +7,40 @@ urlpatterns = [
     # Dashboard principal
     path('', views.inicio, name='inicio'),
 
-    # ---- Películas ----
-    path('peliculas/', views.peliculas_lista, name='peliculas_lista'),
-    path('peliculas/<int:pelicula_id>/', views.peliculas_detalle, name='peliculas_detalle'),
+    # # ---- Películas ----
+    path('peliculas/',                          views.peliculas_lista,         name='peliculas_lista'),
+    path('peliculas/crear/',                    views.peliculas_crear,         name='peliculas_crear'),
+    path('peliculas/<int:pelicula_id>/',        views.peliculas_detalle,       name='peliculas_detalle'),
+    path('peliculas/<int:pelicula_id>/editar/', views.peliculas_editar,        name='peliculas_editar'),
+    path('peliculas/tmdb/buscar/',              views.peliculas_buscar_tmdb,   name='peliculas_buscar_tmdb'),
+    path('peliculas/tmdb/<int:tmdb_id>/',       views.peliculas_importar_tmdb, name='peliculas_importar_tmdb'),
 
-    # ---- Salas y Funciones ----
-    path('salas/', views.salas_lista, name='salas_lista'),
-    path('funciones/', views.funciones_lista, name='funciones_lista'),
-    path('funciones/<int:funcion_id>/', views.funciones_detalle, name='funciones_detalle'),
+    # ---- Salas ----
+    path('salas/',                      views.salas_lista,  name='salas_lista'),
+    path('salas/crear/',                views.salas_crear,  name='salas_crear'),
+    path('salas/<int:sala_id>/editar/', views.salas_editar, name='salas_editar'),
+ 
+    # ---- Funciones ----
+    path('funciones/',                         views.funciones_lista,   name='funciones_lista'),
+    path('funciones/crear/',                   views.funciones_crear,   name='funciones_crear'),
+    path('funciones/<int:funcion_id>/',        views.funciones_detalle, name='funciones_detalle'),
+    path('funciones/<int:funcion_id>/editar/', views.funciones_editar,  name='funciones_editar'),
 
     # ---- Reservas ----
-    path('reservas/', views.reservas_lista, name='reservas_lista'),
+    path('reservas/',                  views.reservas_lista,   name='reservas_lista'),
     path('reservas/<int:reserva_id>/', views.reservas_detalle, name='reservas_detalle'),
+#   path('reservas/crear/',                    views.reservas_crear,   name='reservas_crear'),   # si lo agregás después
+    path('reservas/<int:reserva_id>/editar/',  views.reservas_editar,  name='reservas_editar'),  # <-- ESTA
 
     # ---- Pagos ----
-    path('pagos/', views.pagos_lista, name='pagos_lista'),
+    path('pagos/',              views.pagos_lista,        name='pagos_lista'),
     path('pagos/estadisticas/', views.pagos_estadisticas, name='pagos_estadisticas'),
 
     # ---- Usuarios (solo superuser) ----
-    path('usuarios/', views.usuarios_lista, name='usuarios_lista'),
-    path('usuarios/<int:usuario_id>/', views.usuarios_detalle, name='usuarios_detalle'),
+    path('usuarios/',                         views.usuarios_lista,   name='usuarios_lista'),
+    path('usuarios/crear/',                   views.usuarios_crear,   name='usuarios_crear'),
+    path('usuarios/<int:usuario_id>/',        views.usuarios_detalle, name='usuarios_detalle'),
+    path('usuarios/<int:usuario_id>/editar/', views.usuarios_editar,  name='usuarios_editar'),
 
     # ---- Verificador QR (staff) ----
     path('verificador-qr/', views.verificador_qr, name='verificador_qr'),
