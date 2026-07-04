@@ -3,288 +3,359 @@
 {% block titulo %}Procesar Pago{% endblock %}
 
 {% block contenido %}
-<div style="max-width: 600px; margin: 0 auto;">
-    <h1 style="text-align: center;">Procesar Pago</h1>
+<div style="max-width: 680px; margin: 0 auto;">
+
+    <h1 style="text-align: center; color: #333; margin-bottom: 1.25rem;">💳 Procesar Pago</h1>
 
     <!-- ============================================================ -->
-    <!-- AVISO PAGO SIMULADO — PROMINENTE                             -->
+    <!-- AVISO PAGO SIMULADO                                          -->
     <!-- ============================================================ -->
-    <div style="background: linear-gradient(135deg, #f39c12 0%, #e67e22 100%);
-                border-radius: 10px; padding: 1.25rem 1.5rem; margin-top: 1rem;
-                margin-bottom: 0.5rem; display: flex; align-items: center; gap: 1rem;
-                box-shadow: 0 4px 12px rgba(243,156,18,0.4);">
+    <div style="background: linear-gradient(135deg, #f39c12 0%, #e67e22 100%); border-radius: 10px; padding: 1.25rem 1.5rem; margin-bottom: 1.25rem; display: flex; align-items: center; gap: 1rem; box-shadow: 0 4px 12px rgba(243,156,18,0.4);">
         <div style="font-size: 2.5rem; flex-shrink: 0;">🧪</div>
         <div style="color: white;">
-            <div style="font-size: 1.1rem; font-weight: bold; margin-bottom: 0.25rem;">
-                ENTORNO DE DEMOSTRACIÓN — PAGO SIMULADO
-            </div>
-            <div style="font-size: 0.9rem; opacity: 0.95; line-height: 1.4;">
-                No se realizará ningún cobro real. Podés usar cualquier número de tarjeta.
-                Este sistema es una simulación educativa.
-            </div>
+            <div style="font-size: 1.1rem; font-weight: bold; margin-bottom: 0.25rem;">ENTORNO DE DEMOSTRACIÓN — PAGO SIMULADO</div>
+            <div style="font-size: 0.9rem; opacity: 0.95; line-height: 1.4;">No se realizará ningún cobro real. Podés usar cualquier número de tarjeta. Este sistema es una simulación educativa.</div>
         </div>
     </div>
 
-    <!-- Contador regresivo -->
+    <!-- ============================================================ -->
+    <!-- CONTADOR REGRESIVO (uno solo)                                -->
+    <!-- ============================================================ -->
     {% if reserva.tiempo_restante_pago %}
-    <div id="countdownContainer"
-         style="background: linear-gradient(135deg, #ff6b6b 0%, #ff8e53 100%);
-                padding: 1.5rem; border-radius: 8px; margin-top: 1rem;
-                text-align: center; color: white;
-                box-shadow: 0 4px 12px rgba(255,107,107,0.3);">
-        <div style="font-size: 0.9rem; margin-bottom: 0.5rem; opacity: 0.95;">
-            ⏰ Tiempo restante para completar el pago:
-        </div>
-        <div id="countdown"
-             style="font-size: 2.5rem; font-weight: bold;
-                    font-family: 'Courier New', monospace; letter-spacing: 0.1em;"
-             data-tiempo="{{ reserva.tiempo_restante_pago }}">
+    <div id="countdownContainer" style="background: linear-gradient(135deg, #ff6b6b 0%, #ff8e53 100%); padding: 1.5rem; border-radius: 8px; margin-bottom: 1.25rem; text-align: center; color: white; box-shadow: 0 4px 12px rgba(255,107,107,0.3);">
+        <div style="font-size: 0.9rem; margin-bottom: 0.5rem; opacity: 0.95;">⏰ Completá el pago antes de que expire el tiempo:</div>
+        <div id="countdown" style="font-size: 2.5rem; font-weight: bold; font-family: 'Courier New', monospace; letter-spacing: 0.1em;" data-tiempo="{{ reserva.tiempo_restante_pago }}">
             {{ reserva.tiempo_restante_formato }}
         </div>
-        <div style="font-size: 0.8rem; margin-top: 0.5rem; opacity: 0.9;">
-            La reserva se cancelará si no completás el pago a tiempo
+        <div style="font-size: 0.8rem; margin-top: 0.5rem; opacity: 0.9;">La reserva se cancelará automáticamente si no completás el pago</div>
+    </div>
+    {% endif %}
+
+    <!-- ============================================================ -->
+    <!-- RESUMEN DE RESERVA (uno solo, con precio por entrada y código)-->
+    <!-- ============================================================ -->
+    <div style="background: white; padding: 1.5rem; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.08); margin-bottom: 1.25rem;">
+        <h2 style="color: #333; margin: 0 0 1rem 0; font-size: 1.2rem; border-bottom: 2px solid #007bff; padding-bottom: 0.5rem;">🎬 Resumen de tu Reserva</h2>
+        <p style="margin: 0.4rem 0;"><strong>Película:</strong> {{ reserva.funcion.pelicula.titulo }}</p>
+        <p style="margin: 0.4rem 0;"><strong>Sala:</strong> {{ reserva.funcion.sala.nombre }}</p>
+        <p style="margin: 0.4rem 0;"><strong>Fecha:</strong> {{ reserva.funcion.fecha_hora|date:"d/m/Y" }}</p>
+        <p style="margin: 0.4rem 0;"><strong>Horario:</strong> {{ reserva.funcion.fecha_hora|date:"H:i" }} hs</p>
+        <p style="margin: 0.4rem 0;"><strong>Entradas:</strong> {{ reserva.cantidad_entradas }}</p>
+        {% if reserva.asientos_seleccionados %}
+        <p style="margin: 0.4rem 0;"><strong>Asientos:</strong> {{ reserva.asientos_formateados }}</p>
+        {% endif %}
+        <p style="margin: 0.4rem 0;"><strong>Código de Reserva:</strong> <span style="font-family: monospace; font-weight: bold;">{{ reserva.codigo_reserva }}</span></p>
+        <div style="margin-top: 1rem; padding: 1rem; background: #e7f3ff; border-radius: 6px;">
+            <p style="margin: 0; font-size: 0.9rem; color: #666;">Precio por entrada: ${{ reserva.funcion.precio }}</p>
+            <p id="totalOriginalDisplay" style="margin: 0.25rem 0 0 0; font-size: 1.4rem; font-weight: bold; color: #333;">Total: ${{ total }}</p>
+        </div>
+    </div>
+
+    <!-- ============================================================ -->
+    <!-- SECCIÓN PROMOCIONES                                          -->
+    <!-- ============================================================ -->
+    {% if promociones_disponible %}
+
+    <!-- Promo del día -->
+    {% if promo_dia %}
+    <div style="background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%); padding: 1.25rem; border-radius: 8px; margin-bottom: 1rem; color: white;">
+        <div style="display: flex; align-items: center; gap: 0.75rem;">
+            <span style="font-size: 2rem;">🎉</span>
+            <div>
+                <div style="font-weight: bold; font-size: 1.1rem;">¡Promoción activa hoy!</div>
+                <div style="opacity: 0.95; font-size: 0.95rem;">
+                    {{ promo_dia.nombre }}
+                    {% if promo_dia.tipo == '2x1' %}— Por cada 2 entradas, pagás solo 1
+                    {% elif promo_dia.tipo == 'descuento' %}— {{ promo_dia.porcentaje_descuento }}% de descuento
+                    {% endif %}
+                </div>
+                {% if promo_dia.descripcion %}
+                <div style="opacity: 0.85; font-size: 0.85rem; margin-top: 0.25rem;">{{ promo_dia.descripcion }}</div>
+                {% endif %}
+            </div>
         </div>
     </div>
     {% endif %}
 
-    <!-- Resumen de la Reserva -->
-    <div style="background-color: white; padding: 2rem; border-radius: 8px;
-                box-shadow: 0 2px 4px rgba(0,0,0,0.1); margin-top: 1.5rem; margin-bottom: 1.5rem;">
-        <h2 style="color: #333; margin-bottom: 1rem;">Resumen de tu Reserva</h2>
+    <!-- Cupón de descuento -->
+    <div style="background: white; padding: 1.5rem; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.08); margin-bottom: 1rem;">
+        <h3 style="margin: 0 0 1rem 0; color: #333; font-size: 1.1rem;">🏷️ Cupón de descuento</h3>
+        <div style="display: flex; gap: 0.75rem;">
+            <input type="text" id="inputCupon" placeholder="Ingresá tu código (ej: DESC25)"
+                style="flex: 1; padding: 0.6rem 1rem; border: 2px solid #ddd; border-radius: 6px; font-size: 1rem; text-transform: uppercase; font-family: monospace;">
+            <button type="button" onclick="verificarCupon()"
+                style="padding: 0.6rem 1.25rem; background: #6c757d; color: white; border: none; border-radius: 6px; font-weight: bold; cursor: pointer;">
+                Aplicar
+            </button>
+        </div>
+        <div id="cuponFeedback" style="margin-top: 0.6rem; font-size: 0.9rem;"></div>
+        <input type="hidden" id="cuponAplicado" value="">
+    </div>
 
-        <p style="margin: 0.5rem 0;"><strong>Película:</strong> {{ reserva.funcion.pelicula.titulo }}</p>
-        <p style="margin: 0.5rem 0;"><strong>Sala:</strong> {{ reserva.funcion.sala.nombre }}</p>
-        <p style="margin: 0.5rem 0;"><strong>Fecha:</strong> {{ reserva.funcion.fecha_hora|date:"d/m/Y" }}</p>
-        <p style="margin: 0.5rem 0;"><strong>Horario:</strong> {{ reserva.funcion.fecha_hora|date:"H:i" }} hs</p>
-        <p style="margin: 0.5rem 0;"><strong>Entradas:</strong> {{ reserva.cantidad_entradas }}</p>
-        {% if reserva.asientos_seleccionados %}
-        <p style="margin: 0.5rem 0;"><strong>Asientos:</strong> {{ reserva.asientos_formateados }}</p>
-        {% endif %}
-        <p style="margin: 0.5rem 0;"><strong>Código de Reserva:</strong> {{ reserva.codigo_reserva }}</p>
+    <!-- Combos -->
+    {% if combos %}
+    <div style="background: white; padding: 1.5rem; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.08); margin-bottom: 1rem;">
+        <h3 style="margin: 0 0 1rem 0; color: #333; font-size: 1.1rem;">🍿 Agregar combo</h3>
+        <div style="display: grid; gap: 0.75rem;" id="combosContainer">
+            {% for combo in combos %}
+            <label style="display: flex; align-items: center; gap: 1rem; padding: 0.85rem 1rem; border: 2px solid #ddd; border-radius: 8px; cursor: pointer; transition: border-color 0.2s;"
+                   onclick="seleccionarCombo(this, '{{ combo.id }}', {{ combo.precio }})">
+                <input type="radio" name="combo_radio" value="{{ combo.id }}" style="margin: 0; flex-shrink: 0;">
+                <div style="flex: 1;">
+                    <div style="font-weight: bold; color: #333;">{{ combo.nombre }}</div>
+                    <div style="font-size: 0.85rem; color: #666; margin-top: 0.1rem;">{{ combo.descripcion }}</div>
+                </div>
+                <div style="font-weight: bold; color: #28a745; font-size: 1.1rem; white-space: nowrap;">+${{ combo.precio }}</div>
+            </label>
+            {% endfor %}
+            <label style="display: flex; align-items: center; gap: 1rem; padding: 0.85rem 1rem; border: 2px solid #007bff; border-radius: 8px; cursor: pointer; background: #f0f7ff;"
+                   onclick="seleccionarCombo(this, '', 0)">
+                <input type="radio" name="combo_radio" value="" checked style="margin: 0; flex-shrink: 0;">
+                <div style="flex: 1;">
+                    <div style="font-weight: bold; color: #333;">Sin combo</div>
+                    <div style="font-size: 0.85rem; color: #666;">Solo las entradas</div>
+                </div>
+                <div style="color: #666; font-size: 0.9rem;">$0</div>
+            </label>
+        </div>
+        <input type="hidden" id="comboSeleccionado" value="">
+    </div>
+    {% endif %}
 
-        <div style="margin-top: 1.5rem; padding: 1rem; background-color: #e7f3ff; border-radius: 4px;">
-            <p style="margin: 0; font-size: 1.5rem; font-weight: bold; color: #333;">
-                Total a Pagar: ${{ total }}
-            </p>
+    <!-- Resumen de descuentos (aparece dinámicamente) -->
+    <div id="resumenDescuentos" style="display: none; background: #d4edda; padding: 1rem 1.5rem; border-radius: 8px; margin-bottom: 1rem; border-left: 4px solid #28a745;">
+        <h4 style="margin: 0 0 0.75rem 0; color: #155724;">✅ Descuentos aplicados</h4>
+        <div id="detalleDescuentos" style="font-size: 0.9rem; color: #155724;"></div>
+        <div style="margin-top: 0.75rem; padding-top: 0.75rem; border-top: 1px solid #b8dab8;">
+            <span style="font-size: 1.25rem; font-weight: bold; color: #155724;">Total final: $<span id="totalFinalDisplay">0</span></span>
         </div>
     </div>
 
-    <!-- Formulario de Pago -->
-    <div style="background-color: white; padding: 2rem; border-radius: 8px;
-                box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
-        <h2 style="color: #333; margin-bottom: 1rem;">Método de Pago</h2>
+    {% endif %} <!-- /promociones_disponible -->
+
+    <!-- ============================================================ -->
+    <!-- FORMULARIO DE PAGO (uno solo, con hidden inputs de promos)   -->
+    <!-- ============================================================ -->
+    <div style="background: white; padding: 1.5rem; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.08);">
+        <h2 style="color: #333; margin: 0 0 1rem 0; font-size: 1.2rem; border-bottom: 2px solid #28a745; padding-bottom: 0.5rem;">Método de Pago</h2>
 
         <form method="post" id="pagoForm">
             {% csrf_token %}
+            <!-- Campos ocultos para promociones -->
+            <input type="hidden" name="codigo_cupon" id="hiddenCupon" value="">
+            <input type="hidden" name="combo_id" id="hiddenCombo" value="">
 
-            <div style="margin-bottom: 1.5rem;">
-                <label style="display: block; margin-bottom: 0.5rem; font-weight: bold;">
-                    Seleccioná tu método de pago:
+            <!-- Métodos de pago -->
+            <div style="display: flex; flex-direction: column; gap: 0.75rem; margin-bottom: 1.5rem;">
+                <label style="display: flex; align-items: center; padding: 1rem; border: 2px solid #ddd; border-radius: 6px; cursor: pointer;" onclick="selectMetodo('efectivo')">
+                    <input type="radio" name="metodo_pago" value="efectivo" required style="margin-right: 0.75rem;">
+                    <div><strong>💵 Efectivo</strong><p style="margin: 0; font-size: 0.85rem; color: #666;">Pagar en boletería</p></div>
                 </label>
-
-                <div style="display: flex; flex-direction: column; gap: 0.75rem;">
-                    <label style="display: flex; align-items: center; padding: 1rem;
-                                  border: 2px solid #ddd; border-radius: 4px; cursor: pointer;"
-                           onclick="selectMetodo('efectivo')">
-                        <input type="radio" name="metodo_pago" value="efectivo" required
-                               style="margin-right: 0.75rem;">
-                        <div>
-                            <strong>💵 Efectivo</strong>
-                            <p style="margin: 0; font-size: 0.9rem; color: #666;">Pagar en boletería</p>
-                        </div>
-                    </label>
-
-                    <label style="display: flex; align-items: center; padding: 1rem;
-                                  border: 2px solid #ddd; border-radius: 4px; cursor: pointer;"
-                           onclick="selectMetodo('tarjeta_debito')">
-                        <input type="radio" name="metodo_pago" value="tarjeta_debito" required
-                               style="margin-right: 0.75rem;">
-                        <div>
-                            <strong>💳 Tarjeta de Débito</strong>
-                            <p style="margin: 0; font-size: 0.9rem; color: #666;">
-                                Simulado — cualquier número funciona
-                            </p>
-                        </div>
-                    </label>
-
-                    <label style="display: flex; align-items: center; padding: 1rem;
-                                  border: 2px solid #ddd; border-radius: 4px; cursor: pointer;"
-                           onclick="selectMetodo('tarjeta_credito')">
-                        <input type="radio" name="metodo_pago" value="tarjeta_credito" required
-                               style="margin-right: 0.75rem;">
-                        <div>
-                            <strong>💳 Tarjeta de Crédito</strong>
-                            <p style="margin: 0; font-size: 0.9rem; color: #666;">
-                                Simulado — cualquier número funciona
-                            </p>
-                        </div>
-                    </label>
-
-                    <label style="display: flex; align-items: center; padding: 1rem;
-                                  border: 2px solid #ddd; border-radius: 4px; cursor: pointer;"
-                           onclick="selectMetodo('transferencia')">
-                        <input type="radio" name="metodo_pago" value="transferencia" required
-                               style="margin-right: 0.75rem;">
-                        <div>
-                            <strong>🏦 Transferencia</strong>
-                            <p style="margin: 0; font-size: 0.9rem; color: #666;">Transferencia bancaria</p>
-                        </div>
-                    </label>
-                </div>
+                <label style="display: flex; align-items: center; padding: 1rem; border: 2px solid #ddd; border-radius: 6px; cursor: pointer;" onclick="selectMetodo('tarjeta_debito')">
+                    <input type="radio" name="metodo_pago" value="tarjeta_debito" required style="margin-right: 0.75rem;">
+                    <div><strong>💳 Tarjeta de Débito</strong><p style="margin: 0; font-size: 0.85rem; color: #666;">Simulado — cualquier número funciona</p></div>
+                </label>
+                <label style="display: flex; align-items: center; padding: 1rem; border: 2px solid #ddd; border-radius: 6px; cursor: pointer;" onclick="selectMetodo('tarjeta_credito')">
+                    <input type="radio" name="metodo_pago" value="tarjeta_credito" required style="margin-right: 0.75rem;">
+                    <div><strong>💳 Tarjeta de Crédito</strong><p style="margin: 0; font-size: 0.85rem; color: #666;">Simulado — cualquier número funciona</p></div>
+                </label>
+                <label style="display: flex; align-items: center; padding: 1rem; border: 2px solid #ddd; border-radius: 6px; cursor: pointer;" onclick="selectMetodo('transferencia')">
+                    <input type="radio" name="metodo_pago" value="transferencia" required style="margin-right: 0.75rem;">
+                    <div><strong>🏦 Transferencia</strong><p style="margin: 0; font-size: 0.85rem; color: #666;">Transferencia bancaria</p></div>
+                </label>
             </div>
 
-            <!-- Campos de Tarjeta -->
-            <div id="datosTarjeta"
-                 style="display: none; margin-top: 1.5rem; padding: 1.5rem;
-                        background-color: #f8f9fa; border-radius: 4px;
-                        border: 2px dashed #ffc107;">
-
-                <!-- Aviso dentro del formulario de tarjeta -->
-                <div style="background-color: #fff3cd; padding: 0.75rem 1rem;
-                            border-radius: 6px; margin-bottom: 1.25rem;
-                            display: flex; align-items: center; gap: 0.75rem;">
+            <!-- Campos de tarjeta (se muestran solo si es tarjeta) -->
+            <div id="datosTarjeta" style="display: none; margin-bottom: 1.5rem; padding: 1.5rem; background: #f8f9fa; border-radius: 6px; border: 2px dashed #ffc107;">
+                <!-- Aviso simulación dentro del formulario -->
+                <div style="background: #fff3cd; padding: 0.75rem 1rem; border-radius: 6px; margin-bottom: 1.25rem; display: flex; align-items: center; gap: 0.75rem;">
                     <span style="font-size: 1.25rem;">🧪</span>
-                    <span style="color: #856404; font-size: 0.9rem;">
-                        <strong>Modo simulación:</strong> Usá cualquier número. No se realizará ningún cobro real.
-                    </span>
+                    <span style="color: #856404; font-size: 0.9rem;"><strong>Modo simulación:</strong> Usá cualquier número. No se realizará ningún cobro real.</span>
                 </div>
-
-                <h3 style="color: #333; margin-bottom: 1rem; font-size: 1.1rem;">
-                    Datos de la Tarjeta
-                </h3>
-
-                <div style="margin-bottom: 1rem;">
-                    <label for="nombre_titular"
-                           style="display: block; margin-bottom: 0.5rem; font-weight: bold;">
-                        Nombre del Titular:
-                    </label>
-                    <input type="text" id="nombre_titular" name="nombre_titular"
-                           placeholder="Como aparece en la tarjeta"
-                           style="width: 100%; padding: 0.5rem; border: 1px solid #ddd;
-                                  border-radius: 4px; font-size: 1rem;">
+                <h3 style="color: #333; margin: 0 0 1rem 0; font-size: 1.1rem;">Datos de la Tarjeta</h3>
+                <div style="margin-bottom: 0.75rem;">
+                    <label style="display: block; font-weight: bold; margin-bottom: 0.3rem;">Nombre del Titular:</label>
+                    <input type="text" id="nombre_titular" name="nombre_titular" placeholder="Como aparece en la tarjeta"
+                        style="width: 100%; padding: 0.5rem; border: 1px solid #ddd; border-radius: 4px; font-size: 1rem; box-sizing: border-box;">
                 </div>
-
-                <div style="margin-bottom: 1rem;">
-                    <label for="numero_tarjeta"
-                           style="display: block; margin-bottom: 0.5rem; font-weight: bold;">
-                        Número de Tarjeta:
-                    </label>
-                    <input type="text" id="numero_tarjeta" name="numero_tarjeta"
-                           placeholder="1234 5678 9012 3456" maxlength="19"
-                           style="width: 100%; padding: 0.5rem; border: 1px solid #ddd;
-                                  border-radius: 4px; font-size: 1rem;">
+                <div style="margin-bottom: 0.75rem;">
+                    <label style="display: block; font-weight: bold; margin-bottom: 0.3rem;">Número de Tarjeta:</label>
+                    <input type="text" id="numero_tarjeta" name="numero_tarjeta" placeholder="1234 5678 9012 3456" maxlength="19"
+                        style="width: 100%; padding: 0.5rem; border: 1px solid #ddd; border-radius: 4px; font-size: 1rem; box-sizing: border-box;">
                 </div>
-
-                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem;">
                     <div>
-                        <label for="vencimiento"
-                               style="display: block; margin-bottom: 0.5rem; font-weight: bold;">
-                            Vencimiento:
-                        </label>
-                        <input type="text" id="vencimiento" name="vencimiento"
-                               placeholder="MM/AA" maxlength="5"
-                               style="width: 100%; padding: 0.5rem; border: 1px solid #ddd;
-                                      border-radius: 4px; font-size: 1rem;">
+                        <label style="display: block; font-weight: bold; margin-bottom: 0.3rem;">Vencimiento:</label>
+                        <input type="text" id="vencimiento" name="vencimiento" placeholder="MM/AA" maxlength="5"
+                            style="width: 100%; padding: 0.5rem; border: 1px solid #ddd; border-radius: 4px; font-size: 1rem; box-sizing: border-box;">
                     </div>
                     <div>
-                        <label for="cvv"
-                               style="display: block; margin-bottom: 0.5rem; font-weight: bold;">
-                            CVV:
-                        </label>
+                        <label style="display: block; font-weight: bold; margin-bottom: 0.3rem;">CVV:</label>
                         <input type="text" id="cvv" name="cvv" placeholder="123" maxlength="4"
-                               style="width: 100%; padding: 0.5rem; border: 1px solid #ddd;
-                                      border-radius: 4px; font-size: 1rem;">
+                            style="width: 100%; padding: 0.5rem; border: 1px solid #ddd; border-radius: 4px; font-size: 1rem; box-sizing: border-box;">
                     </div>
                 </div>
             </div>
 
             <!-- Botones -->
-            <div style="margin-top: 2rem; display: flex; gap: 1rem;">
+            <div style="display: flex; gap: 1rem;">
                 <button type="submit" id="submitBtn"
-                        style="flex: 1; padding: 1rem; background-color: #28a745;
-                               color: white; border: none; border-radius: 4px;
-                               font-weight: bold; cursor: pointer; font-size: 1rem;">
+                    style="flex: 1; padding: 1rem; background: #28a745; color: white; border: none; border-radius: 6px; font-weight: bold; font-size: 1rem; cursor: pointer;">
                     💳 Confirmar Pago
                 </button>
                 <a href="{% url 'reservas:mis_reservas' %}"
-                   style="flex: 1; padding: 1rem; background-color: #6c757d; color: white;
-                          border-radius: 4px; text-align: center; text-decoration: none;
-                          font-weight: bold; font-size: 1rem;
-                          display: flex; align-items: center; justify-content: center;">
+                    style="flex: 1; padding: 1rem; background: #6c757d; color: white; border-radius: 6px; text-align: center; text-decoration: none; font-weight: bold; font-size: 1rem; display: flex; align-items: center; justify-content: center;">
                     Cancelar
                 </a>
             </div>
         </form>
     </div>
-</div>
 
+</div><!-- /max-width wrapper -->
+
+<!-- ============================================================ -->
+<!-- SCRIPT ÚNICO (sin duplicados)                               -->
+<!-- ============================================================ -->
 <script>
-function selectMetodo(metodo) {
-    const datosTarjeta = document.getElementById('datosTarjeta');
-    const campos = ['nombre_titular', 'numero_tarjeta', 'vencimiento', 'cvv'];
-    if (metodo === 'tarjeta_debito' || metodo === 'tarjeta_credito') {
-        datosTarjeta.style.display = 'block';
-        campos.forEach(c => { document.getElementById(c).required = true; });
+// ===== VARIABLES GLOBALES =====
+const totalOriginal = {{ total }};
+let descuentoPromo = 0;
+let descuentoCupon = 0;
+let precioCombo = 0;
+
+{% if promo_dia %}
+const cantidadEntradas = {{ reserva.cantidad_entradas }};
+{% if promo_dia.tipo == '2x1' %}
+const precioUnitario = totalOriginal / cantidadEntradas;
+descuentoPromo = precioUnitario * Math.floor(cantidadEntradas / 2);
+{% elif promo_dia.tipo == 'descuento' %}
+descuentoPromo = totalOriginal * {{ promo_dia.porcentaje_descuento }} / 100;
+{% endif %}
+{% endif %}
+
+// ===== RESUMEN DE DESCUENTOS =====
+function actualizarResumen() {
+    const totalFinal = Math.max(totalOriginal - descuentoPromo - descuentoCupon, 0) + precioCombo;
+    const hayDescuento = descuentoPromo > 0 || descuentoCupon > 0 || precioCombo > 0;
+    const resumen = document.getElementById('resumenDescuentos');
+    const detalle = document.getElementById('detalleDescuentos');
+    const totalDisplay = document.getElementById('totalFinalDisplay');
+
+    if (hayDescuento) {
+        resumen.style.display = 'block';
+        let html = `<p style="margin:0.25rem 0;">Subtotal entradas: <strong>$${totalOriginal.toFixed(2)}</strong></p>`;
+        if (descuentoPromo > 0) html += `<p style="margin:0.25rem 0;">Descuento promoción día: <strong>-$${descuentoPromo.toFixed(2)}</strong></p>`;
+        if (descuentoCupon > 0) html += `<p style="margin:0.25rem 0;">Descuento cupón: <strong>-$${descuentoCupon.toFixed(2)}</strong></p>`;
+        if (precioCombo > 0) html += `<p style="margin:0.25rem 0;">Combo agregado: <strong>+$${precioCombo.toFixed(2)}</strong></p>`;
+        detalle.innerHTML = html;
+        totalDisplay.textContent = totalFinal.toFixed(2);
     } else {
-        datosTarjeta.style.display = 'none';
-        campos.forEach(c => { document.getElementById(c).required = false; });
+        resumen.style.display = 'none';
     }
 }
 
-document.getElementById('numero_tarjeta').addEventListener('input', function (e) {
+{% if promo_dia %}actualizarResumen();{% endif %}
+
+// ===== CUPÓN =====
+async function verificarCupon() {
+    const codigo = document.getElementById('inputCupon').value.trim().toUpperCase();
+    const feedback = document.getElementById('cuponFeedback');
+    if (!codigo) { feedback.innerHTML = '<span style="color:#dc3545;">Ingresá un código</span>'; return; }
+    feedback.innerHTML = '<span style="color:#6c757d;">Verificando...</span>';
+    const formData = new FormData();
+    formData.append('codigo', codigo);
+    formData.append('monto', totalOriginal);
+    try {
+        const resp = await fetch('{% url "promociones:verificar_cupon" %}', { method: 'POST', body: formData });
+        const data = await resp.json();
+        if (data.success) {
+            descuentoCupon = data.descuento;
+            document.getElementById('cuponAplicado').value = codigo;
+            document.getElementById('hiddenCupon').value = codigo;
+            feedback.innerHTML = `<span style="color:#28a745;">✅ ${data.descripcion} — Descuento: $${data.descuento.toFixed(2)}</span>`;
+        } else {
+            descuentoCupon = 0;
+            document.getElementById('cuponAplicado').value = '';
+            document.getElementById('hiddenCupon').value = '';
+            feedback.innerHTML = `<span style="color:#dc3545;">❌ ${data.error}</span>`;
+        }
+        actualizarResumen();
+    } catch {
+        feedback.innerHTML = '<span style="color:#dc3545;">Error de conexión</span>';
+    }
+}
+
+document.getElementById('inputCupon')?.addEventListener('keypress', e => {
+    if (e.key === 'Enter') { e.preventDefault(); verificarCupon(); }
+});
+
+// ===== COMBOS =====
+function seleccionarCombo(label, comboId, comboPrecio) {
+    document.querySelectorAll('#combosContainer label').forEach(l => {
+        l.style.borderColor = '#ddd';
+        l.style.background = 'white';
+    });
+    label.style.borderColor = '#007bff';
+    label.style.background = '#f0f7ff';
+    precioCombo = comboPrecio;
+    document.getElementById('comboSeleccionado').value = comboId;
+    document.getElementById('hiddenCombo').value = comboId;
+    actualizarResumen();
+}
+
+// ===== MÉTODO DE PAGO =====
+function selectMetodo(metodo) {
+    const datosTarjeta = document.getElementById('datosTarjeta');
+    const esTarjeta = metodo === 'tarjeta_debito' || metodo === 'tarjeta_credito';
+    datosTarjeta.style.display = esTarjeta ? 'block' : 'none';
+    ['nombre_titular', 'numero_tarjeta', 'vencimiento', 'cvv'].forEach(id => {
+        const el = document.getElementById(id);
+        if (el) el.required = esTarjeta;
+    });
+}
+
+// ===== AUTO-FORMATO TARJETA =====
+document.getElementById('numero_tarjeta')?.addEventListener('input', function(e) {
     let v = e.target.value.replace(/\s/g, '');
     let f = v.match(/.{1,4}/g);
     e.target.value = f ? f.join(' ') : v;
 });
-
-document.getElementById('vencimiento').addEventListener('input', function (e) {
+document.getElementById('vencimiento')?.addEventListener('input', function(e) {
     let v = e.target.value.replace(/\D/g, '');
-    e.target.value = v.length >= 2 ? v.substring(0, 2) + '/' + v.substring(2, 4) : v;
+    e.target.value = v.length >= 2 ? v.slice(0, 2) + '/' + v.slice(2, 4) : v;
 });
-
-document.getElementById('cvv').addEventListener('input', function (e) {
+document.getElementById('cvv')?.addEventListener('input', function(e) {
     e.target.value = e.target.value.replace(/\D/g, '');
 });
 
+// ===== CONTADOR REGRESIVO =====
 {% if reserva.tiempo_restante_pago %}
-(function () {
-    const countdownEl = document.getElementById('countdown');
+(function() {
+    const el = document.getElementById('countdown');
     const container = document.getElementById('countdownContainer');
-    const submitBtn = document.getElementById('submitBtn');
+    const btn = document.getElementById('submitBtn');
     const form = document.getElementById('pagoForm');
-    if (!countdownEl) return;
-
-    let t = parseInt(countdownEl.dataset.tiempo);
-
-    function fmt(s) {
-        return `${String(Math.floor(s / 60)).padStart(2, '0')}:${String(s % 60).padStart(2, '0')}`;
-    }
-
+    if (!el) return;
+    let tiempo = parseInt(el.dataset.tiempo);
     function tick() {
-        if (t <= 0) {
-            countdownEl.textContent = '00:00';
+        if (tiempo <= 0) {
+            el.textContent = '00:00';
             container.style.background = 'linear-gradient(135deg, #6c757d 0%, #495057 100%)';
-            submitBtn.disabled = true;
-            submitBtn.style.backgroundColor = '#6c757d';
-            submitBtn.style.cursor = 'not-allowed';
-            submitBtn.innerHTML = '⏰ Tiempo Expirado';
-            form.style.opacity = '0.5';
-            form.style.pointerEvents = 'none';
+            if (btn) { btn.disabled = true; btn.style.backgroundColor = '#6c757d'; btn.innerHTML = '⏰ Tiempo Expirado'; }
+            if (form) { form.style.opacity = '0.5'; form.style.pointerEvents = 'none'; }
             setTimeout(() => {
-                alert('⏰ El tiempo de pago expiró. La reserva será cancelada.');
+                alert('⏰ El tiempo de pago expiró. La reserva será cancelada automáticamente.');
                 window.location.href = "{% url 'reservas:mis_reservas' %}";
             }, 1000);
             return;
         }
-        countdownEl.textContent = fmt(t);
-        if (t <= 180) {
-            container.style.background = 'linear-gradient(135deg, #dc3545 0%, #c82333 100%)';
-        }
-        t--;
+        const m = Math.floor(tiempo / 60), s = tiempo % 60;
+        el.textContent = `${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`;
+        if (tiempo <= 180) container.style.background = 'linear-gradient(135deg, #dc3545 0%, #c82333 100%)';
+        tiempo--;
     }
-
     tick();
-    const iv = setInterval(() => { tick(); if (t < 0) clearInterval(iv); }, 1000);
+    const iv = setInterval(() => { tick(); if (tiempo < 0) clearInterval(iv); }, 1000);
 })();
 {% endif %}
 </script>

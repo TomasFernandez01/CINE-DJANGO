@@ -5,17 +5,17 @@
 {% block contenido %}
 <h1>🎫 Mis Reservas</h1>
 
-<!-- Filtros ARREGLADOS -->
+<!-- Filtros -->
 <div style="background-color: white; padding: 1rem; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); margin-bottom: 1.5rem;">
     <form method="get" id="filtrosForm" style="display: flex; gap: 1rem; flex-wrap: wrap; align-items: center;">
         <label style="display: flex; align-items: center; gap: 0.5rem; cursor: pointer;">
-            <input type="checkbox" name="mostrar_canceladas" value="si" 
+            <input type="checkbox" name="mostrar_canceladas" value="si"
                    {% if mostrar_canceladas == 'si' %}checked{% endif %}
                    onchange="document.getElementById('filtrosForm').submit()">
             Mostrar canceladas
         </label>
         <label style="display: flex; align-items: center; gap: 0.5rem; cursor: pointer;">
-            <input type="checkbox" name="mostrar_expiradas" value="si" 
+            <input type="checkbox" name="mostrar_expiradas" value="si"
                    {% if mostrar_expiradas == 'si' %}checked{% endif %}
                    onchange="document.getElementById('filtrosForm').submit()">
             Mostrar expiradas
@@ -26,19 +26,17 @@
 {% if reservas %}
     <div style="display: grid; gap: 1rem;">
         {% for reserva in reservas %}
-            <div style="background-color: white; padding: 1.5rem; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); 
+            <div style="background-color: white; padding: 1.5rem; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1);
                 {% if reserva.estado == 'confirmada' %}border-left: 4px solid #28a745;
                 {% elif reserva.estado == 'pendiente' %}border-left: 4px solid #ffc107;
                 {% elif reserva.estado == 'expirada' %}border-left: 4px solid #6c757d;
                 {% else %}border-left: 4px solid #dc3545;{% endif %}">
-                
+
                 <div style="display: flex; justify-content: space-between; align-items: start; flex-wrap: wrap; gap: 1rem;">
                     <div style="flex: 1; min-width: 250px;">
-                        <h3 style="margin: 0 0 1rem 0; color: #333;">
-                            {{ reserva.funcion.pelicula.titulo }}
-                        </h3>
-                        
-                        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 0.75rem; margin-bottom: 1rem;">
+                        <h3 style="margin: 0 0 1rem 0; color: #333;">{{ reserva.funcion.pelicula.titulo }}</h3>
+
+                        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 0.75rem; margin-bottom: 1rem;">
                             <div>
                                 <div style="font-size: 0.875rem; color: #666;">Código</div>
                                 <div style="font-weight: bold; color: #333; font-family: monospace;">{{ reserva.codigo_reserva }}</div>
@@ -56,33 +54,62 @@
                                 <div style="font-weight: bold; color: #333;">{{ reserva.funcion.sala.nombre }}</div>
                             </div>
                         </div>
-                        
-                        <!-- Mostrar asientos seleccionados -->
+
+                        <!-- Asientos -->
                         {% if reserva.asientos_seleccionados %}
                         <div style="margin-bottom: 1rem;">
                             <div style="font-size: 0.875rem; color: #666; margin-bottom: 0.25rem;">🪑 Asientos</div>
-                            <div style="display: flex; gap: 0.5rem; flex-wrap: wrap;">
+                            <div style="display: flex; gap: 0.4rem; flex-wrap: wrap;">
                                 {% for asiento in reserva.lista_asientos %}
-                                    <span style="display: inline-block; padding: 0.25rem 0.5rem; background-color: #007bff; color: white; border-radius: 4px; font-size: 0.875rem; font-weight: bold;">
+                                    <span style="padding: 0.2rem 0.5rem; background-color: #007bff; color: white; border-radius: 4px; font-size: 0.8rem; font-weight: bold;">
                                         {{ asiento }}
                                     </span>
                                 {% endfor %}
                             </div>
                         </div>
                         {% endif %}
-                        
-                        <div style="display: flex; gap: 1rem; align-items: center; flex-wrap: wrap;">
+
+                        <!-- Total con descuento -->
+                        <div style="display: flex; gap: 1.5rem; align-items: center; flex-wrap: wrap;">
                             <div>
-                                <span style="font-size: 0.875rem; color: #666;">Entradas:</span>
+                                <span style="font-size: 0.875rem; color: #666;">Entradas: </span>
                                 <span style="font-weight: bold; color: #333;">{{ reserva.cantidad_entradas }}</span>
                             </div>
                             <div>
-                                <span style="font-size: 0.875rem; color: #666;">Total:</span>
-                                <span style="font-weight: bold; color: #28a745; font-size: 1.25rem;">${{ reserva.total }}</span>
+                                {% if reserva.estado == 'confirmada' and reserva.pago %}
+                                    {% if reserva.tuvo_descuento %}
+                                        {# Mostrar precio original tachado y precio final #}
+                                        <span style="font-size: 0.85rem; color: #999; text-decoration: line-through;">
+                                            ${{ reserva.total }}
+                                        </span>
+                                        <span style="font-weight: bold; color: #28a745; font-size: 1.25rem; margin-left: 0.4rem;">
+                                            ${{ reserva.total_pagado }}
+                                        </span>
+                                        <span style="display: inline-block; margin-left: 0.4rem; padding: 0.15rem 0.5rem; background: #d4edda; color: #155724; border-radius: 4px; font-size: 0.78rem; font-weight: bold;">
+                                            -${{ reserva.pago.descuento_total }}
+                                        </span>
+                                    {% else %}
+                                        <span style="font-weight: bold; color: #28a745; font-size: 1.25rem;">
+                                            ${{ reserva.total_pagado }}
+                                        </span>
+                                    {% endif %}
+                                    {# Combo si lo tiene #}
+                                    {% if reserva.pago.combo %}
+                                        <div style="font-size: 0.8rem; color: #ff8c00; margin-top: 0.2rem;">
+                                            🍿 {{ reserva.pago.combo.nombre }}
+                                        </div>
+                                    {% endif %}
+                                {% else %}
+                                    {# Pendiente o cancelada: mostrar total estimado #}
+                                    <span style="font-weight: bold; color: #333; font-size: 1.1rem;">
+                                        ${{ reserva.total }}
+                                    </span>
+                                {% endif %}
                             </div>
                         </div>
                     </div>
-                    
+
+                    <!-- Columna derecha: estado y acciones -->
                     <div style="display: flex; flex-direction: column; gap: 0.75rem; align-items: flex-end;">
                         <span style="padding: 0.5rem 1rem; border-radius: 6px; font-weight: bold; white-space: nowrap;
                             {% if reserva.estado == 'confirmada' %}background-color: #d4edda; color: #155724;
@@ -91,30 +118,35 @@
                             {% else %}background-color: #f8d7da; color: #721c24;{% endif %}">
                             {{ reserva.get_estado_display }}
                         </span>
-                        
-                        <!-- Contador de tiempo restante para pago -->
+
                         {% if reserva.estado == 'pendiente' and reserva.tiempo_restante_pago %}
                             <div style="background-color: #ff6b6b; color: white; padding: 0.5rem 1rem; border-radius: 6px; font-weight: bold; text-align: center;">
                                 ⏰ {{ reserva.tiempo_restante_formato }}
                             </div>
                         {% endif %}
-                        
+
                         <div style="display: flex; flex-direction: column; gap: 0.5rem; width: 100%;">
-                            <a href="{% url 'reservas:detalle_reserva' reserva.id %}" style="padding: 0.5rem 1rem; background-color: #007bff; color: white; text-decoration: none; border-radius: 4px; text-align: center; font-weight: bold; white-space: nowrap;">
+                            <a href="{% url 'reservas:detalle_reserva' reserva.id %}"
+                               style="padding: 0.5rem 1rem; background-color: #007bff; color: white; text-decoration: none; border-radius: 4px; text-align: center; font-weight: bold; white-space: nowrap;">
                                 Ver Detalle
                             </a>
-                            
+
                             {% if reserva.estado == 'pendiente' %}
-                                <a href="{% url 'pagos:procesar_pago' reserva.id %}" style="padding: 0.5rem 1rem; background-color: #28a745; color: white; text-decoration: none; border-radius: 4px; text-align: center; font-weight: bold; white-space: nowrap;">
+                                <a href="{% url 'pagos:procesar_pago' reserva.id %}"
+                                   style="padding: 0.5rem 1rem; background-color: #28a745; color: white; text-decoration: none; border-radius: 4px; text-align: center; font-weight: bold; white-space: nowrap;">
                                     💳 Pagar Ahora
                                 </a>
-                                <a href="{% url 'reservas:cancelar_reserva' reserva.id %}" style="padding: 0.5rem 1rem; background-color: #dc3545; color: white; text-decoration: none; border-radius: 4px; text-align: center; font-weight: bold; white-space: nowrap;" onclick="return confirm('¿Seguro que querés cancelar esta reserva?')">
+                                <a href="{% url 'reservas:cancelar_reserva' reserva.id %}"
+                                   style="padding: 0.5rem 1rem; background-color: #dc3545; color: white; text-decoration: none; border-radius: 4px; text-align: center; font-weight: bold; white-space: nowrap;"
+                                   onclick="return confirm('¿Seguro que querés cancelar esta reserva?')">
                                     Cancelar
                                 </a>
                             {% endif %}
-                            
+
                             {% if reserva.estado in 'cancelada,expirada' %}
-                                <a href="{% url 'reservas:eliminar_reserva' reserva.id %}" style="padding: 0.5rem 1rem; background-color: #6c757d; color: white; text-decoration: none; border-radius: 4px; text-align: center; font-weight: bold; white-space: nowrap;" onclick="return confirm('¿Eliminar del historial?')">
+                                <a href="{% url 'reservas:eliminar_reserva' reserva.id %}"
+                                   style="padding: 0.5rem 1rem; background-color: #6c757d; color: white; text-decoration: none; border-radius: 4px; text-align: center; font-weight: bold; white-space: nowrap;"
+                                   onclick="return confirm('¿Eliminar del historial?')">
                                     🗑️ Eliminar
                                 </a>
                             {% endif %}
@@ -126,20 +158,16 @@
     </div>
 {% else %}
     <div style="background-color: white; padding: 3rem; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); text-align: center;">
-        <p style="font-size: 1.25rem; color: #666; margin: 0 0 1.5rem 0;">
-            No tenés reservas en este momento.
-        </p>
-        <a href="{% url 'peliculas:lista_peliculas' %}" style="display: inline-block; padding: 1rem 2rem; background-color: #007bff; color: white; text-decoration: none; border-radius: 6px; font-weight: bold;">
+        <p style="font-size: 1.25rem; color: #666; margin: 0 0 1.5rem 0;">No tenés reservas en este momento.</p>
+        <a href="{% url 'peliculas:lista_peliculas' %}"
+           style="display: inline-block; padding: 1rem 2rem; background-color: #007bff; color: white; text-decoration: none; border-radius: 6px; font-weight: bold;">
             🎬 Explorar Películas
         </a>
     </div>
 {% endif %}
 
 <script>
-// Auto-recargar cada 30 segundos para actualizar contadores
-setTimeout(function() {
-    location.reload();
-}, 10000);
+// Auto-recargar cada 30 segundos para actualizar contadores de tiempo
+setTimeout(function() { location.reload(); }, 30000);
 </script>
-
 {% endblock %}

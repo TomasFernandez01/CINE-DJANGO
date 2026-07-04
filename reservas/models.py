@@ -41,6 +41,22 @@ class Reserva(models.Model):
         """Calcula el total a pagar"""
         return self.funcion.precio * self.cantidad_entradas
     
+    #-------------------------------------------------------------
+                                #PROMOCIONES 
+    
+    def total_pagado(self):
+        """Retorna el monto real pagado. Si hay pago con descuento, usa pago.monto."""
+        if hasattr(self, 'pago'):
+            return self.pago.monto
+        return self.total()
+
+    def tuvo_descuento(self):
+        """Indica si se aplicó algún descuento al pago."""
+        if hasattr(self, 'pago'):
+            return self.pago.descuento_total > 0
+        return False
+    #-------------------------------------------------------------
+    
     ##############################################################3
     def lista_asientos(self):
         """Retorna los asientos como lista"""

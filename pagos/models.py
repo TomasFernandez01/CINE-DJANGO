@@ -23,44 +23,49 @@ class Pago(models.Model):
     
     reserva = models.OneToOneField(Reserva, on_delete=models.CASCADE, related_name='pago')
     metodo_pago = models.CharField(max_length=20, choices=METODO_PAGO_CHOICES)
-    monto = models.DecimalField(max_digits=10, decimal_places=2)
-    fecha_pago = models.DateTimeField(default=timezone.now)
     estado = models.CharField(max_length=20, choices=ESTADO_CHOICES, default='pendiente')
+    fecha_pago = models.DateTimeField(default=timezone.now)
     numero_transaccion = models.CharField(max_length=50, unique=True, blank=True)
-    
-    # Datos de tarjeta (opcional)
+    # =========================
+    # MONTOS (APP PROMOCIONES)
+    # =========================
+    monto_original = models.DecimalField(max_digits=10,decimal_places=2,default=0,
+                                         help_text="Monto antes de descuentos")
+    descuento_cupon = models.DecimalField(max_digits=10,decimal_places=2,default=0)
+    descuento_promo_dia = models.DecimalField(max_digits=10,decimal_places=2,default=0)
+    descuento_total = models.DecimalField(max_digits=10,decimal_places=2,default=0)
+    precio_combo = models.DecimalField(max_digits=10,decimal_places=2,default=0)
+    monto = models.DecimalField(max_digits=10,decimal_places=2,
+                                help_text="Monto final pagado")
+    # =========================
+    # DATOS TARJETA
+    # =========================
     ultimos_4_digitos = models.CharField(max_length=4, blank=True, null=True)
     nombre_titular = models.CharField(max_length=200, blank=True, null=True)
-    
+    # =========================
+    # APP PROMOCIONES
+    # =========================
+    cupon_usado = models.ForeignKey('promociones.Cupon',on_delete=models.SET_NULL,null=True,blank=True,related_name='pagos')
+    combo = models.ForeignKey('promociones.Combo',on_delete=models.SET_NULL,null=True,blank=True,related_name='pagos')
+    promo_dia = models.ForeignKey('promociones.PromocionDia',on_delete=models.SET_NULL,null=True,blank=True,related_name='pagos')
     # ============================================
-    # NUEVO: CÓDIGO QR
+    # QR
     # ============================================
-    codigo_qr = models.CharField(
-        max_length=100, 
-        unique=True, 
-        blank=True,
-        help_text="Código único para QR"
-    )
-    
-    qr_escaneado = models.BooleanField(
-        default=False,
-        help_text="Indica si el QR fue escaneado al ingresar"
-    )
-    
-    fecha_escaneo = models.DateTimeField(
-        null=True, 
-        blank=True,
-        help_text="Fecha y hora en que se escaneó el QR"
-    )
-    
-    escaneado_por = models.CharField(
-        max_length=100, 
-        blank=True,
-        help_text="Usuario/personal que escaneó el QR"
-    )
+    codigo_qr = models.CharField(max_length=100, unique=True, blank=True, 
+                                 help_text="Código único para QR")
+    qr_escaneado = models.BooleanField(default=False, 
+                                       help_text="Indica si el QR fue escaneado al ingresar")
+    fecha_escaneo = models.DateTimeField(null=True, blank=True,
+                                         help_text="Fecha y hora en que se escaneó el QR")
+    escaneado_por = models.CharField(max_length=100, blank=True,
+                                     help_text="Usuario/personal que escaneó el QR")
     
     def __str__(self):
         return f"Pago {self.numero_transaccion} - {self.reserva.usuario.username}"
+    
+    # -B.PROMOCIONES
+    def tuvo_descuento(self):
+        return self.descuento_total > 0
     
     def generar_codigo_qr(self):
         """-QR-. Formato: PAGO-{UUID}-{CODIGO_RESERVA}"""

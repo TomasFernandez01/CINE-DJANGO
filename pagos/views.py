@@ -3,15 +3,14 @@ from django.contrib.auth.decorators import login_required
 from django.contrib import messages
 from django.http import JsonResponse
 from django.views.decorators.csrf import csrf_exempt
+from django.utils import timezone
+from decimal import Decimal
 from .models import Pago
 from reservas.models import Reserva
 
-
-from django.utils import timezone
 from django.db.models import Sum, Count, Q
 from datetime import timedelta
 from salas.models import Funcion
-
 
 try:
     from utils.email_utils import enviar_email_pago_confirmado
@@ -25,8 +24,99 @@ try:
 except ImportError:
     QR_DISPONIBLE = False
     print("⚠️ Módulo qrcode no encontrado. Instalar con: pip install qrcode[pil]")
+#################################################################################
+# Imports de promociones
+try:
+    from promociones.models import Cupon, PromocionDia, Combo, CuponUsado
+    PROMOCIONES_DISPONIBLE = True
+except ImportError:
+    PROMOCIONES_DISPONIBLE = False
+# ============================================================
+# HELPERS DE PROMOCIONES
+# ============================================================
+ 
+def _obtener_promo_dia():
+    """Retorna la PromocionDia activa para hoy, o None."""
+    if not PROMOCIONES_DISPONIBLE:
+        return None
+    dia_actual = timezone.now().weekday()
+    return PromocionDia.objects.filter(dia_semana=dia_actual, activo=True).first()
+ 
+ 
+def _obtener_combos():
+    """Retorna combos activos."""
+    if not PROMOCIONES_DISPONIBLE:
+        return []
+    return Combo.objects.filter(activo=True)
+ 
+ 
+def _calcular_descuentos(monto_original, cantidad_entradas, codigo_cupon, combo_id, usuario, promo_dia):
+    """
+    Calcula todos los descuentos y retorna un dict con los resultados.
+    La promo_dia y el cupón se aplican sobre el monto de entradas.
+    El combo es un adicional.
+    """
+    descuento_promo = Decimal('0')
+    descuento_cupon_val = Decimal('0')
+    cupon_obj = None
+    combo_obj = None
+    promo_dia_obj = None
+    error_cupon = None
+ 
+    # 1. Promo del día
+    if promo_dia:
+        descuento_promo = promo_dia.calcular_descuento(monto_original, cantidad_entradas)
+        promo_dia_obj = promo_dia
+ 
+    # 2. Cupón
+    if codigo_cupon and PROMOCIONES_DISPONIBLE:
+        codigo_cupon = codigo_cupon.upper().strip()
+        try:
+            cupon = Cupon.objects.get(codigo=codigo_cupon)
+            valido, msg = cupon.es_valido()
+ 
+            if not valido:
+                error_cupon = msg
+            elif cupon.monto_minimo and monto_original < cupon.monto_minimo:
+                error_cupon = f'Monto mínimo para este cupón: ${cupon.monto_minimo}'
+            elif cupon.solo_primera_compra and CuponUsado.objects.filter(usuario=usuario).exists():
+                error_cupon = 'Cupón solo válido para primera compra'
+            elif CuponUsado.objects.filter(cupon=cupon, usuario=usuario).exists():
+                error_cupon = 'Ya utilizaste este cupón'
+            else:
+                descuento_cupon_val = cupon.calcular_descuento(monto_original)
+                cupon_obj = cupon
+        except Cupon.DoesNotExist:
+            error_cupon = 'Código de cupón no encontrado'
+ 
+    # 3. Combo
+    if combo_id and PROMOCIONES_DISPONIBLE:
+        try:
+            combo_obj = Combo.objects.get(id=combo_id, activo=True)
+        except Combo.DoesNotExist:
+            combo_obj = None
+ 
+    descuento_total = descuento_promo + descuento_cupon_val
+    precio_combo = combo_obj.precio if combo_obj else Decimal('0')
+    monto_final = max(monto_original - descuento_total, Decimal('0')) + precio_combo
+ 
+    return {
+        'monto_original': monto_original,
+        'descuento_promo_dia': descuento_promo,
+        'descuento_cupon': descuento_cupon_val,
+        'descuento_total': descuento_total,
+        'precio_combo': precio_combo,
+        'monto_final': monto_final,
+        'cupon_obj': cupon_obj,
+        'combo_obj': combo_obj,
+        'promo_dia_obj': promo_dia_obj,
+        'error_cupon': error_cupon,
+    }
+#################################################################################
 
-
+# ============================================================
+# VISTAS PRINCIPALES adaptarlo al nievo archivo
+# ============================================================
 @login_required
 def procesar_pago(request, reserva_id):
     reserva = get_object_or_404(Reserva, id=reserva_id, usuario=request.user)
@@ -43,6 +133,12 @@ def procesar_pago(request, reserva_id):
         messages.error(request, 'Esta reserva ya tiene un pago registrado.')
         return redirect('reservas:detalle_reserva', reserva_id=reserva.id)
     
+    #---------------------------------------------------------------------
+    promo_dia = _obtener_promo_dia()
+    combos = _obtener_combos()
+    monto_original = reserva.total()
+    #---------------------------------------------------------------------
+    
     if request.method == 'POST':
         if reserva.expiro_tiempo_pago():
             reserva.estado = 'cancelada'
@@ -51,15 +147,43 @@ def procesar_pago(request, reserva_id):
             return redirect('salas:lista_funciones')
         
         metodo_pago = request.POST.get('metodo_pago')
-        
+        #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+        codigo_cupon = request.POST.get('codigo_cupon', '').strip()
+        combo_id = request.POST.get('combo_id', '').strip()
+        # Calcular descuentos
+        calc = _calcular_descuentos(
+            monto_original=monto_original,
+            cantidad_entradas=reserva.cantidad_entradas,
+            codigo_cupon=codigo_cupon,
+            combo_id=combo_id if combo_id else None,
+            usuario=request.user,
+            promo_dia=promo_dia,
+        )
+        if calc['error_cupon']:
+            messages.warning(request, f'⚠️ Cupón inválido: {calc["error_cupon"]}. El pago se procesará sin descuento por cupón.')
+            calc['descuento_cupon'] = Decimal('0')
+            calc['cupon_obj'] = None
+            calc['descuento_total'] = calc['descuento_promo_dia']
+            calc['monto_final'] = max(monto_original - calc['descuento_total'], Decimal('0')) + calc['precio_combo']
+        # # Antes
+        # pago = Pago.objects.create( reserva=reserva, metodo_pago=metodo_pago, monto=reserva.total(), estado='aprobado')
         # Crear el pago
         pago = Pago.objects.create(
             reserva=reserva,
             metodo_pago=metodo_pago,
-            monto=reserva.total(),
-            estado='aprobado'
+            monto_original=monto_original,
+            descuento_cupon=calc['descuento_cupon'],
+            descuento_promo_dia=calc['descuento_promo_dia'],
+            descuento_total=calc['descuento_total'],
+            precio_combo=calc['precio_combo'],
+            monto=calc['monto_final'],
+            estado='aprobado',
+            cupon_usado=calc['cupon_obj'],
+            combo=calc['combo_obj'],
+            promo_dia=calc['promo_dia_obj'],
         )
-        
+        #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+        # Datos de tarjeta si los hubieran puesto
         if metodo_pago in ['tarjeta_debito', 'tarjeta_credito']:
             numero_tarjeta = request.POST.get('numero_tarjeta', '')
             if len(numero_tarjeta) >= 4:
@@ -74,7 +198,19 @@ def procesar_pago(request, reserva_id):
         # NUEVO: Generar código QR automáticamente
         pago.generar_codigo_qr()
         pago.save()
-        
+        #-----------------------------------------------------------
+        # Registrar uso del cupón
+        if calc['cupon_obj'] and PROMOCIONES_DISPONIBLE:
+            CuponUsado.objects.create(
+                cupon=calc['cupon_obj'],
+                usuario=request.user,
+                reserva=reserva,
+                descuento_aplicado=calc['descuento_cupon'],
+            )
+            calc['cupon_obj'].usos_actuales += 1
+            calc['cupon_obj'].save(update_fields=['usos_actuales'])
+        #-----------------------------------------------------------
+
         if EMAIL_DISPONIBLE:
             try:
                 enviar_email_pago_confirmado(pago, request)
@@ -86,12 +222,22 @@ def procesar_pago(request, reserva_id):
             messages.success(request, f'✅ ¡Pago procesado exitosamente! Número de transacción: {pago.numero_transaccion}')
         
         return redirect('pagos:comprobante_pago', pago_id=pago.id)
-    
+    #-----------------------------------------------------------
+    # contexto = {
+    #     'reserva': reserva,
+    #     'total': reserva.total(),
+    # }
+
+    # GET — contexto para el template
     contexto = {
         'reserva': reserva,
-        'total': reserva.total(),
+        'total': monto_original,
+        'promo_dia': promo_dia,
+        'combos': combos,
+        'promociones_disponible': PROMOCIONES_DISPONIBLE,
     }
     return render(request, 'pagos/procesar_pago.html', contexto)
+    #-----------------------------------------------------------
 
 
 @login_required
@@ -113,7 +259,9 @@ def comprobante_pago(request, pago_id):
     }
     return render(request, 'pagos/comprobante_pago.html', contexto)
 
-
+"""
+                                                            Sin cambios
+"""
 # ============================================
 # NUEVAS VISTAS PARA VERIFICACIÓN DE QR
 # ============================================
