@@ -3,7 +3,7 @@ from django.contrib.auth.decorators import login_required
 from django.contrib import messages
 from django.utils import timezone
 from django.http import JsonResponse
-from datetime import timedelta
+from datetime import timedelta , datetime
 from .models import Reserva
 from salas.models import Funcion
 from django.conf import settings
@@ -46,6 +46,8 @@ def seleccionar_asientos(request, funcion_id):
         return redirect('salas:lista_funciones')
 
     ############################################################################
+    # ─── Timer de sesión ────────────────────────────────────────
+    # Se guarda el momento exacto en que el usuario entró a esta pantalla. El mismo timer cubre selección de asientos + pago.
     # Guardar el momento en que el usuario entró a seleccionar asientos
     # Esto define el inicio del contador de tiempo
     clave_sesion = f'inicio_seleccion_{funcion_id}'
@@ -56,7 +58,7 @@ def seleccionar_asientos(request, funcion_id):
     tiempo_limite = get_tiempo_limite()
  
     # Calcular segundos restantes desde que entró a la página
-    from datetime import datetime
+    # from datetime import datetime
     inicio_dt = datetime.fromisoformat(inicio_seleccion_iso)
     # Hacer aware si es naive
     if timezone.is_naive(inicio_dt):
@@ -71,6 +73,8 @@ def seleccionar_asientos(request, funcion_id):
         messages.warning(request, '⏰ El tiempo expiró. El contador se reinició.')
         request.session[clave_sesion] = timezone.now().isoformat()
         segundos_restantes = tiempo_limite * 60
+
+    # ─────────────────────────────────────────────────────────────
     ############################################################################
 
     asientos_ocupados = funcion.asientos_ocupados()
@@ -93,7 +97,7 @@ def seleccionar_asientos(request, funcion_id):
 
 @login_required
 def confirmar_reserva_con_asientos(request, funcion_id):
-    """Procesa la reserva con los asientos seleccionados."""
+    """Procesa la reserva con los asientos seleccionados. Verifica que el timer de sesión no haya expirado antes de crear la reserva."""
     if request.method != 'POST':
         return redirect('reservas:seleccionar_asientos', funcion_id=funcion_id)
     
@@ -102,6 +106,9 @@ def confirmar_reserva_con_asientos(request, funcion_id):
     max_asientos = get_max_asientos()
     tiempo_limite = get_tiempo_limite()
 
+    # ─── Verificar timer de sesión ───────────────────────────────
+    # El timer empezó en seleccionar_asientos. Si llegó aquí con tiempo
+    # suficiente, usamos los segundos restantes como fecha_limite_pago.
 
     if not asientos_seleccionados:
         messages.error(request, 'Debes seleccionar al menos un asiento.')
@@ -141,14 +148,20 @@ def confirmar_reserva_con_asientos(request, funcion_id):
     fecha_limite_pago = None
 
     if clave_sesion in request.session:
-        from datetime import datetime
+        # from datetime import datetime
         inicio_iso = request.session.pop(clave_sesion)
         inicio_dt = datetime.fromisoformat(inicio_iso)
+        
         if timezone.is_naive(inicio_dt):
             inicio_dt = timezone.make_aware(inicio_dt)
         fecha_limite_calculada = inicio_dt + timedelta(minutes=tiempo_limite)
         # Garantizar al menos 1 minuto para confirmar
         fecha_limite_pago = max(fecha_limite_calculada, timezone.now() + timedelta(minutes=1))
+        
+        if fecha_limite_calculada <= timezone.now():
+            messages.error(request, '⏰ El tiempo expiró. Por favor, comenzá de nuevo.')
+            return redirect('reservas:seleccionar_asientos', funcion_id=funcion_id)
+
     else:
         fecha_limite_pago = timezone.now() + timedelta(minutes=tiempo_limite)
 
@@ -246,7 +259,7 @@ def detalle_reserva(request, reserva_id):
     reserva = get_object_or_404(Reserva, id=reserva_id, usuario=request.user)
     
     if reserva.cancelar_por_tiempo_expirado():
-        messages.warning(request, '⏰ Esta reserva fue cancelada automáticamente porque expiró el tiempo de pago (15 minutos).')
+        messages.warning(request, f'⏰ Esta reserva fue cancelada automáticamente porque expiró el tiempo de pago ({get_tiempo_limite()} minutos).')
     
     if reserva.actualizar_estado_si_expiro():
         messages.info(request, 'Esta reserva ha expirado porque la función ya pasó.')

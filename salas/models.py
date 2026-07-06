@@ -5,22 +5,59 @@ from django.utils import timezone
 from django.core.exceptions import ValidationError
 
 class Sala(models.Model):
+    TIPO_CHOICES = [
+        ('2d', '2D'),
+        ('3d', '3D'),
+        ('2d_premium', '2D Premium'),
+        ('3d_premium', '3D Premium (IMAX/DBOX)'),
+    ]
+    TIPO_CONFIG = {
+        '2d':        {'icono': '🎬', 'color': '#6c757d', 'badge': 'secondary'},
+        '3d':        {'icono': '🥽', 'color': '#007bff', 'badge': 'primary'},
+        '2d_premium':{'icono': '⭐', 'color': '#fd7e14', 'badge': 'warning'},
+        '3d_premium':{'icono': '💎', 'color': '#6f42c1', 'badge': 'purple'},
+    }
     nombre = models.CharField(max_length=100)
-    # cambiar a default 1 y bloquear interaccion porque se calcula solo la capacidad , solo se debe modificar filasxcolumnas
+    tipo = models.CharField(
+        max_length=20,
+        choices=TIPO_CHOICES,
+        default='2d',
+        help_text="Tipo de tecnología de la sala"
+        )
     capacidad = models.IntegerField(
         default=0,
-        editable=False,  # No se puede editar manualmente
+        editable=False,
         help_text="Se calcula automáticamente: filas*columnas"
         ) 
-
     activa = models.BooleanField(default=True)
+    filas = models.IntegerField(
+        default=6, 
+        help_text="Cantidad de filas (A, B, C, ...)"
+        )
+    columnas = models.IntegerField(
+        default=8, 
+        help_text="Cantidad de columnas (1, 2, 3, ...)"
+        )
     
-    # NUEVO: Configuración del mapa de asientos
-    filas = models.IntegerField(default=10, help_text="Cantidad de filas (A, B, C, ...)")
-    columnas = models.IntegerField(default=12, help_text="Cantidad de columnas (1, 2, 3, ...)")
-    
+    ###############################################################
     def __str__(self):
-        return f"{self.nombre} (Cap: {self.capacidad})"
+        return f"{self.nombre} [{self.get_tipo_display()}] (Cap: {self.capacidad})"
+ 
+    def tipo_icono(self):
+        return self.TIPO_CONFIG.get(self.tipo, {}).get('icono', '🎬')
+ 
+    def tipo_color(self):
+        return self.TIPO_CONFIG.get(self.tipo, {}).get('color', '#6c757d')
+ 
+    def es_premium(self):
+        return 'premium' in self.tipo
+ 
+    def es_3d(self):
+        return '3d' in self.tipo
+    ###############################################################
+    # antes---
+    # def __str__(self):
+    #     return f"{self.nombre} (Cap: {self.capacidad})"
     
     def layout_asientos(self):
         """Retorna el layout de asientos como lista de listas"""
@@ -62,8 +99,11 @@ class Funcion(models.Model):
     precio = models.DecimalField(max_digits=10, decimal_places=2)
     disponible = models.BooleanField(default=True)
     
+    # def __str__(self):
+    #     return f"{self.pelicula.titulo} - {self.sala.nombre} - {self.fecha_hora.strftime('%d/%m/%Y %H:%M')}"
     def __str__(self):
-        return f"{self.pelicula.titulo} - {self.sala.nombre} - {self.fecha_hora.strftime('%d/%m/%Y %H:%M')}"
+        return f"{self.pelicula.titulo} - {self.sala.nombre} [{self.sala.get_tipo_display()}] - {self.fecha_hora.strftime('%d/%m/%Y %H:%M')}"
+
     
     # NUEVO: ahora los metodos orbitan a a funcion asienos_ocupados
     def asientos_ocupados(self):

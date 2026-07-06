@@ -1,6 +1,6 @@
 {% extends 'base.html' %}
 
-{% block titulo %}Salas - Mi Sitio de Películas{% endblock %}
+{% block titulo %}Salas - Cine Online{% endblock %}
 
 {% block contenido %}
 <h1>Nuestras Salas</h1>
@@ -8,12 +8,54 @@
 {% if salas %}
     <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 1.5rem; margin-top: 1.5rem;">
         {% for sala in salas %}
-            <div style="background-color: white; padding: 1.5rem; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
-                <h3 style="color: #333; margin-bottom: 0.5rem;">{{ sala.nombre }}</h3>
+            <div style="background-color: white; padding: 1.5rem; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); border-top: 4px solid {{ sala.tipo_color }};">
+                <div style="display: flex; justify-content: space-between; align-items: start; margin-bottom: 1rem;">
+                    <h3 style="color: #333; margin: 0;">{{ sala.nombre }}</h3>
+                    
+                    {# Badge tipo sala #}
+                    {% if sala.tipo == '2d' %}
+                        <span style="background-color: #6c757d; color: white; padding: 0.25rem 0.75rem; border-radius: 20px; font-size: 0.8rem; font-weight: bold; white-space: nowrap;">
+                            🎬 2D
+                        </span>
+                    {% elif sala.tipo == '3d' %}
+                        <span style="background-color: #007bff; color: white; padding: 0.25rem 0.75rem; border-radius: 20px; font-size: 0.8rem; font-weight: bold; white-space: nowrap;">
+                            🥽 3D
+                        </span>
+                    {% elif sala.tipo == '2d_premium' %}
+                        <span style="background-color: #fd7e14; color: white; padding: 0.25rem 0.75rem; border-radius: 20px; font-size: 0.8rem; font-weight: bold; white-space: nowrap;">
+                            ⭐ 2D Premium
+                        </span>
+                    {% elif sala.tipo == '3d_premium' %}
+                        <span style="background-color: #6f42c1; color: white; padding: 0.25rem 0.75rem; border-radius: 20px; font-size: 0.8rem; font-weight: bold; white-space: nowrap;">
+                            💎 3D Premium
+                        </span>
+                    {% endif %}
+                </div>
+
                 <p style="color: #666; margin: 0.5rem 0;">
                     <strong>Capacidad:</strong> {{ sala.capacidad }} personas
                 </p>
-                <p style="color: #28a745; font-size: 0.9rem; margin-top: 1rem;">
+                <p style="color: #666; margin: 0.5rem 0;">
+                    <strong>Distribución:</strong> {{ sala.filas }} filas × {{ sala.columnas }} columnas
+                </p>
+
+                {% if sala.es_premium %}
+                    <div style="margin-top: 1rem; padding: 0.75rem; background-color: #fff8f0; border-radius: 6px; border-left: 3px solid #fd7e14;">
+                        <p style="margin: 0; color: #856404; font-size: 0.875rem;">
+                            ✨ Sala Premium — butacas reclinables, audio Dolby Atmos
+                        </p>
+                    </div>
+                {% endif %}
+
+                {% if sala.es_3d %}
+                    <div style="margin-top: 0.5rem; padding: 0.75rem; background-color: #e7f3ff; border-radius: 6px; border-left: 3px solid #007bff;">
+                        <p style="margin: 0; color: #004085; font-size: 0.875rem;">
+                            🥽 Tecnología 3D — lentes incluidos en el precio
+                        </p>
+                    </div>
+                {% endif %}
+
+                <p style="color: #28a745; font-size: 0.9rem; margin-top: 1rem; margin-bottom: 0;">
                     ✓ Disponible
                 </p>
             </div>
