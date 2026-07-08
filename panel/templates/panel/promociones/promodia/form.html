@@ -1,0 +1,76 @@
+{% extends 'panel/base_panel.html' %}
+
+{% block titulo %}{{ titulo_pagina }} — Panel{% endblock %}
+
+{% block breadcrumb %}
+<span class="sep">›</span>
+<a href="{% url 'panel:promodia_lista' %}">Promociones por Día</a>
+<span class="sep">›</span>
+<span class="current">{% if accion == 'crear' %}Agregar{% else %}Editar{% endif %}</span>
+{% endblock %}
+
+{% block contenido %}
+{% include 'panel/_form_styles.html' %}
+
+<div style="max-width:640px;">
+
+    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1.5rem;">
+        <h1 style="font-size:1.4rem; color:#1a1a2e; margin:0;">{{ titulo_pagina }}</h1>
+        <a href="{% url 'panel:promodia_lista' %}" class="btn btn-ghost">← Volver</a>
+    </div>
+
+    <form method="post">
+        {% csrf_token %}
+        <div class="card">
+            <div class="card-header"><h3>📆 Datos de la Promoción</h3></div>
+            <div class="card-body" style="display:flex; flex-direction:column; gap:1.1rem;">
+
+                <div>
+                    <label class="form-label">Nombre <span class="required">*</span></label>
+                    {{ form.nombre }}
+                    {% if form.nombre.errors %}<div class="field-error">{{ form.nombre.errors.0 }}</div>{% endif %}
+                </div>
+
+                <div style="display:grid; grid-template-columns:1fr 1fr; gap:1rem;">
+                    <div>
+                        <label class="form-label">Día de la semana <span class="required">*</span></label>
+                        {{ form.dia_semana }}
+                        {% if form.dia_semana.errors %}<div class="field-error">{{ form.dia_semana.errors.0 }}</div>{% endif %}
+                    </div>
+                    <div>
+                        <label class="form-label">Tipo <span class="required">*</span></label>
+                        {{ form.tipo }}
+                        {% if form.tipo.errors %}<div class="field-error">{{ form.tipo.errors.0 }}</div>{% endif %}
+                    </div>
+                </div>
+
+                <div>
+                    <label class="form-label">% de descuento</label>
+                    {{ form.porcentaje_descuento }}
+                    <div class="form-help">{{ form.porcentaje_descuento.help_text }}</div>
+                    {% if form.porcentaje_descuento.errors %}<div class="field-error">{{ form.porcentaje_descuento.errors.0 }}</div>{% endif %}
+                </div>
+
+                <div>
+                    <label class="form-label">Descripción</label>
+                    {{ form.descripcion }}
+                </div>
+
+                <div class="checkbox-row">
+                    {{ form.activo }}
+                    <label for="{{ form.activo.id_for_label }}">Promoción activa</label>
+                </div>
+
+            </div>
+        </div>
+
+        <div style="display:flex; gap:1rem; margin-top:1.5rem;">
+            <button type="submit" class="btn btn-success" style="font-size:1rem; padding:0.75rem 2rem;">
+                {% if accion == 'crear' %}✅ Crear Promoción{% else %}💾 Guardar Cambios{% endif %}
+            </button>
+            <a href="{% url 'panel:promodia_lista' %}" class="btn btn-ghost">Cancelar</a>
+        </div>
+    </form>
+</div>
+
+{% endblock %}

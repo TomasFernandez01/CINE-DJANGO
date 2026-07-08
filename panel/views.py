@@ -10,12 +10,14 @@ from peliculas.models import Pelicula
 from salas.models import Sala, Funcion
 from reservas.models import Reserva
 from pagos.models import Pago
+from promociones.models import Cupon, PromocionDia, Combo, CuponUsado
 from django.contrib.auth.models import User
 # ============================================================
                                                                 # V2
 from .forms import (
     PeliculaForm, SalaForm, FuncionForm,
-    CrearUsuarioForm, EditarUsuarioForm, ReservaForm
+    CrearUsuarioForm, EditarUsuarioForm, ReservaForm,
+    ComboForm, CuponForm, PromocionDiaForm
 )
 from django.core.files.base import ContentFile
 import requests
@@ -807,3 +809,207 @@ def reservas_editar(request, reserva_id):
         'pago': pago,
         'seccion_activa': 'reservas',
     })
+
+# ============================================================
+# PROMOCIONES — COMBOS
+# ============================================================
+
+@staff_required
+def combos_lista(request):
+    combos = Combo.objects.all().order_by('precio')
+    return render(request, 'panel/promociones/combos/lista.html', {
+        'combos': combos,
+        'seccion_activa': 'combos',
+    })
+
+
+@staff_required
+def combos_crear(request):
+    if request.method == 'POST':
+        form = ComboForm(request.POST, request.FILES)
+        if form.is_valid():
+            combo = form.save()
+            messages.success(request, f'✅ Combo "{combo.nombre}" creado.')
+            return redirect('panel:combos_lista')
+    else:
+        form = ComboForm()
+
+    return render(request, 'panel/promociones/combos/form.html', {
+        'form': form,
+        'titulo_pagina': 'Agregar Combo',
+        'accion': 'crear',
+        'seccion_activa': 'combos',
+    })
+
+
+@staff_required
+def combos_editar(request, combo_id):
+    combo = get_object_or_404(Combo, id=combo_id)
+
+    if request.method == 'POST':
+        form = ComboForm(request.POST, request.FILES, instance=combo)
+        if form.is_valid():
+            form.save()
+            messages.success(request, f'✅ Combo "{combo.nombre}" actualizado.')
+            return redirect('panel:combos_lista')
+    else:
+        form = ComboForm(instance=combo)
+
+    return render(request, 'panel/promociones/combos/form.html', {
+        'form': form,
+        'objeto': combo,
+        'titulo_pagina': f'Editar: {combo.nombre}',
+        'accion': 'editar',
+        'seccion_activa': 'combos',
+    })
+
+
+# ============================================================
+# PROMOCIONES — CUPONES
+# ============================================================
+
+@staff_required
+def cupones_lista(request):
+    busqueda = request.GET.get('q', '')
+    estado = request.GET.get('estado', '')
+
+    cupones = Cupon.objects.all().order_by('-fecha_inicio')
+    if busqueda:
+        cupones = cupones.filter(
+            Q(codigo__icontains=busqueda) | Q(descripcion__icontains=busqueda)
+        )
+    if estado == 'activo':
+        cupones = cupones.filter(activo=True)
+    elif estado == 'inactivo':
+        cupones = cupones.filter(activo=False)
+
+    contexto = {
+        'cupones': cupones,
+        'busqueda': busqueda,
+        'estado': estado,
+        'total': cupones.count(),
+        'seccion_activa': 'cupones',
+    }
+    return render(request, 'panel/promociones/cupones/lista.html', contexto)
+
+
+@staff_required
+def cupones_crear(request):
+    if request.method == 'POST':
+        form = CuponForm(request.POST)
+        if form.is_valid():
+            cupon = form.save()
+            messages.success(request, f'✅ Cupón "{cupon.codigo}" creado.')
+            return redirect('panel:cupones_lista')
+    else:
+        form = CuponForm()
+
+    return render(request, 'panel/promociones/cupones/form.html', {
+        'form': form,
+        'titulo_pagina': 'Agregar Cupón',
+        'accion': 'crear',
+        'seccion_activa': 'cupones',
+    })
+
+
+@staff_required
+def cupones_editar(request, cupon_id):
+    cupon = get_object_or_404(Cupon, id=cupon_id)
+
+    if request.method == 'POST':
+        form = CuponForm(request.POST, instance=cupon)
+        if form.is_valid():
+            form.save()
+            messages.success(request, f'✅ Cupón "{cupon.codigo}" actualizado.')
+            return redirect('panel:cupones_lista')
+    else:
+        form = CuponForm(instance=cupon)
+
+    return render(request, 'panel/promociones/cupones/form.html', {
+        'form': form,
+        'objeto': cupon,
+        'titulo_pagina': f'Editar: {cupon.codigo}',
+        'accion': 'editar',
+        'seccion_activa': 'cupones',
+    })
+
+
+# ============================================================
+# PROMOCIONES — PROMOCIÓN POR DÍA
+# ============================================================
+
+@staff_required
+def promodia_lista(request):
+    promociones = PromocionDia.objects.all().order_by('dia_semana')
+    return render(request, 'panel/promociones/promodia/lista.html', {
+        'promociones': promociones,
+        'seccion_activa': 'promodia',
+    })
+
+
+@staff_required
+def promodia_crear(request):
+    if request.method == 'POST':
+        form = PromocionDiaForm(request.POST)
+        if form.is_valid():
+            promo = form.save()
+            messages.success(request, f'✅ Promoción "{promo.nombre}" creada.')
+            return redirect('panel:promodia_lista')
+    else:
+        form = PromocionDiaForm()
+
+    return render(request, 'panel/promociones/promodia/form.html', {
+        'form': form,
+        'titulo_pagina': 'Agregar Promoción por Día',
+        'accion': 'crear',
+        'seccion_activa': 'promodia',
+    })
+
+
+@staff_required
+def promodia_editar(request, promo_id):
+    promo = get_object_or_404(PromocionDia, id=promo_id)
+
+    if request.method == 'POST':
+        form = PromocionDiaForm(request.POST, instance=promo)
+        if form.is_valid():
+            form.save()
+            messages.success(request, f'✅ Promoción "{promo.nombre}" actualizada.')
+            return redirect('panel:promodia_lista')
+    else:
+        form = PromocionDiaForm(instance=promo)
+
+    return render(request, 'panel/promociones/promodia/form.html', {
+        'form': form,
+        'objeto': promo,
+        'titulo_pagina': f'Editar: {promo.nombre}',
+        'accion': 'editar',
+        'seccion_activa': 'promodia',
+    })
+
+
+# ============================================================
+# CUPONES USADOS (solo lectura) — vive en Operaciones
+# ============================================================
+
+@staff_required
+def cupones_usados_lista(request):
+    busqueda = request.GET.get('q', '')
+
+    historial = CuponUsado.objects.select_related(
+        'cupon', 'usuario', 'reserva__funcion__pelicula'
+    ).order_by('-fecha_uso')
+
+    if busqueda:
+        historial = historial.filter(
+            Q(cupon__codigo__icontains=busqueda) |
+            Q(usuario__username__icontains=busqueda)
+        )
+
+    contexto = {
+        'historial': historial[:100],
+        'busqueda': busqueda,
+        'total': historial.count(),
+        'seccion_activa': 'cupones_usados',
+    }
+    return render(request, 'panel/promociones/cupones_usados/lista.html', contexto)

@@ -1,0 +1,100 @@
+{% extends 'panel/base_panel.html' %}
+
+{% block titulo %}Cupones — Panel{% endblock %}
+
+{% block breadcrumb %}
+<span class="sep">›</span>
+<span class="current">Cupones</span>
+{% endblock %}
+
+{% block contenido %}
+
+{% comment %} 
+<div style="display:flex; justify-content:space-between; align-items:center;
+            flex-wrap:wrap; gap:1rem; margin-bottom:1.5rem;">
+    <h1 style="font-size:1.4rem; color:#1a1a2e; margin:0;">Cupones</h1>
+    <a href="{% url 'panel:cupones_crear' %}" class="btn btn-success">Agregar cupón</a>
+    
+</div> 
+{% endcomment %}
+<div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem; flex-wrap: wrap; gap: 1rem;">
+        <div>
+            <h1 style="margin: 0; color: #333;">🏷️ Gestión de Cupones 🎟️</h1>
+            <p style="margin: 0.25rem 0 0 0; color: #666;">Activá, desactivá y consultá el historial de cada cupón</p>
+        </div>
+        <div style="display: flex; gap: 0.75rem; flex-wrap: wrap;">
+            <a href="{% url 'panel:inicio' %}" 
+            style="padding: 0.6rem 1.2rem; background-color: #6c757d; color: white; border-radius: 6px; text-decoration: none; font-weight: bold; font-size: 0.9rem;">Panel</a>
+            <a href="{% url 'panel:cupones_crear' %}" style="padding: 0.6rem 1.2rem; background-color: #28a745; color: white; border-radius: 6px; text-decoration: none; font-weight: bold; font-size: 0.9rem;">
+                Agregar cupón
+            </a>
+        </div>
+    </div>
+
+
+<div class="card" style="margin-bottom:1.25rem;">
+    <div class="card-body" style="padding:1rem 1.25rem;">
+        <form method="get" style="display:flex; gap:0.75rem; flex-wrap:wrap; align-items:center;">
+            <input type="text" name="q" value="{{ busqueda }}" class="input"
+                   placeholder="Código o descripción..." style="flex:1; min-width:220px;">
+            <select name="estado" class="select">
+                <option value="">Todos</option>
+                <option value="activo"   {% if estado == 'activo' %}selected{% endif %}>Activos</option>
+                <option value="inactivo" {% if estado == 'inactivo' %}selected{% endif %}>Inactivos</option>
+            </select>
+            <button type="submit" class="btn btn-dark">Filtrar</button>
+            <a href="{% url 'panel:cupones_lista' %}" class="btn btn-ghost">Limpiar</a>
+        </form>
+    </div>
+</div>
+
+<div class="card">
+    {% if cupones %}
+    <table class="tabla">
+        <thead>
+            <tr>
+                <th>Código</th>
+                <th>Descripción</th>
+                <th>Descuento</th>
+                <th>Vigencia</th>
+                <th>Usos</th>
+                <th>Estado</th>
+                <th></th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for c in cupones %}
+            <tr>
+                <td style="font-family:monospace; font-weight:700; color:#1a1a2e;">{{ c.codigo }}</td>
+                <td style="font-size:0.875rem; color:#555;">{{ c.descripcion }}</td>
+                <td style="font-weight:600;">
+                    {% if c.tipo == 'porcentaje' %}{{ c.valor }}%{% else %}${{ c.valor|floatformat:0 }}{% endif %}
+                </td>
+                <td style="font-size:0.8rem; color:#666;">
+                    {{ c.fecha_inicio|date:"d/m/Y" }} — {{ c.fecha_fin|date:"d/m/Y" }}
+                </td>
+                <td style="font-size:0.8rem; color:#666;">
+                    {{ c.usos_actuales }}{% if c.usos_maximos %}/{{ c.usos_maximos }}{% else %}/∞{% endif %}
+                </td>
+                <td>
+                    {% if c.activo %}
+                    <span class="badge badge-aprobado">Activo</span>
+                    {% else %}
+                    <span class="badge badge-cancelada">Inactivo</span>
+                    {% endif %}
+                </td>
+                <td>
+                    <a href="{% url 'panel:cupones_editar' c.id %}" class="btn btn-ghost" style="font-size:0.75rem;">✏️</a>
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    {% else %}
+    <div class="card-body" style="text-align:center; padding:3rem; color:#999;">
+        No se encontraron cupones.
+    </div>
+    {% endif %}
+</div>
+
+{% endblock %}

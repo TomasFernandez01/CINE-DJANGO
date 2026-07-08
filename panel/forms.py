@@ -4,6 +4,7 @@ from django.contrib.auth.forms import UserCreationForm
 from peliculas.models import Pelicula
 from salas.models import Sala, Funcion
 from reservas.models import Reserva
+from promociones.models import Cupon, PromocionDia, Combo
 
 # ============================================================
 # ESTILOS BASE REUTILIZABLES
@@ -227,3 +228,95 @@ class ReservaForm(forms.ModelForm):
         super().__init__(*args, **kwargs)
         if self.instance and self.instance.pk and self.instance.fecha_limite_pago:
             self.initial['fecha_limite_pago'] = self.instance.fecha_limite_pago.strftime('%Y-%m-%dT%H:%M')
+
+# ============================================================
+# PROMOCIONES — COMBOS
+# ============================================================
+class ComboForm(forms.ModelForm):
+    class Meta:
+        model = Combo
+        fields = ['nombre', 'descripcion', 'precio', 'activo', 'imagen']
+        widgets = {
+            'nombre':      forms.TextInput(attrs=INPUT_ATTRS),
+            'descripcion': forms.TextInput(attrs=INPUT_ATTRS),
+            'precio':      forms.NumberInput(attrs={**INPUT_ATTRS, 'step': '0.01', 'min': '0'}),
+            'activo':      forms.CheckboxInput(attrs={'class': 'panel-checkbox'}),
+            'imagen':      forms.ClearableFileInput(attrs={'class': 'panel-file'}),
+        }
+        labels = {
+            'nombre':      'Nombre del combo',
+            'descripcion': 'Descripción (Ej: 1 entrada + Pochoclo + Bebida)',
+            'precio':      'Precio ($)',
+            'activo':      'Combo activo',
+            'imagen':      'Imagen',
+        }
+
+
+# ============================================================
+# PROMOCIONES — CUPONES
+# ============================================================
+class CuponForm(forms.ModelForm):
+    class Meta:
+        model = Cupon
+        fields = [
+            'codigo', 'descripcion', 'tipo', 'valor',
+            'fecha_inicio', 'fecha_fin', 'usos_maximos',
+            'monto_minimo', 'solo_primera_compra', 'activo',
+        ]
+        widgets = {
+            'codigo':       forms.TextInput(attrs={**INPUT_ATTRS, 'placeholder': 'Ej: VERANO10', 'style': 'text-transform:uppercase;'}),
+            'descripcion':  forms.TextInput(attrs=INPUT_ATTRS),
+            'tipo':         forms.Select(attrs=SELECT_ATTRS),
+            'valor':        forms.NumberInput(attrs={**INPUT_ATTRS, 'step': '0.01', 'min': '0'}),
+            'fecha_inicio': forms.DateInput(attrs={**INPUT_ATTRS, 'type': 'date'}),
+            'fecha_fin':    forms.DateInput(attrs={**INPUT_ATTRS, 'type': 'date'}),
+            'usos_maximos': forms.NumberInput(attrs={**INPUT_ATTRS, 'min': '0'}),
+            'monto_minimo': forms.NumberInput(attrs={**INPUT_ATTRS, 'step': '0.01', 'min': '0'}),
+            'solo_primera_compra': forms.CheckboxInput(attrs={'class': 'panel-checkbox'}),
+            'activo':       forms.CheckboxInput(attrs={'class': 'panel-checkbox'}),
+        }
+        labels = {
+            'codigo':              'Código',
+            'descripcion':         'Descripción',
+            'tipo':                'Tipo de descuento',
+            'valor':               'Valor',
+            'fecha_inicio':        'Fecha de inicio',
+            'fecha_fin':           'Fecha de fin',
+            'usos_maximos':        'Usos máximos',
+            'monto_minimo':        'Monto mínimo de compra',
+            'solo_primera_compra': 'Solo primera compra',
+            'activo':              'Cupón activo',
+        }
+        help_texts = {
+            'valor':        'Si es porcentaje: 25 = 25%. Si es monto fijo: 500 = $500',
+            'usos_maximos': 'Dejar vacío para usos ilimitados',
+            'monto_minimo': 'Dejar vacío si no aplica',
+        }
+
+
+# ============================================================
+# PROMOCIONES — PROMOCIÓN POR DÍA
+# ============================================================
+class PromocionDiaForm(forms.ModelForm):
+    class Meta:
+        model = PromocionDia
+        fields = ['nombre', 'dia_semana', 'tipo', 'porcentaje_descuento', 'descripcion', 'activo']
+        widgets = {
+            'nombre':                forms.TextInput(attrs=INPUT_ATTRS),
+            'dia_semana':            forms.Select(attrs=SELECT_ATTRS),
+            'tipo':                  forms.Select(attrs=SELECT_ATTRS),
+            'porcentaje_descuento':  forms.NumberInput(attrs={**INPUT_ATTRS, 'step': '0.01', 'min': '0'}),
+            'descripcion':           forms.Textarea(attrs={**TEXTAREA_ATTRS, 'rows': 3}),
+            'activo':                forms.CheckboxInput(attrs={'class': 'panel-checkbox'}),
+        }
+        labels = {
+            'nombre':               'Nombre de la promoción',
+            'dia_semana':           'Día de la semana',
+            'tipo':                 'Tipo',
+            'porcentaje_descuento': '% de descuento',
+            'descripcion':          'Descripción (visible para el usuario)',
+            'activo':               'Promoción activa',
+        }
+        help_texts = {
+            'porcentaje_descuento': 'Solo aplica si el tipo es "Descuento porcentual"',
+        }

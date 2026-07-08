@@ -358,6 +358,18 @@
                class="sidebar-link {% if seccion_activa == 'funciones' %}active{% endif %}">
                 <span class="icon">📅</span> Funciones
             </a>
+            <a href="{% url 'panel:combos_lista' %}"
+               class="sidebar-link {% if seccion_activa == 'combos' %}active{% endif %}">
+                <span class="icon">🍿</span> Combos
+            </a>
+            <a href="{% url 'panel:cupones_lista' %}"
+               class="sidebar-link {% if seccion_activa == 'cupones' %}active{% endif %}">
+                <span class="icon">🎟️</span> Cupones
+            </a>
+            <a href="{% url 'panel:promodia_lista' %}"
+               class="sidebar-link {% if seccion_activa == 'promodia' %}active{% endif %}">
+                <span class="icon">📆</span> Promos por Día
+            </a>
         </div>
 
         <hr class="sidebar-divider">
@@ -376,6 +388,10 @@
             <a href="{% url 'panel:pagos_estadisticas' %}"
                class="sidebar-link {% if seccion_activa == 'estadisticas' %}active{% endif %}">
                 <span class="icon">📊</span> Estadísticas
+            </a>
+            <a href="{% url 'panel:cupones_usados_lista' %}"
+               class="sidebar-link {% if seccion_activa == 'cupones_usados' %}active{% endif %}">
+                <span class="icon">📋</span> Cupones Usados
             </a>
             <a href="{% url 'panel:verificador_qr' %}"
                class="sidebar-link {% if seccion_activa == 'verificador' %}active{% endif %}">
