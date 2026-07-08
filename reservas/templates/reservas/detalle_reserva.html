@@ -4,7 +4,7 @@
 
 {% block contenido %}
 <div style="max-width: 600px; margin: 0 auto;">
-    <h1 style="text-align: center;">Comprobante de Reserva</h1>
+    <h1 style="text-align: center;">Proceso-Comprobante de Reserva</h1>
 
     <!-- QR si está pagado -->
     {% if reserva.estado == 'confirmada' and reserva.pago and reserva.pago.codigo_qr %}

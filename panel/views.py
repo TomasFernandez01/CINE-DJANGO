@@ -1013,3 +1013,58 @@ def cupones_usados_lista(request):
         'seccion_activa': 'cupones_usados',
     }
     return render(request, 'panel/promociones/cupones_usados/lista.html', contexto)
+
+# ============================================================
+#   STAFFV2 stadisticas de cupones
+# ============================================================
+
+@staff_required
+def cupones_estadisticas(request):
+    """Estadísticas de uso de cupones (único dato realmente trackeado hoy)."""
+    ahora = timezone.now()
+    hoy = ahora.replace(hour=0, minute=0, second=0, microsecond=0)
+    semana = hoy - timedelta(days=7)
+    mes = hoy - timedelta(days=30)
+
+    usos_hoy = CuponUsado.objects.filter(fecha_uso__gte=hoy)
+    usos_semana = CuponUsado.objects.filter(fecha_uso__gte=semana)
+    usos_mes = CuponUsado.objects.filter(fecha_uso__gte=mes)
+
+    stats = {
+        'usos_hoy': usos_hoy.count(),
+        'usos_semana': usos_semana.count(),
+        'usos_mes': usos_mes.count(),
+        'usos_total': CuponUsado.objects.count(),
+        'descuento_hoy': usos_hoy.aggregate(t=Sum('descuento_aplicado'))['t'] or 0,
+        'descuento_semana': usos_semana.aggregate(t=Sum('descuento_aplicado'))['t'] or 0,
+        'descuento_mes': usos_mes.aggregate(t=Sum('descuento_aplicado'))['t'] or 0,
+        'descuento_total': CuponUsado.objects.aggregate(t=Sum('descuento_aplicado'))['t'] or 0,
+    }
+
+    # Ranking histórico de cupones más usados
+    top_cupones = CuponUsado.objects.values(
+        'cupon__codigo', 'cupon__descripcion'
+    ).annotate(
+        veces_usado=Count('id'),
+        descuento_generado=Sum('descuento_aplicado')
+    ).order_by('-veces_usado')[:10]
+
+    # Cupones activos que no se usaron en los últimos 30 días (candidatos a revisar)
+    cupones_activos_sin_uso = Cupon.objects.filter(
+        activo=True
+    ).exclude(
+        id__in=usos_mes.values_list('cupon_id', flat=True)
+    ).order_by('-fecha_inicio')[:10]
+
+    ultimos_usos = CuponUsado.objects.select_related(
+        'cupon', 'usuario', 'reserva__funcion__pelicula'
+    ).order_by('-fecha_uso')[:10]
+
+    contexto = {
+        'stats': stats,
+        'top_cupones': top_cupones,
+        'cupones_activos_sin_uso': cupones_activos_sin_uso,
+        'ultimos_usos': ultimos_usos,
+        'seccion_activa': 'cupones',
+    }
+    return render(request, 'panel/promociones/cupones/estadisticas.html', contexto)

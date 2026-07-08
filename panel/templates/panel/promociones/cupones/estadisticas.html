@@ -1,0 +1,161 @@
+{% extends 'panel/base_panel.html' %}
+
+{% block titulo %}Estadísticas de Cupones — Panel{% endblock %}
+
+{% block breadcrumb %}
+<span class="sep">›</span>
+<a href="{% url 'panel:cupones_lista' %}">Cupones</a>
+<span class="sep">›</span>
+<span class="current">Estadísticas</span>
+{% endblock %}
+
+{% block contenido %}
+
+<div style="display:flex; justify-content:space-between; align-items:center;
+            flex-wrap:wrap; gap:1rem; margin-bottom:1.5rem;">
+    <h1 style="font-size:1.4rem; color:#1a1a2e; margin:0;">📊 Estadísticas de Cupones</h1>
+    <a href="{% url 'panel:cupones_lista' %}" class="btn btn-ghost">Volver a cupones</a>
+</div>
+
+<!-- Tarjetas de resumen -->
+<div class="stat-grid">
+    <div class="stat-card blue">
+        <div class="stat-label">Usos hoy</div>
+        <div class="stat-value">{{ stats.usos_hoy }}</div>
+        <div class="stat-sub">${{ stats.descuento_hoy|floatformat:0 }} en descuentos</div>
+    </div>
+    <div class="stat-card gold">
+        <div class="stat-label">Usos esta semana</div>
+        <div class="stat-value">{{ stats.usos_semana }}</div>
+        <div class="stat-sub">${{ stats.descuento_semana|floatformat:0 }} en descuentos</div>
+    </div>
+    <div class="stat-card green">
+        <div class="stat-label">Usos este mes</div>
+        <div class="stat-value">{{ stats.usos_mes }}</div>
+        <div class="stat-sub">${{ stats.descuento_mes|floatformat:0 }} en descuentos</div>
+    </div>
+    <div class="stat-card purple">
+        <div class="stat-label">Usos totales (histórico)</div>
+        <div class="stat-value">{{ stats.usos_total }}</div>
+        <div class="stat-sub">${{ stats.descuento_total|floatformat:0 }} en descuentos</div>
+    </div>
+</div>
+
+<div style="display:grid; grid-template-columns:1fr 1fr; gap:1.5rem; margin-bottom:1.5rem;">
+
+    <!-- Ranking de cupones más usados -->
+    <div class="card">
+        <div class="card-header">
+            <h3>🏆 Cupones Más Usados</h3>
+        </div>
+        <div style="overflow-x:auto;">
+            {% if top_cupones %}
+            <table class="tabla">
+                <thead>
+                    <tr>
+                        <th>Código</th>
+                        <th>Usos</th>
+                        <th>Descuento generado</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for c in top_cupones %}
+                    <tr>
+                        <td>
+                            <div style="font-family:monospace; font-weight:700; color:#1a1a2e;">
+                                {{ c.cupon__codigo }}
+                            </div>
+                            <div style="font-size:0.75rem; color:#999;">{{ c.cupon__descripcion }}</div>
+                        </td>
+                        <td style="font-weight:600;">{{ c.veces_usado }}</td>
+                        <td style="font-weight:600; color:#27ae60;">
+                            ${{ c.descuento_generado|floatformat:0 }}
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+            {% else %}
+            <div style="padding:2rem;text-align:center;color:#999;">Todavía no hay usos registrados.</div>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- Cupones activos sin uso reciente -->
+    <div class="card">
+        <div class="card-header">
+            <h3>⚠️ Activos sin uso en 30 días</h3>
+        </div>
+        <div style="overflow-x:auto;">
+            {% if cupones_activos_sin_uso %}
+            <table class="tabla">
+                <thead>
+                    <tr>
+                        <th>Código</th>
+                        <th>Vigencia</th>
+                        <th></th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for c in cupones_activos_sin_uso %}
+                    <tr>
+                        <td style="font-family:monospace; font-weight:700; color:#1a1a2e;">{{ c.codigo }}</td>
+                        <td style="font-size:0.8rem; color:#666;">
+                            {{ c.fecha_inicio|date:"d/m/Y" }} — {{ c.fecha_fin|date:"d/m/Y" }}
+                        </td>
+                        <td>
+                            <a href="{% url 'panel:cupones_editar' c.id %}" class="btn btn-ghost" style="font-size:0.75rem;">✏️</a>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+            {% else %}
+            <div style="padding:2rem;text-align:center;color:#999;">Todos los cupones activos tuvieron uso reciente.</div>
+            {% endif %}
+        </div>
+    </div>
+
+</div>
+
+<!-- Últimos usos -->
+<div class="card">
+    <div class="card-header">
+        <h3>🕒 Últimos Usos Registrados</h3>
+        <a href="{% url 'panel:cupones_usados_lista' %}" class="btn btn-ghost" style="font-size:0.75rem;">
+            Ver historial completo
+        </a>
+    </div>
+    <div style="overflow-x:auto;">
+        {% if ultimos_usos %}
+        <table class="tabla">
+            <thead>
+                <tr>
+                    <th>Cupón</th>
+                    <th>Usuario</th>
+                    <th>Película</th>
+                    <th>Descuento</th>
+                    <th>Fecha</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for h in ultimos_usos %}
+                <tr>
+                    <td style="font-family:monospace; font-weight:700; color:#1a1a2e;">{{ h.cupon.codigo }}</td>
+                    <td style="color:#666;">{{ h.usuario.get_full_name|default:h.usuario.username }}</td>
+                    <td>
+                        {% if h.reserva %}{{ h.reserva.funcion.pelicula.titulo }}{% else %}—{% endif %}
+                    </td>
+                    <td style="font-weight:600; color:#27ae60;">${{ h.descuento_aplicado|floatformat:0 }}</td>
+                    <td style="color:#999; font-size:0.8rem;">{{ h.fecha_uso|date:"d/m H:i" }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        {% else %}
+        <div style="padding:2rem;text-align:center;color:#999;">Sin usos registrados todavía.</div>
+        {% endif %}
+    </div>
+</div>
+
+{% endblock %}

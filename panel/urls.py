@@ -46,6 +46,9 @@ urlpatterns = [
     path('cupones/',                            views.cupones_lista,  name='cupones_lista'),
     path('cupones/crear/',                      views.cupones_crear,  name='cupones_crear'),
     path('cupones/<int:cupon_id>/editar/',      views.cupones_editar, name='cupones_editar'),
+    # ============================================================
+    path('cupones/estadisticas/',               views.cupones_estadisticas, name='cupones_estadisticas'),
+    # ============================================================
     # ---- Promociones: Promo por Día ----
     path('promociones-dia/',                    views.promodia_lista,  name='promodia_lista'),
     path('promociones-dia/crear/',              views.promodia_crear,  name='promodia_crear'),
