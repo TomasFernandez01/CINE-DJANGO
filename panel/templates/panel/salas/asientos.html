@@ -1,0 +1,391 @@
+{% extends 'panel/base_panel.html' %}
+
+{% block titulo %}Asientos — {{ sala.nombre }} — Panel{% endblock %}
+
+{% block breadcrumb %}
+<span class="sep">›</span>
+<a href="{% url 'panel:salas_lista' %}">Salas</a>
+<span class="sep">›</span>
+<span class="current">{{ sala.nombre }} · Asientos</span>
+{% endblock %}
+
+{% block contenido %}
+
+<div style="display:flex; justify-content:space-between; align-items:center;
+            flex-wrap:wrap; gap:1rem; margin-bottom:1.5rem;">
+    <div>
+        <h1 style="font-size:1.4rem; color:#1a1a2e; margin:0;">🪑 Asientos — {{ sala.nombre }}</h1>
+        <div style="color:#666; font-size:0.9rem; margin-top:0.25rem;">
+            Hacé clic en un asiento para bloquearlo o desbloquearlo.
+        </div>
+    </div>
+    <a href="{% url 'panel:salas_lista' %}" class="btn btn-ghost">← Volver a Salas</a>
+</div>
+
+<!-- Selector de modo -->
+<div class="card" style="margin-bottom:1.25rem;">
+    <div class="card-body" style="display:flex; align-items:center; gap:1rem; flex-wrap:wrap;">
+        <label class="form-label" style="margin:0;">Modo de bloqueo:</label>
+        <select id="selectorModo" class="select" style="min-width:280px;">
+            <option value="" {% if not funcion_seleccionada %}selected{% endif %}>
+                🔒 Permanente (toda la sala, todas las funciones)
+            </option>
+            {% for f in funciones_sala %}
+            <option value="{{ f.id }}" {% if funcion_seleccionada.id == f.id %}selected{% endif %}>
+                🎬 Solo función: {{ f.pelicula.titulo }} — {{ f.fecha_hora|date:"d/m H:i" }}
+            </option>
+            {% endfor %}
+        </select>
+        {% if funcion_seleccionada %}
+        <span style="font-size:0.8rem; color:#999;">
+            Los bloqueos permanentes también se aplican acá automáticamente.
+        </span>
+        {% endif %}
+    </div>
+</div>
+
+<div style="display:grid; grid-template-columns:2fr 1fr; gap:1.5rem; align-items:start;">
+
+    <!-- Mapa de asientos -->
+    <div class="card">
+        <div class="card-header">
+            <h3>Mapa de Asientos</h3>
+            <div style="display:flex; gap:0.6rem; font-size:0.72rem; flex-wrap:wrap; align-items:center;">
+                <span style="display:flex; align-items:center; gap:4px;">
+                    <span style="width:12px; height:12px; background:#27ae60; border-radius:2px; display:inline-block;"></span> Libre
+                </span>
+                {% for valor, etiqueta in motivo_choices %}
+                <span style="display:flex; align-items:center; gap:4px;">
+                    <span class="leyenda-color" data-motivo="{{ valor }}"
+                          style="width:12px; height:12px; border-radius:2px; display:inline-block;"></span> {{ etiqueta }}
+                </span>
+                {% endfor %}
+                {% if funcion_seleccionada %}
+                <span style="display:flex; align-items:center; gap:4px;">
+                    <span style="width:12px; height:12px; background:#495057; border-radius:2px; display:inline-block;"></span> Vendido
+                </span>
+                {% endif %}
+            </div>
+        </div>
+        <div class="card-body" style="overflow-x:auto;">
+            <div style="text-align:center; margin-bottom:1rem;">
+                <div style="background:linear-gradient(to bottom,#333,#555); color:white;
+                            padding:0.3rem 3rem; border-radius:4px 4px 0 0;
+                            font-size:0.7rem; letter-spacing:2px; display:inline-block;">
+                    PANTALLA
+                </div>
+            </div>
+            <div id="mapaAsientos" style="display:flex; flex-direction:column; gap:5px; align-items:center;">
+                {% for fila in layout %}
+                <div style="display:flex; gap:5px; align-items:center;">
+                    <span style="width:20px; font-size:0.7rem; color:#999; text-align:center; font-weight:600;">
+                        {{ fila.0|slice:":1" }}
+                    </span>
+                    {% for asiento in fila %}
+                        <button
+                            type="button"
+                            class="asiento-btn"
+                            data-asiento="{{ asiento }}"
+                            style="width:28px; height:24px; border-radius:4px; font-size:8px;
+                                   border:1px solid rgba(0,0,0,0.15); font-weight:700; color:white;
+                                   cursor:pointer; transition:transform 0.12s;">
+                            {{ asiento }}
+                        </button>
+                    {% endfor %}
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+
+    <!-- Panel lateral de edición + listado de bloqueos -->
+    <div style="display:flex; flex-direction:column; gap:1.25rem;">
+
+        <!-- Panel de acción (aparece al hacer clic) -->
+        <div class="card" id="panelAccion" style="display:none;">
+            <div class="card-header"><h3 id="panelAccionTitulo">Asiento</h3></div>
+            <div class="card-body" id="panelAccionBody"></div>
+        </div>
+
+        <div class="card" id="panelVacio">
+            <div class="card-body" style="text-align:center; color:#999; font-size:0.875rem;">
+                👆 Elegí un asiento en el mapa para bloquearlo o desbloquearlo.
+            </div>
+        </div>
+
+        <!-- Listado de todos los bloqueos de la sala -->
+        <div class="card">
+            <div class="card-header"><h3>📋 Bloqueos de esta sala</h3></div>
+            <div style="max-height:360px; overflow-y:auto;">
+                {% if todos_los_bloqueos %}
+                <table class="tabla" id="tablaBloqueos">
+                    <thead>
+                        <tr>
+                            <th>Asiento</th>
+                            <th>Motivo</th>
+                            <th>Alcance</th>
+                            <th></th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for b in todos_los_bloqueos %}
+                        <tr data-bloqueo-id="{{ b.id }}" data-asiento="{{ b.asiento_codigo }}">
+                            <td style="font-weight:600;">{{ b.asiento_codigo }}</td>
+                            <td style="font-size:0.8rem;">{{ b.get_motivo_display }}</td>
+                            <td style="font-size:0.75rem; color:#666;">
+                                {% if b.funcion %}
+                                    {{ b.funcion.pelicula.titulo }}<br>{{ b.funcion.fecha_hora|date:"d/m H:i" }}
+                                {% else %}
+                                    Permanente
+                                {% endif %}
+                            </td>
+                            <td>
+                                <button type="button" class="btn btn-danger btn-desbloquear-fila"
+                                        data-bloqueo-id="{{ b.id }}"
+                                        style="font-size:0.7rem; padding:0.25rem 0.5rem;">
+                                    Quitar
+                                </button>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+                {% else %}
+                <div class="card-body" style="text-align:center; color:#999; font-size:0.875rem;">
+                    No hay asientos bloqueados en esta sala.
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+</div>
+
+<style>
+    .asiento-btn.libre     { background:#27ae60; }
+    .asiento-btn.mantenimiento { background:#6c757d; }
+    .asiento-btn.vip           { background:#fd7e14; }
+    .asiento-btn.admin         { background:#6f42c1; }
+    .asiento-btn.reservado     { background:#007bff; }
+    .asiento-btn.vendido       { background:#495057; cursor:not-allowed; opacity:0.75; }
+    .asiento-btn:hover:not(.vendido) { transform:scale(1.15); }
+    .leyenda-color[data-motivo="mantenimiento"] { background:#6c757d; }
+    .leyenda-color[data-motivo="vip"]           { background:#fd7e14; }
+    .leyenda-color[data-motivo="admin"]         { background:#6f42c1; }
+    .leyenda-color[data-motivo="reservado"]     { background:#007bff; }
+</style>
+
+<script>
+(function () {
+    const SALA_ID = {{ sala.id }};
+    const FUNCION_ID = {{ funcion_seleccionada.id|default:"null" }};
+    const CSRF_TOKEN = '{{ csrf_token }}';
+
+    // Datos iniciales inyectados desde Django (bloqueos y ocupados actuales)
+    const bloqueosPorAsiento = {}; // codigo -> {bloqueo_id, motivo, motivo_display, nota, permanente}
+    {% for codigo, b in bloqueos_por_codigo.items %}
+        bloqueosPorAsiento["{{ codigo }}"] = {
+            bloqueo_id: {{ b.id }},
+            motivo: "{{ b.motivo }}",
+            motivo_display: "{{ b.get_motivo_display|escapejs }}",
+            nota: "{{ b.nota|escapejs }}",
+            permanente: {% if b.funcion_id %}false{% else %}true{% endif %}
+        };
+    {% endfor %}
+
+    const ocupadosPorReserva = new Set([
+        {% for a in asientos_ocupados_reserva %}"{{ a }}",{% endfor %}
+    ]);
+
+    const motivoLabels = {
+        {% for valor, etiqueta in motivo_choices %}"{{ valor }}": "{{ etiqueta|escapejs }}",{% endfor %}
+    };
+
+    const botones = document.querySelectorAll('.asiento-btn');
+    const panelAccion = document.getElementById('panelAccion');
+    const panelAccionTitulo = document.getElementById('panelAccionTitulo');
+    const panelAccionBody = document.getElementById('panelAccionBody');
+    const panelVacio = document.getElementById('panelVacio');
+
+    function pintarBoton(btn) {
+        const codigo = btn.dataset.asiento;
+        btn.classList.remove('libre', 'mantenimiento', 'vip', 'admin', 'reservado', 'vendido');
+        if (ocupadosPorReserva.has(codigo)) {
+            btn.classList.add('vendido');
+            btn.title = codigo + ' — vendido/reservado';
+            return;
+        }
+        const b = bloqueosPorAsiento[codigo];
+        if (b) {
+            btn.classList.add(b.motivo);
+            btn.title = codigo + ' — ' + b.motivo_display + (b.nota ? ' (' + b.nota + ')' : '');
+        } else {
+            btn.classList.add('libre');
+            btn.title = codigo + ' — libre';
+        }
+    }
+
+    botones.forEach(pintarBoton);
+
+    function cerrarPanel() {
+        panelAccion.style.display = 'none';
+        panelVacio.style.display = 'block';
+    }
+
+    function mostrarPanelLibre(codigo) {
+        panelVacio.style.display = 'none';
+        panelAccion.style.display = 'block';
+        panelAccionTitulo.textContent = 'Bloquear asiento ' + codigo;
+
+        let opciones = '';
+        for (const [valor, etiqueta] of Object.entries(motivoLabels)) {
+            opciones += `<option value="${valor}">${etiqueta}</option>`;
+        }
+
+        panelAccionBody.innerHTML = `
+            <div style="display:flex; flex-direction:column; gap:0.8rem;">
+                <div>
+                    <label class="form-label">Motivo</label>
+                    <select id="inputMotivo" class="panel-select">${opciones}</select>
+                </div>
+                <div>
+                    <label class="form-label">Nota (opcional)</label>
+                    <input type="text" id="inputNota" class="panel-input" maxlength="200"
+                           placeholder="Ej: butaca rota">
+                </div>
+                <div style="font-size:0.75rem; color:#999;">
+                    ${FUNCION_ID ? 'Se bloqueará solo para la función seleccionada.' : 'Se bloqueará de forma permanente en toda la sala.'}
+                </div>
+                <div style="display:flex; gap:0.5rem;">
+                    <button type="button" id="btnConfirmarBloqueo" class="btn btn-success" style="flex:1;">
+                        🔒 Bloquear
+                    </button>
+                    <button type="button" id="btnCancelarBloqueo" class="btn btn-ghost">Cancelar</button>
+                </div>
+                <div id="errorBloqueo" style="color:#e74c3c; font-size:0.8rem; display:none;"></div>
+            </div>
+        `;
+
+        document.getElementById('btnCancelarBloqueo').onclick = cerrarPanel;
+        document.getElementById('btnConfirmarBloqueo').onclick = function () {
+            const motivo = document.getElementById('inputMotivo').value;
+            const nota = document.getElementById('inputNota').value;
+            bloquearAsiento(codigo, motivo, nota);
+        };
+    }
+
+    function mostrarPanelBloqueado(codigo) {
+        const b = bloqueosPorAsiento[codigo];
+        panelVacio.style.display = 'none';
+        panelAccion.style.display = 'block';
+        panelAccionTitulo.textContent = 'Asiento ' + codigo;
+
+        panelAccionBody.innerHTML = `
+            <div style="display:flex; flex-direction:column; gap:0.6rem; font-size:0.875rem;">
+                <div><strong>Motivo:</strong> ${b.motivo_display}</div>
+                <div><strong>Alcance:</strong> ${b.permanente ? 'Permanente (toda la sala)' : 'Solo esta función'}</div>
+                ${b.nota ? `<div><strong>Nota:</strong> ${b.nota}</div>` : ''}
+                <div style="display:flex; gap:0.5rem; margin-top:0.5rem;">
+                    <button type="button" id="btnConfirmarDesbloqueo" class="btn btn-danger" style="flex:1;">
+                        🔓 Desbloquear
+                    </button>
+                    <button type="button" id="btnCancelarDesbloqueo" class="btn btn-ghost">Cerrar</button>
+                </div>
+            </div>
+        `;
+
+        document.getElementById('btnCancelarDesbloqueo').onclick = cerrarPanel;
+        document.getElementById('btnConfirmarDesbloqueo').onclick = function () {
+            desbloquearAsiento(codigo, b.bloqueo_id);
+        };
+    }
+
+    botones.forEach(function (btn) {
+        btn.addEventListener('click', function () {
+            const codigo = this.dataset.asiento;
+            if (ocupadosPorReserva.has(codigo)) return; // vendido, no clicable
+            if (bloqueosPorAsiento[codigo]) {
+                mostrarPanelBloqueado(codigo);
+            } else {
+                mostrarPanelLibre(codigo);
+            }
+        });
+    });
+
+    function bloquearAsiento(codigo, motivo, nota) {
+        const fd = new FormData();
+        fd.append('asiento_codigo', codigo);
+        fd.append('motivo', motivo);
+        fd.append('nota', nota);
+        if (FUNCION_ID) fd.append('funcion_id', FUNCION_ID);
+        fd.append('csrfmiddlewaretoken', CSRF_TOKEN);
+
+        fetch(`/panel/salas/${SALA_ID}/asientos/bloquear/`, { method: 'POST', body: fd })
+            .then(r => r.json())
+            .then(data => {
+                if (!data.success) {
+                    const errBox = document.getElementById('errorBloqueo');
+                    if (errBox) {
+                        errBox.style.display = 'block';
+                        errBox.textContent = Object.values(data.errors).flat().join(' ');
+                    }
+                    return;
+                }
+                bloqueosPorAsiento[codigo] = {
+                    bloqueo_id: data.bloqueo_id,
+                    motivo: data.motivo,
+                    motivo_display: data.motivo_display,
+                    nota: data.nota,
+                    permanente: data.permanente,
+                };
+                const btn = document.querySelector(`.asiento-btn[data-asiento="${codigo}"]`);
+                if (btn) pintarBoton(btn);
+                cerrarPanel();
+                location.reload(); // refresca también la tabla de bloqueos de abajo
+            })
+            .catch(() => alert('Error de conexión al bloquear el asiento.'));
+    }
+
+    function desbloquearAsiento(codigo, bloqueoId) {
+        if (!confirm('¿Desbloquear el asiento ' + codigo + '?')) return;
+
+        const fd = new FormData();
+        fd.append('bloqueo_id', bloqueoId);
+        fd.append('csrfmiddlewaretoken', CSRF_TOKEN);
+
+        fetch(`/panel/salas/${SALA_ID}/asientos/desbloquear/`, { method: 'POST', body: fd })
+            .then(r => r.json())
+            .then(data => {
+                if (!data.success) { alert('No se pudo desbloquear.'); return; }
+                delete bloqueosPorAsiento[codigo];
+                const btn = document.querySelector(`.asiento-btn[data-asiento="${codigo}"]`);
+                if (btn) pintarBoton(btn);
+                cerrarPanel();
+                location.reload();
+            })
+            .catch(() => alert('Error de conexión al desbloquear el asiento.'));
+    }
+
+    // Botones "Quitar" en la tabla inferior
+    document.querySelectorAll('.btn-desbloquear-fila').forEach(function (btn) {
+        btn.addEventListener('click', function () {
+            const fila = this.closest('tr');
+            desbloquearAsiento(fila.dataset.asiento, this.dataset.bloqueoId);
+        });
+    });
+
+    // Cambio de modo (permanente <-> función)
+    document.getElementById('selectorModo').addEventListener('change', function () {
+        const valor = this.value;
+        const url = new URL(window.location.href);
+        if (valor) {
+            url.searchParams.set('funcion', valor);
+        } else {
+            url.searchParams.delete('funcion');
+        }
+        window.location.href = url.toString();
+    });
+})();
+</script>
+
+{% endblock %}

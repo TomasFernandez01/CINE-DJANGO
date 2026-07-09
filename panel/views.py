@@ -2,12 +2,13 @@ from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib import messages
 from django.utils import timezone
 from django.db.models import Sum, Count, Q
+from django.http import JsonResponse                    # mapa-salas
+from django.views.decorators.http import require_POST   # mapa-salas
+from django.core.exceptions import ValidationError      # mapa-salas
 from datetime import timedelta
-
 from .decorators import staff_required, superuser_required
-
 from peliculas.models import Pelicula
-from salas.models import Sala, Funcion
+from salas.models import Sala, Funcion, AsientoBloqueado # mapa-salas
 from reservas.models import Reserva
 from pagos.models import Pago
 from promociones.models import Cupon, PromocionDia, Combo, CuponUsado
@@ -154,7 +155,6 @@ def peliculas_importar_tmdb(request, tmdb_id):
 # ============================================================
 # SALAS — CRUD
 # ============================================================
-
 @staff_required
 def salas_crear(request):
     if request.method == 'POST':
@@ -172,8 +172,6 @@ def salas_crear(request):
         'accion': 'crear',
         'seccion_activa': 'salas',
     })
-
-
 @staff_required
 def salas_editar(request, sala_id):
     sala = get_object_or_404(Sala, id=sala_id)
@@ -195,6 +193,113 @@ def salas_editar(request, sala_id):
         'seccion_activa': 'salas',
     })
 
+################ SALAS — MAPA VISUAL DE ASIENTOS BLOQUEADOS
+@staff_required
+def salas_asientos(request, sala_id):
+    """
+    Mapa visual de la sala para que el staff bloquee/desbloquee asientos
+    con un clic. Tiene dos "modos":
+      - Permanente (sin función): afecta a la sala para siempre.
+      - Una función puntual: afecta solo a esa función (además de lo
+        permanente, que siempre se hereda).
+    """
+    sala = get_object_or_404(Sala, id=sala_id)
+
+    funcion_id = request.GET.get('funcion', '')
+    funcion_seleccionada = None
+    if funcion_id:
+        funcion_seleccionada = get_object_or_404(Funcion, id=funcion_id, sala=sala)
+
+    # Bloqueos aplicables al modo actual
+    if funcion_seleccionada:
+        bloqueos = sala.bloqueos_asientos.filter(
+            Q(funcion__isnull=True) | Q(funcion=funcion_seleccionada)
+        )
+    else:
+        bloqueos = sala.bloqueos_asientos.filter(funcion__isnull=True)
+
+    bloqueos_por_codigo = {b.asiento_codigo: b for b in bloqueos}
+
+    # Todos los bloqueos de la sala (para el listado inferior, sin importar el modo actual)
+    todos_los_bloqueos = sala.bloqueos_asientos.select_related('funcion__pelicula').order_by('asiento_codigo')
+
+    funciones_sala = sala.funciones.filter(
+        fecha_hora__gte=timezone.now()
+    ).select_related('pelicula').order_by('fecha_hora')[:30]
+
+    # Si hay una función seleccionada, mostramos también qué asientos ya
+    # están vendidos/reservados (informativo, no se pueden bloquear desde acá).
+    asientos_ocupados_reserva = []
+    if funcion_seleccionada:
+        asientos_ocupados_reserva = funcion_seleccionada.asientos_ocupados()
+
+    contexto = {
+        'sala': sala,
+        'layout': sala.layout_asientos(),
+        'bloqueos_por_codigo': bloqueos_por_codigo,
+        'todos_los_bloqueos': todos_los_bloqueos,
+        'funcion_seleccionada': funcion_seleccionada,
+        'funciones_sala': funciones_sala,
+        'asientos_ocupados_reserva': asientos_ocupados_reserva,
+        'motivo_choices': AsientoBloqueado.MOTIVO_CHOICES,
+        'seccion_activa': 'salas',
+    }
+    return render(request, 'panel/salas/asientos.html', contexto)
+
+
+@staff_required
+@require_POST
+def salas_asientos_bloquear(request, sala_id):
+    """Endpoint AJAX: crea un bloqueo para un asiento."""
+    sala = get_object_or_404(Sala, id=sala_id)
+
+    asiento_codigo = request.POST.get('asiento_codigo', '').strip()
+    motivo = request.POST.get('motivo', 'admin')
+    nota = request.POST.get('nota', '').strip()
+    funcion_id = request.POST.get('funcion_id') or None
+
+    funcion = None
+    if funcion_id:
+        funcion = get_object_or_404(Funcion, id=funcion_id, sala=sala)
+
+    bloqueo = AsientoBloqueado(
+        sala=sala,
+        asiento_codigo=asiento_codigo,
+        motivo=motivo,
+        nota=nota,
+        funcion=funcion,
+    )
+    try:
+        bloqueo.full_clean()
+    except ValidationError as e:
+        errores = e.message_dict if hasattr(e, 'message_dict') else {'__all__': e.messages}
+        return JsonResponse({'success': False, 'errors': errores}, status=400)
+
+    bloqueo.save(skip_validation=True)  # ya se validó arriba con full_clean()
+
+    return JsonResponse({
+        'success': True,
+        'bloqueo_id': bloqueo.id,
+        'asiento_codigo': bloqueo.asiento_codigo,
+        'motivo': bloqueo.motivo,
+        'motivo_display': bloqueo.get_motivo_display(),
+        'nota': bloqueo.nota,
+        'permanente': bloqueo.funcion_id is None,
+    })
+
+
+@staff_required
+@require_POST
+def salas_asientos_desbloquear(request, sala_id):
+    """Endpoint AJAX: elimina un bloqueo existente."""
+    sala = get_object_or_404(Sala, id=sala_id)
+    bloqueo_id = request.POST.get('bloqueo_id')
+
+    bloqueo = get_object_or_404(AsientoBloqueado, id=bloqueo_id, sala=sala)
+    asiento_codigo = bloqueo.asiento_codigo
+    bloqueo.delete()
+
+    return JsonResponse({'success': True, 'asiento_codigo': asiento_codigo})
 
 # ============================================================
 # FUNCIONES — CRUD

@@ -104,7 +104,6 @@ class Funcion(models.Model):
     def __str__(self):
         return f"{self.pelicula.titulo} - {self.sala.nombre} [{self.sala.get_tipo_display()}] - {self.fecha_hora.strftime('%d/%m/%Y %H:%M')}"
 
-    
     # NUEVO: ahora los metodos orbitan a a funcion asienos_ocupados
     def asientos_ocupados(self):
         """
@@ -121,6 +120,35 @@ class Funcion(models.Model):
                 asientos.extend(reserva.asientos_seleccionados.split(','))
         
         return asientos
+    # ============================================
+    # NUEVO: ASIENTOS BLOQUEADOS/NO DISPONIBLES
+    # ============================================
+    def asientos_bloqueados(self):
+        """
+        Retorna una lista de códigos de asientos bloqueados por el admin
+        (permanentes de la sala + específicos de esta función).
+        Ejemplo: ['A1', 'C5']
+        """
+        bloqueos = self.sala.bloqueos_asientos.filter(
+            models.Q(funcion__isnull=True) | models.Q(funcion=self)
+        )
+        return list(bloqueos.values_list('asiento_codigo', flat=True))
+
+    def asientos_no_disponibles(self):
+        """
+        Retorna todos los códigos de asientos que NO se pueden seleccionar:
+        ocupados por reserva + bloqueados por el admin (sin duplicados).
+        """
+        return list(set(self.asientos_ocupados()) | set(self.asientos_bloqueados()))
+
+    def asientos_disponibles(self):
+        """Retorna la cantidad de asientos disponibles"""
+        no_disponibles = len(self.asientos_no_disponibles())
+        return self.sala.capacidad - no_disponibles
+    
+    def esta_asiento_disponible(self, asiento_codigo):
+        """Verifica si un asiento específico está disponible (ni ocupado ni bloqueado)"""
+        return asiento_codigo not in self.asientos_no_disponibles()
     
     ###################################################
     # def asientos_disponibles(self):
@@ -258,4 +286,115 @@ class Funcion(models.Model):
         # Índice compuesto para búsquedas rápidas de solapamiento
         indexes = [
             models.Index(fields=['sala', 'fecha_hora']),
+        ]
+
+
+########################################################################33
+class AsientoBloqueado(models.Model):
+    MOTIVO_CHOICES = [
+        ('mantenimiento', 'Mantenimiento'),
+        ('vip', 'VIP'),
+        ('admin', 'Reservado por Admin'),
+        ('reservado', 'Reservado (cortesía/especial)'),
+    ]
+
+    sala = models.ForeignKey(
+        Sala,
+        on_delete=models.CASCADE,
+        related_name='bloqueos_asientos'
+        #related_name='asientos_bloqueados',
+    )
+    asiento_codigo = models.CharField(
+        max_length=10,
+        help_text="Código del asiento, ej: A1"
+    )
+    motivo = models.CharField(max_length=20, choices=MOTIVO_CHOICES, default='admin')
+    funcion = models.ForeignKey(
+        Funcion,
+        on_delete=models.CASCADE,
+        #related_name='asientos_bloqueados',
+        related_name='bloqueos_asientos',
+        null=True,
+        blank=True,
+        help_text="Dejar vacío para bloqueo permanente en toda la sala. "
+                   "Completar para bloquear solo en esta función."
+    )
+    nota = models.CharField(
+        max_length=200,
+        blank=True,
+        help_text="Motivo puntual, opcional (ej: butaca rota, avisado 03/07)"
+    )
+    creado_en = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        alcance = f"función #{self.funcion_id}" if self.funcion_id else "permanente"
+        return f"{self.sala.nombre} - {self.asiento_codigo} ({self.get_motivo_display()}, {alcance})"
+
+    def clean(self):
+        super().clean()
+
+        # 1. Validar que el asiento_codigo exista realmente en la sala
+        if self.sala_id and self.asiento_codigo:
+            codigos_validos = {
+                asiento
+                for fila in self.sala.layout_asientos()
+                for asiento in fila
+            }
+            if self.asiento_codigo not in codigos_validos:
+                raise ValidationError({
+                    'asiento_codigo': f'"{self.asiento_codigo}" no existe en la sala '
+                                       f'"{self.sala.nombre}". Códigos válidos: '
+                                       f'{", ".join(sorted(codigos_validos))}.'
+                })
+
+        # 2. Validar que la función (si se especifica) pertenezca a esta sala
+        if self.funcion_id and self.funcion.sala_id != self.sala_id:
+            raise ValidationError({
+                'funcion': 'Esta función no pertenece a la sala seleccionada.'
+            })
+
+        # 3. Evitar bloqueos duplicados/ambiguos para el mismo asiento
+        if self.sala_id and self.asiento_codigo:
+            conflictos = AsientoBloqueado.objects.filter(
+                sala_id=self.sala_id,
+                asiento_codigo=self.asiento_codigo,
+            )
+            if self.pk:
+                conflictos = conflictos.exclude(pk=self.pk)
+
+            # Ya existe un bloqueo permanente para este asiento
+            if conflictos.filter(funcion__isnull=True).exists():
+                raise ValidationError(
+                    f'El asiento {self.asiento_codigo} ya tiene un bloqueo permanente '
+                    f'en esta sala. Elimínalo antes de crear uno nuevo.'
+                )
+
+            # Se está creando otro bloqueo permanente pero ya hay uno específico de función
+            # (no es un error grave, pero avisamos para que el admin no se confunda)
+            if self.funcion_id is None and conflictos.filter(funcion__isnull=False).exists():
+                raise ValidationError(
+                    f'El asiento {self.asiento_codigo} ya tiene bloqueo(s) para función(es) '
+                    f'específicas. Revisalos antes de bloquearlo de forma permanente.'
+                )
+
+            # Ya existe un bloqueo para esta misma función puntual
+            if self.funcion_id and conflictos.filter(funcion_id=self.funcion_id).exists():
+                raise ValidationError(
+                    f'El asiento {self.asiento_codigo} ya está bloqueado para esta función.'
+                )
+
+    def save(self, *args, **kwargs):
+        if not kwargs.pop('skip_validation', False):
+            self.full_clean()
+        super().save(*args, **kwargs)
+
+    class Meta:
+        verbose_name = 'Asiento Bloqueado'
+        verbose_name_plural = 'Asientos Bloqueados'
+        ordering = ['sala', 'asiento_codigo']
+        constraints = [
+            models.UniqueConstraint(
+                fields=['sala', 'asiento_codigo', 'funcion'],
+                name='unico_bloqueo_por_asiento_funcion'
+            ),
         ]

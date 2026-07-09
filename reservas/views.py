@@ -76,21 +76,37 @@ def seleccionar_asientos(request, funcion_id):
 
     # ─────────────────────────────────────────────────────────────
     ############################################################################
-
-    asientos_ocupados = funcion.asientos_ocupados()
     layout = funcion.sala.layout_asientos()
     max_asientos = get_max_asientos()
-    
     contexto = {
         'funcion': funcion,
         'sala': funcion.sala,
         'layout': layout,
-        'asientos_ocupados': asientos_ocupados,
+        # NOTA: por ahora el template sigue tratando todo "no disponible" como
+        # "ocupado" (mismo color). La distinción visual por motivo de bloqueo
+        # (VIP, mantenimiento, etc.) se suma en el paso de templates.
+        'asientos_ocupados': funcion.asientos_no_disponibles(),
         'asientos_disponibles': funcion.asientos_disponibles(),
         'max_asientos': max_asientos,
         'tiempo_limite_minutos': tiempo_limite,
         'segundos_restantes': segundos_restantes,
     }
+    
+    # Si falla volver a este contexto
+    # asientos_ocupados = funcion.asientos_ocupados()
+    # layout = funcion.sala.layout_asientos()
+    # max_asientos = get_max_asientos()
+    # contexto = {
+    #     'funcion': funcion,
+    #     'sala': funcion.sala,
+    #     'layout': layout,
+    #     'asientos_ocupados': asientos_ocupados,
+    #     'asientos_disponibles': funcion.asientos_disponibles(),
+    #     'max_asientos': max_asientos,
+    #     'tiempo_limite_minutos': tiempo_limite,
+    #     'segundos_restantes': segundos_restantes,
+    # }
+
     
     return render(request, 'reservas/seleccionar_asientos.html', contexto)
 

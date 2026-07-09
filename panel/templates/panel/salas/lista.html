@@ -13,7 +13,7 @@
             flex-wrap:wrap; gap:1rem; margin-bottom:1.5rem;">
     <h1 style="font-size:1.4rem; color:#1a1a2e; margin:0;">🏢 Salas</h1>
     {% comment %} <a href="{% url 'admin:salas_sala_add' %}" class="btn btn-success">+ Agregar sala</a> {% endcomment %}
-    <a href="{% url 'panel:salas_crear' %}" class="btn btn-success">+ Agregar sala</a>
+    <a href="{% url 'panel:salas_crear' %}" class="btn btn-success">Agregar sala</a>
 </div>
 
 <div style="display:grid; grid-template-columns:repeat(auto-fill, minmax(280px,1fr)); gap:1rem;">
@@ -88,6 +88,7 @@
                 </a>
                 {% comment %} <a href="{% url 'admin:salas_sala_change' s.id %}" class="btn btn-ghost" style="font-size:0.8rem;" title="Editar">✏️</a> {% endcomment %}
                 <a href="{% url 'panel:salas_editar' s.id %}" class="btn btn-ghost" style="font-size:0.8rem;" title="Editar">✏️</a>
+                <a href="{% url 'panel:salas_asientos' s.id %}" class="btn btn-primary" style="font-size:0.8rem;" title="Bloquear asientos">🪑</a>
             </div>
         </div>
     </div>

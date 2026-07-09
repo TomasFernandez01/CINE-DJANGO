@@ -1,5 +1,5 @@
 from django.contrib import admin
-from .models import Sala, Funcion
+from .models import Sala, Funcion, AsientoBloqueado
 
 @admin.register(Sala)
 class SalaAdmin(admin.ModelAdmin):
@@ -116,3 +116,43 @@ class FuncionAdmin(admin.ModelAdmin):
             int(porcentaje)
         )
     asientos_disponibles.short_description = 'Disponibles'
+
+@admin.register(AsientoBloqueado)
+class AsientoBloqueadoAdmin(admin.ModelAdmin):
+    list_display = ['sala', 'asiento_codigo', 'motivo_badge', 'alcance', 'nota', 'creado_en']
+    list_filter = ['motivo', 'sala']
+    search_fields = ['asiento_codigo', 'sala__nombre', 'nota']
+    autocomplete_fields = ['funcion']
+
+    fieldsets = (
+        ('Ubicación', {
+            'fields': ('sala', 'asiento_codigo')
+        }),
+        ('Bloqueo', {
+            'fields': ('motivo', 'funcion', 'nota'),
+            'description': 'Dejá "Función" vacío para un bloqueo permanente en toda la sala, '
+                            'o elegí una función para bloquear el asiento solo en esa función puntual.'
+        }),
+    )
+
+    def motivo_badge(self, obj):
+        colores = {
+            'mantenimiento': ('#6c757d', '🔧'),
+            'vip':           ('#fd7e14', '⭐'),
+            'admin':         ('#6f42c1', '🔒'),
+            'reservado':     ('#007bff', '🎁'),
+        }
+        color, icono = colores.get(obj.motivo, ('#6c757d', '⬛'))
+        from django.utils.html import format_html
+        return format_html(
+            '<span style="background-color:{}; color:white; padding:3px 10px; '
+            'border-radius:12px; font-weight:bold; font-size:12px;">{} {}</span>',
+            color, icono, obj.get_motivo_display()
+        )
+    motivo_badge.short_description = 'Motivo'
+
+    def alcance(self, obj):
+        if obj.funcion_id:
+            return f"Función: {obj.funcion.pelicula.titulo} ({obj.funcion.fecha_hora.strftime('%d/%m %H:%M')})"
+        return "Permanente (toda la sala)"
+    alcance.short_description = 'Alcance'

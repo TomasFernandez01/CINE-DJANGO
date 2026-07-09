@@ -17,6 +17,11 @@ urlpatterns = [
     path('salas/',                              views.salas_lista,              name='salas_lista'),
     path('salas/crear/',                        views.salas_crear,              name='salas_crear'),
     path('salas/<int:sala_id>/editar/',         views.salas_editar,             name='salas_editar'),
+    # mapa-salas
+    path('salas/<int:sala_id>/asientos/',       views.salas_asientos,            name='salas_asientos'),
+    path('salas/<int:sala_id>/asientos/bloquear/',views.salas_asientos_bloquear,   name='salas_asientos_bloquear'),
+    path('salas/<int:sala_id>/asientos/desbloquear/',views.salas_asientos_desbloquear, name='salas_asientos_desbloquear'),
+
     # ---- Funciones ----
     path('funciones/',                          views.funciones_lista,          name='funciones_lista'),
     path('funciones/crear/',                    views.funciones_crear,          name='funciones_crear'),
