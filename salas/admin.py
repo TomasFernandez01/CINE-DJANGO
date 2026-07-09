@@ -1,5 +1,11 @@
 from django.contrib import admin
-from .models import Sala, Funcion, AsientoBloqueado
+from .models import Sala, Funcion, AsientoBloqueado, SeccionSala
+
+class SeccionSalaInline(admin.TabularInline):
+    model = SeccionSala
+    extra = 0
+    fields = ['nombre', 'fila_inicio', 'fila_fin', 'columna_inicio', 'columna_fin']
+
 
 @admin.register(Sala)
 class SalaAdmin(admin.ModelAdmin):
@@ -10,6 +16,7 @@ class SalaAdmin(admin.ModelAdmin):
     list_editable = ['activa']
     # IMPORTANTE: Capacidad es readonly (solo lectura)
     readonly_fields = ['capacidad']
+    inlines = [SeccionSalaInline]
     
     fieldsets = (
         ('Información Básica', {

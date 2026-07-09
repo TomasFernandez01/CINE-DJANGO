@@ -19,7 +19,7 @@
             Hacé clic en un asiento para bloquearlo o desbloquearlo.
         </div>
     </div>
-    <a href="{% url 'panel:salas_lista' %}" class="btn btn-ghost">← Volver a Salas</a>
+    <a href="{% url 'panel:salas_lista' %}" class="btn btn-ghost">Volver a Salas</a>
 </div>
 
 <!-- Selector de modo -->
@@ -79,9 +79,10 @@
                 {% for fila in layout %}
                 <div style="display:flex; gap:5px; align-items:center;">
                     <span style="width:20px; font-size:0.7rem; color:#999; text-align:center; font-weight:600;">
-                        {{ fila.0|slice:":1" }}
+                        {{ fila.letra }}
                     </span>
-                    {% for asiento in fila %}
+                    {% for asiento in fila.celdas %}
+                        {% if asiento %}
                         <button
                             type="button"
                             class="asiento-btn"
@@ -91,9 +92,32 @@
                                    cursor:pointer; transition:transform 0.12s;">
                             {{ asiento }}
                         </button>
+                        {% else %}
+                        <div style="width:28px; height:24px;"></div>
+                        {% endif %}
                     {% endfor %}
                 </div>
                 {% endfor %}
+                {% comment %}  
+                {% for fila in layout %}
+                <div style="display:flex; gap:5px; align-items:center;">
+                    <span style="width:20px; font-size:0.7rem; color:#999; text-align:center; font-weight:600;">
+                        {{ fila.0|slice:":1" }}
+                    </span>
+                    {% for asiento in fila %}
+                    <button
+                            type="button"
+                            class="asiento-btn"
+                            data-asiento="{{ asiento }}"
+                            style="width:28px; height:24px; border-radius:4px; font-size:8px;
+                            border:1px solid rgba(0,0,0,0.15); font-weight:700; color:white;
+                            cursor:pointer; transition:transform 0.12s;">
+                            {{ asiento }}
+                        </button>
+                    {% endfor %}
+                </div>
+                {% endfor %}
+                {% endcomment %}
             </div>
         </div>
     </div>

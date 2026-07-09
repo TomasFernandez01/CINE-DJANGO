@@ -82,13 +82,37 @@
                 </div>
             </div>
             <div style="display:flex; flex-direction:column; gap:4px; align-items:center;">
+                {% comment %} 
                 {% for fila in layout %}
                 <div style="display:flex; gap:4px; align-items:center;">
                     <span style="width:18px; font-size:0.65rem; color:#999;
                                  text-align:center; font-weight:600;">
-                        {{ fila.0|slice:":1" }}
+                                 {{ fila.0|slice:":1" }}
                     </span>
                     {% for asiento in fila %}
+                    <div style="width:22px; height:18px; border-radius:3px; font-size:7px;
+                    display:flex; align-items:center; justify-content:center;
+                                font-weight:700; color:white;
+                                {% if asiento in asientos_ocupados %}
+                                background:#e74c3c;
+                                {% else %}
+                                background:#27ae60;
+                                {% endif %}"
+                                title="{{ asiento }}">
+                        {{ asiento }}
+                    </div>
+                    {% endfor %}
+                </div>
+                {% endfor %}
+                {% endcomment %}
+                {% for fila in layout %}
+                <div style="display:flex; gap:4px; align-items:center;">
+                    <span style="width:18px; font-size:0.65rem; color:#999;
+                                 text-align:center; font-weight:600;">
+                        {{ fila.letra }}
+                    </span>
+                    {% for asiento in fila.celdas %}
+                    {% if asiento %}
                     <div style="width:22px; height:18px; border-radius:3px; font-size:7px;
                                 display:flex; align-items:center; justify-content:center;
                                 font-weight:700; color:white;
@@ -100,6 +124,9 @@
                          title="{{ asiento }}">
                         {{ asiento }}
                     </div>
+                    {% else %}
+                    <div style="width:22px; height:18px;"></div>
+                    {% endif %}
                     {% endfor %}
                 </div>
                 {% endfor %}

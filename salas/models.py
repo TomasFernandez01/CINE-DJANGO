@@ -17,7 +17,7 @@ class Sala(models.Model):
         '2d_premium':{'icono': '⭐', 'color': '#fd7e14', 'badge': 'warning'},
         '3d_premium':{'icono': '💎', 'color': '#6f42c1', 'badge': 'purple'},
     }
-    nombre = models.CharField(max_length=100)
+    nombre = models.CharField(max_length=100,default='SALA')
     tipo = models.CharField(
         max_length=20,
         choices=TIPO_CHOICES,
@@ -30,13 +30,18 @@ class Sala(models.Model):
         help_text="Se calcula automáticamente: filas*columnas"
         ) 
     activa = models.BooleanField(default=True)
+    
     filas = models.IntegerField(
         default=6, 
-        help_text="Cantidad de filas (A, B, C, ...)"
+        help_text=
+                "Cantidad TOTAL de filas del lienzo de la sala (A, B, C, ...). "
+                "Si la sala tiene secciones, ninguna puede exceder este valor."
         )
     columnas = models.IntegerField(
         default=8, 
-        help_text="Cantidad de columnas (1, 2, 3, ...)"
+        help_text=
+                "Cantidad TOTAL de columnas del lienzo de la sala (1, 2, 3, ...). "
+                "Si la sala tiene secciones, ninguna puede exceder este valor."
         )
     
     ###############################################################
@@ -60,8 +65,72 @@ class Sala(models.Model):
     #     return f"{self.nombre} (Cap: {self.capacidad})"
     
     def layout_asientos(self):
-        """Retorna el layout de asientos como lista de listas"""
+        """
+        V1--Retorna el layout de asientos como lista de listas de códigos. Si la sala tiene SeccionSala definidas, cada celda del lienzo (fila x columna) solo aparece si alguna sección la cubre — esto permite secciones lado a lado, con distinta profundidad de filas, y "pasillos" (columnas/filas sin ninguna sección).
+        Si la sala todavía no tiene secciones (caso legacy / recién creada), se usa el comportamiento anterior: grilla uniforme filas x columnas.
+        V2--
+        Retorna el layout de asientos como lista de filas.
+        Cada fila es un dict: {'letra': 'A', 'celdas': [...]}
+          - 'letra': la letra de esa fila (A, B, C...), explícita para no
+            depender de adivinarla a partir del primer asiento (que puede
+            no existir si esa fila arranca con un pasillo).
+          - 'celdas': lista de longitud fija (una posición por columna del
+            lienzo). Cada posición es el código del asiento si alguna
+            sección la cubre, o None si es un pasillo (columna/fila sin
+            ninguna sección). Mantener la posición exacta es necesario
+            para que los templates dibujen el espacio vacío del pasillo
+            en vez de "amontonar" los asientos.
+
+        Se omiten las filas que no tienen NINGÚN asiento en toda su
+        extensión (ninguna sección la cubre).
+
+        Si la sala todavía no tiene secciones (caso legacy / recién creada),
+        se usa el comportamiento anterior: grilla uniforme sin huecos.
+        """
         letras = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'
+        ######################################
+        # Un objeto sin pk todavía (recién instanciado, no guardado) no puede
+        # tener secciones relacionadas en la base de datos. entonces agrego la condicion if self.pk else []
+        secciones = list(self.secciones.all()) if self.pk else []
+
+        if not secciones:
+            layout = []
+            for i in range(self.filas):
+                # fila = [f"{letras[i]}{j}" for j in range(1, self.columnas + 1)]
+                # layout.append(fila)
+                celdas = [f"{letras[i]}{j}" for j in range(1, self.columnas + 1)]
+                layout.append({'letra': letras[i], 'celdas': celdas})
+            return layout
+        
+        layout = []
+        for fila_num in range(1, self.filas + 1):
+            fila_celdas = []
+            for col_num in range(1, self.columnas + 1):
+                cubierta = any(
+                    s.fila_inicio <= fila_num <= s.fila_fin and
+                    s.columna_inicio <= col_num <= s.columna_fin
+                    for s in secciones
+                )
+                fila_celdas.append(f"{letras[fila_num - 1]}{col_num}" if cubierta else None)
+            if any(fila_celdas):
+                layout.append({'letra': letras[fila_num - 1], 'celdas': fila_celdas})
+        return layout
+        #####################################
+        layout = []
+        for fila_num in range(1, self.filas + 1):
+            fila_codigos = []
+            for col_num in range(1, self.columnas + 1):
+                cubierta = any(
+                    s.fila_inicio <= fila_num <= s.fila_fin and
+                    s.columna_inicio <= col_num <= s.columna_fin
+                    for s in secciones
+                )
+                if cubierta:
+                    fila_codigos.append(f"{letras[fila_num - 1]}{col_num}")
+            if fila_codigos:
+                layout.append(fila_codigos)
+        return layout
+        ###################################### 
         layout = []
         for i in range(self.filas):
             fila = []
@@ -71,7 +140,17 @@ class Sala(models.Model):
         return layout
     
     def total_asientos(self):
-        """Calcula el total de asientos según filas x columnas"""
+        """
+        Calcula el total de asientos. Si hay secciones definidas, suma el
+        área real de cada una (evita contar pasillos). Si no hay secciones
+        todavía, usa el cálculo legacy filas x columnas.
+        """
+        ################################# if self.pk else [] para la sala si no existe
+        secciones = list(self.secciones.all()) if self.pk else []
+        if not secciones:
+            return self.filas * self.columnas
+        return sum(s.total_asientos() for s in secciones)
+        #################################
         return self.filas * self.columnas
     
     def save(self, *args, **kwargs):
@@ -90,6 +169,93 @@ class Sala(models.Model):
         verbose_name = 'Sala'
         verbose_name_plural = 'Salas'
         ordering = ['nombre']
+
+# ==========================================================================
+class SeccionSala(models.Model):
+    """
+    Una región rectangular dentro del lienzo (filas x columnas) de una Sala.
+    Varias secciones pueden convivir lado a lado o con distinta profundidad
+    de filas (ej: sector central que llega más atrás que los laterales).
+    Las celdas del lienzo que no están cubiertas por ninguna sección quedan
+    vacías (pasillos).
+    """
+    sala = models.ForeignKey(Sala, on_delete=models.CASCADE, related_name='secciones')
+    nombre = models.CharField(
+        max_length=50,
+        help_text="Ej: Lateral Izquierdo, Centro, Palcos"
+    )
+    fila_inicio = models.PositiveIntegerField(help_text="Primera fila (1 = A, 2 = B, ...)")
+    fila_fin = models.PositiveIntegerField(help_text="Última fila incluida")
+    columna_inicio = models.PositiveIntegerField(help_text="Primera columna")
+    columna_fin = models.PositiveIntegerField(help_text="Última columna incluida")
+
+    def __str__(self):
+        return (f"{self.sala.nombre} - {self.nombre} "
+                f"(filas {self.fila_inicio}-{self.fila_fin}, "
+                f"columnas {self.columna_inicio}-{self.columna_fin})")
+
+    def total_asientos(self):
+        """Cantidad de asientos que ocupa esta sección (área del rectángulo)."""
+        return (self.fila_fin - self.fila_inicio + 1) * (self.columna_fin - self.columna_inicio + 1)
+
+    def clean(self):
+        super().clean()
+
+        # 1. Rangos coherentes
+        if self.fila_inicio and self.fila_fin and self.fila_inicio > self.fila_fin:
+            raise ValidationError({'fila_fin': 'La fila final no puede ser menor a la fila inicial.'})
+        if self.columna_inicio and self.columna_fin and self.columna_inicio > self.columna_fin:
+            raise ValidationError({'columna_fin': 'La columna final no puede ser menor a la columna inicial.'})
+
+        # 2. No exceder el lienzo total de la sala
+        if self.sala_id:
+            if self.fila_fin and self.fila_fin > self.sala.filas:
+                raise ValidationError({
+                    'fila_fin': f'La sala "{self.sala.nombre}" solo tiene {self.sala.filas} filas en total.'
+                })
+            if self.columna_fin and self.columna_fin > self.sala.columnas:
+                raise ValidationError({
+                    'columna_fin': f'La sala "{self.sala.nombre}" solo tiene {self.sala.columnas} columnas en total.'
+                })
+            if self.fila_inicio and self.fila_inicio < 1:
+                raise ValidationError({'fila_inicio': 'La fila inicial debe ser 1 o mayor.'})
+            if self.columna_inicio and self.columna_inicio < 1:
+                raise ValidationError({'columna_inicio': 'La columna inicial debe ser 1 o mayor.'})
+
+        # 3. No solaparse con otra sección de la misma sala
+        if self.sala_id and self.fila_inicio and self.fila_fin and self.columna_inicio and self.columna_fin:
+            otras = SeccionSala.objects.filter(sala_id=self.sala_id)
+            if self.pk:
+                otras = otras.exclude(pk=self.pk)
+
+            for otra in otras:
+                filas_se_solapan = not (self.fila_fin < otra.fila_inicio or self.fila_inicio > otra.fila_fin)
+                columnas_se_solapan = not (self.columna_fin < otra.columna_inicio or self.columna_inicio > otra.columna_fin)
+                if filas_se_solapan and columnas_se_solapan:
+                    raise ValidationError(
+                        f'Esta sección se superpone con "{otra.nombre}" '
+                        f'(filas {otra.fila_inicio}-{otra.fila_fin}, '
+                        f'columnas {otra.columna_inicio}-{otra.columna_fin}).'
+                    )
+
+    def save(self, *args, **kwargs):
+        if not kwargs.pop('skip_validation', False):
+            self.full_clean()
+        super().save(*args, **kwargs)
+        # La capacidad de la sala depende de sus secciones: recalcular.
+        self.sala.save()
+
+    def delete(self, *args, **kwargs):
+        sala = self.sala
+        super().delete(*args, **kwargs)
+        sala.save()  # recalcular capacidad tras borrar la sección
+
+    class Meta:
+        verbose_name = 'Sección de Sala'
+        verbose_name_plural = 'Secciones de Sala'
+        ordering = ['sala', 'fila_inicio', 'columna_inicio']
+
+# ==========================================================================
 
 
 class Funcion(models.Model):

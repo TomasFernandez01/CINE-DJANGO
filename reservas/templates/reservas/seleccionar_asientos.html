@@ -114,9 +114,43 @@
     {# ============================================================ #}
     {# MAPA DE ASIENTOS                                             #}
     {# ============================================================ #}
-    <div id="mapaAsientos" style="background-color: white; padding: 2rem; border-radius: 8px;
-                box-shadow: 0 2px 4px rgba(0,0,0,0.1); margin-bottom: 1.5rem; overflow-x: auto;">
+    <div id="mapaAsientos" style="background-color: white; padding: 2rem; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); margin-bottom: 1.5rem; overflow-x: auto;">
         <div style="display: inline-block; min-width: 100%;">
+            {% comment %} NUEVO {% endcomment %}
+            {% for fila in layout %}
+                <div style="display: flex; justify-content: center; gap: 8px; margin-bottom: 8px; align-items: center;">
+                    <div style="width: 30px; text-align: center; font-weight: bold; color: #666;">
+                        {{ fila.letra }}
+                    </div>
+                    {% for asiento in fila.celdas %}
+                        {% if asiento %}
+                        <button
+                            type="button"
+                            class="asiento {% if asiento in asientos_ocupados %}ocupado{% else %}disponible{% endif %}"
+                            data-asiento="{{ asiento }}"
+                            {% if asiento in asientos_ocupados %}disabled{% endif %}
+                            style="width: 40px; height: 40px; border: 2px solid; border-radius: 6px;
+                                   font-size: 11px; font-weight: bold; transition: all 0.2s;
+                                   {% if asiento in asientos_ocupados %}
+                                       background-color: #dc3545; border-color: #bd2130;
+                                       color: white; cursor: not-allowed; opacity: 0.7;
+                                   {% else %}
+                                       background-color: #28a745; border-color: #1e7e34;
+                                       color: white; cursor: pointer;
+                                   {% endif %}">
+                            {{ asiento }}
+                        </button>
+                        {% else %}
+                        {# Pasillo: espacio vacío del mismo tamaño, sin botón #}
+                        <div style="width: 40px; height: 40px;"></div>
+                        {% endif %}
+                    {% endfor %}
+                    <div style="width: 30px; text-align: center; font-weight: bold; color: #666;">
+                        {{ fila.letra }}
+                    </div>
+                </div>
+            {% endfor %}
+            {% comment %}
             {% for fila in layout %}
                 <div style="display: flex; justify-content: center; gap: 8px; margin-bottom: 8px; align-items: center;">
                     <div style="width: 30px; text-align: center; font-weight: bold; color: #666;">
@@ -145,6 +179,7 @@
                     </div>
                 </div>
             {% endfor %}
+            {% endcomment %}
         </div>
     </div>
 
