@@ -17,6 +17,7 @@ urlpatterns = [
     path('salas/',                              views.salas_lista,              name='salas_lista'),
     path('salas/crear/',                        views.salas_crear,              name='salas_crear'),
     path('salas/<int:sala_id>/editar/',         views.salas_editar,             name='salas_editar'),
+    path('salas/eliminar/',                     views.salas_eliminar,            name='salas_eliminar'),
     # mapa-salas
     path('salas/<int:sala_id>/asientos/',       views.salas_asientos,            name='salas_asientos'),
     path('salas/<int:sala_id>/asientos/bloquear/',views.salas_asientos_bloquear,   name='salas_asientos_bloquear'),

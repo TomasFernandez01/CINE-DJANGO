@@ -17,7 +17,7 @@
     <div style="display:flex; justify-content:space-between; align-items:center;
                 margin-bottom:1.5rem;">
         <h1 style="font-size:1.4rem; color:#1a1a2e; margin:0;">{{ titulo_pagina }}</h1>
-        <a href="{% url 'panel:salas_lista' %}" class="btn btn-ghost">← Volver</a>
+        <a href="{% url 'panel:salas_lista' %}" class="btn btn-ghost">Volver</a>
     </div>
 
     <form method="post" id="formSala">
@@ -72,8 +72,92 @@
 
                 </div>
             </div>
+            {% comment %}  {% endcomment %}
+            <!-- Secciones de la sala -->
+            <div class="card" style="grid-column:1/-1;">
+                <div class="card-header">
+                    <h3>📐 Secciones de la Sala</h3>
+                    <button type="button" id="btnAgregarSeccion" class="btn btn-ghost" style="font-size:0.8rem;">
+                        + Agregar sección
+                    </button>
+                </div>
+                <div class="card-body">
+                    <p style="font-size:0.8rem; color:#666; margin-top:0; margin-bottom:1rem;">
+                        Cada sección es un rectángulo dentro del lienzo total (Filas × Columnas de arriba).
+                        Las celdas que ninguna sección cubra quedan como pasillo. Si no cargás ninguna
+                        sección, la sala funciona como una grilla uniforme completa (comportamiento anterior).
+                    </p>
 
+                    {{ formset.management_form }}
+                    {% if formset.non_form_errors %}
+                    <div style="background:#f8d7da; border-left:4px solid #e74c3c;
+                                padding:0.75rem 1rem; border-radius:6px; margin-bottom:1rem; color:#721c24;">
+                        {% for error in formset.non_form_errors %}
+                        <p style="margin:0;">{{ error }}</p>
+                        {% endfor %}
+                    </div>
+                    {% endif %}
+
+                    <div style="overflow-x:auto;">
+                        <table class="tabla" id="tablaSecciones">
+                            <thead>
+                                <tr>
+                                    <th>Nombre</th>
+                                    <th>Fila inicio</th>
+                                    <th>Fila fin</th>
+                                    <th>Col. inicio</th>
+                                    <th>Col. fin</th>
+                                    <th>Quitar</th>
+                                </tr>
+                            </thead>
+                            <tbody id="seccionesBody">
+                                {% for seccion_form in formset %}
+                                <tr class="fila-seccion">
+                                    <td>{{ seccion_form.id }}{{ seccion_form.nombre }}</td>
+                                    <td>{{ seccion_form.fila_inicio }}</td>
+                                    <td>{{ seccion_form.fila_fin }}</td>
+                                    <td>{{ seccion_form.columna_inicio }}</td>
+                                    <td>{{ seccion_form.columna_fin }}</td>
+                                    <td style="text-align:center;">
+                                        {% if seccion_form.DELETE %}
+                                        <label style="cursor:pointer; font-size:0.75rem; display:flex; flex-direction:column; align-items:center; gap:2px;">
+                                            {{ seccion_form.DELETE }}
+                                            Eliminar
+                                        </label>
+                                        {% endif %}
+                                    </td>
+                                </tr>
+                                {% if seccion_form.errors %}
+                                <tr>
+                                    <td colspan="6" style="color:#e74c3c; font-size:0.78rem; padding-top:0;">
+                                        {% for field, errores in seccion_form.errors.items %}
+                                            {% for error in errores %}{{ error }} {% endfor %}
+                                        {% endfor %}
+                                    </td>
+                                </tr>
+                                {% endif %}
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <!-- Fila plantilla, oculta, usada por JS para clonar al agregar sección -->
+                    <table style="display:none;">
+                        <tbody>
+                            <tr id="filaSeccionPlantilla">
+                                <td>{{ formset.empty_form.nombre }}</td>
+                                <td>{{ formset.empty_form.fila_inicio }}</td>
+                                <td>{{ formset.empty_form.fila_fin }}</td>
+                                <td>{{ formset.empty_form.columna_inicio }}</td>
+                                <td>{{ formset.empty_form.columna_fin }}</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            {% comment %}  {% endcomment %}
             <!-- Preview calculado -->
+            {% comment %} volver a este si falla el otro
             <div class="card" style="grid-column:1/-1;">
                 <div class="card-header"><h3>📐 Capacidad Calculada</h3></div>
                 <div class="card-body" style="text-align:center;">
@@ -87,6 +171,20 @@
                         <span id="colsVal">
                             {% if objeto %}{{ objeto.columnas }}{% else %}?{% endif %}
                         </span> columnas)
+                    </div>
+                </div>
+            </div>
+            {% endcomment %}
+            <!-- Preview calculado -->
+            <div class="card" style="grid-column:1/-1;">
+                <div class="card-header"><h3>📐 Capacidad Calculada</h3></div>
+                <div class="card-body" style="text-align:center;">
+                    <div style="font-size:3rem; font-weight:800; color:#1a1a2e;" id="capacidadCalc">
+                        {% if objeto %}{{ objeto.capacidad }}{% else %}—{% endif %}
+                    </div>
+                    <div style="color:#666; font-size:0.9rem; margin-top:0.25rem;" id="capacidadDetalle">
+                        <span id="filasVal">{% if objeto %}{{ objeto.filas }}{% else %}?{% endif %}</span> filas *
+                        <span id="colsVal">{% if objeto %}{{ objeto.columnas }}{% else %}?{% endif %}</span> columnas de lienzo total
                     </div>
                 </div>
             </div>
@@ -113,6 +211,94 @@
 </div>
 
 <script>
+(function () {
+    const filasInput = document.getElementById('id_filas');
+    const colsInput  = document.getElementById('id_columnas');
+    const capEl      = document.getElementById('capacidadCalc');
+    const filasEl    = document.getElementById('filasVal');
+    const colsEl     = document.getElementById('colsVal');
+    const seccionesBody = document.getElementById('seccionesBody');
+    const totalFormsInput = document.querySelector('input[name$="-TOTAL_FORMS"]');
+    const plantilla = document.getElementById('filaSeccionPlantilla');
+    const btnAgregar = document.getElementById('btnAgregarSeccion');
+
+    function calcularCapacidad() {
+        const filasLienzo = parseInt(filasInput.value) || 0;
+        const colsLienzo  = parseInt(colsInput.value) || 0;
+        filasEl.textContent = filasLienzo || '?';
+        colsEl.textContent  = colsLienzo || '?';
+
+        let total = 0;
+        let hayValida = false;
+
+        seccionesBody.querySelectorAll('.fila-seccion').forEach(function (fila) {
+            if (fila.style.display === 'none') return; // fue quitada por el usuario
+
+            const deleteChk = fila.querySelector('input[type="checkbox"]');
+            if (deleteChk && deleteChk.checked) return; // marcada para eliminar
+
+            const nums = fila.querySelectorAll('input[type="number"]');
+            if (nums.length < 4) return;
+            const valores = Array.from(nums).map(n => parseInt(n.value));
+            if (valores.some(v => isNaN(v))) return;
+            const [fi, ff, ci, cf] = valores;
+            if (ff < fi || cf < ci) return;
+
+            total += (ff - fi + 1) * (cf - ci + 1);
+            hayValida = true;
+        });
+
+        // Si hay al menos una sección con datos completos, la capacidad real
+        // es la suma de sus áreas (no cuenta pasillos). Si todavía no se
+        // cargó ninguna sección, se muestra la grilla uniforme legacy.
+        capEl.textContent = hayValida ? (total || '—') : ((filasLienzo * colsLienzo) || '—');
+    }
+
+    // "+ Agregar sección": clona la fila plantilla con un índice nuevo
+    btnAgregar?.addEventListener('click', function () {
+        const index = parseInt(totalFormsInput.value, 10);
+        const nuevaFila = document.createElement('tr');
+        nuevaFila.className = 'fila-seccion nueva-seccion';
+
+        let html = '';
+        plantilla.querySelectorAll('td').forEach(function (celda) {
+            html += '<td>' + celda.innerHTML.replace(/__prefix__/g, index) + '</td>';
+        });
+        html += '<td style="text-align:center;">' +
+                '<button type="button" class="btn btn-ghost btn-quitar-nueva" ' +
+                'style="font-size:0.7rem; padding:0.25rem 0.6rem;">✕ Quitar</button>' +
+                '</td>';
+        nuevaFila.innerHTML = html;
+        seccionesBody.appendChild(nuevaFila);
+
+        totalFormsInput.value = index + 1;
+        calcularCapacidad();
+    });
+
+    // "✕ Quitar" en una fila recién agregada (todavía no guardada en la BD):
+    // se vacía y se oculta, así el formset la trata como "vacía" y la ignora
+    // al guardar, sin necesidad de renumerar los índices del formset.
+    seccionesBody.addEventListener('click', function (e) {
+        if (!e.target.classList.contains('btn-quitar-nueva')) return;
+        const fila = e.target.closest('tr');
+        fila.querySelectorAll('input').forEach(function (input) {
+            if (input.type === 'checkbox') input.checked = false;
+            else input.value = '';
+        });
+        fila.style.display = 'none';
+        calcularCapacidad();
+    });
+
+    filasInput?.addEventListener('input', calcularCapacidad);
+    colsInput?.addEventListener('input', calcularCapacidad);
+    seccionesBody.addEventListener('input', calcularCapacidad);
+    seccionesBody.addEventListener('change', calcularCapacidad);
+
+    calcularCapacidad();
+})();
+</script>
+{% comment %} lo mismo si falla el script volver a este
+<script>
 const filasInput = document.getElementById('id_filas');
 const colsInput  = document.getElementById('id_columnas');
 const capEl   = document.getElementById('capacidadCalc');
@@ -129,6 +315,6 @@ function actualizarCapacidad() {
 
 filasInput?.addEventListener('input', actualizarCapacidad);
 colsInput?.addEventListener('input', actualizarCapacidad);
-</script>
+</script> {% endcomment %}
 
 {% endblock %}

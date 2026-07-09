@@ -2,7 +2,8 @@ from django import forms
 from django.contrib.auth.models import User
 from django.contrib.auth.forms import UserCreationForm
 from peliculas.models import Pelicula
-from salas.models import Sala, Funcion
+from django.forms import inlineformset_factory
+from salas.models import Sala, Funcion, SeccionSala
 from reservas.models import Reserva
 from promociones.models import Cupon, PromocionDia, Combo
 
@@ -71,15 +72,31 @@ class SalaForm(forms.ModelForm):
         }
         labels = {
             'nombre':   'Nombre de la sala',
-            'filas':    'Cantidad de filas (A, B, C...)',
-            'columnas': 'Cantidad de columnas (1, 2, 3...)',
+            'filas':    'Filas totales del lienzo (A, B, C...)',
+            'columnas': 'Columnas totales del lienzo',
             'activa':   'Sala activa',
         }
         help_texts = {
-            'filas':    'Máximo 26 filas (A–Z)',
-            'columnas': 'La capacidad se calcula automáticamente: filas × columnas',
+            'filas':    'Máximo 26 filas (A-Z). Debe alcanzar para la sección más profunda.',
+            'columnas': 'Debe alcanzar para el ancho total (todas las secciones + pasillos).',
         }
-
+# ============================================================
+# SALAS — SECCIONES (formset inline)
+# ============================================================
+SeccionSalaFormSet = inlineformset_factory(
+    Sala,
+    SeccionSala,
+    fields=['nombre', 'fila_inicio', 'fila_fin', 'columna_inicio', 'columna_fin'],
+    extra=1,
+    can_delete=True,
+    widgets={
+        'nombre': forms.TextInput(attrs={**INPUT_ATTRS, 'placeholder': 'Ej: Centro, Lateral Izquierdo'}),
+        'fila_inicio': forms.NumberInput(attrs={**INPUT_ATTRS, 'min': 1}),
+        'fila_fin': forms.NumberInput(attrs={**INPUT_ATTRS, 'min': 1}),
+        'columna_inicio': forms.NumberInput(attrs={**INPUT_ATTRS, 'min': 1}),
+        'columna_fin': forms.NumberInput(attrs={**INPUT_ATTRS, 'min': 1}),
+    },
+)
 
 # ============================================================
 # FUNCIONES

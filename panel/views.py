@@ -18,7 +18,8 @@ from django.contrib.auth.models import User
 from .forms import (
     PeliculaForm, SalaForm, FuncionForm,
     CrearUsuarioForm, EditarUsuarioForm, ReservaForm,
-    ComboForm, CuponForm, PromocionDiaForm
+    ComboForm, CuponForm, PromocionDiaForm,
+    SeccionSalaFormSet,
 )
 from django.core.files.base import ContentFile
 import requests
@@ -160,22 +161,75 @@ def salas_crear(request):
     if request.method == 'POST':
         form = SalaForm(request.POST)
         if form.is_valid():
+            # No confirmamos en DB todavía: necesitamos que el formset valide las secciones contra los filas/columnas YA actualizados (aunque sea solo en memoria), no contra los valores viejos.
+            sala_temp = form.save(commit=False)
+            formset = SeccionSalaFormSet(request.POST, instance=sala_temp)
+
+            if formset.is_valid():
+                sala_temp.save()
+                formset.save()
+                messages.success(request, f'✅ Sala "{sala_temp.nombre}" creada.')
+                return redirect('panel:salas_lista')
+        else:
+            formset = SeccionSalaFormSet(request.POST, instance=Sala())
+    else:
+        form = SalaForm()
+        formset = SeccionSalaFormSet(instance=Sala())
+
+    return render(request, 'panel/salas/form.html', {
+        'form': form,
+        'formset': formset,
+        'titulo_pagina': 'Agregar Sala',
+        'accion': 'crear',
+        'seccion_activa': 'salas',
+    })
+    ##############
+    if request.method == 'POST':
+        form = SalaForm(request.POST)
+        if form.is_valid():
             sala = form.save()
             messages.success(request, f'✅ Sala "{sala.nombre}" creada.')
             return redirect('panel:salas_lista')
     else:
-        form = SalaForm()
-
+        form = SalaForm()    
     return render(request, 'panel/salas/form.html', {
         'form': form,
         'titulo_pagina': 'Agregar Sala',
         'accion': 'crear',
         'seccion_activa': 'salas',
     })
+
 @staff_required
 def salas_editar(request, sala_id):
     sala = get_object_or_404(Sala, id=sala_id)
 
+    if request.method == 'POST':
+        form = SalaForm(request.POST, instance=sala)
+        if form.is_valid():
+            sala_temp = form.save(commit=False)
+            formset = SeccionSalaFormSet(request.POST, instance=sala_temp)
+
+            if formset.is_valid():
+                sala_temp.save()
+                formset.save()
+                messages.success(request, f'✅ Sala "{sala_temp.nombre}" actualizada.')
+                return redirect('panel:salas_lista')
+        else:
+            formset = SeccionSalaFormSet(request.POST, instance=sala)
+    else:
+        form = SalaForm(instance=sala)
+        formset = SeccionSalaFormSet(instance=sala)
+
+    return render(request, 'panel/salas/form.html', {
+        'form': form,
+        'formset': formset,
+        'objeto': sala,
+        'titulo_pagina': f'Editar sala: {sala.nombre}',
+        'accion': 'editar',
+        'seccion_activa': 'salas',
+    })
+
+    sala = get_object_or_404(Sala, id=sala_id)
     if request.method == 'POST':
         form = SalaForm(request.POST, instance=sala)
         if form.is_valid():
@@ -300,6 +354,48 @@ def salas_asientos_desbloquear(request, sala_id):
     bloqueo.delete()
 
     return JsonResponse({'success': True, 'asiento_codigo': asiento_codigo})
+
+@staff_required
+@require_POST
+def salas_eliminar(request):
+    """
+    Borrado múltiple de salas, en dos pasos:
+      1. Sin 'confirmado': muestra una vista previa con cuántas funciones y
+         reservas se van a borrar en cascada (Sala -> Funcion -> Reserva).
+      2. Con 'confirmado=1': borra de verdad.
+    """
+    ids = request.POST.getlist('seleccionadas')
+    if not ids:
+        messages.error(request, 'No seleccionaste ninguna sala.')
+        return redirect('panel:salas_lista')
+
+    salas_qs = Sala.objects.filter(id__in=ids)
+    if not salas_qs.exists():
+        messages.error(request, 'Las salas seleccionadas ya no existen.')
+        return redirect('panel:salas_lista')
+
+    if request.POST.get('confirmado') == '1':
+        nombres = list(salas_qs.values_list('nombre', flat=True))
+        salas_qs.delete()  # cascada: borra también sus funciones y reservas
+        messages.success(request, f'🗑️ Sala(s) eliminada(s): {", ".join(nombres)}.')
+        return redirect('panel:salas_lista')
+
+    # Paso 1: vista previa de lo que se va a borrar en cascada
+    resumen = []
+    for sala in salas_qs:
+        total_funciones = sala.funciones.count()
+        total_reservas = Reserva.objects.filter(funcion__sala=sala).count()
+        resumen.append({
+            'sala': sala,
+            'total_funciones': total_funciones,
+            'total_reservas': total_reservas,
+        })
+
+    return render(request, 'panel/salas/confirmar_eliminar.html', {
+        'resumen': resumen,
+        'ids': ids,
+        'seccion_activa': 'salas',
+    })
 
 # ============================================================
 # FUNCIONES — CRUD
