@@ -17,21 +17,19 @@
 {% include 'panel/_form_styles.html' %}
 
 <div style="max-width:720px;">
-
     <div style="display:flex; justify-content:space-between; align-items:center;
                 margin-bottom:1.5rem;">
         <h1 style="font-size:1.4rem; color:#1a1a2e; margin:0;">{{ titulo_pagina }}</h1>
         {% if objeto %}
-        <a href="{% url 'panel:funciones_detalle' objeto.id %}" class="btn btn-ghost">← Volver</a>
+            <a href="{% url 'panel:funciones_detalle' objeto.id %}" class="btn btn-ghost">DETALLE</a>
         {% else %}
-        <a href="{% url 'panel:funciones_lista' %}" class="btn btn-ghost">← Volver</a>
+            <a href="{% url 'panel:funciones_lista' %}" class="btn btn-ghost">FUNCIONES</a>
         {% endif %}
     </div>
-
     <!-- Aviso de validación de solapamiento -->
     <div style="background:#e7f3ff; border-left:4px solid #3498db; padding:0.85rem 1rem;
                 border-radius:6px; margin-bottom:1.25rem; font-size:0.875rem; color:#1a5276;">
-        <strong>ℹ️ Validación automática:</strong> El sistema verificará que la función no se
+        <strong>ℹ Validación automática:</strong> El sistema verificará que la función no se
         solape con otras en la misma sala (considera duración de la película + 30 min de margen).
     </div>
 
@@ -134,19 +132,26 @@
         {% endif %}
 
         <div style="display:flex; gap:1rem; margin-top:1.5rem;">
-            <button type="submit" class="btn btn-success"
-                    style="font-size:1rem; padding:0.75rem 2rem;">
-                {% if accion == 'crear' %}✅ Crear Función{% else %}💾 Guardar Cambios{% endif %}
+            <button type="submit" class="btn btn-primary">
+                {% if accion == 'crear' %}GUARDAR{% else %}MODIFICAR{% endif %}
             </button>
+            <button type="submit" name="guardar_y_agregar_otro" value="1" class="btn btn-primary">CARGAR</button>
             {% if objeto %}
-            <a href="{% url 'panel:funciones_detalle' objeto.id %}" class="btn btn-ghost">
-                Cancelar
-            </a>
+                <a href="{% url 'panel:funciones_detalle' objeto.id %}" class="btn btn-primary">CANCELAR</a>
+                {% if accion == 'editar' %}
+                    <button type="submit" form="formEliminarFuncion" class="btn btn-danger">BORRAR</button>
+                {% endif %}
             {% else %}
-            <a href="{% url 'panel:funciones_lista' %}" class="btn btn-ghost">Cancelar</a>
+                <a href="{% url 'panel:funciones_lista' %}" class="btn btn-primary">CANCELAR</a>
             {% endif %}
         </div>
     </form>
+    {% if objeto and accion == 'editar' %}
+    <form method="post" action="{% url 'panel:funciones_eliminar' %}" id="formEliminarFuncion">
+        {% csrf_token %}
+        <input type="hidden" name="seleccionadas" value="{{ objeto.id }}">
+    </form>
+    {% endif %}
 </div>
 
 <script>

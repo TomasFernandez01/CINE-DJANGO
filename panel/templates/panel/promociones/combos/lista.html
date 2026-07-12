@@ -9,66 +9,70 @@
 
 {% block contenido %}
 
-{% comment %} <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:1rem; margin-bottom:1.5rem;">
-    <h1 style="margin: 0; color: #333;">🍿 Gestión de Combos</h1>        
-    <p style="margin: 0.25rem 0 0 0; color: #666;">Activá o desactivá combos disponibles para la venta</p>        
-    <a href="{% url 'panel:combos_crear' %}" class="btn btn-success">+ Agregar combo</a>
-    revisar
-    <a href="{% url 'panel:inicio' %}" style="padding: 0.6rem 1.2rem; background-color: #6c757d; color: white; border-radius: 6px; text-decoration: none; font-weight: bold; font-size: 0.9rem;">← Panel</a>
-</div> {% endcomment %}
-
 <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem; flex-wrap: wrap; gap: 1rem;">
         <div>
             <h1 style="margin: 0; color: #333;">🍿 Gestión de Combos</h1>
             <p style="margin: 0.25rem 0 0 0; color: #666;">Activá o desactivá combos disponibles para la venta</p>
         </div>
-        <div style="display: flex; gap: 0.75rem;">
-            <a href="{% url 'panel:inicio' %}" 
-            style="padding: 0.6rem 1.2rem; background-color: #6c757d; color: white; border-radius: 6px; text-decoration: none; font-weight: bold; font-size: 0.9rem;">Panel</a>
-            <a href="{% url 'panel:combos_crear' %}" style="padding: 0.6rem 1.2rem; background-color: #28a745; color: white; border-radius: 6px; text-decoration: none; font-weight: bold; font-size: 0.9rem;">Agregar combo</a>
-            {% comment %}  class="btn btn-success" {% endcomment %}
-        </div>
-    </div>
 
+        <div style="display: flex; gap: 0.75rem;">
+            <button type="submit" form="formCombos" id="btnEliminarSeleccionadas" class="btn btn-danger" disabled style="opacity:0.5; cursor:not-allowed;">Eliminar</button>
+            <a href="{% url 'panel:inicio' %}" class="btn btn-primary">INICIO</a>
+            <a href="{% url 'panel:combos_crear' %}" class="btn btn-primary">NUEVO</a>
+        </div>
+</div>
+
+<form method="post" action="{% url 'panel:combos_eliminar' %}" id="formCombos">
+    {% csrf_token %}
 <div style="display:grid; grid-template-columns:repeat(auto-fill, minmax(240px,1fr)); gap:1rem;">
     {% for c in combos %}
+    <!-- Tarjeta de Presentacion -->
     <div class="card">
         {% if c.imagen %}
-        <img src="{{ c.imagen.url }}" alt="{{ c.nombre }}"
-             style="width:100%; height:140px; object-fit:cover;">
+        <img src="{{ c.imagen.url }}" alt="{{ c.nombre }}" style="width:100%; height:140px; object-fit:cover;">
         {% else %}
-        <div style="width:100%; height:140px; background:#f0f2f5; display:flex;
-                    align-items:center; justify-content:center; font-size:2.5rem;">
-            🍿
-        </div>
+        <div style="width:100%; height:140px; background:#f0f2f5; display:flex; align-items:center; justify-content:center; font-size:2.5rem;">🍿</div>
         {% endif %}
+        
         <div class="card-header">
-            <h3>{{ c.nombre }}</h3>
-            <span style="font-size:0.75rem; padding:0.2rem 0.6rem; border-radius:20px; font-weight:600;
-                         {% if c.activo %}background:#d4edda; color:#155724;
-                         {% else %}background:#f8d7da; color:#721c24;{% endif %}">
-                {% if c.activo %}Activo{% else %}Inactivo{% endif %}
-            </span>
+            <label style="display:flex; align-items:center; gap:0.5rem; cursor:pointer; margin:0;">
+                <input type="checkbox" name="seleccionadas" value="{{ c.id }}" class="chk-combo panel-checkbox">
+                <h3 style="margin:0;">{{ c.nombre }}</h3>
+            </label>
+            <span style="font-size:0.75rem; padding:0.2rem 0.6rem; border-radius:20px; font-weight:600; {% if c.activo %}background:#d4edda; color:#155724; {% else %}background:#f8d7da; color:#721c24;{% endif %}">{% if c.activo %}Activo{% else %}Inactivo{% endif %}</span>
         </div>
+
         <div class="card-body">
             <p style="color:#666; font-size:0.85rem; margin:0 0 1rem;">{{ c.descripcion }}</p>
             <div style="display:flex; justify-content:space-between; align-items:center;">
-                <span style="font-size:1.4rem; font-weight:700; color:#27ae60;">
-                    ${{ c.precio|floatformat:0 }}
-                </span>
-                <a href="{% url 'panel:combos_editar' c.id %}" class="btn btn-ghost" style="font-size:0.8rem;">
-                    ✏️ Editar
-                </a>
+                <span style="font-size:1.4rem; font-weight:700; color:#27ae60;">${{ c.precio|floatformat:0 }}</span>
+                <a href="{% url 'panel:combos_editar' c.id %}" class="btn btn-ghost" style="font-size:0.8rem;">EDITAR</a>
             </div>
         </div>
     </div>
     {% empty %}
     <div class="card" style="grid-column:1/-1;">
-        <div class="card-body" style="text-align:center; padding:3rem; color:#999;">
-            No hay combos registrados.
-        </div>
+        <div class="card-body" style="text-align:center; padding:3rem; color:#999;">No hay combos registrados.</div>
     </div>
     {% endfor %}
 </div>
+</form>
+
+<script>
+(function () {
+    const checks = document.querySelectorAll('.chk-combo');
+    const btn = document.getElementById('btnEliminarSeleccionadas');
+
+    function actualizarBoton() {
+        const hayAlguno = Array.from(checks).some(c => c.checked);
+        btn.disabled = !hayAlguno;
+        btn.style.opacity = hayAlguno ? '1' : '0.5';
+        btn.style.cursor = hayAlguno ? 'pointer' : 'not-allowed';
+    }
+
+    checks.forEach(c => c.addEventListener('change', actualizarBoton));
+    actualizarBoton();
+})();
+</script>
 
 {% endblock %}

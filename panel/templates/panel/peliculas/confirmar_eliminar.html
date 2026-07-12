@@ -1,0 +1,84 @@
+{% extends 'panel/base_panel.html' %}
+
+{% block titulo %}Confirmar eliminación — Panel{% endblock %}
+
+{% block breadcrumb %}
+<span class="sep">›</span>
+<a href="{% url 'panel:peliculas_lista' %}">Películas</a>
+<span class="sep">›</span>
+<span class="current">Confirmar eliminación</span>
+{% endblock %}
+
+{% block contenido %}
+
+<div style="max-width:720px;">
+
+    <h1 style="font-size:1.4rem; color:#e74c3c; margin-bottom:0.5rem;">⚠️ Confirmar eliminación</h1>
+    <p style="color:#666; margin-bottom:1.5rem;">
+        Esta acción no se puede deshacer. Al borrar una película, también se borran
+        <strong>en cascada</strong> todas sus funciones, las reservas de esas funciones,
+        y los pagos asociados a esas reservas.
+    </p>
+
+    <div class="card" style="margin-bottom:1.5rem;">
+        <div class="card-header"><h3>Se eliminará lo siguiente</h3></div>
+        <div style="overflow-x:auto;">
+            <table class="tabla">
+                <thead>
+                    <tr>
+                        <th>Película</th>
+                        <th>Funciones que se borran</th>
+                        <th>Reservas que se borran</th>
+                        <th>Pagos que se borran</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for item in resumen %}
+                    <tr>
+                        <td style="font-weight:600;">{{ item.pelicula.titulo }}</td>
+                        <td>
+                            {% if item.total_funciones %}
+                            <span style="color:#e74c3c; font-weight:600;">{{ item.total_funciones }}</span>
+                            {% else %}
+                            <span style="color:#999;">0</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            {% if item.total_reservas %}
+                            <span style="color:#e74c3c; font-weight:600;">{{ item.total_reservas }}</span>
+                            {% else %}
+                            <span style="color:#999;">0</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            {% if item.total_pagos %}
+                            <span style="color:#e74c3c; font-weight:600;">{{ item.total_pagos }}</span>
+                            {% else %}
+                            <span style="color:#999;">0</span>
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <form method="post" action="{% url 'panel:peliculas_eliminar' %}">
+        {% csrf_token %}
+        {% for id in ids %}
+        <input type="hidden" name="seleccionadas" value="{{ id }}">
+        {% endfor %}
+        <input type="hidden" name="confirmado" value="1">
+
+        <div style="display:flex; gap:1rem;">
+            <button type="submit" class="btn btn-danger" style="font-size:1rem; padding:0.75rem 2rem;">
+                🗑️ Sí, eliminar definitivamente
+            </button>
+            <a href="{% url 'panel:peliculas_lista' %}" class="btn btn-ghost">Cancelar</a>
+        </div>
+    </form>
+
+</div>
+
+{% endblock %}

@@ -22,19 +22,15 @@
             </p>
         </div>
         <div style="display:flex; gap:0.5rem;">
-            <a href="{% url 'panel:peliculas_crear' %}" class="btn btn-ghost">
-                ✏️ Crear manualmente
-            </a>
-            <a href="{% url 'panel:peliculas_lista' %}" class="btn btn-ghost">← Volver</a>
+            <a href="{% url 'panel:peliculas_crear' %}" class="btn btn-ghost">Crear manualmente</a>
+            <a href="{% url 'panel:peliculas_lista' %}" class="btn btn-ghost">Volver</a>
         </div>
     </div>
 
     {% if not tmdb_disponible %}
     <div style="background:#fff3cd; border-left:4px solid #f39c12; padding:1rem 1.25rem;
                 border-radius:8px; color:#856404; margin-bottom:1.5rem;">
-        <strong>⚠️ TMDB no está configurado.</strong>
-        Verificá que <code>TMDB_API_KEY</code> esté en settings.py y que
-        <code>utils/tmdb_api.py</code> esté disponible.
+        <strong>⚠️ TMDB no está configurado.</strong>Verificá que <code>TMDB_API_KEY</code> esté en settings.py y que<code>utils/tmdb_api.py</code> esté disponible.
     </div>
     {% endif %}
 
@@ -49,9 +45,8 @@
                        onfocus="this.style.borderColor='#1a1a2e'"
                        onblur="this.style.borderColor='#e0e0e0'"
                        autofocus>
-                <button type="submit" class="btn btn-dark"
-                        style="padding:0.75rem 1.5rem; font-size:1rem;">
-                    🔍 Buscar
+                <button type="submit" class="btn btn-dark" style="padding:0.75rem 1.5rem; font-size:1rem;">
+                    Buscar
                 </button>
             </form>
         </div>
@@ -103,10 +98,10 @@
                 </p>
                 {% endif %}
                 <a href="{% url 'panel:peliculas_importar_tmdb' p.id %}"
-                   class="btn btn-success"
+                   class="btn btn-primary"
                    style="width:100%; text-align:center; font-size:0.8rem;"
                    onclick="return confirm('¿Importar: {{ p.title }}?')">
-                    ➕ Importar
+                    Importar
                 </a>
             </div>
         </div>

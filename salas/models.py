@@ -502,9 +502,13 @@ class AsientoBloqueado(models.Model):
         # 1. Validar que el asiento_codigo exista realmente en la sala
         if self.sala_id and self.asiento_codigo:
             codigos_validos = {
-                asiento
+                # asiento
+                # for fila in self.sala.layout_asientos()
+                # for asiento in fila
+                codigo
                 for fila in self.sala.layout_asientos()
-                for asiento in fila
+                for codigo in fila['celdas']
+                if codigo is not None
             }
             if self.asiento_codigo not in codigos_validos:
                 raise ValidationError({

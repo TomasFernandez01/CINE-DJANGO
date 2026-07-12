@@ -9,41 +9,35 @@
 
 {% block contenido %}
 
-<div style="display:flex; justify-content:space-between; align-items:center;
-            flex-wrap:wrap; gap:1rem; margin-bottom:1.5rem;">
-    <h1 style="font-size:1.4rem; color:#1a1a2e; margin:0;">📅 Funciones</h1>
-    {% comment %} <a href="{% url 'admin:salas_funcion_add' %}" class="btn btn-success">+ Agregar función</a> {% endcomment %}
-    <a href="{% url 'panel:funciones_crear' %}" class="btn btn-success">+ Agregar función</a>
+<div style="display:flex; justify-content:space-between; align-items:center;flex-wrap:wrap; gap:1rem; margin-bottom:1.5rem;">
+        <h1 style="font-size:1.4rem; color:#1a1a2e; margin:0;">📅 Funciones</h1>
+        <div style="display:flex; gap:0.5rem;">
+        
+            <button type="submit" form="formFunciones" id="btnEliminarSeleccionadas" class="btn btn-danger" disabled style="opacity:0.5; cursor:not-allowed;">Eliminar</button>
+            <a href="{% url 'panel:salas_lista' %}" class="btn btn-primary">SALAS</a>
+            <a href="{% url 'panel:inicio' %}" class="btn btn-primary">INICIO</a>
+            <a href="{% url 'panel:funciones_crear' %}" class="btn btn-primary">NUEVA</a>
+    </div>
 </div>
 
+<form method="post" action="{% url 'panel:funciones_eliminar' %}" id="formFunciones">
+    {% csrf_token %}
 <!-- Filtros por tipo -->
 <div style="display:flex; gap:0.5rem; margin-bottom:1.25rem; flex-wrap:wrap;">
     {% for valor, label in filtros_tabs %}
     <a href="?filtro={{ valor }}"
-       style="padding:0.5rem 1rem; border-radius:20px; text-decoration:none;
-              font-size:0.85rem; font-weight:600; transition:all 0.2s;
-              {% if filtro == valor %}
-                  background:#1a1a2e; color:white;
-              {% else %}
-                  background:white; color:#666;
-                  box-shadow:0 1px 4px rgba(0,0,0,0.1);
-              {% endif %}">
-        {{ label }}
-    </a>
+       style="padding:0.5rem 1rem; border-radius:20px; text-decoration:none; font-size:0.85rem; font-weight:600; transition:all 0.2s; {% if filtro == valor %} background:#1a1a2e; color:white; {% else %} background:white; color:#666; box-shadow:0 1px 4px rgba(0,0,0,0.1); {% endif %}">{{ label }}</a>
     {% endfor %}
 </div>
-
 <!-- Contador -->
-<div style="font-size:0.85rem; color:#666; margin-bottom:0.75rem;">
-    {{ total }} función(es)
-</div>
-
+<div style="font-size:0.85rem; color:#666; margin-bottom:0.75rem;">{{ total }} función(es)</div>
 <!-- Tabla -->
 <div class="card">
     {% if funciones %}
     <table class="tabla">
         <thead>
             <tr>
+                <th style="width:2rem;"><input type="checkbox" id="chkTodasFunciones" class="panel-checkbox"></th>
                 <th>Película</th>
                 <th>Sala</th>
                 <th>Fecha y Hora</th>
@@ -62,45 +56,37 @@
             {% endif %}
             <tr>
                 <td>
+                    <input type="checkbox" name="seleccionadas" value="{{ f.id }}" class="chk-funcion panel-checkbox">
+                </td>
+                <td>
                     <div style="font-weight:600; color:#1a1a2e;">{{ f.pelicula.titulo }}</div>
                 </td>
                 <td style="color:#666;">{{ f.sala.nombre }}</td>
                 <td style="font-weight:600;">
-                    {{ f.fecha_hora|date:"d/m/Y" }}
-                    <span style="color:#999; font-size:0.8rem;">
-                        {{ f.fecha_hora|date:"H:i" }} hs
-                    </span>
+                    {{ f.fecha_hora|date:"d/m/Y" }}<span style="color:#999; font-size:0.8rem;">{{ f.fecha_hora|date:"H:i" }} hs</span>
                 </td>
                 <td style="color:#27ae60; font-weight:600;">${{ f.precio }}</td>
                 <td style="min-width:120px;">
                     {% with vendidos=cap|add:"-"|add:disp|add:"0" %}
                     <div style="font-size:0.8rem; margin-bottom:3px;">
-                        <span style="font-weight:600;">
-                            {{ disp }}
-                        </span>
+                        <span style="font-weight:600;">{{ disp }}</span>
                         <span style="color:#999;">/ {{ cap }} libres</span>
                     </div>
                     {% endwith %}
                     <div class="ocupacion-bar">
                         {% if cap > 0 %}
                         {% widthratio disp cap 100 as pct %}
-                        <div class="ocupacion-fill {% if pct < 30 %}lleno{% elif pct < 60 %}medio{% endif %}"
-                             style="width:{{ pct }}%;"></div>
+                        <div class="ocupacion-fill {% if pct < 30 %}lleno{% elif pct < 60 %}medio{% endif %}" style="width:{{ pct }}%;"></div>
                         {% endif %}
                     </div>
                 </td>
                 <td>
-                    <span style="font-size:0.75rem; padding:0.2rem 0.6rem; border-radius:20px; font-weight:600;
-                                 {% if f.disponible %}background:#d4edda; color:#155724;
-                                 {% else %}background:#e2e3e5; color:#383d41;{% endif %}">
+                    <span style="font-size:0.75rem; padding:0.2rem 0.6rem; border-radius:20px; font-weight:600;{% if f.disponible %}background:#d4edda; color:#155724;{% else %}background:#e2e3e5; color:#383d41;{% endif %}">
                         {% if f.disponible %}Disponible{% else %}No disponible{% endif %}
                     </span>
                 </td>
                 <td>
-                    <a href="{% url 'panel:funciones_detalle' f.id %}"
-                       class="btn btn-ghost" style="font-size:0.75rem; padding:0.3rem 0.7rem;">
-                        Ver detalle
-                    </a>
+                    <a href="{% url 'panel:funciones_detalle' f.id %}" class="btn btn-ghost" style="font-size:0.75rem; padding:0.3rem 0.7rem;">Ver detalle</a>
                 </td>
             </tr>
             {% endwith %}
@@ -113,5 +99,28 @@
     </div>
     {% endif %}
 </div>
+</form>
+<script>
+(function () {
+    const checks = document.querySelectorAll('.chk-funcion');
+    const chkTodas = document.getElementById('chkTodasFunciones');
+    const btn = document.getElementById('btnEliminarSeleccionadas');
+    if (!btn) return;
+
+    function actualizarBoton() {
+        const hayAlguno = Array.from(checks).some(c => c.checked);
+        btn.disabled = !hayAlguno;
+        btn.style.opacity = hayAlguno ? '1' : '0.5';
+        btn.style.cursor = hayAlguno ? 'pointer' : 'not-allowed';
+    }
+
+    checks.forEach(c => c.addEventListener('change', actualizarBoton));
+    chkTodas?.addEventListener('change', function () {
+        checks.forEach(c => c.checked = chkTodas.checked);
+        actualizarBoton();
+    });
+    actualizarBoton();
+})();
+</script>
 
 {% endblock %}

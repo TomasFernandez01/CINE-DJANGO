@@ -12,13 +12,11 @@
 <div style="display:flex; justify-content:space-between; align-items:center;
             flex-wrap:wrap; gap:1rem; margin-bottom:1.5rem;">
     <h1 style="font-size:1.4rem; color:#1a1a2e; margin:0;">🏢 Salas</h1>
-    {% comment %} <a href="{% url 'admin:salas_sala_add' %}" class="btn btn-success">+ Agregar sala</a> {% endcomment %}
-    <button type="submit" form="formSalas" id="btnEliminarSeleccionadas"
-                class="btn btn-danger" disabled
-                style="opacity:0.5; cursor:not-allowed;">
-            🗑️ Eliminar seleccionadas
-    </button>
-    <a href="{% url 'panel:salas_crear' %}" class="btn btn-success">Agregar sala</a>
+    <div style="display:flex; gap:0.5rem;">
+        <button type="submit" form="formSalas" id="btnEliminarSeleccionadas" class="btn btn-danger" disabled style="opacity:0.5; cursor:not-allowed;">Eliminar</button>
+        <a href="{% url 'panel:inicio' %}" class="btn btn-primary">INICIO</a>
+        <a href="{% url 'panel:salas_crear' %}" class="btn btn-primary">NUEVA</a>
+    </div>
 </div>
 <form method="post" action="{% url 'panel:salas_eliminar' %}" id="formSalas">
     {% csrf_token %}
@@ -59,7 +57,7 @@
                     </div>
                     <div style="font-size:0.65rem; color:rgba(255,255,255,0.4);
                                 margin-top:0.5rem; letter-spacing:1px;">
-                        {{ s.filas }} filas × {{ s.columnas }} columnas
+                        {{ s.filas }} filas * {{ s.columnas }} columnas
                     </div>
                 </div>
 
@@ -92,12 +90,9 @@
                 </div>
 
                 <div style="display:flex; gap:0.5rem;">
-                    <a href="{% url 'panel:funciones_lista' %}?sala={{ s.id }}"
-                       class="btn btn-primary" style="flex:1; text-align:center; font-size:0.8rem;">
-                        Ver funciones
-                    </a>
-                    <a href="{% url 'panel:salas_editar' s.id %}" class="btn btn-ghost" style="font-size:0.8rem;" title="Editar">✏️</a>
-                    <a href="{% url 'panel:salas_asientos' s.id %}" class="btn btn-primary" style="font-size:0.8rem;" title="Bloquear asientos">🪑</a>
+                    <a href="{% url 'panel:funciones_lista' %}?sala={{ s.id }}" class="btn btn-primary">FUNCIONES</a> 
+                    <a href="{% url 'panel:salas_editar' s.id %}" class="btn btn-primary" title="Editar">EDITAR</a>
+                    <a href="{% url 'panel:salas_asientos' s.id %}" class="btn btn-primary" title="Bloquear asientos">BLOQUEO</a>
                 </div>
             </div>
         </div>

@@ -7,6 +7,7 @@ from django.views.decorators.http import require_POST   # mapa-salas
 from django.core.exceptions import ValidationError      # mapa-salas
 from datetime import timedelta
 from .decorators import staff_required, superuser_required
+#### APPS
 from peliculas.models import Pelicula
 from salas.models import Sala, Funcion, AsientoBloqueado # mapa-salas
 from reservas.models import Reserva
@@ -41,11 +42,33 @@ def peliculas_crear(request):
         form = PeliculaForm(request.POST, request.FILES)
         if form.is_valid():
             pelicula = form.save()
+            #---------------------------------------------------------------------------------
+            # Si el formulario venía precargado desde TMDB (peliculas_importar_tmdb) y el usuario no subió un poster propio, bajamos ahora el poster original de TMDB. Recién acá se toca el disco/la base por eso.
+            poster_url_tmdb = request.POST.get('poster_url_tmdb', '').strip()
+            if poster_url_tmdb and not pelicula.poster:
+                try:
+                    resp = requests.get(poster_url_tmdb, timeout=10)
+                    resp.raise_for_status()
+                    nombre = f"{pelicula.titulo.lower().replace(' ', '_')[:40]}.jpg"
+                    pelicula.poster.save(nombre, ContentFile(resp.content), save=True)
+                except Exception:
+                    pass  # se crea igual sin poster, no es un error bloqueante
+            #---------------------------------------------------------------------------------
             messages.success(request, f'✅ Película "{pelicula.titulo}" creada exitosamente.')
+            if request.POST.get('guardar_y_agregar_otro'):
+                return redirect('panel:peliculas_crear')
             return redirect('panel:peliculas_detalle', pelicula_id=pelicula.id)
     else:
         form = PeliculaForm()
 
+    return render(request, 'panel/peliculas/form.html', {
+        'form': form,
+        'titulo_pagina': 'Agregar Película',
+        'accion': 'crear',
+        'seccion_activa': 'peliculas',
+        # Si Validacion falla y formulario lo rellena TMDB (trae el campo oculto poster_url_tmdb en el POST), lo re-pasamos al contexto para no perder la preview del poster al re-renderizar.
+        'poster_url_tmdb': request.POST.get('poster_url_tmdb', '') if request.method == 'POST' else '',
+    })
     return render(request, 'panel/peliculas/form.html', {
         'form': form,
         'titulo_pagina': 'Agregar Película',
@@ -63,6 +86,8 @@ def peliculas_editar(request, pelicula_id):
         if form.is_valid():
             form.save()
             messages.success(request, f'✅ Película "{pelicula.titulo}" actualizada.')
+            if request.POST.get('guardar_y_agregar_otro'):
+                return redirect('panel:peliculas_crear')
             return redirect('panel:peliculas_detalle', pelicula_id=pelicula.id)
     else:
         form = PeliculaForm(instance=pelicula)
@@ -75,6 +100,52 @@ def peliculas_editar(request, pelicula_id):
         'seccion_activa': 'peliculas',
     })
 
+@staff_required
+@require_POST
+def peliculas_eliminar(request):
+    """
+    Borrado múltiple de películas, en dos pasos (mismo patrón que salas_eliminar):
+      1. Sin 'confirmado': vista previa con cuántas funciones, reservas y pagos
+         se van a borrar en cascada (Pelicula -> Funcion -> Reserva -> Pago).
+      2. Con 'confirmado=1': borra de verdad.
+    """
+    ids = request.POST.getlist('seleccionadas')
+    if not ids:
+        messages.error(request, 'No seleccionaste ninguna película.')
+        return redirect('panel:peliculas_lista')
+
+    peliculas_qs = Pelicula.objects.filter(id__in=ids)
+    if not peliculas_qs.exists():
+        messages.error(request, 'Las películas seleccionadas ya no existen.')
+        return redirect('panel:peliculas_lista')
+
+    if request.POST.get('confirmado') == '1':
+        titulos = list(peliculas_qs.values_list('titulo', flat=True))
+        peliculas_qs.delete()  # cascada: borra también sus funciones, reservas y pagos
+        messages.success(request, f'🗑️ Película(s) eliminada(s): {", ".join(titulos)}.')
+        return redirect('panel:peliculas_lista')
+
+    # Paso 1: vista previa de lo que se va a borrar en cascada
+    resumen = []
+    for pelicula in peliculas_qs:
+        total_funciones = pelicula.funciones.count()
+        total_reservas = Reserva.objects.filter(funcion__pelicula=pelicula).count()
+        total_pagos = Pago.objects.filter(reserva__funcion__pelicula=pelicula).count()
+        resumen.append({
+            'pelicula': pelicula,
+            'total_funciones': total_funciones,
+            'total_reservas': total_reservas,
+            'total_pagos': total_pagos,
+        })
+
+    return render(request, 'panel/peliculas/confirmar_eliminar.html', {
+        'resumen': resumen,
+        'ids': ids,
+        'seccion_activa': 'peliculas',
+    })
+# ============================================================
+# PELÍCULAS — T M D B
+# ============================================================
 
 @staff_required
 def peliculas_buscar_tmdb(request):
@@ -103,7 +174,9 @@ def peliculas_buscar_tmdb(request):
 
 @staff_required
 def peliculas_importar_tmdb(request, tmdb_id):
-    """Importa una película desde TMDB y redirige al formulario de edición."""
+    """
+    Importa una película desde TMDB y redirige al formulario de edición. Precarga datos en el formulario (accion='crear'), SIN guardar en BD. El poster no se puede precargar en un <input type="file">, así que se muestra como preview y se pasa la URL original en un campo oculto: si el usuario no sube un poster propio, recién al guardar (en peliculas_crear) se descarga esa imagen.
+    """
     if not TMDB_DISPONIBLE:
         messages.error(request, 'TMDB no está configurado.')
         return redirect('panel:peliculas_buscar_tmdb')
@@ -115,13 +188,33 @@ def peliculas_importar_tmdb(request, tmdb_id):
 
     data = response['data']
 
-    # Verificar duplicado
+    # Verificar duplicado.Si ya existe una película con ese título, no tiene sentido precargar. un formulario de creación: mandamos a editar la que ya está.
     existente = Pelicula.objects.filter(titulo__iexact=data['titulo']).first()
     if existente:
         messages.warning(request, f'"{data["titulo"]}" ya existe. Podés editarla.')
         return redirect('panel:peliculas_editar', pelicula_id=existente.id)
+    
+    form = PeliculaForm(initial={
+        'titulo': data['titulo'][:50],
+        'sinopsis': data.get('sinopsis', ''),
+        'duracion': data.get('duracion'),
+        'genero': data.get('genero'),
+        'clasificacion': data.get('clasificacion', 'ATP'),
+        'director': data.get('director', ''),
+        'actores': data.get('actores', ''),
+        'año': data.get('año'),
+    })
 
-    # Crear película
+    messages.info(request, f'Datos de "{data["titulo"]}" importados desde TMDB. Revisá y guardá para crearla.')
+
+    return render(request, 'panel/peliculas/form.html', {
+        'form': form,
+        'titulo_pagina': 'Agregar Película (desde TMDB)',
+        'accion': 'crear',
+        'seccion_activa': 'peliculas',
+        'poster_url_tmdb': data.get('poster_url', ''),
+    })
+    # Crear película , comentar el anterior si no sirve y volver a este
     pelicula = Pelicula.objects.create(
         titulo=data['titulo'][:50],
         sinopsis=data.get('sinopsis', ''),
@@ -152,7 +245,6 @@ def peliculas_importar_tmdb(request, tmdb_id):
 
     return redirect('panel:peliculas_editar', pelicula_id=pelicula.id)
 
-
 # ============================================================
 # SALAS — CRUD
 # ============================================================
@@ -169,6 +261,8 @@ def salas_crear(request):
                 sala_temp.save()
                 formset.save()
                 messages.success(request, f'✅ Sala "{sala_temp.nombre}" creada.')
+                if request.POST.get('guardar_y_agregar_otro'):
+                    return redirect('panel:salas_crear')
                 return redirect('panel:salas_lista')
         else:
             formset = SeccionSalaFormSet(request.POST, instance=Sala())
@@ -213,6 +307,8 @@ def salas_editar(request, sala_id):
                 sala_temp.save()
                 formset.save()
                 messages.success(request, f'✅ Sala "{sala_temp.nombre}" actualizada.')
+                if request.POST.get('guardar_y_agregar_otro'):
+                    return redirect('panel:salas_crear')
                 return redirect('panel:salas_lista')
         else:
             formset = SeccionSalaFormSet(request.POST, instance=sala)
@@ -246,6 +342,49 @@ def salas_editar(request, sala_id):
         'accion': 'editar',
         'seccion_activa': 'salas',
     })
+
+@staff_required
+@require_POST
+def salas_eliminar(request):
+    """
+    Borrado múltiple de salas, en dos pasos:
+      1. Sin 'confirmado': muestra una vista previa con cuántas funciones y
+         reservas se van a borrar en cascada (Sala -> Funcion -> Reserva).
+      2. Con 'confirmado=1': borra de verdad.
+    """
+    ids = request.POST.getlist('seleccionadas')
+    if not ids:
+        messages.error(request, 'No seleccionaste ninguna sala.')
+        return redirect('panel:salas_lista')
+
+    salas_qs = Sala.objects.filter(id__in=ids)
+    if not salas_qs.exists():
+        messages.error(request, 'Las salas seleccionadas ya no existen.')
+        return redirect('panel:salas_lista')
+
+    if request.POST.get('confirmado') == '1':
+        nombres = list(salas_qs.values_list('nombre', flat=True))
+        salas_qs.delete()  # cascada: borra también sus funciones y reservas
+        messages.success(request, f'🗑️ Sala(s) eliminada(s): {", ".join(nombres)}.')
+        return redirect('panel:salas_lista')
+
+    # Paso 1: vista previa de lo que se va a borrar en cascada
+    resumen = []
+    for sala in salas_qs:
+        total_funciones = sala.funciones.count()
+        total_reservas = Reserva.objects.filter(funcion__sala=sala).count()
+        resumen.append({
+            'sala': sala,
+            'total_funciones': total_funciones,
+            'total_reservas': total_reservas,
+        })
+
+    return render(request, 'panel/salas/confirmar_eliminar.html', {
+        'resumen': resumen,
+        'ids': ids,
+        'seccion_activa': 'salas',
+    })
+
 
 ################ SALAS — MAPA VISUAL DE ASIENTOS BLOQUEADOS
 @staff_required
@@ -355,48 +494,6 @@ def salas_asientos_desbloquear(request, sala_id):
 
     return JsonResponse({'success': True, 'asiento_codigo': asiento_codigo})
 
-@staff_required
-@require_POST
-def salas_eliminar(request):
-    """
-    Borrado múltiple de salas, en dos pasos:
-      1. Sin 'confirmado': muestra una vista previa con cuántas funciones y
-         reservas se van a borrar en cascada (Sala -> Funcion -> Reserva).
-      2. Con 'confirmado=1': borra de verdad.
-    """
-    ids = request.POST.getlist('seleccionadas')
-    if not ids:
-        messages.error(request, 'No seleccionaste ninguna sala.')
-        return redirect('panel:salas_lista')
-
-    salas_qs = Sala.objects.filter(id__in=ids)
-    if not salas_qs.exists():
-        messages.error(request, 'Las salas seleccionadas ya no existen.')
-        return redirect('panel:salas_lista')
-
-    if request.POST.get('confirmado') == '1':
-        nombres = list(salas_qs.values_list('nombre', flat=True))
-        salas_qs.delete()  # cascada: borra también sus funciones y reservas
-        messages.success(request, f'🗑️ Sala(s) eliminada(s): {", ".join(nombres)}.')
-        return redirect('panel:salas_lista')
-
-    # Paso 1: vista previa de lo que se va a borrar en cascada
-    resumen = []
-    for sala in salas_qs:
-        total_funciones = sala.funciones.count()
-        total_reservas = Reserva.objects.filter(funcion__sala=sala).count()
-        resumen.append({
-            'sala': sala,
-            'total_funciones': total_funciones,
-            'total_reservas': total_reservas,
-        })
-
-    return render(request, 'panel/salas/confirmar_eliminar.html', {
-        'resumen': resumen,
-        'ids': ids,
-        'seccion_activa': 'salas',
-    })
-
 # ============================================================
 # FUNCIONES — CRUD
 # ============================================================
@@ -413,6 +510,8 @@ def funciones_crear(request):
                     f'✅ Función de "{funcion.pelicula.titulo}" creada el '
                     f'{funcion.fecha_hora.strftime("%d/%m/%Y a las %H:%M")}.'
                 )
+                if request.POST.get('guardar_y_agregar_otro'):
+                    return redirect('panel:funciones_crear')
                 return redirect('panel:funciones_detalle', funcion_id=funcion.id)
             except Exception as e:
                 messages.error(request, f'Error al guardar: {str(e)}')
@@ -443,6 +542,8 @@ def funciones_editar(request, funcion_id):
             try:
                 form.save()
                 messages.success(request, '✅ Función actualizada.')
+                if request.POST.get('guardar_y_agregar_otro'):
+                    return redirect('panel:funciones_crear')
                 return redirect('panel:funciones_detalle', funcion_id=funcion.id)
             except Exception as e:
                 messages.error(request, f'Error: {str(e)}')
@@ -456,7 +557,50 @@ def funciones_editar(request, funcion_id):
         'accion': 'editar',
         'seccion_activa': 'funciones',
     })
+@staff_required
+@require_POST
+def funciones_eliminar(request):
+    """
+    Borrado múltiple de funciones, en dos pasos (mismo patrón que salas_eliminar):
+      1. Sin 'confirmado': vista previa con cuántas reservas y pagos se van a
+         borrar en cascada (Funcion -> Reserva -> Pago).
+      2. Con 'confirmado=1': borra de verdad.
+    """
+    ids = request.POST.getlist('seleccionadas')
+    if not ids:
+        messages.error(request, 'No seleccionaste ninguna función.')
+        return redirect('panel:funciones_lista')
 
+    funciones_qs = Funcion.objects.filter(id__in=ids).select_related('pelicula', 'sala')
+    if not funciones_qs.exists():
+        messages.error(request, 'Las funciones seleccionadas ya no existen.')
+        return redirect('panel:funciones_lista')
+
+    if request.POST.get('confirmado') == '1':
+        descripciones = [
+            f'{f.pelicula.titulo} ({f.fecha_hora.strftime("%d/%m/%Y %H:%M")})'
+            for f in funciones_qs
+        ]
+        funciones_qs.delete()  # cascada: borra también sus reservas y pagos
+        messages.success(request, f'🗑️ Función(es) eliminada(s): {", ".join(descripciones)}.')
+        return redirect('panel:funciones_lista')
+
+    # Paso 1: vista previa de lo que se va a borrar en cascada
+    resumen = []
+    for funcion in funciones_qs:
+        total_reservas = funcion.reservas.count()
+        total_pagos = Pago.objects.filter(reserva__funcion=funcion).count()
+        resumen.append({
+            'funcion': funcion,
+            'total_reservas': total_reservas,
+            'total_pagos': total_pagos,
+        })
+
+    return render(request, 'panel/funciones/confirmar_eliminar.html', {
+        'resumen': resumen,
+        'ids': ids,
+        'seccion_activa': 'funciones',
+    })
 
 # ============================================================
 # USUARIOS — CRUD (solo superuser)
@@ -1031,6 +1175,8 @@ def combos_crear(request):
         if form.is_valid():
             combo = form.save()
             messages.success(request, f'✅ Combo "{combo.nombre}" creado.')
+            if request.POST.get('guardar_y_agregar_otro'):
+                return redirect('panel:combos_crear')
             return redirect('panel:combos_lista')
     else:
         form = ComboForm()
@@ -1052,6 +1198,8 @@ def combos_editar(request, combo_id):
         if form.is_valid():
             form.save()
             messages.success(request, f'✅ Combo "{combo.nombre}" actualizado.')
+            if request.POST.get('guardar_y_agregar_otro'):
+                return redirect('panel:combos_crear')
             return redirect('panel:combos_lista')
     else:
         form = ComboForm(instance=combo)
@@ -1064,6 +1212,44 @@ def combos_editar(request, combo_id):
         'seccion_activa': 'combos',
     })
 
+@staff_required
+@require_POST
+def combos_eliminar(request):
+    """
+    Borrado múltiple de combos, en dos pasos (mismo patrón que salas_eliminar).
+    A diferencia de Sala/Pelicula/Funcion, Combo NO borra en cascada: los Pagos
+    que lo usaron quedan con combo=null (Pago.combo es on_delete=SET_NULL).
+    """
+    ids = request.POST.getlist('seleccionadas')
+    if not ids:
+        messages.error(request, 'No seleccionaste ningún combo.')
+        return redirect('panel:combos_lista')
+
+    combos_qs = Combo.objects.filter(id__in=ids)
+    if not combos_qs.exists():
+        messages.error(request, 'Los combos seleccionados ya no existen.')
+        return redirect('panel:combos_lista')
+
+    if request.POST.get('confirmado') == '1':
+        nombres = list(combos_qs.values_list('nombre', flat=True))
+        combos_qs.delete()
+        messages.success(request, f'🗑️ Combo(s) eliminado(s): {", ".join(nombres)}.')
+        return redirect('panel:combos_lista')
+
+    # Paso 1: vista previa (no hay cascada, solo informamos pagos que quedarían sin combo)
+    resumen = []
+    for combo in combos_qs:
+        total_pagos = Pago.objects.filter(combo=combo).count()
+        resumen.append({
+            'combo': combo,
+            'total_pagos': total_pagos,
+        })
+
+    return render(request, 'panel/promociones/combos/confirmar_eliminar.html', {
+        'resumen': resumen,
+        'ids': ids,
+        'seccion_activa': 'combos',
+    })
 
 # ============================================================
 # PROMOCIONES — CUPONES
@@ -1101,6 +1287,8 @@ def cupones_crear(request):
         if form.is_valid():
             cupon = form.save()
             messages.success(request, f'✅ Cupón "{cupon.codigo}" creado.')
+            if request.POST.get('guardar_y_agregar_otro'):
+                return redirect('panel:cupones_crear')
             return redirect('panel:cupones_lista')
     else:
         form = CuponForm()
@@ -1122,6 +1310,8 @@ def cupones_editar(request, cupon_id):
         if form.is_valid():
             form.save()
             messages.success(request, f'✅ Cupón "{cupon.codigo}" actualizado.')
+            if request.POST.get('guardar_y_agregar_otro'):
+                return redirect('panel:cupones_crear')
             return redirect('panel:cupones_lista')
     else:
         form = CuponForm(instance=cupon)
@@ -1134,6 +1324,44 @@ def cupones_editar(request, cupon_id):
         'seccion_activa': 'cupones',
     })
 
+@staff_required
+@require_POST
+def cupones_eliminar(request):
+    """
+    Borrado múltiple de cupones, en dos pasos (mismo patrón que salas_eliminar).
+    Cupon SÍ borra en cascada su historial de usos (CuponUsado.cupon es CASCADE),
+    pero los Pagos que lo usaron quedan con cupon_usado=null (SET_NULL), no se borran.
+    """
+    ids = request.POST.getlist('seleccionadas')
+    if not ids:
+        messages.error(request, 'No seleccionaste ningún cupón.')
+        return redirect('panel:cupones_lista')
+
+    cupones_qs = Cupon.objects.filter(id__in=ids)
+    if not cupones_qs.exists():
+        messages.error(request, 'Los cupones seleccionados ya no existen.')
+        return redirect('panel:cupones_lista')
+
+    if request.POST.get('confirmado') == '1':
+        codigos = list(cupones_qs.values_list('codigo', flat=True))
+        cupones_qs.delete()  # cascada: borra también su historial de usos (CuponUsado)
+        messages.success(request, f'🗑️ Cupón(es) eliminado(s): {", ".join(codigos)}.')
+        return redirect('panel:cupones_lista')
+
+    # Paso 1: vista previa de lo que se va a borrar en cascada
+    resumen = []
+    for cupon in cupones_qs:
+        total_usos = cupon.usos.count()
+        resumen.append({
+            'cupon': cupon,
+            'total_usos': total_usos,
+        })
+
+    return render(request, 'panel/promociones/cupones/confirmar_eliminar.html', {
+        'resumen': resumen,
+        'ids': ids,
+        'seccion_activa': 'cupones',
+    })
 
 # ============================================================
 # PROMOCIONES — PROMOCIÓN POR DÍA
@@ -1155,6 +1383,8 @@ def promodia_crear(request):
         if form.is_valid():
             promo = form.save()
             messages.success(request, f'✅ Promoción "{promo.nombre}" creada.')
+            if request.POST.get('guardar_y_agregar_otro'):
+                return redirect('panel:promodia_crear')
             return redirect('panel:promodia_lista')
     else:
         form = PromocionDiaForm()
@@ -1176,6 +1406,8 @@ def promodia_editar(request, promo_id):
         if form.is_valid():
             form.save()
             messages.success(request, f'✅ Promoción "{promo.nombre}" actualizada.')
+            if request.POST.get('guardar_y_agregar_otro'):
+                return redirect('panel:promodia_crear')
             return redirect('panel:promodia_lista')
     else:
         form = PromocionDiaForm(instance=promo)
@@ -1187,6 +1419,46 @@ def promodia_editar(request, promo_id):
         'accion': 'editar',
         'seccion_activa': 'promodia',
     })
+
+@staff_required
+@require_POST
+def promodia_eliminar(request):
+    """
+    Borrado múltiple de promociones por día, en dos pasos (mismo patrón que
+    salas_eliminar). PromocionDia NO borra en cascada: los Pagos que la usaron
+    quedan con promo_dia=null (Pago.promo_dia es on_delete=SET_NULL).
+    """
+    ids = request.POST.getlist('seleccionadas')
+    if not ids:
+        messages.error(request, 'No seleccionaste ninguna promoción.')
+        return redirect('panel:promodia_lista')
+
+    promos_qs = PromocionDia.objects.filter(id__in=ids)
+    if not promos_qs.exists():
+        messages.error(request, 'Las promociones seleccionadas ya no existen.')
+        return redirect('panel:promodia_lista')
+
+    if request.POST.get('confirmado') == '1':
+        nombres = list(promos_qs.values_list('nombre', flat=True))
+        promos_qs.delete()
+        messages.success(request, f'🗑️ Promoción(es) eliminada(s): {", ".join(nombres)}.')
+        return redirect('panel:promodia_lista')
+
+    # Paso 1: vista previa (no hay cascada, solo informamos pagos que quedarían sin promo)
+    resumen = []
+    for promo in promos_qs:
+        total_pagos = Pago.objects.filter(promo_dia=promo).count()
+        resumen.append({
+            'promo': promo,
+            'total_pagos': total_pagos,
+        })
+
+    return render(request, 'panel/promociones/promodia/confirmar_eliminar.html', {
+        'resumen': resumen,
+        'ids': ids,
+        'seccion_activa': 'promodia',
+    })
+
 
 
 # ============================================================

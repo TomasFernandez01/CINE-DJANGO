@@ -11,18 +11,18 @@
 
 {% block contenido %}
 
-<div style="display:flex; justify-content:space-between; align-items:center;
-            flex-wrap:wrap; gap:1rem; margin-bottom:1.5rem;">
+<div style="display:flex; justify-content:space-between; align-items:center;flex-wrap:wrap; gap:1rem; margin-bottom:1.5rem;">
     <div>
-        <h1 style="font-size:1.4rem; color:#1a1a2e; margin:0;">
-            {{ funcion.pelicula.titulo }}
-        </h1>
+        <h1 style="font-size:1.4rem; color:#1a1a2e; margin:0;">{{ funcion.pelicula.titulo }}</h1>
         <div style="color:#666; font-size:0.9rem; margin-top:0.25rem;">
             {{ funcion.sala.nombre }} · {{ funcion.fecha_hora|date:"d/m/Y H:i" }} hs
         </div>
     </div>
-    {% comment %} <a href="{% url 'admin:salas_funcion_change' funcion.id %}" class="btn btn-primary">✏️ Editar función</a> {% endcomment %}
-    <a href="{% url 'panel:funciones_editar' funcion.id %}" class="btn btn-primary">✏️ Editar función</a>
+    <div style="display:flex; gap:0.5rem;">            
+        <a href="{% url 'panel:salas_lista' %}" class="btn btn-primary">SALAS</a>
+        <a href="{% url 'panel:funciones_editar' funcion.id %}" class="btn btn-primary">EDITAR</a>
+        <a href="{% url 'panel:funciones_lista' %}" class="btn btn-danger">ATRAS</a>
+    </div>
 </div>
 
 <!-- Stats de la función -->

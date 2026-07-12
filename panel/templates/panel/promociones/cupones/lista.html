@@ -1,34 +1,20 @@
 {% extends 'panel/base_panel.html' %}
-
 {% block titulo %}Cupones — Panel{% endblock %}
-
 {% block breadcrumb %}
 <span class="sep">›</span>
 <span class="current">Cupones</span>
 {% endblock %}
-
 {% block contenido %}
 
-{% comment %} 
-<div style="display:flex; justify-content:space-between; align-items:center;
-            flex-wrap:wrap; gap:1rem; margin-bottom:1.5rem;">
-    <h1 style="font-size:1.4rem; color:#1a1a2e; margin:0;">Cupones</h1>
-    <a href="{% url 'panel:cupones_crear' %}" class="btn btn-success">Agregar cupón</a>
-    
-</div> 
-{% endcomment %}
 <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem; flex-wrap: wrap; gap: 1rem;">
         <div>
-            <h1 style="margin: 0; color: #333;">🏷️ Gestión de Cupones 🎟️</h1>
-            <p style="margin: 0.25rem 0 0 0; color: #666;">Activá, desactivá y consultá el historial de cada cupón</p>
+            <h1 style="margin: 0; color: #333;">🏷️ Gestión de Cupones 🎟️</h1><p style="margin: 0.25rem 0 0 0; color: #666;">Activá, desactivá y consultá el historial de cada cupón</p>
         </div>
         <div style="display: flex; gap: 0.75rem; flex-wrap: wrap;">
-            <a href="{% url 'panel:inicio' %}" 
-            style="padding: 0.6rem 1.2rem; background-color: #6c757d; color: white; border-radius: 6px; text-decoration: none; font-weight: bold; font-size: 0.9rem;">Panel</a>
-            <a href="{% url 'panel:cupones_crear' %}" style="padding: 0.6rem 1.2rem; background-color: #28a745; color: white; border-radius: 6px; text-decoration: none; font-weight: bold; font-size: 0.9rem;">
-                Agregar cupón
-            </a>
-            <a href="{% url 'panel:cupones_estadisticas' %}" class="btn btn-ghost">📊 Estadísticas</a>
+            <button type="submit" form="formCupones" id="btnEliminarSeleccionadas" class="btn btn-danger" disabled style="opacity:0.5; cursor:not-allowed;">Eliminar</button>
+            <a href="{% url 'panel:inicio' %}" class="btn btn-primary">INICIO</a>
+            <a href="{% url 'panel:cupones_crear' %}" class="btn btn-primary">NUEVO</a>
+            <a href="{% url 'panel:cupones_estadisticas' %}"class="btn btn-primary">USOS</a>
         </div>
     </div>
 
@@ -48,12 +34,14 @@
         </form>
     </div>
 </div>
-
+<form method="post" action="{% url 'panel:cupones_eliminar' %}" id="formCupones">
+    {% csrf_token %}
 <div class="card">
     {% if cupones %}
     <table class="tabla">
         <thead>
             <tr>
+                <th style="width:2rem;"><input type="checkbox" id="chkTodosCupones" class="panel-checkbox"></th>
                 <th>Código</th>
                 <th>Descripción</th>
                 <th>Descuento</th>
@@ -66,27 +54,16 @@
         <tbody>
             {% for c in cupones %}
             <tr>
+                <td><input type="checkbox" name="seleccionadas" value="{{ c.id }}" class="chk-cupon panel-checkbox"></td>
+
                 <td style="font-family:monospace; font-weight:700; color:#1a1a2e;">{{ c.codigo }}</td>
                 <td style="font-size:0.875rem; color:#555;">{{ c.descripcion }}</td>
-                <td style="font-weight:600;">
-                    {% if c.tipo == 'porcentaje' %}{{ c.valor }}%{% else %}${{ c.valor|floatformat:0 }}{% endif %}
-                </td>
-                <td style="font-size:0.8rem; color:#666;">
-                    {{ c.fecha_inicio|date:"d/m/Y" }} — {{ c.fecha_fin|date:"d/m/Y" }}
-                </td>
-                <td style="font-size:0.8rem; color:#666;">
-                    {{ c.usos_actuales }}{% if c.usos_maximos %}/{{ c.usos_maximos }}{% else %}/∞{% endif %}
-                </td>
-                <td>
-                    {% if c.activo %}
-                    <span class="badge badge-aprobado">Activo</span>
-                    {% else %}
-                    <span class="badge badge-cancelada">Inactivo</span>
-                    {% endif %}
-                </td>
-                <td>
-                    <a href="{% url 'panel:cupones_editar' c.id %}" class="btn btn-ghost" style="font-size:0.75rem;">✏️</a>
-                </td>
+                <td style="font-weight:600;">{% if c.tipo == 'porcentaje' %}{{ c.valor }}%{% else %}${{ c.valor|floatformat:0 }}{% endif %}</td>
+                <td style="font-size:0.8rem; color:#666;">{{ c.fecha_inicio|date:"d/m/Y" }} — {{ c.fecha_fin|date:"d/m/Y" }}</td>
+                <td style="font-size:0.8rem; color:#666;">{{ c.usos_actuales }}{% if c.usos_maximos %}/{{ c.usos_maximos }}{% else %}/∞{% endif %}</td>
+                <td>{% if c.activo %}<span class="badge badge-aprobado">Activo</span>{% else %}<span class="badge badge-cancelada">Inactivo</span>{% endif %}</td>
+                
+                <td><a href="{% url 'panel:cupones_editar' c.id %}" class="btn btn-ghost" style="font-size:0.75rem;">EDITAR</a></td>
             </tr>
             {% endfor %}
         </tbody>
@@ -97,5 +74,29 @@
     </div>
     {% endif %}
 </div>
+</form>
+
+<script>
+(function () {
+    const checks = document.querySelectorAll('.chk-cupon');
+    const chkTodos = document.getElementById('chkTodosCupones');
+    const btn = document.getElementById('btnEliminarSeleccionadas');
+    if (!btn) return;
+
+    function actualizarBoton() {
+        const hayAlguno = Array.from(checks).some(c => c.checked);
+        btn.disabled = !hayAlguno;
+        btn.style.opacity = hayAlguno ? '1' : '0.5';
+        btn.style.cursor = hayAlguno ? 'pointer' : 'not-allowed';
+    }
+
+    checks.forEach(c => c.addEventListener('change', actualizarBoton));
+    chkTodos?.addEventListener('change', function () {
+        checks.forEach(c => c.checked = chkTodos.checked);
+        actualizarBoton();
+    });
+    actualizarBoton();
+})();
+</script>
 
 {% endblock %}

@@ -9,12 +9,12 @@
 
 {% block contenido %}
 
-<div style="display:flex; justify-content:space-between; align-items:center;
-            flex-wrap:wrap; gap:1rem; margin-bottom:1.5rem;">
+<div style="display:flex; justify-content:space-between; align-items:center;flex-wrap:wrap; gap:1rem; margin-bottom:1.5rem;">
     <h1 style="font-size:1.4rem; color:#1a1a2e; margin:0;">📋 Cupones Usados</h1>
-    <a href="{% url 'panel:cupones_lista' %}" class="btn btn-ghost">🎟️ Ver cupones</a>
-    <a href="{% url 'panel:inicio' %}" 
-            style="padding: 0.6rem 1.2rem; background-color: #6c757d; color: white; border-radius: 6px; text-decoration: none; font-weight: bold; font-size: 0.9rem;">Panel</a>
+    <div style="display:flex; gap:0.5rem;">
+        <a href="{% url 'panel:cupones_lista' %}" class="btn btn-primary">🎟️ Ver cupones</a>
+        <a href="{% url 'panel:inicio' %}" class="btn btn-primary">INICIO</a>
+    </div>
 </div>
 
 <div class="card" style="margin-bottom:1.25rem;">

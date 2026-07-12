@@ -32,16 +32,24 @@
             {% endif %}
         </div>
         {% if objeto %}
-        <a href="{% url 'panel:peliculas_detalle' objeto.id %}" class="btn btn-ghost">
-            ← Volver al detalle
+        <a href="{% url 'panel:peliculas_detalle' objeto.id %}" class="btn btn-danger">
+            ATRAS
         </a>
         {% else %}
-        <a href="{% url 'panel:peliculas_lista' %}" class="btn btn-ghost">← Volver</a>
+        <a href="{% url 'panel:peliculas_lista' %}" class="btn btn-danger">ATRAS</a>
         {% endif %}
     </div>
 
-    <form method="post" enctype="multipart/form-data" id="formPelicula">
+    <form method="post" enctype="multipart/form-data" id="formPelicula"
+    action="{% if accion == 'editar' and objeto %}
+                {% url 'panel:peliculas_editar' objeto.id %}
+            {% else %}
+                {% url 'panel:peliculas_crear' %}
+            {% endif %}">
         {% csrf_token %}
+        {% if poster_url_tmdb %}
+        <input type="hidden" name="poster_url_tmdb" value="{{ poster_url_tmdb }}">
+        {% endif %}
 
         <div style="display:grid; grid-template-columns:1fr 280px; gap:1.5rem; align-items:start;">
 
@@ -133,67 +141,68 @@
             <!-- Columna lateral: poster -->
             <div>
                 <div class="card">
-                    <div class="card-header"><h3>🖼️ Poster</h3></div>
+                    <div class="card-header"><h3>Poster</h3></div>
                     <div class="card-body">
 
                         <!-- Preview del poster actual -->
                         {% if objeto and objeto.poster %}
                         <div style="margin-bottom:1rem; text-align:center;">
-                            <img src="{{ objeto.poster.url }}" alt="poster"
-                                 id="posterPreview"
-                                 style="max-width:100%; border-radius:8px;
-                                        box-shadow:0 2px 8px rgba(0,0,0,0.15);">
+                            <img src="{{ objeto.poster.url }}" alt="poster" id="posterPreview" style="max-width:100%; border-radius:8px; box-shadow:0 2px 8px rgba(0,0,0,0.15);">
                         </div>
+                        
+                        {% elif poster_url_tmdb %}
+                        <div style="margin-bottom:0.5rem; text-align:center;">
+                            <img src="{{ poster_url_tmdb }}" alt="poster TMDB" id="posterPreview" style="max-width:100%; border-radius:8px; box-shadow:0 2px 8px rgba(0,0,0,0.15);">
+                        </div>
+                        <div class="form-help" style="margin-bottom:1rem;">📥 Poster de TMDB. Descarga al guardar, salvo que subas otro acá abajo.</div>
+                        
                         {% else %}
-                        <div id="posterPlaceholder"
-                             style="aspect-ratio:2/3; background:#f0f0f0; border-radius:8px;
-                                    display:flex; align-items:center; justify-content:center;
-                                    color:#ccc; font-size:3rem; margin-bottom:1rem;">
-                            🎬
-                        </div>
-                        <img id="posterPreview"
-                             style="max-width:100%; border-radius:8px; display:none;
-                                    margin-bottom:1rem; box-shadow:0 2px 8px rgba(0,0,0,0.15);">
+                        <div id="posterPlaceholder" style="aspect-ratio:2/3; background:#f0f0f0; border-radius:8px; display:flex; align-items:center; justify-content:center; color:#ccc; font-size:3rem; margin-bottom:1rem;"> 🎬 </div>
+                        <img id="posterPreview"  style="max-width:100%; border-radius:8px; display:none; margin-bottom:1rem; box-shadow:0 2px 8px rgba(0,0,0,0.15);">
                         {% endif %}
 
                         {{ form.poster }}
                         {% if form.poster.errors %}
                         <div class="field-error">{{ form.poster.errors.0 }}</div>
                         {% endif %}
-                        <div class="form-help" style="margin-top:0.5rem;">
-                            Formatos: JPG, PNG. Recomendado: proporción 2:3
-                        </div>
+                        <div class="form-help" style="margin-top:0.5rem;">Formatos: JPG, PNG. Recomendado: proporción 2:3</div>
                     </div>
                 </div>
             </div>
-
         </div>
 
         <!-- Errores generales -->
         {% if form.non_field_errors %}
-        <div style="background:#f8d7da; border-left:4px solid #e74c3c;
-                    padding:1rem; border-radius:6px; margin-top:1rem; color:#721c24;">
-            {% for error in form.non_field_errors %}
-            <p style="margin:0;">{{ error }}</p>
-            {% endfor %}
+        <div style="background:#f8d7da; border-left:4px solid #e74c3c; padding:1rem; border-radius:6px; margin-top:1rem; color:#721c24;">
+            {% for error in form.non_field_errors %}<p style="margin:0;">{{ error }}</p>{% endfor %}
         </div>
         {% endif %}
-
         <!-- Botones -->
         <div style="display:flex; gap:1rem; margin-top:1.5rem; flex-wrap:wrap;">
-            <button type="submit" class="btn btn-success" style="font-size:1rem; padding:0.75rem 2rem;">
-                {% if accion == 'crear' %}✅ Crear Película{% else %}💾 Guardar Cambios{% endif %}
+            <button type="submit" class="btn btn-primary">
+                {% if accion == 'crear' %}CREAR{% else %}MODIFICAR{% endif %}
             </button>
+            <button type="submit" name="guardar_y_agregar_otro" value="1" class="btn btn-primary">CARGAR</button>
+            
             {% if objeto %}
-            <a href="{% url 'panel:peliculas_detalle' objeto.id %}" class="btn btn-ghost">
-                Cancelar
-            </a>
+            <a href="{% url 'panel:peliculas_detalle' objeto.id %}" class="btn btn-primary">Cancelar</a>
+                {% if accion == 'editar' %}
+                <button type="submit" form="formEliminarPelicula" class="btn btn-danger">Eliminar</button>
+                {% endif %}
             {% else %}
-            <a href="{% url 'panel:peliculas_lista' %}" class="btn btn-ghost">Cancelar</a>
+            <a href="{% url 'panel:peliculas_lista' %}" class="btn btn-primary">Cancelar</a>
             {% endif %}
         </div>
-
     </form>
+
+    {% if objeto and accion == 'editar' %}
+    <!-- Form separado (no puede anidarse dentro del form principal) que reutiliza el mismo endpoint de borrado masivo, pasando un solo id. -->
+    <form method="post" action="{% url 'panel:peliculas_eliminar' %}" id="formEliminarPelicula">
+        {% csrf_token %}
+        <input type="hidden" name="seleccionadas" value="{{ objeto.id }}">
+    </form>
+    {% endif %}
+
 </div>
 
 <script>
