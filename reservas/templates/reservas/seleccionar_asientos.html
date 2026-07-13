@@ -13,7 +13,7 @@
     {#   tiempo_limite_minutos (int) → tiempo para PAGAR después   #}
     {#                               de confirmar (backend real)   #}
     {# ============================================================ #}
-    {% if segundos_restantes %}
+    {% comment %} {% if segundos_restantes %}
     <div id="countdownBanner"
          data-segundos="{{ segundos_restantes }}"
          style="background: linear-gradient(135deg, #ff6b6b 0%, #ff8e53 100%);
@@ -22,7 +22,7 @@
                 box-shadow: 0 4px 12px rgba(255,107,107,0.35);
                 transition: background 0.5s;">
         <div style="font-size: 0.85rem; margin-bottom: 0.35rem; opacity: 0.95;">
-            🪑 Tiempo para elegir tus asientos — elegí antes de que los tome otro
+            Es por Tiempo — elegí antes de que los tome otro
         </div>
         <div id="countdown"
              style="font-size: 2.2rem; font-weight: bold;
@@ -33,7 +33,7 @@
             Si se acaba este tiempo, la pantalla se reinicia y debés volver a elegir
         </div>
     </div>
-    {% endif %}
+    {% endif %} {% endcomment %}
 
     {# ============================================================ #}
     {# INFO DE LA FUNCIÓN                                           #}
@@ -45,17 +45,27 @@
             <div>
                 <h2 style="margin: 0 0 0.75rem 0; color: #333;">{{ funcion.pelicula.titulo }}</h2>
                 <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 0.75rem;">
-                    <div><strong>📅 Fecha:</strong> {{ funcion.fecha_hora|date:"d/m/Y" }}</div>
-                    <div><strong>🕐 Horario:</strong> {{ funcion.fecha_hora|date:"H:i" }} hs</div>
-                    <div><strong>🏢 Sala:</strong> {{ sala.nombre }}</div>
-                    <div><strong>💰 Precio:</strong> ${{ funcion.precio }} por entrada</div>
-                    <div><strong>🪑 Disponibles:</strong>
+                    <div><strong>Fecha:</strong> {{ funcion.fecha_hora|date:"d/m/Y" }}</div>
+                    <div><strong>Horario:</strong> {{ funcion.fecha_hora|date:"H:i" }} hs</div>
+                    <div><strong>Sala:</strong> {{ sala.nombre }}</div>
+                    <div><strong>Precio:</strong> ${{ funcion.precio_final }} por entrada</div>
+                    <div><strong>Disponibles:</strong>
                         <span style="color: {% if asientos_disponibles > 10 %}#28a745{% elif asientos_disponibles > 0 %}#fd7e14{% else %}#dc3545{% endif %}; font-weight: bold;">
                             {{ asientos_disponibles }}
                         </span>
                     </div>
                 </div>
             </div>
+
+            {% if info_categorias %}
+            <div style="font-size: 0.8rem; color: #666; align-self: flex-end;">
+                <div style="display:flex; align-items:center; gap:6px;">
+                    <span style="width:14px; height:14px; border-radius:3px; display:inline-block;
+                                 background: linear-gradient(135deg, #f1c40f, #e67e22);"></span>
+                    Asientos con categoría especial cuestan distinto (mirá el color en el mapa)
+                </div>
+            </div>
+            {% endif %}
 
             {# Badge tipo sala #}
             <div style="text-align: center; flex-shrink: 0;">
@@ -116,7 +126,6 @@
     {# ============================================================ #}
     <div id="mapaAsientos" style="background-color: white; padding: 2rem; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); margin-bottom: 1.5rem; overflow-x: auto;">
         <div style="display: inline-block; min-width: 100%;">
-            {% comment %} NUEVO {% endcomment %}
             {% for fila in layout %}
                 <div style="display: flex; justify-content: center; gap: 8px; margin-bottom: 8px; align-items: center;">
                     <div style="width: 30px; text-align: center; font-weight: bold; color: #666;">
@@ -224,7 +233,7 @@
                        border-radius: 6px; font-weight: bold; font-size: 1.1rem;
                        cursor: not-allowed; opacity: 0.5;
                        transition: opacity 0.2s, background-color 0.2s;">
-                🎫 Confirmar Reserva
+                RESERVAR
             </button>
             <a href="{% url 'peliculas:detalle_pelicula' funcion.pelicula.id %}"
                 style="flex: 1; min-width: 200px; padding: 1rem;
@@ -240,7 +249,7 @@
     <div style="background-color: #fff3cd; padding: 1rem; border-radius: 6px;
                 border-left: 4px solid #ffc107; margin-top: 1.5rem;">
         <p style="margin: 0; color: #856404;">
-            <strong>ℹ️ Información:</strong>
+            <strong>Información:</strong>
             Seleccioná hasta <strong>{{ max_asientos }}</strong> asientos.
             Al confirmar se crea tu reserva y <strong>a partir de ese momento</strong>
             tendrás <strong>{{ tiempo_limite_minutos }} minutos para completar el pago</strong>.
@@ -249,15 +258,20 @@
     </div>
 </div>
 
+{{ precios_por_asiento|json_script:"precios-por-asiento-data" }}
+{{ info_categorias|json_script:"info-categorias-data" }}
+
 {# ============================================================ #}
 {# SCRIPTS                                                      #}
 {# ============================================================ #}
 <script>
 (function () {
     // ─── Constantes desde Django ────────────────────────────────
-    const PRECIO_ENTRADA  = {{ funcion.precio }};
+    const PRECIO_ENTRADA  = {{ funcion.precio_final }};
     const MAX_ASIENTOS    = {{ max_asientos }};
     const FUNCION_ID      = {{ funcion.id }};
+    const PRECIOS_POR_ASIENTO = JSON.parse(document.getElementById('precios-por-asiento-data').textContent);
+    const INFO_CATEGORIAS     = JSON.parse(document.getElementById('info-categorias-data').textContent);
 
     // ─── Estado ─────────────────────────────────────────────────
     const asientosSeleccionados = new Set();
@@ -276,82 +290,97 @@
 
     // ════════════════════════════════════════════════════════════
     // COUNTDOWN
+    // Blindado con "if (banner && countdownEl)": si el banner de arriba
+    // está comentado en el HTML (como está ahora), banner/countdownEl son
+    // null y este bloque simplemente no hace nada, en vez de tirar un
+    // TypeError que frenaba TODO el script de acá para abajo (por eso no
+    // andaba la selección de asientos ni el submit del formulario)
     // ════════════════════════════════════════════════════════════
     {% if segundos_restantes %}
-    let tiempoRestante = parseInt(banner.dataset.segundos, 10);
+    if (banner && countdownEl) {
+        let tiempoRestante = parseInt(banner.dataset.segundos, 10);
 
-    function formatearTiempo(seg) {
-        const m = Math.floor(seg / 60);
-        const s = seg % 60;
-        return String(m).padStart(2, '0') + ':' + String(s).padStart(2, '0');
-    }
+        var formatearTiempo = function (seg) {
+            const m = Math.floor(seg / 60);
+            const s = seg % 60;
+            return String(m).padStart(2, '0') + ':' + String(s).padStart(2, '0');
+        };
 
-    function expirarSesion() {
-        // Bloquear formulario
-        formularioBloqueado = true;
-        if (btnConfirmar) {
-            btnConfirmar.disabled = true;
-            btnConfirmar.style.opacity = '0.4';
-            btnConfirmar.style.cursor = 'not-allowed';
-            btnConfirmar.textContent = '⏰ Tiempo Expirado';
-        }
-        if (formReserva) {
-            formReserva.style.opacity = '0.5';
-            formReserva.style.pointerEvents = 'none';
-        }
-        // Bloquear asientos
-        botonesAsientos.forEach(b => {
-            b.disabled = true;
-            b.style.cursor = 'not-allowed';
-        });
+        var expirarSesion = function () {
+            // Bloquear formulario
+            formularioBloqueado = true;
+            if (btnConfirmar) {
+                btnConfirmar.disabled = true;
+                btnConfirmar.style.opacity = '0.4';
+                btnConfirmar.style.cursor = 'not-allowed';
+                btnConfirmar.textContent = '⏰ Tiempo Expirado';
+            }
+            if (formReserva) {
+                formReserva.style.opacity = '0.5';
+                formReserva.style.pointerEvents = 'none';
+            }
+            // Bloquear asientos
+            botonesAsientos.forEach(b => {
+                b.disabled = true;
+                b.style.cursor = 'not-allowed';
+            });
 
-        // Cambiar banner
-        if (banner) {
+            // Cambiar banner
             banner.style.background = 'linear-gradient(135deg, #6c757d 0%, #495057 100%)';
             banner.style.boxShadow  = 'none';
-        }
-        if (countdownEl) countdownEl.textContent = '00:00';
+            countdownEl.textContent = '00:00';
 
-        // Alerta y redirige
-        setTimeout(function () {
-            alert('⏰ El tiempo para seleccionar asientos expiró. Serás redirigido a las funciones disponibles.');
-            window.location.href = "{% url 'salas:lista_funciones' %}";
-        }, 800);
-    }
+            // Alerta y redirige
+            setTimeout(function () {
+                alert('⏰ El tiempo para seleccionar asientos expiró. Serás redirigido a las funciones disponibles.');
+                window.location.href = "{% url 'salas:lista_funciones' %}";
+            }, 800);
+        };
 
-    function actualizarContador() {
-        if (tiempoRestante <= 0) {
-            clearInterval(intervalo);
-            expirarSesion();
-            return;
-        }
+        var actualizarContadorBanner = function () {
+            if (tiempoRestante <= 0) {
+                clearInterval(intervaloBanner);
+                expirarSesion();
+                return;
+            }
 
-        // Actualizar texto
-        if (countdownEl) {
             countdownEl.textContent = formatearTiempo(tiempoRestante);
-        }
 
-        // Alerta visual: menos de 2 minutos → rojo intenso + pulso
-        if (tiempoRestante <= 120 && banner) {
-            banner.style.background = 'linear-gradient(135deg, #dc3545 0%, #c82333 100%)';
-            if (countdownEl) countdownEl.style.animation = 'pulso 1s infinite';
-        }
-        // Alerta visual: menos de 1 minuto → parpadeo más rápido
-        if (tiempoRestante <= 60 && countdownEl) {
-            countdownEl.style.animation = 'pulsoRapido 0.5s infinite';
-        }
+            // Alerta visual: menos de 2 minutos → rojo intenso + pulso
+            if (tiempoRestante <= 120) {
+                banner.style.background = 'linear-gradient(135deg, #dc3545 0%, #c82333 100%)';
+                countdownEl.style.animation = 'pulso 1s infinite';
+            }
+            // Alerta visual: menos de 1 minuto → parpadeo más rápido
+            if (tiempoRestante <= 60) {
+                countdownEl.style.animation = 'pulsoRapido 0.5s infinite';
+            }
 
-        tiempoRestante--;
+            tiempoRestante--;
+        };
+
+        // Iniciar inmediatamente y luego cada segundo
+        actualizarContadorBanner();
+        var intervaloBanner = setInterval(actualizarContadorBanner, 1000);
     }
-
-    // Iniciar inmediatamente y luego cada segundo
-    actualizarContador();
-    const intervalo = setInterval(actualizarContador, 1000);
     {% endif %}
-
     // ════════════════════════════════════════════════════════════
     // SELECCIÓN DE ASIENTOS
     // ════════════════════════════════════════════════════════════
+
+    // Pintar de entrada los asientos con categoría especial (ej: "Mejorado"),
+    // guardando su color como "color base" para poder restaurarlo al deseleccionar.
+    Object.entries(INFO_CATEGORIAS).forEach(function ([codigo, info]) {
+        const btn = document.querySelector('.asiento.disponible[data-asiento="' + codigo + '"]');
+        if (btn) {
+            btn.style.backgroundColor = info.color;
+            btn.style.borderColor     = info.color;
+            btn.dataset.colorBase  = info.color;
+            btn.dataset.borderBase = info.color;
+            btn.title = codigo + ' — ' + info.nombre + ' (x' + info.multiplicador + ')';
+        }
+    });
+
     botonesAsientos.forEach(function (boton) {
         // Click
         boton.addEventListener('click', function () {
@@ -405,8 +434,11 @@
     // ─── Actualizar resumen inferior ────────────────────────────
     function actualizarResumen() {
         const cantidad = asientosSeleccionados.size;
-        const total    = cantidad * PRECIO_ENTRADA;
-
+        //const total    = cantidad * PRECIO_ENTRADA;
+        let total = 0;
+        asientosSeleccionados.forEach(function (codigo) {
+            total += (PRECIOS_POR_ASIENTO[codigo] !== undefined ? PRECIOS_POR_ASIENTO[codigo] : PRECIO_ENTRADA);
+        });
         if (cantidad === 0) {
             textoAsientos.textContent = 'Ninguno';
             btnConfirmar.disabled     = true;
@@ -491,7 +523,7 @@
 
                 if (conflicto) {
                     actualizarResumen();
-                    alert('⚠️ Algunos asientos que seleccionaste acaban de ser reservados por otro usuario. Por favor, elegí otros.');
+                    alert('Algunos asientos que seleccionaste acaban de ser reservados por otro usuario. Por favor, elegí otros.');
                     location.reload();
                 }
             })

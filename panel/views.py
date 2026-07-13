@@ -7,9 +7,8 @@ from django.views.decorators.http import require_POST   # mapa-salas
 from django.core.exceptions import ValidationError      # mapa-salas
 from datetime import timedelta
 from .decorators import staff_required, superuser_required
-#### APPS
 from peliculas.models import Pelicula
-from salas.models import Sala, Funcion, AsientoBloqueado # mapa-salas
+from salas.models import Sala, Funcion, AsientoBloqueado, CategoriaAsiento # mapa-salas
 from reservas.models import Reserva
 from pagos.models import Pago
 from promociones.models import Cupon, PromocionDia, Combo, CuponUsado
@@ -20,8 +19,9 @@ from .forms import (
     PeliculaForm, SalaForm, FuncionForm,
     CrearUsuarioForm, EditarUsuarioForm, ReservaForm,
     ComboForm, CuponForm, PromocionDiaForm,
-    SeccionSalaFormSet,
+    SeccionSalaFormSet, ConfiguracionGeneralForm,
 )
+from .models import ConfiguracionGeneral
 from django.core.files.base import ContentFile
 import requests
 
@@ -426,6 +426,26 @@ def salas_asientos(request, sala_id):
     if funcion_seleccionada:
         asientos_ocupados_reserva = funcion_seleccionada.asientos_ocupados()
 
+    # Categorías especiales (ej: "Mejorado") — siempre permanentes por sala,
+    # no dependen de la función seleccionada en el modo de arriba.
+    categorias = sala.categorias_asientos.all().order_by('asiento_codigo')
+    categorias_por_codigo = {c.asiento_codigo: c for c in categorias}
+
+    contexto = {
+        'sala': sala,
+        'layout': sala.layout_asientos(),
+        'bloqueos_por_codigo': bloqueos_por_codigo,
+        'todos_los_bloqueos': todos_los_bloqueos,
+        'categorias_por_codigo': categorias_por_codigo,
+        'todas_las_categorias': categorias,
+        'funcion_seleccionada': funcion_seleccionada,
+        'funciones_sala': funciones_sala,
+        'asientos_ocupados_reserva': asientos_ocupados_reserva,
+        'motivo_choices': AsientoBloqueado.MOTIVO_CHOICES,
+        'seccion_activa': 'salas',
+    }
+    return render(request, 'panel/salas/asientos.html', contexto)
+
     contexto = {
         'sala': sala,
         'layout': sala.layout_asientos(),
@@ -438,7 +458,6 @@ def salas_asientos(request, sala_id):
         'seccion_activa': 'salas',
     }
     return render(request, 'panel/salas/asientos.html', contexto)
-
 
 @staff_required
 @require_POST
@@ -491,6 +510,62 @@ def salas_asientos_desbloquear(request, sala_id):
     bloqueo = get_object_or_404(AsientoBloqueado, id=bloqueo_id, sala=sala)
     asiento_codigo = bloqueo.asiento_codigo
     bloqueo.delete()
+
+    return JsonResponse({'success': True, 'asiento_codigo': asiento_codigo})
+
+@staff_required
+@require_POST
+def salas_categoria_asignar(request, sala_id):
+    """
+    Endpoint AJAX: crea o actualiza la categoría especial (ej: "Mejorado")
+    de un asiento puntual. A diferencia de los bloqueos, esto es SIEMPRE
+    permanente por sala (no depende de la función seleccionada).
+    """
+    sala = get_object_or_404(Sala, id=sala_id)
+
+    asiento_codigo = request.POST.get('asiento_codigo', '').strip()
+    nombre = request.POST.get('nombre', 'Mejorado').strip() or 'Mejorado'
+    multiplicador = request.POST.get('multiplicador', '1.25').strip()
+    color = request.POST.get('color', '#f1c40f').strip()
+
+    # Si ya existe una categoría para ese asiento, la actualizamos en vez de
+    # crear un duplicado (el modelo tiene unique_together sala+asiento_codigo).
+    categoria = CategoriaAsiento.objects.filter(sala=sala, asiento_codigo=asiento_codigo).first()
+    if categoria is None:
+        categoria = CategoriaAsiento(sala=sala, asiento_codigo=asiento_codigo)
+
+    categoria.nombre = nombre
+    categoria.multiplicador = multiplicador or '1.25'
+    categoria.color = color or '#f1c40f'
+
+    try:
+        categoria.full_clean()
+    except ValidationError as e:
+        errores = e.message_dict if hasattr(e, 'message_dict') else {'__all__': e.messages}
+        return JsonResponse({'success': False, 'errors': errores}, status=400)
+
+    categoria.save(skip_validation=True)  # ya se validó arriba con full_clean()
+
+    return JsonResponse({
+        'success': True,
+        'categoria_id': categoria.id,
+        'asiento_codigo': categoria.asiento_codigo,
+        'nombre': categoria.nombre,
+        'multiplicador': str(categoria.multiplicador),
+        'color': categoria.color,
+    })
+
+
+@staff_required
+@require_POST
+def salas_categoria_quitar(request, sala_id):
+    """Endpoint AJAX: elimina la categoría especial de un asiento."""
+    sala = get_object_or_404(Sala, id=sala_id)
+    categoria_id = request.POST.get('categoria_id')
+
+    categoria = get_object_or_404(CategoriaAsiento, id=categoria_id, sala=sala)
+    asiento_codigo = categoria.asiento_codigo
+    categoria.delete()
 
     return JsonResponse({'success': True, 'asiento_codigo': asiento_codigo})
 
@@ -1541,3 +1616,31 @@ def cupones_estadisticas(request):
         'seccion_activa': 'cupones',
     }
     return render(request, 'panel/promociones/cupones/estadisticas.html', contexto)
+
+# ============================================================
+# CONFIGURACIÓN GENERAL (precio base de la entrada, etc)
+# ============================================================
+@staff_required
+def configuracion_general(request):
+    """
+    Pantalla del panel para editar la configuración general del sistema
+    (por ahora: precio base de la entrada). Es una fila única en la base
+    (ConfiguracionGeneral.obtener()), así que cambiar el número acá no
+    requiere ningún makemigrations/migrate.
+    """
+    config = ConfiguracionGeneral.obtener()
+
+    if request.method == 'POST':
+        form = ConfiguracionGeneralForm(request.POST, instance=config)
+        if form.is_valid():
+            form.save()
+            messages.success(request, '✅ Configuración general actualizada.')
+            return redirect('panel:configuracion_general')
+    else:
+        form = ConfiguracionGeneralForm(instance=config)
+
+    return render(request, 'panel/configuracion/general.html', {
+        'form': form,
+        'config': config,
+        'seccion_activa': 'configuracion',
+    })

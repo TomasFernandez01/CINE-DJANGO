@@ -6,6 +6,7 @@ from django.forms import inlineformset_factory
 from salas.models import Sala, Funcion, SeccionSala
 from reservas.models import Reserva
 from promociones.models import Cupon, PromocionDia, Combo
+from panel.models import ConfiguracionGeneral
 
 # ============================================================
 # ESTILOS BASE REUTILIZABLES
@@ -63,22 +64,28 @@ class PeliculaForm(forms.ModelForm):
 class SalaForm(forms.ModelForm):
     class Meta:
         model = Sala
-        fields = ['nombre', 'filas', 'columnas', 'activa']
+        fields = ['nombre', 'tipo', 'filas', 'columnas', 'multiplicador_precio', 'activa']
         widgets = {
             'nombre':   forms.TextInput(attrs=INPUT_ATTRS),
+            'tipo':     forms.Select(attrs=SELECT_ATTRS),
             'filas':    forms.NumberInput(attrs={**INPUT_ATTRS, 'min': 1, 'max': 26}),
             'columnas': forms.NumberInput(attrs={**INPUT_ATTRS, 'min': 1, 'max': 30}),
+            'multiplicador_precio': forms.NumberInput(attrs={**INPUT_ATTRS, 'step': '0.01', 'min': '0.01', 'id': 'id_multiplicador_precio'}),
             'activa':   forms.CheckboxInput(attrs={'class': 'panel-checkbox'}),
         }
         labels = {
             'nombre':   'Nombre de la sala',
+            'tipo':     'Tipo de sala',
             'filas':    'Filas totales del lienzo (A, B, C...)',
             'columnas': 'Columnas totales del lienzo',
+            'multiplicador_precio': 'Multiplicador de precio',
             'activa':   'Sala activa',
         }
         help_texts = {
             'filas':    'Máximo 26 filas (A-Z). Debe alcanzar para la sección más profunda.',
             'columnas': 'Debe alcanzar para el ancho total (todas las secciones + pasillos).',
+            'tipo':     'Al elegir el tipo se sugiere un multiplicador (podés cambiarlo igual).',
+            'multiplicador_precio': 'Se aplica sobre el precio base de la entrada. 1.00 = precio normal.',
         }
 # ============================================================
 # SALAS — SECCIONES (formset inline)
@@ -112,14 +119,15 @@ class FuncionForm(forms.ModelForm):
                 attrs={**INPUT_ATTRS, 'type': 'datetime-local'},
                 format='%Y-%m-%dT%H:%M'
             ),
-            'precio':     forms.NumberInput(attrs={**INPUT_ATTRS, 'step': '0.01', 'min': '0'}),
+            'precio':     forms.NumberInput(attrs={**INPUT_ATTRS, 'step': '0.01', 'min': '0',
+                                                     'placeholder': 'Vacío = automático (precio base x multiplicador de sala)'}),
             'disponible': forms.CheckboxInput(attrs={'class': 'panel-checkbox'}),
         }
         labels = {
             'pelicula':   'Película',
             'sala':       'Sala',
             'fecha_hora': 'Fecha y hora',
-            'precio':     'Precio por entrada ($)',
+            'precio':     'Precio por entrada ($) — opcional',
             'disponible': 'Disponible para reservas',
         }
 
@@ -336,4 +344,22 @@ class PromocionDiaForm(forms.ModelForm):
         }
         help_texts = {
             'porcentaje_descuento': 'Solo aplica si el tipo es "Descuento porcentual"',
+        }
+
+# ============================================================
+# CONFIGURACIÓN GENERAL (precio base de la entrada)
+# ============================================================
+class ConfiguracionGeneralForm(forms.ModelForm):
+    class Meta:
+        model = ConfiguracionGeneral
+        fields = ['precio_entrada_base']
+        widgets = {
+            'precio_entrada_base': forms.NumberInput(attrs={**INPUT_ATTRS, 'step': '0.01', 'min': '0'}),
+        }
+        labels = {
+            'precio_entrada_base': 'Precio base de la entrada ($)',
+        }
+        help_texts = {
+            'precio_entrada_base': 'Se usa para las funciones que no tengan un precio manual cargado '
+                                     '(se multiplica por el multiplicador de la sala).',
         }

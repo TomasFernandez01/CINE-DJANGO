@@ -2,6 +2,7 @@ from django.db import models
 from django.contrib.auth.models import User
 from django.utils import timezone
 from datetime import timedelta
+from decimal import Decimal
 from salas.models import Funcion
 from django.conf import settings
 
@@ -38,9 +39,22 @@ class Reserva(models.Model):
         return f"Reserva {self.codigo_reserva} - {self.usuario.username} - {self.funcion.pelicula.titulo}"
     
     def total(self):
-        """Calcula el total a pagar"""
+        """
+        Calcula el total a pagar por las entradas. Si hay asientos guardados,
+        suma el precio de CADA asiento (funcion.precio_para_asiento), que ya
+        tiene en cuenta el multiplicador de la sala y el de la categoría del
+        asiento si tiene una (ej: "Mejorado"). Si por algún motivo no hay
+        asientos guardados (reservas viejas, o casos sin mapa), cae al
+        cálculo plano anterior como respaldo.
+        """
+        asientos = self.lista_asientos()
+        if asientos:
+            return sum(
+                (self.funcion.precio_para_asiento(codigo) for codigo in asientos),
+                Decimal('0')
+            )
+        return self.funcion.precio_final() * self.cantidad_entradas
         return self.funcion.precio * self.cantidad_entradas
-    
     #-------------------------------------------------------------
                                 #PROMOCIONES 
     
@@ -58,6 +72,23 @@ class Reserva(models.Model):
     #-------------------------------------------------------------
     
     ##############################################################3
+    def desglose_precios_asientos(self):
+        """
+        Lista de {codigo, precio} para cada asiento de esta reserva, usando el
+        precio real de CADA asiento (con su categoría especial si tiene).
+        Sirve para mostrar un desglose cuando no todos cuestan lo mismo.
+        """
+        return [
+            {'codigo': codigo, 'precio': self.funcion.precio_para_asiento(codigo)}
+            for codigo in self.lista_asientos()
+        ]
+
+    def tiene_precios_mixtos(self):
+        """True si esta reserva tiene asientos con precios distintos entre sí
+        (por categorías especiales tipo "Mejorado")."""
+        precios = {item['precio'] for item in self.desglose_precios_asientos()}
+        return len(precios) > 1
+
     def lista_asientos(self):
         """Retorna los asientos como lista"""
         if self.asientos_seleccionados:

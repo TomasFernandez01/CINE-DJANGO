@@ -3,6 +3,17 @@ from peliculas.models import Pelicula
 from datetime import timedelta
 from django.utils import timezone
 from django.core.exceptions import ValidationError
+from decimal import Decimal, ROUND_HALF_UP
+
+
+def redondear_precio(monto, paso=Decimal('50')):
+    """
+    Redondea un monto al múltiplo de `paso` más cercano (por defecto $50), para
+    que combinar multiplicadores (sala x categoría de asiento) no deje precios
+    feos con muchos decimales.
+    """
+    monto = Decimal(monto)
+    return (monto / paso).quantize(Decimal('1'), rounding=ROUND_HALF_UP) * paso
 
 class Sala(models.Model):
     TIPO_CHOICES = [
@@ -11,6 +22,9 @@ class Sala(models.Model):
         ('2d_premium', '2D Premium'),
         ('3d_premium', '3D Premium (IMAX/DBOX)'),
     ]
+    # 'multiplicador' es el valor SUGERIDO al elegir ese tipo (autocompleta el
+    # campo Sala.multiplicador_precio en el formulario), no un valor fijo: el
+    # admin siempre puede pisarlo con cualquier decimal.
     TIPO_CONFIG = {
         '2d':        {'icono': '🎬', 'color': '#6c757d', 'badge': 'secondary'},
         '3d':        {'icono': '🥽', 'color': '#007bff', 'badge': 'primary'},
@@ -32,17 +46,24 @@ class Sala(models.Model):
     activa = models.BooleanField(default=True)
     
     filas = models.IntegerField(
-        default=6, 
+        default=10, 
         help_text=
                 "Cantidad TOTAL de filas del lienzo de la sala (A, B, C, ...). "
                 "Si la sala tiene secciones, ninguna puede exceder este valor."
         )
     columnas = models.IntegerField(
-        default=8, 
+        default=10, 
         help_text=
                 "Cantidad TOTAL de columnas del lienzo de la sala (1, 2, 3, ...). "
                 "Si la sala tiene secciones, ninguna puede exceder este valor."
         )
+    
+    multiplicador_precio = models.DecimalField(
+        max_digits=4, decimal_places=2, default=Decimal('1.00'),
+        help_text="Multiplica el precio base de la entrada para funciones en esta "
+                   "sala (1.00 = precio normal, 1.25 = +25%, etc). Libre: podés "
+                   "usar el valor sugerido de tu tipo de sala o poner cualquier otro."
+    )
     
     ###############################################################
     def __str__(self):
@@ -54,6 +75,11 @@ class Sala(models.Model):
     def tipo_color(self):
         return self.TIPO_CONFIG.get(self.tipo, {}).get('color', '#6c757d')
  
+    def tipo_multiplicador_sugerido(self):
+        """Multiplicador sugerido según el tipo de sala (2D/3D/Premium), solo
+        como referencia para precargar el campo libre multiplicador_precio."""
+        return self.TIPO_CONFIG.get(self.tipo, {}).get('multiplicador', Decimal('1.00'))
+
     def es_premium(self):
         return 'premium' in self.tipo
  
@@ -262,13 +288,45 @@ class Funcion(models.Model):
     pelicula = models.ForeignKey(Pelicula, on_delete=models.CASCADE, related_name='funciones')
     sala = models.ForeignKey(Sala, on_delete=models.CASCADE, related_name='funciones')
     fecha_hora = models.DateTimeField()
-    precio = models.DecimalField(max_digits=10, decimal_places=2)
+    precio = models.DecimalField(
+        max_digits=10, decimal_places=2, null=True, blank=True,
+        help_text="Precio manual de esta función. Si lo dejás vacío, se calcula "
+                   "automáticamente: precio base configurado x multiplicador de "
+                   "la sala."
+    )
     disponible = models.BooleanField(default=True)
     
     # def __str__(self):
     #     return f"{self.pelicula.titulo} - {self.sala.nombre} - {self.fecha_hora.strftime('%d/%m/%Y %H:%M')}"
     def __str__(self):
         return f"{self.pelicula.titulo} - {self.sala.nombre} [{self.sala.get_tipo_display()}] - {self.fecha_hora.strftime('%d/%m/%Y %H:%M')}"
+
+    def precio_final(self):
+        """
+        Precio final de la función: el manual si el admin cargó uno, sino el
+        calculado automáticamente (precio base configurable x multiplicador
+        de la sala), redondeado a un valor cerrado.
+        """
+        if self.precio is not None:
+            return self.precio
+        from panel.models import ConfiguracionGeneral
+        base = ConfiguracionGeneral.obtener().precio_entrada_base
+        return redondear_precio(base * self.sala.multiplicador_precio)
+
+    def precio_para_asiento(self, codigo_asiento):
+        """
+        Precio final de UN asiento puntual: el precio_final() de la función,
+        multiplicado además por el multiplicador de su categoría si ese
+        asiento tiene una CategoriaAsiento asignada (ej: "Mejorado" x1.25).
+        Los multiplicadores se van aplicando en cadena (sala, luego asiento),
+        no se reemplazan entre sí — así el sistema queda simple y predecible
+        para cuando se sumen más modificadores de precio a futuro.
+        """
+        precio_base = self.precio_final()
+        categoria = self.sala.categorias_asientos.filter(asiento_codigo=codigo_asiento).first()
+        if categoria:
+            return redondear_precio(precio_base * categoria.multiplicador)
+        return precio_base
 
     # NUEVO: ahora los metodos orbitan a a funcion asienos_ocupados
     def asientos_ocupados(self):
@@ -459,9 +517,7 @@ class Funcion(models.Model):
 class AsientoBloqueado(models.Model):
     MOTIVO_CHOICES = [
         ('mantenimiento', 'Mantenimiento'),
-        ('vip', 'VIP'),
-        ('admin', 'Reservado por Admin'),
-        ('reservado', 'Reservado (cortesía/especial)'),
+        ('reservado', 'Reservado'),
     ]
 
     sala = models.ForeignKey(
@@ -474,7 +530,7 @@ class AsientoBloqueado(models.Model):
         max_length=10,
         help_text="Código del asiento, ej: A1"
     )
-    motivo = models.CharField(max_length=20, choices=MOTIVO_CHOICES, default='admin')
+    motivo = models.CharField(max_length=20, choices=MOTIVO_CHOICES, default='mantenimiento')
     funcion = models.ForeignKey(
         Funcion,
         on_delete=models.CASCADE,
@@ -552,6 +608,16 @@ class AsientoBloqueado(models.Model):
                 raise ValidationError(
                     f'El asiento {self.asiento_codigo} ya está bloqueado para esta función.'
                 )
+            
+            # 4. Un asiento bloqueado de forma PERMANENTE no puede tener también
+            #    una categoría especial (serían dos estados contradictorios).
+            if self.funcion_id is None and self.sala.categorias_asientos.filter(
+                    asiento_codigo=self.asiento_codigo).exists():
+                raise ValidationError(
+                    f'El asiento {self.asiento_codigo} tiene una categoría especial '
+                    f'asignada (ej: Mejorado). Sacale esa categoría antes de bloquearlo '
+                    f'de forma permanente.'
+                )
 
     def save(self, *args, **kwargs):
         if not kwargs.pop('skip_validation', False):
@@ -566,5 +632,87 @@ class AsientoBloqueado(models.Model):
             models.UniqueConstraint(
                 fields=['sala', 'asiento_codigo', 'funcion'],
                 name='unico_bloqueo_por_asiento_funcion'
+            ),
+        ]
+
+
+########################################################################
+class CategoriaAsiento(models.Model):
+    """
+    Categoría especial para un asiento puntual (ej: "Mejorado"), que a
+    diferencia de AsientoBloqueado NO impide comprarlo — solo le cambia el
+    precio (vía `multiplicador`, aplicado sobre Funcion.precio_final()) y el
+    color en el mapa. Es permanente por sala (no depende de una función
+    puntual), a diferencia de los bloqueos que sí pueden ser por función.
+    """
+    sala = models.ForeignKey(
+        Sala,
+        on_delete=models.CASCADE,
+        related_name='categorias_asientos'
+    )
+    asiento_codigo = models.CharField(
+        max_length=10,
+        help_text="Código del asiento, ej: A1"
+    )
+    nombre = models.CharField(
+        max_length=50, default='Mejorado',
+        help_text="Nombre de la categoría, ej: Mejorado, Confort, Primera fila"
+    )
+    multiplicador = models.DecimalField(
+        max_digits=4, decimal_places=2, default=Decimal('1.25'),
+        help_text="Se aplica sobre el precio final de la función para este asiento "
+                   "puntual (1.25 = +25%, 1.50 = +50%, etc)."
+    )
+    color = models.CharField(
+        max_length=7, default='#f1c40f',
+        help_text="Color hex para mostrar este asiento en el mapa, ej: #f1c40f"
+    )
+    creado_en = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return f"{self.sala.nombre} - {self.asiento_codigo} ({self.nombre} x{self.multiplicador})"
+
+    def clean(self):
+        super().clean()
+
+        # 1. Validar que el asiento_codigo exista realmente en la sala
+        if self.sala_id and self.asiento_codigo:
+            codigos_validos = {
+                codigo
+                for fila in self.sala.layout_asientos()
+                for codigo in fila['celdas']
+                if codigo is not None
+            }
+            if self.asiento_codigo not in codigos_validos:
+                raise ValidationError({
+                    'asiento_codigo': f'"{self.asiento_codigo}" no existe en la sala '
+                                       f'"{self.sala.nombre}". Códigos válidos: '
+                                       f'{", ".join(sorted(codigos_validos))}.'
+                })
+
+        # 2. Un asiento con categoría especial no puede estar bloqueado de
+        #    forma permanente al mismo tiempo (son estados contradictorios).
+        if self.sala_id and self.asiento_codigo:
+            if self.sala.bloqueos_asientos.filter(
+                    asiento_codigo=self.asiento_codigo, funcion__isnull=True).exists():
+                raise ValidationError(
+                    f'El asiento {self.asiento_codigo} tiene un bloqueo permanente '
+                    f'(mantenimiento/reservado). Sacale ese bloqueo antes de asignarle '
+                    f'una categoría.'
+                )
+
+    def save(self, *args, **kwargs):
+        if not kwargs.pop('skip_validation', False):
+            self.full_clean()
+        super().save(*args, **kwargs)
+
+    class Meta:
+        verbose_name = 'Categoría de Asiento'
+        verbose_name_plural = 'Categorías de Asientos'
+        ordering = ['sala', 'asiento_codigo']
+        constraints = [
+            models.UniqueConstraint(
+                fields=['sala', 'asiento_codigo'],
+                name='unica_categoria_por_asiento'
             ),
         ]

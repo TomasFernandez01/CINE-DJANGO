@@ -105,6 +105,7 @@
             opacity: 0.9;
         }
         .sidebar-sublink .icon { font-size: 0.9rem; }
+
         .sidebar-divider {
             border: none;
             border-top: 1px solid rgba(255,255,255,0.07);
@@ -339,25 +340,53 @@
 
     <nav>
         <!-- Dashboard -->
-        <div class="sidebar-section"><a href="{% url 'panel:inicio' %}" class="sidebar-link {% if seccion_activa == 'inicio' %}active{% endif %}"><span class="icon">🏠</span> Dashboard</a></div>
+        <div class="sidebar-section">
+            <a href="{% url 'panel:inicio' %}" 
+                class="sidebar-link {% if seccion_activa == 'inicio' %}active{% endif %}">
+                <span class="icon">🏠</span> Dashboard
+            </a>
+        </div>
+        
         <hr class="sidebar-divider">
+
         <!-- Catálogo -->
         <div class="sidebar-section">
             <div class="sidebar-section-label">Catálogo</div>
-            <a href="{% url 'panel:peliculas_lista' %}" class="sidebar-link {% if seccion_activa == 'peliculas' %}active{% endif %}"><span class="icon">🎬</span> Películas</a>
-            <a href="{% url 'panel:salas_lista' %}" class="sidebar-link {% if seccion_activa == 'salas' %}active{% endif %}"><span class="icon">🏢</span> Salas</a>
-            <a href="{% url 'panel:funciones_lista' %}" class="sidebar-link {% if seccion_activa == 'funciones' %}active{% endif %}"><span class="icon">📅</span> Funciones</a>
-        </div>
-        <hr class="sidebar-divider">
-        <!-- Promociones -->
-        <div class="sidebar-section">
-            <div class="sidebar-section-label">Promociones</div>
-            <a href="{% url 'panel:combos_lista' %}"class="sidebar-link {% if seccion_activa == 'combos' %}active{% endif %}"><span class="icon">🍿</span>Combos</a>
-            <a href="{% url 'panel:cupones_lista' %}"class="sidebar-link {% if seccion_activa == 'cupones' %}active{% endif %}"><span class="icon">🎟️</span>Cupones</a>
-            <a href="{% url 'panel:promodia_lista' %}"class="sidebar-link {% if seccion_activa == 'promodia' %}active{% endif %}"><span class="icon">📆</span>Dscuentos</a>
+            <a href="{% url 'panel:peliculas_lista' %}" 
+                class="sidebar-link {% if seccion_activa == 'peliculas' %}active{% endif %}">
+                <span class="icon">🎬</span> Películas
+            </a>
+            <a href="{% url 'panel:salas_lista' %}" 
+                class="sidebar-link {% if seccion_activa == 'salas' %}active{% endif %}">
+                <span class="icon">🏢</span> Salas
+            </a>
+            <a href="{% url 'panel:funciones_lista' %}" 
+                class="sidebar-link {% if seccion_activa == 'funciones' %}active{% endif %}">
+                <span class="icon">📅</span> Funciones
+            </a>
         </div>
 
         <hr class="sidebar-divider">
+
+        <!-- Promociones -->
+        <div class="sidebar-section">
+            <div class="sidebar-section-label">Promociones</div>
+            <a href="{% url 'panel:combos_lista' %}"
+                class="sidebar-link {% if seccion_activa == 'combos' %}active{% endif %}">
+                <span class="icon">🍿</span>Combos
+            </a>
+            <a href="{% url 'panel:cupones_lista' %}"
+                class="sidebar-link {% if seccion_activa == 'cupones' %}active{% endif %}">
+                <span class="icon">🎟️</span>Cupones
+            </a>
+            <a href="{% url 'panel:promodia_lista' %}"
+                class="sidebar-link {% if seccion_activa == 'promodia' %}active{% endif %}">
+                <span class="icon">📆</span>Descuentos
+            </a>
+        </div>
+
+        <hr class="sidebar-divider">
+
         <!-- Operaciones -->
         <div class="sidebar-section">
             <div class="sidebar-section-label">Operaciones</div>
@@ -380,6 +409,10 @@
             <a href="{% url 'panel:verificador_qr' %}"
                class="sidebar-link {% if seccion_activa == 'verificador' %}active{% endif %}">
                 <span class="icon">📱</span> Verificador QR
+            </a>
+            <a href="{% url 'panel:configuracion_general' %}"
+               class="sidebar-link {% if seccion_activa == 'configuracion' %}active{% endif %}">
+                <span class="icon">⚙️</span> Configuración General
             </a>
         </div>
 
@@ -411,7 +444,7 @@
             {% endif %}
         </div>
         <a href="{% url 'peliculas:inicio' %}" class="btn-sitio">
-            ← Volver al sitio
+            PAGINA PRINCIPAL
         </a>
     </div>
 </aside>

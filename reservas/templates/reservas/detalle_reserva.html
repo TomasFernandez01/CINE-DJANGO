@@ -4,10 +4,9 @@
 
 {% block contenido %}
 <div style="max-width: 600px; margin: 0 auto;">
-    <h1 style="text-align: center;">Proceso-Comprobante de Reserva</h1>
-
     <!-- QR si está pagado -->
     {% if reserva.estado == 'confirmada' and reserva.pago and reserva.pago.codigo_qr %}
+    <h1 style="text-align: center;">Comprobante de Reserva</h1>
     <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); padding: 2rem; border-radius: 12px; margin-top: 1.5rem; margin-bottom: 2rem; text-align: center; color: white;">
         <h2 style="margin: 0 0 1rem 0;">🎫 Tu Entrada</h2>
         <div style="background: white; padding: 1.5rem; border-radius: 8px; display: inline-block; margin-bottom: 1rem;">
@@ -17,8 +16,10 @@
             <p style="margin: 0 0 0.3rem 0; font-size: 0.85rem; opacity: 0.9;">Código QR:</p>
             <p style="margin: 0; font-size: 1.1rem; font-weight: bold; font-family: monospace; letter-spacing: 1px;">{{ reserva.pago.codigo_qr }}</p>
         </div>
-        <p style="margin: 1rem 0 0 0; font-size: 0.9rem; opacity: 0.9;">📱 Mostrá este código al ingresar al cine</p>
+        <p style="margin: 1rem 0 0 0; font-size: 0.9rem; opacity: 0.9;">Mostrá este código al ingresar al cine</p>
     </div>
+    {% else %}
+    <h1 style="text-align: center;">Proceso de Reserva</h1>
     {% endif %}
 
     <div style="background-color: white; padding: 2rem; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); margin-top: 1.5rem;">
@@ -32,7 +33,7 @@
         <!-- Contador regresivo para pendientes -->
         {% if reserva.estado == 'pendiente' and reserva.tiempo_restante_pago %}
         <div id="countdownContainer" style="background: linear-gradient(135deg, #ff6b6b 0%, #ff8e53 100%); padding: 1.5rem; border-radius: 8px; margin-bottom: 1.5rem; text-align: center; color: white;">
-            <div style="font-size: 0.9rem; margin-bottom: 0.5rem; opacity: 0.95;">⏰ Tiempo restante para completar el pago:</div>
+            <div style="font-size: 0.9rem; margin-bottom: 0.5rem; opacity: 0.95;">Tiempo restante para completar el pago:</div>
             <div id="countdown" style="font-size: 3rem; font-weight: bold; font-family: 'Courier New', monospace;" data-tiempo="{{ reserva.tiempo_restante_pago }}">
                 {{ reserva.tiempo_restante_formato }}
             </div>
@@ -59,7 +60,7 @@
 
             {% if reserva.asientos_seleccionados %}
             <div style="margin-top: 1rem;">
-                <strong>🪑 Asientos:</strong>
+                <strong>Asientos =</strong>
                 <div style="display: flex; gap: 0.5rem; flex-wrap: wrap; margin-top: 0.5rem;">
                     {% for asiento in reserva.lista_asientos %}
                         <span style="padding: 0.25rem 0.75rem; background-color: #007bff; color: white; border-radius: 4px; font-weight: bold;">
@@ -86,48 +87,70 @@
             {% if reserva.estado == 'confirmada' and reserva.pago %}
                 {# Reserva pagada: mostrar desglose completo #}
                 <div style="display: flex; flex-direction: column; gap: 0.4rem;">
-                    <div style="display: flex; justify-content: space-between; color: #555; font-size: 0.95rem;">
-                        <span>Subtotal ({{ reserva.cantidad_entradas }} × ${{ reserva.funcion.precio }})</span>
-                        <span>${{ reserva.pago.monto_original }}</span>
-                    </div>
+                    {% if reserva.tiene_precios_mixtos %}
+                        {# Hay asientos con categoría especial (precio distinto entre sí): desglose por asiento #}
+                        {% for item in reserva.desglose_precios_asientos %}
+                            <div style="display: flex; justify-content: space-between; color: #555; font-size: 0.9rem;">
+                                <span>Asiento {{ item.codigo }}</span>
+                                <span>${{ item.precio }}</span>
+                        </div>
+                        {% endfor %}
+                        <div style="display: flex; justify-content: space-between; color: #555; font-size: 0.95rem; font-weight:600; border-top:1px dashed #99c2e8; padding-top:0.3rem;">
+                            <span>Subtotal ({{ reserva.cantidad_entradas }} entradas)</span>    
+                            <span>${{ reserva.pago.monto_original }}</span>
+                        </div>
+                    {% else %}
+                        <div style="display: flex; justify-content: space-between; color: #555; font-size: 0.95rem;">
+                            <span>Subtotal ({{ reserva.cantidad_entradas }} × ${{ reserva.funcion.precio_final }})</span>
+                            <span>${{ reserva.pago.monto_original }}</span>
+                        </div>
+                    {% endif %}
 
                     {% if reserva.pago.promo_dia %}
-                    <div style="display: flex; justify-content: space-between; color: #e91e8c; font-size: 0.95rem;">
-                        <span>🎉 {{ reserva.pago.promo_dia.nombre }}</span>
-                        <span>-${{ reserva.pago.descuento_promo_dia }}</span>
-                    </div>
+                        <div style="display: flex; justify-content: space-between; color: #e91e8c; font-size: 0.95rem;">
+                            <span>🎉 {{ reserva.pago.promo_dia.nombre }}</span>
+                            <span>-${{ reserva.pago.descuento_promo_dia }}</span>
+                        </div>
                     {% endif %}
 
                     {% if reserva.pago.cupon_usado %}
-                    <div style="display: flex; justify-content: space-between; color: #28a745; font-size: 0.95rem;">
-                        <span>🏷️ Cupón {{ reserva.pago.cupon_usado.codigo }}</span>
-                        <span>-${{ reserva.pago.descuento_cupon }}</span>
-                    </div>
+                        <div style="display: flex; justify-content: space-between; color: #28a745; font-size: 0.95rem;">
+                            <span>🏷️ Cupón {{ reserva.pago.cupon_usado.codigo }}</span>
+                            <span>-${{ reserva.pago.descuento_cupon }}</span>
+                        </div>
                     {% endif %}
 
                     {% if reserva.pago.combo %}
-                    <div style="display: flex; justify-content: space-between; color: #ff8c00; font-size: 0.95rem;">
-                        <span>🍿 {{ reserva.pago.combo.nombre }}</span>
-                        <span>+${{ reserva.pago.precio_combo }}</span>
-                    </div>
+                        <div style="display: flex; justify-content: space-between; color: #ff8c00; font-size: 0.95rem;">
+                            <span>🍿 {{ reserva.pago.combo.nombre }}</span>
+                            <span>+${{ reserva.pago.precio_combo }}</span>
+                        </div>
                     {% endif %}
 
                     <div style="display: flex; justify-content: space-between; border-top: 2px solid #007bff; padding-top: 0.5rem; margin-top: 0.25rem;">
-                        <span style="font-size: 1.1rem; font-weight: bold; color: #333;">Total pagado</span>
+                        <span style="font-size: 1.1rem; font-weight: bold; color: #333;">Total pagado = </span>
                         <span style="font-size: 1.5rem; font-weight: bold; color: #28a745;">${{ reserva.pago.monto }}</span>
                     </div>
 
                     {% if reserva.pago.descuento_total > 0 %}
-                    <div style="text-align: center; margin-top: 0.25rem; padding: 0.4rem; background: #d4edda; border-radius: 4px; color: #155724; font-size: 0.9rem; font-weight: bold;">
-                        💸 Ahorraste ${{ reserva.pago.descuento_total }}
-                    </div>
+                        <div style="text-align: center; margin-top: 0.25rem; padding: 0.4rem; background: #d4edda; border-radius: 4px; color: #155724; font-size: 0.9rem; font-weight: bold;">                   
+                            💸 Ahorraste ${{ reserva.pago.descuento_total }}
+                        </div>
                     {% endif %}
                 </div>
             {% else %}
                 {# Pendiente: mostrar total estimado #}
-                <p style="margin: 0 0 0.25rem 0; font-size: 0.9rem; color: #666;">
-                    Precio por entrada: ${{ reserva.funcion.precio }}
-                </p>
+                {% if reserva.tiene_precios_mixtos %}
+                    {% for item in reserva.desglose_precios_asientos %}
+                    <p style="margin: 0 0 0.15rem 0; font-size: 0.85rem; color: #666;">
+                        Asiento {{ item.codigo }}: ${{ item.precio }}
+                    </p>
+                    {% endfor %}
+                {% else %}
+                    <p style="margin: 0 0 0.25rem 0; font-size: 0.9rem; color: #666;">
+                        Precio por entrada: ${{ reserva.funcion.precio_final }}
+                    </p>
+                {% endif %}
                 <p style="margin: 0; font-size: 1.5rem; font-weight: bold; color: #333;">
                     Total estimado: ${{ reserva.total }}
                 </p>
@@ -141,7 +164,7 @@
         {% if reserva.estado == 'pendiente' %}
         <div style="background-color: #fff3cd; padding: 1rem; border-radius: 4px; border-left: 4px solid #ffc107; margin-bottom: 1rem;">
             <p style="margin: 0; color: #856404;">
-                <strong>⚠️ Reserva pendiente de pago</strong><br>
+                <strong>Reserva pendiente de pago</strong><br>
                 Completá el pago antes de que expire el tiempo. Podés aplicar cupones y elegir combos al pagar.
             </p>
         </div>
@@ -154,18 +177,18 @@
         {% elif reserva.estado == 'confirmada' %}
         <div style="background-color: #d4edda; padding: 1rem; border-radius: 4px; border-left: 4px solid #28a745; margin-bottom: 1rem;">
             <p style="margin: 0; color: #155724;">
-                <strong>✅ Reserva confirmada</strong><br>
+                <strong>Reserva confirmada</strong><br>
                 Tu pago fue procesado. Mostrá el código QR al ingresar al cine.
                 {% if reserva.pago.combo %}Retirá tu <strong>{{ reserva.pago.combo.nombre }}</strong> en el mostrador de combos.{% endif %}
             </p>
         </div>
         {% elif reserva.estado == 'expirada' %}
         <div style="background-color: #e2e3e5; padding: 1rem; border-radius: 4px; border-left: 4px solid #6c757d; margin-bottom: 1rem;">
-            <p style="margin: 0; color: #383d41;"><strong>⏱️ Reserva expirada</strong><br>La función ya pasó.</p>
+            <p style="margin: 0; color: #383d41;"><strong>⏱ Reserva expirada</strong><br>La función ya pasó.</p>
         </div>
         {% elif reserva.estado == 'cancelada' %}
         <div style="background-color: #f8d7da; padding: 1rem; border-radius: 4px; border-left: 4px solid #dc3545; margin-bottom: 1rem;">
-            <p style="margin: 0; color: #721c24;"><strong>❌ Reserva cancelada</strong></p>
+            <p style="margin: 0; color: #721c24;"><strong>Reserva cancelada</strong></p>
         </div>
         {% endif %}
 

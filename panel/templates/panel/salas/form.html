@@ -26,7 +26,7 @@
 
             <!-- Formulario -->
             <div class="card" style="grid-column:1/-1;">
-                <div class="card-header"><h3>🏢 Datos de la Sala</h3></div>
+                <div class="card-header"><h3>Datos de la Sala</h3></div>
                 <div class="card-body" style="display:flex; flex-direction:column; gap:1.1rem;">
 
                     <div>
@@ -37,6 +37,29 @@
                         {% if form.nombre.errors %}
                         <div class="field-error">{{ form.nombre.errors.0 }}</div>
                         {% endif %}
+                    </div>
+
+                    <div style="display:grid; grid-template-columns:1fr 1fr; gap:1rem;">
+                        <div>
+                            <label class="form-label">
+                                Tipo de sala <span class="required">*</span>
+                            </label>
+                            {{ form.tipo }}
+                            <div class="form-help">{{ form.tipo.help_text }}</div>
+                            {% if form.tipo.errors %}
+                            <div class="field-error">{{ form.tipo.errors.0 }}</div>
+                            {% endif %}
+                        </div>
+                        <div>
+                            <label class="form-label">
+                                Multiplicador de precio <span class="required">*</span>
+                            </label>
+                            {{ form.multiplicador_precio }}
+                            <div class="form-help">{{ form.multiplicador_precio.help_text }}</div>
+                            {% if form.multiplicador_precio.errors %}
+                            <div class="field-error">{{ form.multiplicador_precio.errors.0 }}</div>
+                            {% endif %}
+                        </div>
                     </div>
 
                     <div style="display:grid; grid-template-columns:1fr 1fr; gap:1rem;">
@@ -75,9 +98,9 @@
             <!-- Secciones de la sala -->
             <div class="card" style="grid-column:1/-1;">
                 <div class="card-header">
-                    <h3>📐 Secciones de la Sala</h3>
+                    <h3>Secciones de la Sala</h3>
                     <button type="button" id="btnAgregarSeccion" class="btn btn-ghost" style="font-size:0.8rem;">
-                        + Agregar sección
+                        Nueva sección
                     </button>
                 </div>
                 <div class="card-body">
@@ -176,7 +199,7 @@
             {% endcomment %}
             <!-- Preview calculado -->
             <div class="card" style="grid-column:1/-1;">
-                <div class="card-header"><h3>📐 Capacidad Calculada</h3></div>
+                <div class="card-header"><h3>Capacidad Calculada</h3></div>
                 <div class="card-body" style="text-align:center;">
                     <div style="font-size:3rem; font-weight:800; color:#1a1a2e;" id="capacidadCalc">
                         {% if objeto %}{{ objeto.capacidad }}{% else %}—{% endif %}
@@ -215,7 +238,27 @@
     </form>
     {% endif %}
 </div>
+<script>
+// Autocompletar el multiplicador sugerido al elegir el tipo de sala (el admin
+// lo puede pisar después con cualquier valor, esto es solo un atajo).
+(function () {
+    const tipoSelect = document.getElementById('id_tipo');
+    const multInput = document.getElementById('id_multiplicador_precio');
+    if (!tipoSelect || !multInput) return;
 
+    const MULTIPLICADORES_SUGERIDOS = {
+        '2d': '1.00',
+        '3d': '1.25',
+        '2d_premium': '1.25',
+        '3d_premium': '1.50',
+    };
+
+    tipoSelect.addEventListener('change', function () {
+        const sugerido = MULTIPLICADORES_SUGERIDOS[tipoSelect.value];
+        if (sugerido) multInput.value = sugerido;
+    });
+})();
+</script>
 <script>
 (function () {
     const filasInput = document.getElementById('id_filas');

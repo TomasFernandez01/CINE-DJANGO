@@ -99,7 +99,7 @@
         <!-- Funciones próximas -->
         <div class="card">
             <div class="card-header">
-                <h3>📅 Funciones Próximas ({{ funciones.count }})</h3>
+                <h3>Próximas Funciones ({{ funciones.count }})</h3>
             </div>
             {% if funciones %}
             <table class="tabla">
@@ -117,7 +117,10 @@
                     <tr>
                         <td style="font-weight:600;">{{ f.fecha_hora|date:"d/m/Y H:i" }}</td>
                         <td style="color:#666;">{{ f.sala.nombre }}</td>
-                        <td style="color:#27ae60; font-weight:600;">${{ f.precio }}</td>
+                        <td style="color:#27ae60; font-weight:600;">
+                            ${{ f.precio_final }}
+                            {% if f.precio is None %}<span style="color:#999; font-weight:400; font-size:0.75rem;">(auto)</span>{% endif %}
+                        </td>
                         <td>
                             <span style="font-size:0.85rem;
                                 color:{% if f.asientos_disponibles > 10 %}#27ae60{% elif f.asientos_disponibles > 0 %}#f39c12{% else %}#e74c3c{% endif %};">

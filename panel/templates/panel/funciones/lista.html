@@ -10,13 +10,13 @@
 {% block contenido %}
 
 <div style="display:flex; justify-content:space-between; align-items:center;flex-wrap:wrap; gap:1rem; margin-bottom:1.5rem;">
-        <h1 style="font-size:1.4rem; color:#1a1a2e; margin:0;">📅 Funciones</h1>
+        <h1 style="font-size:1.4rem; color:#1a1a2e; margin:0;">FUNCIONES</h1>
         <div style="display:flex; gap:0.5rem;">
         
             <button type="submit" form="formFunciones" id="btnEliminarSeleccionadas" class="btn btn-danger" disabled style="opacity:0.5; cursor:not-allowed;">Eliminar</button>
-            <a href="{% url 'panel:salas_lista' %}" class="btn btn-primary">SALAS</a>
-            <a href="{% url 'panel:inicio' %}" class="btn btn-primary">INICIO</a>
-            <a href="{% url 'panel:funciones_crear' %}" class="btn btn-primary">NUEVA</a>
+            <a href="{% url 'panel:salas_lista' %}" class="btn btn-primary">Salas</a>
+            {% comment %} <a href="{% url 'panel:inicio' %}" class="btn btn-primary">INICIO</a> {% endcomment %}
+            <a href="{% url 'panel:funciones_crear' %}" class="btn btn-primary">Nueva</a>
     </div>
 </div>
 
@@ -65,7 +65,10 @@
                 <td style="font-weight:600;">
                     {{ f.fecha_hora|date:"d/m/Y" }}<span style="color:#999; font-size:0.8rem;">{{ f.fecha_hora|date:"H:i" }} hs</span>
                 </td>
-                <td style="color:#27ae60; font-weight:600;">${{ f.precio }}</td>
+                <td style="color:#27ae60; font-weight:600;">
+                    ${{ f.precio_final }}
+                    {% if f.precio is None %}<span style="color:#999; font-weight:400; font-size:0.75rem;">(auto)</span>{% endif %}
+                </td>
                 <td style="min-width:120px;">
                     {% with vendidos=cap|add:"-"|add:disp|add:"0" %}
                     <div style="font-size:0.8rem; margin-bottom:3px;">

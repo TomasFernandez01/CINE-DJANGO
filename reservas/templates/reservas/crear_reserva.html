@@ -11,7 +11,7 @@
     <div style="margin-bottom: 1.5rem; padding: 1rem; background-color: #f8f9fa; border-radius: 4px;">
         <p style="margin: 0.5rem 0;"><strong>Sala:</strong> {{ funcion.sala.nombre }}</p>
         <p style="margin: 0.5rem 0;"><strong>Fecha y Hora:</strong> {{ funcion.fecha_hora|date:"d/m/Y H:i" }}</p>
-        <p style="margin: 0.5rem 0;"><strong>Precio por entrada:</strong> ${{ funcion.precio }}</p>
+        <p style="margin: 0.5rem 0;"><strong>Precio por entrada:</strong> ${{ funcion.precio_final }}</p>
         <p style="margin: 0.5rem 0; color: #28a745;"><strong>Asientos disponibles:</strong> {{ asientos_disponibles }}</p>
     </div>
     
@@ -20,27 +20,27 @@
         
         <div style="margin-bottom: 1rem;">
             <label for="cantidad_entradas" style="display: block; margin-bottom: 0.5rem; font-weight: bold;">
-                Cantidad de entradas (máximo 4):
+                Cantidad de entradas (máximo 5):
             </label>
             <input 
                 type="number" 
                 id="cantidad_entradas" 
                 name="cantidad_entradas" 
                 min="1" 
-                max="4" 
+                max="5" 
                 value="1" 
                 required
                 style="width: 100%; padding: 0.5rem; border: 1px solid #ddd; border-radius: 4px; font-size: 1rem;"
             >
             <small style="display: block; color: #6c757d; margin-top: 0.25rem;">
-                Límite: 1-4 entradas por reserva
+                Límite: 1-5 entradas por reserva
             </small>
         </div>
-        
+        {% comment %} {{ funcion.precio }} {% endcomment %}
         <div style="margin-top: 1rem; padding: 1rem; background-color: #e7f3ff; border-radius: 4px;">
             <p style="margin: 0; font-size: 1.2rem;">
                 <strong>Total: $</strong>
-                <span id="total">{{ funcion.precio }}</span>
+                <span id="total">{{ funcion.precio_final }}</span>
             </p>
         </div>
         
@@ -56,7 +56,7 @@
 </div>
 
 <script>
-    const precioUnitario = {{ funcion.precio }};
+    const precioUnitario = {{ funcion.precio_final }};
     const cantidadInput = document.getElementById('cantidad_entradas');
     const totalSpan = document.getElementById('total');
     const asientosDisponibles = {{ asientos_disponibles }};
@@ -66,7 +66,7 @@
         
         // Validar límites
         if (cantidad < 1) cantidad = 1;
-        if (cantidad > 10) cantidad = 10;
+        if (cantidad > 5) cantidad = 5;
         if (cantidad > asientosDisponibles) cantidad = asientosDisponibles;
         
         this.value = cantidad;

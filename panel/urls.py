@@ -26,6 +26,8 @@ urlpatterns = [
     path('salas/<int:sala_id>/asientos/',       views.salas_asientos,            name='salas_asientos'),
     path('salas/<int:sala_id>/asientos/bloquear/',views.salas_asientos_bloquear,   name='salas_asientos_bloquear'),
     path('salas/<int:sala_id>/asientos/desbloquear/',views.salas_asientos_desbloquear, name='salas_asientos_desbloquear'),
+    path('salas/<int:sala_id>/asientos/categoria/asignar/', views.salas_categoria_asignar, name='salas_categoria_asignar'),
+    path('salas/<int:sala_id>/asientos/categoria/quitar/',  views.salas_categoria_quitar,  name='salas_categoria_quitar'),
     # ---- Funciones --------------------------------------------------------------------------------
     path('funciones/',                          views.funciones_lista,          name='funciones_lista'),
     # CRUD
@@ -72,4 +74,6 @@ urlpatterns = [
     path('promociones-dia/eliminar/',              views.promodia_eliminar, name='promodia_eliminar'),
     # ---- Cupones Usados (solo lectura) --------------------------------------------------------------------------------
     path('cupones-usados/',                     views.cupones_usados_lista, name='cupones_usados_lista'),
+    # ---- Configuración General --------------------------------------------------------------------------------
+    path('configuracion/',                      views.configuracion_general, name='configuracion_general'),
 ]

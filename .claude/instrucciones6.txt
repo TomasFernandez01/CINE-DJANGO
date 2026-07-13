@@ -1,0 +1,14 @@
+nuevo fix , 
+1- panel/funciones/form.html
+al momento de crear una funcion , si queres tocar el boton crear no te deja sin antes completar el campo obligatorio de precio. dejarlo vacio significaba que entonces el precio establacido en configuracion general. no funciona por ahora
+ (ahora que lo pienso es una seccion importantisimaya que de ahi podemos manejar varias cosas nuevas que se me ocurrieron como el tiempo limite de compra, cantidad de entradas que se pueden comprar , precio base como ya estamos resolviendo , entre otras cosas )
+
+2-  reservas/templates/selecciona_asientos
+Al momento de seleccionar un asiento de color amarillo ,(mejorado) en ninguna parte te dice que te esta multiplicando el precio, por cuanto te lo multiplica y el por que.
+y si voles a tocar en un asiento que esta selecionado o seleccionaste pierde el color que lo distingue de los demas asientos.
+
+en las salas 2dpremium/3d= por 1.25 y 3dpremium= por 1.50 cuando seleccionas los asientos no te hace la multiplicacion por el tipo de sala , es decir pagas normal como si fuiera la sala 2d que tiene el multiplicaor 1.00.
+
+no encuentro mas fixes hasta ahora asi que el ultimo es un capricho 
+
+se puede bloquear todo una fila o toda una columna o seleccionar varios asientos para bloquear o asignar una categoria? eso ya abarca mas logica.

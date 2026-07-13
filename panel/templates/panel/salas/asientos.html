@@ -14,12 +14,12 @@
 <div style="display:flex; justify-content:space-between; align-items:center;
             flex-wrap:wrap; gap:1rem; margin-bottom:1.5rem;">
     <div>
-        <h1 style="font-size:1.4rem; color:#1a1a2e; margin:0;">🪑 Asientos — {{ sala.nombre }}</h1>
+        <h1 style="font-size:1.4rem; color:#1a1a2e; margin:0;">Asientos — {{ sala.nombre }}</h1>
         <div style="color:#666; font-size:0.9rem; margin-top:0.25rem;">
-            Hacé clic en un asiento para bloquearlo o desbloquearlo.
+            Hacé clic en un asiento para bloquearlo, desbloquearlo o asignarle una categoría especial.
         </div>
     </div>
-    <a href="{% url 'panel:salas_lista' %}" class="btn btn-ghost">Volver a Salas</a>
+    <a href="{% url 'panel:salas_lista' %}" class="btn btn-ghost">Salas</a>
 </div>
 
 <!-- Selector de modo -->
@@ -28,11 +28,11 @@
         <label class="form-label" style="margin:0;">Modo de bloqueo:</label>
         <select id="selectorModo" class="select" style="min-width:280px;">
             <option value="" {% if not funcion_seleccionada %}selected{% endif %}>
-                🔒 Permanente (toda la sala, todas las funciones)
+                Permanente (toda la sala, todas las funciones)
             </option>
             {% for f in funciones_sala %}
             <option value="{{ f.id }}" {% if funcion_seleccionada.id == f.id %}selected{% endif %}>
-                🎬 Solo función: {{ f.pelicula.titulo }} — {{ f.fecha_hora|date:"d/m H:i" }}
+                Solo función: {{ f.pelicula.titulo }} — {{ f.fecha_hora|date:"d/m H:i" }}
             </option>
             {% endfor %}
         </select>
@@ -60,6 +60,11 @@
                           style="width:12px; height:12px; border-radius:2px; display:inline-block;"></span> {{ etiqueta }}
                 </span>
                 {% endfor %}
+                <span style="display:flex; align-items:center; gap:4px;">
+                    <span style="width:12px; height:12px; border-radius:2px; display:inline-block;
+                                 background:linear-gradient(135deg, #f1c40f, #e67e22);"></span>
+                    Categoría especial (color propio, no bloquea)
+                </span>
                 {% if funcion_seleccionada %}
                 <span style="display:flex; align-items:center; gap:4px;">
                     <span style="width:12px; height:12px; background:#495057; border-radius:2px; display:inline-block;"></span> Vendido
@@ -133,7 +138,7 @@
 
         <div class="card" id="panelVacio">
             <div class="card-body" style="text-align:center; color:#999; font-size:0.875rem;">
-                👆 Elegí un asiento en el mapa para bloquearlo o desbloquearlo.
+                Elegí un asiento en el mapa para bloquearlo o desbloquearlo.
             </div>
         </div>
 
@@ -181,6 +186,49 @@
                 {% endif %}
             </div>
         </div>
+
+        <!-- Listado de categorías especiales de esta sala -->
+        <div class="card">
+            <div class="card-header"><h3>⭐ Categorías especiales</h3></div>
+            <div style="max-height:360px; overflow-y:auto;">
+                {% if todas_las_categorias %}
+                <table class="tabla" id="tablaCategorias">
+                    <thead>
+                        <tr>
+                            <th>Asiento</th>
+                            <th>Categoría</th>
+                            <th>Multiplicador</th>
+                            <th></th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for c in todas_las_categorias %}
+                        <tr data-categoria-id="{{ c.id }}" data-asiento="{{ c.asiento_codigo }}">
+                            <td style="font-weight:600;">{{ c.asiento_codigo }}</td>
+                            <td style="font-size:0.8rem;">
+                                <span style="width:10px; height:10px; border-radius:2px; display:inline-block;
+                                             background:{{ c.color }}; margin-right:4px;"></span>
+                                {{ c.nombre }}
+                            </td>
+                            <td style="font-size:0.8rem;">x{{ c.multiplicador }}</td>
+                            <td>
+                                <button type="button" class="btn btn-danger btn-quitar-categoria-fila"
+                                        data-categoria-id="{{ c.id }}"
+                                        style="font-size:0.7rem; padding:0.25rem 0.5rem;">
+                                    Quitar
+                                </button>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+                {% else %}
+                <div class="card-body" style="text-align:center; color:#999; font-size:0.875rem;">
+                    No hay categorías especiales asignadas en esta sala.
+                </div>
+                {% endif %}
+            </div>
+        </div>
     </div>
 
 </div>
@@ -188,14 +236,10 @@
 <style>
     .asiento-btn.libre     { background:#27ae60; }
     .asiento-btn.mantenimiento { background:#6c757d; }
-    .asiento-btn.vip           { background:#fd7e14; }
-    .asiento-btn.admin         { background:#6f42c1; }
     .asiento-btn.reservado     { background:#007bff; }
     .asiento-btn.vendido       { background:#495057; cursor:not-allowed; opacity:0.75; }
     .asiento-btn:hover:not(.vendido) { transform:scale(1.15); }
     .leyenda-color[data-motivo="mantenimiento"] { background:#6c757d; }
-    .leyenda-color[data-motivo="vip"]           { background:#fd7e14; }
-    .leyenda-color[data-motivo="admin"]         { background:#6f42c1; }
     .leyenda-color[data-motivo="reservado"]     { background:#007bff; }
 </style>
 
@@ -217,6 +261,16 @@
         };
     {% endfor %}
 
+    const categoriasPorAsiento = {}; // codigo -> {categoria_id, nombre, multiplicador, color}
+    {% for codigo, c in categorias_por_codigo.items %}
+        categoriasPorAsiento["{{ codigo }}"] = {
+            categoria_id: {{ c.id }},
+            nombre: "{{ c.nombre|escapejs }}",
+            multiplicador: "{{ c.multiplicador }}",
+            color: "{{ c.color }}"
+        };
+    {% endfor %}
+
     const ocupadosPorReserva = new Set([
         {% for a in asientos_ocupados_reserva %}"{{ a }}",{% endfor %}
     ]);
@@ -233,7 +287,8 @@
 
     function pintarBoton(btn) {
         const codigo = btn.dataset.asiento;
-        btn.classList.remove('libre', 'mantenimiento', 'vip', 'admin', 'reservado', 'vendido');
+        btn.classList.remove('libre', 'mantenimiento', 'reservado', 'vendido');
+        btn.style.background = ''; // reset (las categorías usan color inline, no clase)
         if (ocupadosPorReserva.has(codigo)) {
             btn.classList.add('vendido');
             btn.title = codigo + ' — vendido/reservado';
@@ -243,10 +298,16 @@
         if (b) {
             btn.classList.add(b.motivo);
             btn.title = codigo + ' — ' + b.motivo_display + (b.nota ? ' (' + b.nota + ')' : '');
-        } else {
-            btn.classList.add('libre');
-            btn.title = codigo + ' — libre';
+            return;
         }
+        const c = categoriasPorAsiento[codigo];
+        if (c) {
+            btn.style.background = c.color;
+            btn.title = codigo + ' — ' + c.nombre + ' (x' + c.multiplicador + ')';
+            return;
+        }
+        btn.classList.add('libre');
+        btn.title = codigo + ' — libre';
     }
 
     botones.forEach(pintarBoton);
@@ -259,7 +320,7 @@
     function mostrarPanelLibre(codigo) {
         panelVacio.style.display = 'none';
         panelAccion.style.display = 'block';
-        panelAccionTitulo.textContent = 'Bloquear asiento ' + codigo;
+        panelAccionTitulo.textContent = 'Asiento ' + codigo;
 
         let opciones = '';
         for (const [valor, etiqueta] of Object.entries(motivoLabels)) {
@@ -269,20 +330,41 @@
         panelAccionBody.innerHTML = `
             <div style="display:flex; flex-direction:column; gap:0.8rem;">
                 <div>
+                    <label class="form-label">¿Qué querés hacer con este asiento?</label>
+                    <select id="inputTipoAsignacion" class="panel-select">
+                        <option value="bloqueo">🔒 Bloquear (mantenimiento/reservado)</option>
+                        <option value="categoria">⭐ Asignar categoría especial (cambia el precio)</option>
+                    </select>
+                </div>
+
+                <div id="subformBloqueo">
                     <label class="form-label">Motivo</label>
                     <select id="inputMotivo" class="panel-select">${opciones}</select>
-                </div>
-                <div>
-                    <label class="form-label">Nota (opcional)</label>
+                    <label class="form-label" style="margin-top:0.6rem;">Nota (opcional)</label>
                     <input type="text" id="inputNota" class="panel-input" maxlength="200"
                            placeholder="Ej: butaca rota">
+                    <div style="font-size:0.75rem; color:#999; margin-top:0.5rem;">
+                        ${FUNCION_ID ? 'Se bloqueará solo para la función seleccionada.' : 'Se bloqueará de forma permanente en toda la sala.'}
+                    </div>
                 </div>
-                <div style="font-size:0.75rem; color:#999;">
-                    ${FUNCION_ID ? 'Se bloqueará solo para la función seleccionada.' : 'Se bloqueará de forma permanente en toda la sala.'}
+
+                <div id="subformCategoria" style="display:none;">
+                    <label class="form-label">Nombre de la categoría</label>
+                    <input type="text" id="inputCategoriaNombre" class="panel-input" maxlength="50" value="Mejorado">
+                    <label class="form-label" style="margin-top:0.6rem;">Multiplicador de precio</label>
+                    <input type="number" id="inputCategoriaMultiplicador" class="panel-input"
+                           step="0.01" min="1.00" value="1.25">
+                    <label class="form-label" style="margin-top:0.6rem;">Color en el mapa</label>
+                    <input type="color" id="inputCategoriaColor" value="#f1c40f" style="width:100%; height:38px; padding:2px;">
+                    <div style="font-size:0.75rem; color:#999; margin-top:0.5rem;">
+                        Este asiento sigue siendo comprable, solo cambia el precio y el color.
+                        Es siempre permanente (no depende de la función elegida arriba).
+                    </div>
                 </div>
+
                 <div style="display:flex; gap:0.5rem;">
-                    <button type="button" id="btnConfirmarBloqueo" class="btn btn-success" style="flex:1;">
-                        🔒 Bloquear
+                    <button type="button" id="btnConfirmarAsignacion" class="btn btn-success" style="flex:1;">
+                        Confirmar
                     </button>
                     <button type="button" id="btnCancelarBloqueo" class="btn btn-ghost">Cancelar</button>
                 </div>
@@ -290,11 +372,25 @@
             </div>
         `;
 
+        document.getElementById('inputTipoAsignacion').addEventListener('change', function () {
+            const esCategoria = this.value === 'categoria';
+            document.getElementById('subformBloqueo').style.display   = esCategoria ? 'none' : 'block';
+            document.getElementById('subformCategoria').style.display = esCategoria ? 'block' : 'none';
+        });
+
         document.getElementById('btnCancelarBloqueo').onclick = cerrarPanel;
-        document.getElementById('btnConfirmarBloqueo').onclick = function () {
-            const motivo = document.getElementById('inputMotivo').value;
-            const nota = document.getElementById('inputNota').value;
-            bloquearAsiento(codigo, motivo, nota);
+        document.getElementById('btnConfirmarAsignacion').onclick = function () {
+            const tipo = document.getElementById('inputTipoAsignacion').value;
+            if (tipo === 'bloqueo') {
+                const motivo = document.getElementById('inputMotivo').value;
+                const nota = document.getElementById('inputNota').value;
+                bloquearAsiento(codigo, motivo, nota);
+            } else {
+                const nombre = document.getElementById('inputCategoriaNombre').value;
+                const multiplicador = document.getElementById('inputCategoriaMultiplicador').value;
+                const color = document.getElementById('inputCategoriaColor').value;
+                asignarCategoria(codigo, nombre, multiplicador, color);
+            }
         };
     }
 
@@ -324,12 +420,46 @@
         };
     }
 
+    function mostrarPanelCategoria(codigo) {
+        const c = categoriasPorAsiento[codigo];
+        panelVacio.style.display = 'none';
+        panelAccion.style.display = 'block';
+        panelAccionTitulo.textContent = 'Asiento ' + codigo;
+
+        panelAccionBody.innerHTML = `
+            <div style="display:flex; flex-direction:column; gap:0.6rem; font-size:0.875rem;">
+                <div><strong>Categoría:</strong> ${c.nombre}</div>
+                <div><strong>Multiplicador:</strong> x${c.multiplicador}</div>
+                <div><strong>Color:</strong>
+                    <span style="width:14px; height:14px; border-radius:3px; display:inline-block;
+                                 background:${c.color}; vertical-align:middle; margin-left:4px;"></span>
+                </div>
+                <div style="font-size:0.75rem; color:#999;">
+                    Este asiento sigue siendo comprable, solo cambia el precio y el color.
+                </div>
+                <div style="display:flex; gap:0.5rem; margin-top:0.5rem;">
+                    <button type="button" id="btnConfirmarQuitarCategoria" class="btn btn-danger" style="flex:1;">
+                        ⭐ Quitar categoría
+                    </button>
+                    <button type="button" id="btnCancelarCategoria" class="btn btn-ghost">Cerrar</button>
+                </div>
+            </div>
+        `;
+
+        document.getElementById('btnCancelarCategoria').onclick = cerrarPanel;
+        document.getElementById('btnConfirmarQuitarCategoria').onclick = function () {
+            quitarCategoria(codigo, c.categoria_id);
+        };
+    }
+
     botones.forEach(function (btn) {
         btn.addEventListener('click', function () {
             const codigo = this.dataset.asiento;
             if (ocupadosPorReserva.has(codigo)) return; // vendido, no clicable
             if (bloqueosPorAsiento[codigo]) {
                 mostrarPanelBloqueado(codigo);
+            } else if (categoriasPorAsiento[codigo]) {
+                mostrarPanelCategoria(codigo);
             } else {
                 mostrarPanelLibre(codigo);
             }
@@ -390,11 +520,72 @@
             .catch(() => alert('Error de conexión al desbloquear el asiento.'));
     }
 
+    function asignarCategoria(codigo, nombre, multiplicador, color) {
+        const fd = new FormData();
+        fd.append('asiento_codigo', codigo);
+        fd.append('nombre', nombre);
+        fd.append('multiplicador', multiplicador);
+        fd.append('color', color);
+        fd.append('csrfmiddlewaretoken', CSRF_TOKEN);
+
+        fetch(`/panel/salas/${SALA_ID}/asientos/categoria/asignar/`, { method: 'POST', body: fd })
+            .then(r => r.json())
+            .then(data => {
+                if (!data.success) {
+                    const errBox = document.getElementById('errorBloqueo');
+                    if (errBox) {
+                        errBox.style.display = 'block';
+                        errBox.textContent = Object.values(data.errors).flat().join(' ');
+                    }
+                    return;
+                }
+                categoriasPorAsiento[codigo] = {
+                    categoria_id: data.categoria_id,
+                    nombre: data.nombre,
+                    multiplicador: data.multiplicador,
+                    color: data.color,
+                };
+                const btn = document.querySelector(`.asiento-btn[data-asiento="${codigo}"]`);
+                if (btn) pintarBoton(btn);
+                cerrarPanel();
+                location.reload(); // refresca también la tabla de categorías de abajo
+            })
+            .catch(() => alert('Error de conexión al asignar la categoría.'));
+    }
+
+    function quitarCategoria(codigo, categoriaId) {
+        if (!confirm('¿Quitar la categoría especial del asiento ' + codigo + '?')) return;
+
+        const fd = new FormData();
+        fd.append('categoria_id', categoriaId);
+        fd.append('csrfmiddlewaretoken', CSRF_TOKEN);
+
+        fetch(`/panel/salas/${SALA_ID}/asientos/categoria/quitar/`, { method: 'POST', body: fd })
+            .then(r => r.json())
+            .then(data => {
+                if (!data.success) { alert('No se pudo quitar la categoría.'); return; }
+                delete categoriasPorAsiento[codigo];
+                const btn = document.querySelector(`.asiento-btn[data-asiento="${codigo}"]`);
+                if (btn) pintarBoton(btn);
+                cerrarPanel();
+                location.reload();
+            })
+            .catch(() => alert('Error de conexión al quitar la categoría.'));
+    }
+
     // Botones "Quitar" en la tabla inferior
     document.querySelectorAll('.btn-desbloquear-fila').forEach(function (btn) {
         btn.addEventListener('click', function () {
             const fila = this.closest('tr');
             desbloquearAsiento(fila.dataset.asiento, this.dataset.bloqueoId);
+        });
+    });
+
+    // Botones "Quitar" en la tabla de categorías
+    document.querySelectorAll('.btn-quitar-categoria-fila').forEach(function (btn) {
+        btn.addEventListener('click', function () {
+            const fila = this.closest('tr');
+            quitarCategoria(fila.dataset.asiento, this.dataset.categoriaId);
         });
     });
 

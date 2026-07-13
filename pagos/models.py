@@ -9,7 +9,7 @@ def get_qr_minutos():
 
 class Pago(models.Model):
     METODO_PAGO_CHOICES = [
-        ('efectivo', 'Efectivo'),
+        # ('efectivo', 'Efectivo'),
         ('tarjeta_debito', 'Tarjeta de Débito'),
         ('tarjeta_credito', 'Tarjeta de Crédito'),
         ('transferencia', 'Transferencia Bancaria'),

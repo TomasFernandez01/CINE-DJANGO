@@ -1,7 +1,7 @@
-{% extends 'base.html' %}
+ {% extends 'base.html' %}
 
 {% block titulo %}Procesar Pago{% endblock %}
-
+   
 {% block contenido %}
 <div style="max-width: 680px; margin: 0 auto;">
 
@@ -23,7 +23,7 @@
     <!-- ============================================================ -->
     {% if reserva.tiempo_restante_pago %}
     <div id="countdownContainer" style="background: linear-gradient(135deg, #ff6b6b 0%, #ff8e53 100%); padding: 1.5rem; border-radius: 8px; margin-bottom: 1.25rem; text-align: center; color: white; box-shadow: 0 4px 12px rgba(255,107,107,0.3);">
-        <div style="font-size: 0.9rem; margin-bottom: 0.5rem; opacity: 0.95;">⏰ Completá el pago antes de que expire el tiempo:</div>
+        <div style="font-size: 0.9rem; margin-bottom: 0.5rem; opacity: 0.95;">Completá el pago antes de que expire el tiempo:</div>
         <div id="countdown" style="font-size: 2.5rem; font-weight: bold; font-family: 'Courier New', monospace; letter-spacing: 0.1em;" data-tiempo="{{ reserva.tiempo_restante_pago }}">
             {{ reserva.tiempo_restante_formato }}
         </div>
@@ -35,7 +35,7 @@
     <!-- RESUMEN DE RESERVA (uno solo, con precio por entrada y código)-->
     <!-- ============================================================ -->
     <div style="background: white; padding: 1.5rem; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.08); margin-bottom: 1.25rem;">
-        <h2 style="color: #333; margin: 0 0 1rem 0; font-size: 1.2rem; border-bottom: 2px solid #007bff; padding-bottom: 0.5rem;">🎬 Resumen de tu Reserva</h2>
+        <h2 style="color: #333; margin: 0 0 1rem 0; font-size: 1.2rem; border-bottom: 2px solid #007bff; padding-bottom: 0.5rem;">Resumen de tu Reserva</h2>
         <p style="margin: 0.4rem 0;"><strong>Película:</strong> {{ reserva.funcion.pelicula.titulo }}</p>
         <p style="margin: 0.4rem 0;"><strong>Sala:</strong> {{ reserva.funcion.sala.nombre }}</p>
         <p style="margin: 0.4rem 0;"><strong>Fecha:</strong> {{ reserva.funcion.fecha_hora|date:"d/m/Y" }}</p>
@@ -46,7 +46,13 @@
         {% endif %}
         <p style="margin: 0.4rem 0;"><strong>Código de Reserva:</strong> <span style="font-family: monospace; font-weight: bold;">{{ reserva.codigo_reserva }}</span></p>
         <div style="margin-top: 1rem; padding: 1rem; background: #e7f3ff; border-radius: 6px;">
-            <p style="margin: 0; font-size: 0.9rem; color: #666;">Precio por entrada: ${{ reserva.funcion.precio }}</p>
+            {% if reserva.tiene_precios_mixtos %}
+                {% for item in reserva.desglose_precios_asientos %}
+                <p style="margin: 0.15rem 0; font-size: 0.85rem; color: #666;">Asiento {{ item.codigo }}: ${{ item.precio }}</p>
+                {% endfor %}
+            {% else %}
+                <p style="margin: 0; font-size: 0.9rem; color: #666;">Precio por entrada: ${{ reserva.funcion.precio_final }}</p>
+            {% endif %}
             <p id="totalOriginalDisplay" style="margin: 0.25rem 0 0 0; font-size: 1.4rem; font-weight: bold; color: #333;">Total: ${{ total }}</p>
         </div>
     </div>
@@ -146,11 +152,7 @@
             <input type="hidden" name="combo_id" id="hiddenCombo" value="">
 
             <!-- Métodos de pago -->
-            <div style="display: flex; flex-direction: column; gap: 0.75rem; margin-bottom: 1.5rem;">
-                <label style="display: flex; align-items: center; padding: 1rem; border: 2px solid #ddd; border-radius: 6px; cursor: pointer;" onclick="selectMetodo('efectivo')">
-                    <input type="radio" name="metodo_pago" value="efectivo" required style="margin-right: 0.75rem;">
-                    <div><strong>💵 Efectivo</strong><p style="margin: 0; font-size: 0.85rem; color: #666;">Pagar en boletería</p></div>
-                </label>
+            <div style="display: flex; flex-direction: column; gap: 0.75rem; margin-bottom: 1.5rem;">              
                 <label style="display: flex; align-items: center; padding: 1rem; border: 2px solid #ddd; border-radius: 6px; cursor: pointer;" onclick="selectMetodo('tarjeta_debito')">
                     <input type="radio" name="metodo_pago" value="tarjeta_debito" required style="margin-right: 0.75rem;">
                     <div><strong>💳 Tarjeta de Débito</strong><p style="margin: 0; font-size: 0.85rem; color: #666;">Simulado — cualquier número funciona</p></div>
@@ -161,7 +163,7 @@
                 </label>
                 <label style="display: flex; align-items: center; padding: 1rem; border: 2px solid #ddd; border-radius: 6px; cursor: pointer;" onclick="selectMetodo('transferencia')">
                     <input type="radio" name="metodo_pago" value="transferencia" required style="margin-right: 0.75rem;">
-                    <div><strong>🏦 Transferencia</strong><p style="margin: 0; font-size: 0.85rem; color: #666;">Transferencia bancaria</p></div>
+                    <div><strong>🏦 Transferencia</strong><p style="margin: 0; font-size: 0.85rem; color: #666;">Transferencia bancaria (simulada)</p></div>
                 </label>
             </div>
 
@@ -201,7 +203,7 @@
             <div style="display: flex; gap: 1rem;">
                 <button type="submit" id="submitBtn"
                     style="flex: 1; padding: 1rem; background: #28a745; color: white; border: none; border-radius: 6px; font-weight: bold; font-size: 1rem; cursor: pointer;">
-                    💳 Confirmar Pago
+                    Confirmar
                 </button>
                 <a href="{% url 'reservas:mis_reservas' %}"
                     style="flex: 1; padding: 1rem; background: #6c757d; color: white; border-radius: 6px; text-align: center; text-decoration: none; font-weight: bold; font-size: 1rem; display: flex; align-items: center; justify-content: center;">

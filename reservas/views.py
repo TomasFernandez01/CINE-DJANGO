@@ -78,6 +78,26 @@ def seleccionar_asientos(request, funcion_id):
     ############################################################################
     layout = funcion.sala.layout_asientos()
     max_asientos = get_max_asientos()
+
+    # Precio real de CADA asiento (ya con el multiplicador de sala y, si
+    # corresponde, el de la categoría especial del asiento aplicado) y datos
+    # de las categorías especiales, para que el mapa de selección muestre el
+    # color/precio real en vez del precio plano de la función.
+    precios_por_asiento = {}
+    for fila in layout:
+        for codigo in fila['celdas']:
+            if codigo:
+                precios_por_asiento[codigo] = float(funcion.precio_para_asiento(codigo))
+
+    info_categorias = {
+        c.asiento_codigo: {
+            'nombre': c.nombre,
+            'color': c.color,
+            'multiplicador': float(c.multiplicador),
+        }
+        for c in funcion.sala.categorias_asientos.all()
+    }
+
     contexto = {
         'funcion': funcion,
         'sala': funcion.sala,
@@ -90,6 +110,8 @@ def seleccionar_asientos(request, funcion_id):
         'max_asientos': max_asientos,
         'tiempo_limite_minutos': tiempo_limite,
         'segundos_restantes': segundos_restantes,
+        'precios_por_asiento': precios_por_asiento,
+        'info_categorias': info_categorias,
     }
     
     # Si falla volver a este contexto
@@ -192,7 +214,7 @@ def confirmar_reserva_con_asientos(request, funcion_id):
     )
     
     msg_base = (
-        f'✅ Reserva creada. Asientos: {reserva.asientos_formateados()}. '
+        f'Reserva creada. Asientos: {reserva.asientos_formateados()}. '
         f'Código: {reserva.codigo_reserva}. '
         f'Tenés {tiempo_limite} minutos en total para completar el pago.'
     )
@@ -244,7 +266,7 @@ def mis_reservas(request):
             canceladas_tiempo += 1
     
     if canceladas_tiempo > 0:
-        messages.warning(request, f'⏰ {canceladas_tiempo} reserva(s) cancelada(s) automáticamente por expiración del tiempo de pago.')
+        messages.warning(request, f'{canceladas_tiempo} reserva(s) cancelada(s) automáticamente por expiración del tiempo de pago.')
     
     # Auto-expirar reservas que ya pasaron
     expiradas_count = 0
@@ -275,7 +297,7 @@ def detalle_reserva(request, reserva_id):
     reserva = get_object_or_404(Reserva, id=reserva_id, usuario=request.user)
     
     if reserva.cancelar_por_tiempo_expirado():
-        messages.warning(request, f'⏰ Esta reserva fue cancelada automáticamente porque expiró el tiempo de pago ({get_tiempo_limite()} minutos).')
+        messages.warning(request, f' Esta reserva fue cancelada automáticamente porque expiró el tiempo de pago ({get_tiempo_limite()} minutos).')
     
     if reserva.actualizar_estado_si_expiro():
         messages.info(request, 'Esta reserva ha expirado porque la función ya pasó.')
@@ -314,11 +336,11 @@ def cancelar_reserva(request, reserva_id):
         if EMAIL_DISPONIBLE:
             try:
                 enviar_email_cancelacion_reserva(reserva)
-                messages.success(request, '✅ Reserva cancelada exitosamente. Te enviamos un email de confirmación.')
+                messages.success(request, 'Reserva cancelada exitosamente. Te enviamos un email de confirmación.')
             except Exception:
-                messages.success(request, '✅ Reserva cancelada exitosamente.')
+                messages.success(request, 'Reserva cancelada exitosamente.')
         else:
-            messages.success(request, '✅ Reserva cancelada exitosamente.')
+            messages.success(request, 'Reserva cancelada exitosamente.')
     else:
         messages.error(request, 'No se puede cancelar esta reserva.')
     
