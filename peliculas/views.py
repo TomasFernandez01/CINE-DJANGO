@@ -1,5 +1,3 @@
-# peliculas/views.py - Agregar estas vistas al archivo existente
-
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.admin.views.decorators import staff_member_required
 from django.contrib import messages
@@ -8,6 +6,8 @@ from django.db.models import Q
 from .models import Pelicula
 from django.core.files.base import ContentFile
 import requests
+from django.http import JsonResponse  # nuevo: para el endpoint del buscador en vivo
+from django.urls import reverse  # nuevo: para armar la url de cada resultado del buscador en vivo
 
 # Importar cliente TMDB
 try:
@@ -22,7 +22,17 @@ except ImportError:
 # ============================================
 
 def inicio(request):
-    return render(request, 'inicio.html')
+    # se envia la cartelera real al home; el carrusel de fechas se movio a lista_peliculas
+    # (pertenece a la app peliculas / cartelera, no al home) por pedido del cliente
+    peliculas_cartelera = Pelicula.objects.filter(en_cartelera=True).order_by('-fecha_estreno')[:8]
+
+    # nuevo: posters disponibles para el hero rotativo (solo las que tienen poster cargado)
+    posters_hero = [p for p in peliculas_cartelera if p.poster]
+
+    return render(request, 'inicio.html', {
+        'peliculas_cartelera': peliculas_cartelera,
+        'posters_hero': posters_hero,
+    })
 
 def lista_peliculas(request):
     # ... código existente ...
@@ -59,8 +69,35 @@ def lista_peliculas(request):
     generos_disponibles = Pelicula.GENERO_CHOICES
     clasificaciones_disponibles = Pelicula.CLASIFICACION_CHOICES
     
+    hay_filtros_activos = bool(busqueda or genero or clasificacion)
+
+    # nuevo: separar "en cartelera" (ya estrenada) de "proximos estrenos" (fecha_estreno a futuro),
+    # usando el campo Pelicula.fecha_estreno que ya existia. Solo se separa cuando no hay
+    # filtros activos, porque con busqueda/filtro se muestra un listado plano de resultados.
+    hoy = timezone.now().date()
+    peliculas_en_cartelera = None
+    peliculas_proximos_estrenos = None
+    if not hay_filtros_activos:
+        peliculas_en_cartelera = peliculas.filter(
+            Q(fecha_estreno__isnull=True) | Q(fecha_estreno__lte=hoy)
+        )
+        peliculas_proximos_estrenos = peliculas.filter(fecha_estreno__gt=hoy)
+
+    # nuevo: carrusel de fechas (movido desde inicio.html), apunta a salas:lista_funciones?fecha=YYYY-MM-DD
+    proximas_fechas = []
+    for i in range(8):
+        dia = hoy + timezone.timedelta(days=i)
+        proximas_fechas.append({
+            'valor': dia.strftime('%Y-%m-%d'),
+            'dia_semana': 'Hoy' if i == 0 else dia.strftime('%a').capitalize(),
+            'dia_mes': dia.strftime('%d/%m'),
+        })
+
     contexto = {
         'peliculas': peliculas,
+        'peliculas_en_cartelera': peliculas_en_cartelera,
+        'peliculas_proximos_estrenos': peliculas_proximos_estrenos,
+        'hay_filtros_activos': hay_filtros_activos,
         'busqueda': busqueda,
         'genero_seleccionado': genero,
         'clasificacion_seleccionada': clasificacion,
@@ -68,8 +105,29 @@ def lista_peliculas(request):
         'generos_disponibles': generos_disponibles,
         'clasificaciones_disponibles': clasificaciones_disponibles,
         'total_resultados': peliculas.count(),
+        'proximas_fechas': proximas_fechas,
     }
     return render(request, 'peliculas/lista_pelis.html', contexto)
+
+
+def buscar_vivo(request):
+    """nuevo: endpoint JSON para el buscador en vivo (autocompletado) de la cartelera.
+    Se consulta con fetch() desde JS a medida que el usuario escribe/borra."""
+    query = request.GET.get('q', '').strip()
+    resultados = []
+    if len(query) >= 2:
+        peliculas = Pelicula.objects.filter(
+            en_cartelera=True, titulo__icontains=query
+        ).order_by('titulo')[:8]
+        for p in peliculas:
+            resultados.append({
+                'id': p.id,
+                'titulo': p.titulo,
+                'poster_url': p.poster.url if p.poster else None,
+                'genero': p.get_genero_display() if p.genero else '',
+                'url': reverse('peliculas:detalle_pelicula', args=[p.id]),
+            })
+    return JsonResponse({'resultados': resultados})
 
 def detalle_pelicula(request, pelicula_id):
     pelicula = get_object_or_404(Pelicula, id=pelicula_id)
@@ -84,7 +142,6 @@ def detalle_pelicula(request, pelicula_id):
         'funciones': funciones,
     }
     return render(request, 'peliculas/detalle_pelicula.html', contexto)
-
 
 # ============================================
 # UTILIDAD PARA DESCARGAR POSTERS

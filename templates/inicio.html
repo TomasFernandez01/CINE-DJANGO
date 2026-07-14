@@ -1,107 +1,142 @@
 {% extends 'base.html' %}
+{% load static %}
 
 {% block titulo %}Inicio - Cine Online{% endblock %}
 
+{% block extra_css %}
+<!-- nuevo: CSS propio del home, separado por componente -->
+<link rel="stylesheet" href="{% static 'css/inicio/hero.css' %}">
+<link rel="stylesheet" href="{% static 'css/inicio/cartelera.css' %}">
+<link rel="stylesheet" href="{% static 'css/inicio/secciones.css' %}">
+{% endblock %}
+
 {% block contenido %}
-<div style="max-width: 1400px; margin: 0 auto;">
-    
-    <!-- Hero Section -->
-    <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); padding: 4rem 2rem; border-radius: 16px; margin-bottom: 3rem; text-align: center; box-shadow: 0 10px 30px rgba(0,0,0,0.2);">
-        <h1 style="color: white; font-size: 3rem; margin-bottom: 1rem; text-shadow: 2px 2px 4px rgba(0,0,0,0.3);">
-            🎬 Bienvenido a tu Cine Online
-        </h1>
-        <p style="color: rgba(255,255,255,0.95); font-size: 1.3rem; margin-bottom: 2rem; max-width: 700px; margin-left: auto; margin-right: auto;">
-            Descubrí las mejores películas en cartelera y reservá tus entradas de forma fácil y rápida
-        </p>
-        <div style="display: flex; gap: 1rem; justify-content: center; flex-wrap: wrap;">
-            <a href="{% url 'peliculas:lista_peliculas' %}" style="display: inline-block; padding: 1rem 2rem; background-color: white; color: #667eea; border-radius: 8px; text-decoration: none; font-weight: bold; font-size: 1.1rem; transition: transform 0.2s, box-shadow 0.2s;" onmouseover="this.style.transform='scale(1.05)'; this.style.boxShadow='0 8px 16px rgba(0,0,0,0.2)'" onmouseout="this.style.transform='scale(1)'; this.style.boxShadow='none'">
+
+<!-- Hero Section -->
+<div class="hero">
+    <!-- nuevo: capas de fondo rotativas, una por poster de la cartelera. Si posters_hero esta vacio no se genera ninguna y el hero queda con el fondo rojo de siempre -->
+    {% for pelicula in posters_hero %}
+        <div class="hero-slide{% if forloop.first %} activa{% endif %}" style="background-image: url('{{ pelicula.poster.url }}');"></div>
+    {% endfor %}
+    {% if posters_hero %}<div class="hero-overlay"></div>{% endif %}
+
+    <div class="hero-contenido">
+        {% if not posters_hero %}
+            <!-- nuevo: aviso para el admin, se oculta solo apenas se cargue al menos un poster -->
+            <div class="hero-aviso-admin">📸 Subí posters a tus películas desde el panel para que roten automáticamente acá</div>
+        {% endif %}
+        <h1>🎬 Bienvenido a tu Cine Online</h1>
+        <p>Descubrí las mejores películas en cartelera y reservá tus entradas de forma fácil y rápida</p>
+        <div class="hero-botones">
+            <a href="{% url 'peliculas:lista_peliculas' %}" class="hero-btn hero-btn-primario">
                 🎥 Ver Cartelera
             </a>
-            <a href="{% url 'salas:lista_funciones' %}" style="display: inline-block; padding: 1rem 2rem; background-color: rgba(255,255,255,0.2); color: white; border: 2px solid white; border-radius: 8px; text-decoration: none; font-weight: bold; font-size: 1.1rem; backdrop-filter: blur(10px); transition: all 0.2s;" onmouseover="this.style.backgroundColor='rgba(255,255,255,0.3)'" onmouseout="this.style.backgroundColor='rgba(255,255,255,0.2)'">
+            <a href="{% url 'salas:lista_funciones' %}" class="hero-btn hero-btn-secundario">
                 🎟️ Ver Funciones
             </a>
         </div>
     </div>
-    
-    <!-- Features -->
-    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 2rem; margin-bottom: 3rem;">
-        <div style="background-color: white; padding: 2rem; border-radius: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); text-align: center;">
-            <div style="font-size: 3rem; margin-bottom: 1rem;">🎫</div>
-            <h3 style="color: #333; margin-bottom: 0.5rem;">Reservá Online</h3>
-            <p style="color: #666; margin: 0;">Comprá tus entradas desde la comodidad de tu casa</p>
-        </div>
-        
-        <div style="background-color: white; padding: 2rem; border-radius: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); text-align: center;">
-            <div style="font-size: 3rem; margin-bottom: 1rem;">💳</div>
-            <h3 style="color: #333; margin-bottom: 0.5rem;">Pagos Seguros</h3>
-            <p style="color: #666; margin: 0;">Múltiples métodos de pago disponibles</p>
-        </div>
-        
-        <div style="background-color: white; padding: 2rem; border-radius: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); text-align: center;">
-            <div style="font-size: 3rem; margin-bottom: 1rem;">⚡</div>
-            <h3 style="color: #333; margin-bottom: 0.5rem;">Rápido y Fácil</h3>
-            <p style="color: #666; margin: 0;">Proceso de reserva simple en pocos pasos</p>
+</div>
+
+<!-- nuevo: cartelera real del home (antes inicio.html no mostraba ninguna pelicula) -->
+<h3 class="cartelera-titulo">En cartelera</h3>
+{% if peliculas_cartelera %}
+    <div class="cartelera-grid">
+        {% for pelicula in peliculas_cartelera %}
+            <a href="{% url 'peliculas:detalle_pelicula' pelicula.id %}" class="cartelera-card">
+                {% if pelicula.poster %}
+                    <img class="cartelera-card-poster" src="{{ pelicula.poster.url }}" alt="{{ pelicula.titulo }}">
+                {% else %}
+                    <div class="cartelera-card-poster-placeholder">🎬</div>
+                {% endif %}
+                <div class="cartelera-card-info">
+                    <h4>{{ pelicula.titulo }}</h4>
+                    <div class="cartelera-card-meta">
+                        {% if pelicula.genero %}<span class="cartelera-badge">{{ pelicula.get_genero_display }}</span>{% endif %}
+                        <span class="cartelera-badge">{{ pelicula.clasificacion }}</span>
+                        {% if pelicula.duracion %}<span class="cartelera-badge">{{ pelicula.duracion_formato }}</span>{% endif %}
+                    </div>
+                </div>
+            </a>
+        {% endfor %}
+    </div>
+{% else %}
+    <div class="cartelera-vacio">Todavía no hay películas cargadas en cartelera.</div>
+{% endif %}
+
+<!-- Features -->
+<div class="features-grid">
+    <div class="feature-card">
+        <div class="feature-card-icono">🎫</div>
+        <h3>Reservá Online</h3>
+        <p>Comprá tus entradas desde la comodidad de tu casa</p>
+    </div>
+
+    <div class="feature-card">
+        <div class="feature-card-icono">💳</div>
+        <h3>Pagos Seguros</h3>
+        <p>Múltiples métodos de pago disponibles</p>
+    </div>
+
+    <div class="feature-card">
+        <div class="feature-card-icono">⚡</div>
+        <h3>Rápido y Fácil</h3>
+        <p>Proceso de reserva simple en pocos pasos</p>
+    </div>
+</div>
+
+<!-- Call to Action -->
+{% if not user.is_authenticated %}
+    <div class="cta-box cta-box-invitado">
+        <h2>¿Primera vez aquí?</h2>
+        <p>Creá tu cuenta gratis y empezá a disfrutar del cine</p>
+        <a href="{% url 'usuarios:registro' %}" class="cta-btn cta-btn-blanco">Registrarse Gratis</a>
+    </div>
+{% else %}
+    <div class="cta-box cta-box-usuario">
+        <h2>¡Hola, {{ user.first_name|default:user.username }}!</h2>
+        <div class="hero-botones">
+            <a href="{% url 'reservas:mis_reservas' %}" class="cta-btn cta-btn-blanco">Ver Mis Reservas</a>
+            <a href="{% url 'usuarios:perfil' %}" class="cta-btn cta-btn-outline">Mi Perfil</a>
         </div>
     </div>
-    
-    <!-- Call to Action -->
-    {% if not user.is_authenticated %}
-        <div style="background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%); padding: 3rem 2rem; border-radius: 12px; text-align: center; box-shadow: 0 4px 12px rgba(0,0,0,0.15);">
-            <h2 style="color: white; font-size: 2rem; margin-bottom: 1rem;">¿Primera vez aquí?</h2>
-            <p style="color: rgba(255,255,255,0.95); font-size: 1.1rem; margin-bottom: 1.5rem;">
-                Creá tu cuenta gratis y empezá a disfrutar del cine
-            </p>
-            <a href="{% url 'usuarios:registro' %}" style="display: inline-block; padding: 1rem 2.5rem; background-color: white; color: #f5576c; border-radius: 8px; text-decoration: none; font-weight: bold; font-size: 1.1rem; transition: transform 0.2s;" onmouseover="this.style.transform='scale(1.05)'" onmouseout="this.style.transform='scale(1)'">
-                Registrarse Gratis
-            </a>
+{% endif %}
+
+<!-- Info adicional -->
+<div class="como-funciona">
+    <h3>¿Cómo funciona?</h3>
+    <div class="como-funciona-grid">
+        <div class="como-funciona-paso">
+            <div class="como-funciona-numero">1</div>
+            <h4>Elegí tu película</h4>
+            <p>Explorá la cartelera</p>
         </div>
-    {% else %}
-        <div style="background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%); padding: 3rem 2rem; border-radius: 12px; text-align: center; box-shadow: 0 4px 12px rgba(0,0,0,0.15);">
-            <h2 style="color: white; font-size: 2rem; margin-bottom: 1rem;">¡Hola, {{ user.first_name|default:user.username }}! 👋</h2>
-            <p style="color: rgba(255,255,255,0.95); font-size: 1.1rem; margin-bottom: 1.5rem;">
-                ¿Listo para tu próxima aventura cinematográfica?
-            </p>
-            <div style="display: flex; gap: 1rem; justify-content: center; flex-wrap: wrap;">
-                <a href="{% url 'reservas:mis_reservas' %}" style="display: inline-block; padding: 1rem 2rem; background-color: white; color: #4facfe; border-radius: 8px; text-decoration: none; font-weight: bold; transition: transform 0.2s;" onmouseover="this.style.transform='scale(1.05)'" onmouseout="this.style.transform='scale(1)'">
-                    Ver Mis Reservas
-                </a>
-                <a href="{% url 'usuarios:perfil' %}" style="display: inline-block; padding: 1rem 2rem; background-color: rgba(255,255,255,0.2); color: white; border: 2px solid white; border-radius: 8px; text-decoration: none; font-weight: bold; backdrop-filter: blur(10px); transition: all 0.2s;" onmouseover="this.style.backgroundColor='rgba(255,255,255,0.3)'" onmouseout="this.style.backgroundColor='rgba(255,255,255,0.2)'">
-                    Mi Perfil
-                </a>
-            </div>
+        <div class="como-funciona-paso">
+            <div class="como-funciona-numero">2</div>
+            <h4>Seleccioná función</h4>
+            <p>Elegí día y horario</p>
         </div>
-    {% endif %}
-    
-    <!-- Info adicional -->
-    <div style="margin-top: 3rem; padding: 2rem; background-color: #f8f9fa; border-radius: 12px;">
-        <h3 style="color: #333; text-align: center; margin-bottom: 1.5rem;">¿Cómo funciona?</h3>
-        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1.5rem;">
-            <div style="text-align: center;">
-                <div style="width: 60px; height: 60px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 1rem; color: white; font-size: 1.5rem; font-weight: bold;">1</div>
-                <h4 style="color: #333; margin-bottom: 0.5rem;">Elegí tu película</h4>
-                <p style="color: #666; margin: 0; font-size: 0.9rem;">Explorá la cartelera</p>
-            </div>
-            <div style="text-align: center;">
-                <div style="width: 60px; height: 60px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 1rem; color: white; font-size: 1.5rem; font-weight: bold;">2</div>
-                <h4 style="color: #333; margin-bottom: 0.5rem;">Seleccioná función</h4>
-                <p style="color: #666; margin: 0; font-size: 0.9rem;">Elegí día y horario</p>
-            </div>
-            <div style="text-align: center;">
-                <div style="width: 60px; height: 60px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 1rem; color: white; font-size: 1.5rem; font-weight: bold;">3</div>
-                <h4 style="color: #333; margin-bottom: 0.5rem;">Reservá</h4>
-                <p style="color: #666; margin: 0; font-size: 0.9rem;">Indicá cantidad de entradas</p>
-            </div>
-            <div style="text-align: center;">
-                <div style="width: 60px; height: 60px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 1rem; color: white; font-size: 1.5rem; font-weight: bold;">4</div>
-                <h4 style="color: #333; margin-bottom: 0.5rem;">Pagá</h4>
-                <p style="color: #666; margin: 0; font-size: 0.9rem;">Completá el pago</p>
-            </div>
-            <div style="text-align: center;">
-                <div style="width: 60px; height: 60px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 1rem; color: white; font-size: 1.5rem; font-weight: bold;">5</div>
-                <h4 style="color: #333; margin-bottom: 0.5rem;">¡Disfrutá!</h4>
-                <p style="color: #666; margin: 0; font-size: 0.9rem;">Presentá tu código</p>
-            </div>
+        <div class="como-funciona-paso">
+            <div class="como-funciona-numero">3</div>
+            <h4>Reservá</h4>
+            <p>Indicá cantidad de entradas</p>
+        </div>
+        <div class="como-funciona-paso">
+            <div class="como-funciona-numero">4</div>
+            <h4>Pagá</h4>
+            <p>Completá el pago</p>
+        </div>
+        <div class="como-funciona-paso">
+            <div class="como-funciona-numero">5</div>
+            <h4>¡Disfrutá!</h4>
+            <p>Presentá tu código</p>
         </div>
     </div>
 </div>
+
+{% endblock %}
+
+{% block extra_js %}
+<!-- nuevo: rotación automática del hero -->
+<script src="{% static 'js/inicio/hero_carousel.js' %}"></script>
 {% endblock %}

@@ -1,0 +1,74 @@
+/* nuevo: dropdown de sugerencias del buscador en vivo */
+
+.buscar-wrapper {
+    position: relative;
+}
+
+.buscar-sugerencias {
+    display: none;
+    position: absolute;
+    top: calc(100% + 4px);
+    left: 0;
+    right: 0;
+    background-color: white;
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    box-shadow: 0 8px 20px rgba(0,0,0,0.15);
+    max-height: 340px;
+    overflow-y: auto;
+    z-index: 50;
+}
+
+.buscar-sugerencia-item {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 0.6rem 0.9rem;
+    text-decoration: none;
+    color: inherit;
+    border-bottom: 1px solid #f0f0f0;
+}
+
+.buscar-sugerencia-item:last-child {
+    border-bottom: none;
+}
+
+.buscar-sugerencia-item:hover {
+    background-color: #f8f9fa;
+}
+
+.buscar-sugerencia-item img,
+.buscar-sugerencia-sinposter {
+    width: 38px;
+    height: 54px;
+    object-fit: cover;
+    border-radius: 4px;
+    flex-shrink: 0;
+}
+
+.buscar-sugerencia-sinposter {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-size: 1.1rem;
+}
+
+.buscar-sugerencia-titulo {
+    color: #333;
+    font-weight: 600;
+    font-size: 0.9rem;
+}
+
+.buscar-sugerencia-genero {
+    color: #888;
+    font-size: 0.75rem;
+}
+
+.buscar-sugerencia-vacio {
+    padding: 0.9rem;
+    color: #888;
+    font-size: 0.9rem;
+    text-align: center;
+}

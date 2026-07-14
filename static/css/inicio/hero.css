@@ -1,0 +1,111 @@
+/* bloque modificado: el hero ahora puede rotar entre posters de la cartelera con fade automático.
+   Si no hay posters cargados, se mantiene el fondo rojo original con un aviso para el admin. */
+
+.hero {
+    position: relative;
+    overflow: hidden;
+    background: linear-gradient(135deg, #1a1a2e 0%, #e50914 140%);
+    padding: 4rem 2rem;
+    border-radius: 16px;
+    margin-bottom: 3rem;
+    text-align: center;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.25);
+    min-height: 320px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+}
+
+/* nuevo: capas de fondo rotativas del hero (una por poster, controladas por JS agregando .activa) */
+.hero-slide {
+    position: absolute;
+    inset: 0;
+    background-size: cover;
+    background-position: center 20%;
+    opacity: 0;
+    transition: opacity 1.2s ease-in-out;
+    z-index: 0;
+}
+
+.hero-slide.activa {
+    opacity: 1;
+}
+
+/* nuevo: velo oscuro sobre las imagenes para que el texto siga siendo legible */
+.hero-overlay {
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(180deg, rgba(26,26,46,0.55) 0%, rgba(26,26,46,0.85) 100%);
+    z-index: 1;
+}
+
+.hero-contenido {
+    position: relative;
+    z-index: 2;
+}
+
+.hero h1 {
+    color: white;
+    font-size: 3rem;
+    margin-bottom: 1rem;
+    text-shadow: 2px 2px 4px rgba(0,0,0,0.4);
+}
+
+.hero p {
+    color: rgba(255,255,255,0.95);
+    font-size: 1.3rem;
+    margin-bottom: 2rem;
+    max-width: 700px;
+    margin-left: auto;
+    margin-right: auto;
+}
+
+/* nuevo: aviso para el admin cuando todavia no cargo ningun poster */
+.hero-aviso-admin {
+    display: inline-block;
+    margin-bottom: 1.5rem;
+    padding: 0.6rem 1.2rem;
+    background-color: rgba(0,0,0,0.25);
+    border: 1px dashed rgba(255,255,255,0.5);
+    border-radius: 8px;
+    color: rgba(255,255,255,0.9);
+    font-size: 0.95rem;
+}
+
+.hero-botones {
+    display: flex;
+    gap: 1rem;
+    justify-content: center;
+    flex-wrap: wrap;
+}
+
+.hero-btn {
+    display: inline-block;
+    padding: 1rem 2rem;
+    border-radius: 8px;
+    text-decoration: none;
+    font-weight: bold;
+    font-size: 1.1rem;
+    transition: transform 0.2s, box-shadow 0.2s, background-color 0.2s;
+}
+
+.hero-btn-primario {
+    background-color: #e50914;
+    color: white;
+}
+
+.hero-btn-primario:hover {
+    transform: scale(1.05);
+    box-shadow: 0 8px 16px rgba(0,0,0,0.25);
+}
+
+.hero-btn-secundario {
+    background-color: rgba(255,255,255,0.15);
+    color: white;
+    border: 2px solid white;
+    backdrop-filter: blur(10px);
+}
+
+.hero-btn-secundario:hover {
+    background-color: rgba(255,255,255,0.3);
+}

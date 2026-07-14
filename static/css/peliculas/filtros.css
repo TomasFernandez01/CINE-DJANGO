@@ -1,0 +1,81 @@
+/* nuevo: formulario de busqueda/filtros, extraído del style="" inline original de lista_pelis.html */
+
+.filtros-caja {
+    background-color: white;
+    padding: 1.5rem;
+    border-radius: 8px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    margin-bottom: 1.5rem;
+}
+
+.filtros-campo {
+    margin-bottom: 1rem;
+}
+
+.filtros-campo label {
+    display: block;
+    margin-bottom: 0.5rem;
+    font-weight: bold;
+    color: #333;
+}
+
+.filtros-input,
+.filtros-select {
+    width: 100%;
+    padding: 0.75rem;
+    border: 2px solid #ddd;
+    border-radius: 6px;
+    font-size: 1rem;
+    transition: border-color 0.2s;
+}
+
+.filtros-input:focus,
+.filtros-select:focus {
+    border-color: #007bff;
+    outline: none;
+}
+
+.filtros-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 1rem;
+    margin-bottom: 1rem;
+}
+
+.filtros-botones {
+    display: flex;
+    gap: 1rem;
+}
+
+.filtros-btn-aplicar {
+    flex: 1;
+    padding: 0.75rem;
+    background-color: #007bff;
+    color: white;
+    border: none;
+    border-radius: 6px;
+    font-weight: bold;
+    cursor: pointer;
+    transition: background-color 0.2s;
+    font-size: 1rem;
+}
+
+.filtros-btn-aplicar:hover {
+    background-color: #0056b3;
+}
+
+.filtros-btn-limpiar {
+    flex: 1;
+    padding: 0.75rem;
+    background-color: #6c757d;
+    color: white;
+    border-radius: 6px;
+    text-align: center;
+    text-decoration: none;
+    font-weight: bold;
+    transition: background-color 0.2s;
+}
+
+.filtros-btn-limpiar:hover {
+    background-color: #545b62;
+}

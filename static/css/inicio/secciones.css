@@ -1,0 +1,133 @@
+/* nuevo: features cards, CTA de registro/bienvenida y "como funciona", extraído del style="" inline original */
+
+.features-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 2rem;
+    margin-bottom: 3rem;
+}
+
+.feature-card {
+    background-color: white;
+    padding: 2rem;
+    border-radius: 12px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    text-align: center;
+}
+
+.feature-card-icono {
+    font-size: 3rem;
+    margin-bottom: 1rem;
+}
+
+.feature-card h3 {
+    color: #333;
+    margin-bottom: 0.5rem;
+}
+
+.feature-card p {
+    color: #666;
+    margin: 0;
+}
+
+.cta-box {
+    padding: 3rem 2rem;
+    border-radius: 12px;
+    text-align: center;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+    margin-bottom: 3rem;
+}
+
+.cta-box-invitado {
+    background: linear-gradient(135deg, #e50914 0%, #7b0510 100%);
+}
+
+.cta-box-usuario {
+    background: linear-gradient(135deg, #1a1a2e 0%, #4a4a7a 100%);
+}
+
+.cta-box h2 {
+    color: white;
+    font-size: 2rem;
+    margin-bottom: 1rem;
+}
+
+.cta-box p {
+    color: rgba(255,255,255,0.95);
+    font-size: 1.1rem;
+    margin-bottom: 1.5rem;
+}
+
+.cta-btn {
+    display: inline-block;
+    padding: 1rem 2.5rem;
+    border-radius: 8px;
+    text-decoration: none;
+    font-weight: bold;
+    font-size: 1.1rem;
+    transition: transform 0.2s;
+}
+
+.cta-btn:hover {
+    transform: scale(1.05);
+}
+
+.cta-btn-blanco {
+    background-color: white;
+    color: #e50914;
+}
+
+.cta-btn-outline {
+    background-color: rgba(255,255,255,0.2);
+    color: white;
+    border: 2px solid white;
+    backdrop-filter: blur(10px);
+}
+
+.como-funciona {
+    margin-top: 3rem;
+    padding: 2rem;
+    background-color: #f8f9fa;
+    border-radius: 12px;
+}
+
+.como-funciona h3 {
+    color: #333;
+    text-align: center;
+    margin-bottom: 1.5rem;
+}
+
+.como-funciona-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 1.5rem;
+}
+
+.como-funciona-paso {
+    text-align: center;
+}
+
+.como-funciona-numero {
+    width: 60px;
+    height: 60px;
+    background: linear-gradient(135deg, #e50914 0%, #7b0510 100%);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0 auto 1rem;
+    color: white;
+    font-size: 1.5rem;
+    font-weight: bold;
+}
+
+.como-funciona-paso h4 {
+    color: #333;
+    margin-bottom: 0.5rem;
+}
+
+.como-funciona-paso p {
+    color: #666;
+    margin: 0;
+    font-size: 0.9rem;
+}

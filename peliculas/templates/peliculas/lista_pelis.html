@@ -1,43 +1,55 @@
 {% extends 'base.html' %}
+{% load static %}
 
 {% block titulo %}Lista de Películas{% endblock %}
+
+{% block extra_css %}
+<!-- nuevo: CSS propio de la cartelera de peliculas, separado por componente -->
+<link rel="stylesheet" href="{% static 'css/peliculas/fechas.css' %}">
+<link rel="stylesheet" href="{% static 'css/peliculas/filtros.css' %}">
+<link rel="stylesheet" href="{% static 'css/peliculas/buscador.css' %}">
+<link rel="stylesheet" href="{% static 'css/peliculas/cartelera.css' %}">
+{% endblock %}
 
 {% block contenido %}
 <h1 style="font-size: 2.5rem; color: #333; margin-bottom: 0.5rem;">🎬 Catálogo de Películas</h1>
 <p style="color: #666; margin-bottom: 1.5rem;">Explorá nuestra cartelera y reservá tus entradas</p>
 
+<!-- bloque modificado: carrusel de fechas, movido acá desde inicio.html (pertenece a la cartelera de peliculas) -->
+<div class="fechas-carrusel">
+    {% for f in proximas_fechas %}
+        <a href="{% url 'salas:lista_funciones' %}?fecha={{ f.valor }}" class="fecha-item{% if forloop.first %} fecha-hoy{% endif %}">
+            <span class="fecha-item-diasemana">{{ f.dia_semana }}</span>
+            <span class="fecha-item-diames">{{ f.dia_mes }}</span>
+        </a>
+    {% endfor %}
+</div>
+
 <!-- Barra de Búsqueda y Filtros -->
-<div style="background-color: white; padding: 1.5rem; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); margin-bottom: 1.5rem;">
+<div class="filtros-caja">
     <form method="get" action="{% url 'peliculas:lista_peliculas' %}">
-        <!-- Búsqueda -->
-        <div style="margin-bottom: 1rem;">
-            <label for="buscar" style="display: block; margin-bottom: 0.5rem; font-weight: bold; color: #333;">
-                🔍 Buscar por título, director o actor:
-            </label>
-            <input 
-                type="text" 
-                id="buscar" 
-                name="buscar" 
+        <!-- bloque modificado: buscador con sugerencias en vivo (fetch a peliculas:buscar_vivo mientras se escribe) -->
+        <div class="filtros-campo buscar-wrapper">
+            <label for="buscar">🔍 Buscar por título, director o actor:</label>
+            <input
+                type="text"
+                id="buscar"
+                name="buscar"
                 value="{{ busqueda }}"
                 placeholder="Ej: Matrix, Tarantino, Tom Hanks..."
-                style="width: 100%; padding: 0.75rem; border: 2px solid #ddd; border-radius: 6px; font-size: 1rem; transition: border-color 0.2s;"
-                onfocus="this.style.borderColor='#007bff'"
-                onblur="this.style.borderColor='#ddd'"
+                class="filtros-input"
+                autocomplete="off"
+                data-url-buscar-vivo="{% url 'peliculas:buscar_vivo' %}"
             >
+            <div id="buscar-sugerencias" class="buscar-sugerencias"></div>
         </div>
-        
+
         <!-- Filtros en una fila -->
-        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem; margin-bottom: 1rem;">
+        <div class="filtros-grid">
             <!-- Filtro Género -->
-            <div>
-                <label for="genero" style="display: block; margin-bottom: 0.5rem; font-weight: bold; color: #333;">
-                    🎭 Género:
-                </label>
-                <select 
-                    id="genero" 
-                    name="genero"
-                    style="width: 100%; padding: 0.5rem; border: 2px solid #ddd; border-radius: 6px; font-size: 1rem;"
-                >
+            <div class="filtros-campo">
+                <label for="genero">🎭 Género:</label>
+                <select id="genero" name="genero" class="filtros-select">
                     <option value="">Todos los géneros</option>
                     {% for valor, nombre in generos_disponibles %}
                         <option value="{{ valor }}" {% if genero_seleccionado == valor %}selected{% endif %}>
@@ -46,17 +58,11 @@
                     {% endfor %}
                 </select>
             </div>
-            
+
             <!-- Filtro Clasificación -->
-            <div>
-                <label for="clasificacion" style="display: block; margin-bottom: 0.5rem; font-weight: bold; color: #333;">
-                    🎫 Clasificación:
-                </label>
-                <select 
-                    id="clasificacion" 
-                    name="clasificacion"
-                    style="width: 100%; padding: 0.5rem; border: 2px solid #ddd; border-radius: 6px; font-size: 1rem;"
-                >
+            <div class="filtros-campo">
+                <label for="clasificacion">🎫 Clasificación:</label>
+                <select id="clasificacion" name="clasificacion" class="filtros-select">
                     <option value="">Todas</option>
                     {% for valor, nombre in clasificaciones_disponibles %}
                         <option value="{{ valor }}" {% if clasificacion_seleccionada == valor %}selected{% endif %}>
@@ -65,131 +71,75 @@
                     {% endfor %}
                 </select>
             </div>
-            
+
             <!-- Orden -->
-            <div>
-                <label for="orden" style="display: block; margin-bottom: 0.5rem; font-weight: bold; color: #333;">
-                    📊 Ordenar por:
-                </label>
-                <select 
-                    id="orden" 
-                    name="orden"
-                    style="width: 100%; padding: 0.5rem; border: 2px solid #ddd; border-radius: 6px; font-size: 1rem;"
-                >
+            <div class="filtros-campo">
+                <label for="orden">📊 Ordenar por:</label>
+                <select id="orden" name="orden" class="filtros-select">
                     <option value="titulo" {% if orden_seleccionado == 'titulo' %}selected{% endif %}>Título (A-Z)</option>
                     <option value="año" {% if orden_seleccionado == 'año' %}selected{% endif %}>Año (Nuevas primero)</option>
                     <option value="genero" {% if orden_seleccionado == 'genero' %}selected{% endif %}>Género</option>
                 </select>
             </div>
         </div>
-        
+
         <!-- Botones -->
-        <div style="display: flex; gap: 1rem;">
-            <button type="submit" style="flex: 1; padding: 0.75rem; background-color: #007bff; color: white; border: none; border-radius: 6px; font-weight: bold; cursor: pointer; transition: background-color 0.2s;" onmouseover="this.style.backgroundColor='#0056b3'" onmouseout="this.style.backgroundColor='#007bff'">
-                Aplicar Filtros
-            </button>
-            <a href="{% url 'peliculas:lista_peliculas' %}" style="flex: 1; padding: 0.75rem; background-color: #6c757d; color: white; border-radius: 6px; text-align: center; text-decoration: none; font-weight: bold; transition: background-color 0.2s;" onmouseover="this.style.backgroundColor='#545b62'" onmouseout="this.style.backgroundColor='#6c757d'">
-                Limpiar
-            </a>
+        <div class="filtros-botones">
+            <button type="submit" class="filtros-btn-aplicar">Aplicar Filtros</button>
+            <a href="{% url 'peliculas:lista_peliculas' %}" class="filtros-btn-limpiar">Limpiar</a>
         </div>
     </form>
 </div>
 
-<!-- Resultados -->
-{% if busqueda or genero_seleccionado or clasificacion_seleccionada %}
-    <p style="color: #666; margin-bottom: 1rem; font-size: 1.1rem;">
+{% if hay_filtros_activos %}
+    <!-- bloque modificado: con filtros activos se muestra un listado plano (no tiene sentido separar en cartelera/proximos estrenos) -->
+    <p class="pelis-resultado-info">
         📊 <strong>{{ total_resultados }}</strong> resultado(s) encontrado(s)
         {% if busqueda %}para "<strong>{{ busqueda }}</strong>"{% endif %}
     </p>
-{% endif %}
 
-{% if peliculas %}
-    <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 1.5rem; margin-top: 1.5rem;">
-        {% for pelicula in peliculas %}
-            <a href="{% url 'peliculas:detalle_pelicula' pelicula.id %}" style="text-decoration: none; color: inherit;">
-                <div style="background-color: white; border-radius: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); overflow: hidden; transition: transform 0.3s, box-shadow 0.3s; cursor: pointer; height: 100%;" onmouseover="this.style.transform='translateY(-8px)'; this.style.boxShadow='0 8px 16px rgba(0,0,0,0.2)';" onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 2px 8px rgba(0,0,0,0.1)';">
-                    
-                    <!-- Poster -->
-                    <div style="position: relative; width: 100%; aspect-ratio: 2/3; overflow: hidden;">
-                        {% if pelicula.poster %}
-                            <img src="{{ pelicula.poster.url }}" alt="{{ pelicula.titulo }}" style="width: 100%; height: 100%; object-fit: cover;">
-                        {% else %}
-                            <div style="width: 100%; height: 100%; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); display: flex; align-items: center; justify-content: center; color: white; font-size: 3rem;">
-                                🎬
-                            </div>
-                        {% endif %}
-                        
-                        <!-- Clasificación badge -->
-                        {% if pelicula.clasificacion %}
-                            <span style="position: absolute; top: 10px; right: 10px; padding: 0.25rem 0.75rem; background-color: rgba(0,123,255,0.95); color: white; border-radius: 6px; font-size: 0.85rem; font-weight: bold; backdrop-filter: blur(10px);">
-                                {{ pelicula.get_clasificacion_display }}
-                            </span>
-                        {% endif %}
-                    </div>
-                    
-                    <!-- Información -->
-                    <div style="padding: 1.25rem;">
-                        <h3 style="color: #333; margin-bottom: 0.75rem; font-size: 1.2rem; min-height: 2.4rem; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;">
-                            {{ pelicula.titulo }}
-                        </h3>
-                        
-                        <div style="display: flex; gap: 0.5rem; margin-bottom: 0.75rem; flex-wrap: wrap;">
-                            {% if pelicula.genero %}
-                                <span style="padding: 0.2rem 0.6rem; background-color: #e7f3ff; color: #007bff; border-radius: 4px; font-size: 0.8rem; font-weight: 500;">
-                                    {{ pelicula.get_genero_display }}
-                                </span>
-                            {% endif %}
-                            
-                            {% if pelicula.duracion %}
-                                <span style="padding: 0.2rem 0.6rem; background-color: #f8f9fa; color: #6c757d; border-radius: 4px; font-size: 0.8rem; font-weight: 500;">
-                                    ⏱ {{ pelicula.duracion_formato }}
-                                </span>
-                            {% endif %}
-                            
-                            {% if pelicula.año %}
-                                <span style="padding: 0.2rem 0.6rem; background-color: #f8f9fa; color: #6c757d; border-radius: 4px; font-size: 0.8rem; font-weight: 500;">
-                                    📅 {{ pelicula.año }}
-                                </span>
-                            {% endif %}
-                        </div>
-                        
-                        {% if pelicula.director %}
-                            <p style="color: #666; font-size: 0.9rem; margin: 0.5rem 0;">
-                                <strong>Director:</strong> {{ pelicula.director }}
-                            </p>
-                        {% endif %}
-                        
-                        {% if pelicula.sinopsis %}
-                            <p style="color: #777; font-size: 0.85rem; margin: 0.75rem 0 0 0; line-height: 1.5; overflow: hidden; text-overflow: ellipsis; display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical;">
-                                {{ pelicula.sinopsis }}
-                            </p>
-                        {% endif %}
-                        
-                        <div style="margin-top: 1rem; padding-top: 1rem; border-top: 1px solid #e9ecef;">
-                            <p style="color: #007bff; font-weight: bold; font-size: 0.95rem; margin: 0; text-align: center;">
-                                Ver funciones →
-                            </p>
-                        </div>
-                    </div>
-                </div>
-            </a>
-        {% endfor %}
-    </div>
-{% else %}
-    <div style="background-color: #fff3cd; padding: 2rem; border-radius: 8px; border-left: 4px solid #ffc107; text-align: center;">
-        <p style="margin: 0 0 0.5rem 0; color: #856404; font-size: 1.3rem; font-weight: bold;">
-            😕 No se encontraron películas
-        </p>
-        <p style="margin: 0; color: #856404;">
-            {% if busqueda or genero_seleccionado or clasificacion_seleccionada %}
+    {% if peliculas %}
+        <div class="pelis-grid">
+            {% for pelicula in peliculas %}
+                {% include 'peliculas/_card_pelicula.html' %}
+            {% endfor %}
+        </div>
+    {% else %}
+        <div class="pelis-vacio">
+            <p>😕 No se encontraron películas</p>
+            <p>
                 Intentá con otros filtros o
-                <a href="{% url 'peliculas:lista_peliculas' %}" style="color: #007bff; font-weight: bold; text-decoration: underline;">
-                    ver todas las películas
-                </a>
-            {% else %}
-                No hay películas en cartelera en este momento.
-            {% endif %}
-        </p>
-    </div>
+                <a href="{% url 'peliculas:lista_peliculas' %}">ver todas las películas</a>
+            </p>
+        </div>
+    {% endif %}
+{% else %}
+    <!-- bloque modificado: separación real en "En cartelera" / "Próximos estrenos" usando Pelicula.fecha_estreno -->
+    <h3 class="cartelera-seccion-titulo">En cartelera</h3>
+    {% if peliculas_en_cartelera %}
+        <div class="pelis-grid">
+            {% for pelicula in peliculas_en_cartelera %}
+                {% include 'peliculas/_card_pelicula.html' %}
+            {% endfor %}
+        </div>
+    {% else %}
+        <div class="pelis-vacio">
+            <p>😕 No hay películas en cartelera en este momento.</p>
+        </div>
+    {% endif %}
+
+    {% if peliculas_proximos_estrenos %}
+        <h3 class="cartelera-seccion-titulo">Próximos estrenos</h3>
+        <div class="pelis-grid">
+            {% for pelicula in peliculas_proximos_estrenos %}
+                {% include 'peliculas/_card_pelicula.html' with proximamente=True %}
+            {% endfor %}
+        </div>
+    {% endif %}
 {% endif %}
+{% endblock %}
+
+{% block extra_js %}
+<!-- nuevo: buscador en vivo -->
+<script src="{% static 'js/peliculas/buscador_vivo.js' %}"></script>
 {% endblock %}

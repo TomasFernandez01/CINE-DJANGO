@@ -1,0 +1,24 @@
+/* nuevo: reset y base general, extraído de base.html; se ajusta paleta a tono "cine" oscuro (inspirado en cinemark.com.ar) */
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: 'Segoe UI', Arial, sans-serif;
+    line-height: 1.6;
+    background-color: #f4f4f4;
+}
+
+.container {
+    max-width: 1400px;
+    margin: 2rem auto;
+    padding: 0 1.5rem;
+}
+
+h1 {
+    color: #1a1a2e;
+    margin-bottom: 1rem;
+}

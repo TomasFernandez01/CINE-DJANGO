@@ -1,0 +1,46 @@
+/* nuevo: carrusel horizontal de fechas del home, estilo inspirado en cinemark.com.ar */
+este archivo quedo huerfano!!!!!!!!!!!!!!!
+.fechas-carrusel {
+    display: flex;
+    gap: 0.75rem;
+    overflow-x: auto;
+    padding-bottom: 0.75rem;
+    margin-bottom: 2rem;
+    scrollbar-width: thin;
+}
+
+.fecha-item {
+    flex: 0 0 auto;
+    min-width: 68px;
+    text-align: center;
+    background-color: #fff;
+    border: 2px solid #eee;
+    border-radius: 10px;
+    padding: 0.6rem 0.4rem;
+    text-decoration: none;
+    color: #1a1a2e;
+    transition: border-color 0.2s, background-color 0.2s;
+}
+
+.fecha-item:hover {
+    border-color: #e50914;
+}
+
+.fecha-item.fecha-hoy {
+    background-color: #1a1a2e;
+    color: white;
+    border-color: #1a1a2e;
+}
+
+.fecha-item-diasemana {
+    display: block;
+    font-size: 0.75rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    margin-bottom: 0.2rem;
+}
+
+.fecha-item-diames {
+    display: block;
+    font-size: 0.85rem;
+}

@@ -8,6 +8,9 @@ urlpatterns = [
     path('', views.inicio, name='inicio'),
     path('peliculas/', views.lista_peliculas, name='lista_peliculas'),
     path('pelicula/<int:pelicula_id>/', views.detalle_pelicula, name='detalle_pelicula'),
+
+    # nuevo: endpoint JSON para el buscador en vivo (autocompletado) de la cartelera
+    path('buscar-vivo/', views.buscar_vivo, name='buscar_vivo'),
     
     # NUEVAS URLs para TMDB (solo para staff)
     # path('admin/tmdb/buscar/', views.buscar_tmdb, name='buscar_tmdb'),
