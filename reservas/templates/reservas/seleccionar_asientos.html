@@ -215,6 +215,7 @@
                 <div id="totalPagar" style="font-size: 1.5rem; font-weight: bold; color: #28a745;">$0</div>
             </div>
         </div>
+        <div id="notaCategoriasSeleccionadas" style="margin-top:0.75rem; font-size:0.8rem; color:#856404;"></div>
     </div>
 
     {# ============================================================ #}
@@ -287,7 +288,8 @@
     const formReserva     = document.getElementById('formReserva');
     const banner          = document.getElementById('countdownBanner');
     const countdownEl     = document.getElementById('countdown');
-
+    const notaCategorias  = document.getElementById('notaCategoriasSeleccionadas'); // nuevo para que muestre el tipo de sala
+    
     // ════════════════════════════════════════════════════════════
     // COUNTDOWN
     // Blindado con "if (banner && countdownEl)": si el banner de arriba
@@ -364,12 +366,15 @@
         var intervaloBanner = setInterval(actualizarContadorBanner, 1000);
     }
     {% endif %}
+    
     // ════════════════════════════════════════════════════════════
     // SELECCIÓN DE ASIENTOS
     // ════════════════════════════════════════════════════════════
-
     // Pintar de entrada los asientos con categoría especial (ej: "Mejorado"),
     // guardando su color como "color base" para poder restaurarlo al deseleccionar.
+    // Además se agrega una marca visible (⭐) en el botón, porque antes esto
+    // solo se veía como tooltip al pasar el mouse y no era obvio para el usuario.
+
     Object.entries(INFO_CATEGORIAS).forEach(function ([codigo, info]) {
         const btn = document.querySelector('.asiento.disponible[data-asiento="' + codigo + '"]');
         if (btn) {
@@ -377,7 +382,9 @@
             btn.style.borderColor     = info.color;
             btn.dataset.colorBase  = info.color;
             btn.dataset.borderBase = info.color;
-            btn.title = codigo + ' — ' + info.nombre + ' (x' + info.multiplicador + ')';
+            // antes terminaba "(x' + info.multiplicador + ')';"
+            btn.title = codigo + ' — ' + info.nombre + ' (x' + info.multiplicador + ', +' + Math.round((info.multiplicador - 1) * 100) + '%)';
+            btn.innerHTML = codigo + '<div style="font-size:8px; line-height:1;">⭐</div>';
         }
     });
 
@@ -389,10 +396,12 @@
             const codigo = this.dataset.asiento;
 
             if (asientosSeleccionados.has(codigo)) {
-                // Deseleccionar
+                // Deseleccionar vuelve a su color base (verde normal, o el
+                // de su categoría si lo tiene) — antes esto quedaba hardcodeado
+                // en verde, por eso los asientos "Mejorado" perdían su color.
                 asientosSeleccionados.delete(codigo);
-                this.style.backgroundColor = '#28a745';
-                this.style.borderColor     = '#1e7e34';
+                this.style.backgroundColor = this.dataset.colorBase  || '#28a745';
+                this.style.borderColor     = this.dataset.borderBase || '#1e7e34';
                 this.style.transform       = 'scale(1)';
             } else {
                 // Validar límite
@@ -457,6 +466,18 @@
         textoCantidad.textContent = cantidad;
         textoTotal.textContent    = '$' + total.toFixed(2);
         inputOculto.value         = Array.from(asientosSeleccionados).sort().join(',');
+
+        // Detalle de por qué el total puede ser más alto: qué asientos
+        // seleccionados tienen categoría especial y cuánto multiplican.
+        const detalles = [];
+        asientosSeleccionados.forEach(function (codigo) {
+            const info = INFO_CATEGORIAS[codigo];
+            if (info) {
+                detalles.push('⭐ ' + codigo + ' es "' + info.nombre + '": +' +
+                              Math.round((info.multiplicador - 1) * 100) + '% sobre el precio base');
+            }
+        });
+        notaCategorias.innerHTML = detalles.length ? detalles.join('<br>') : '';
     }
 
     // ════════════════════════════════════════════════════════════

@@ -37,7 +37,7 @@
         {% csrf_token %}
 
         <div class="card">
-            <div class="card-header"><h3>📅 Datos de la Función</h3></div>
+            <div class="card-header"><h3>Datos de la Función</h3></div>
             <div class="card-body" style="display:flex; flex-direction:column; gap:1.1rem;">
 
                 <!-- Película -->
@@ -76,11 +76,13 @@
                     </div>
                     <div>
                         <label class="form-label">
-                            Precio ($) <span class="required">*</span>
+                            {% comment %} Precio ($) <span class="required">*</span> {% endcomment %}Precio ($) <span style="color:#999; font-weight:400; font-size:0.75rem;">(opcional)</span>
                         </label>
+
                         {{ form.precio }}
+                            <div class="form-help">{{ form.precio.help_text }}</div>
                         {% if form.precio.errors %}
-                        <div class="field-error">{{ form.precio.errors.0 }}</div>
+                            <div class="field-error">{{ form.precio.errors.0 }}</div>
                         {% endif %}
                     </div>
                 </div>
@@ -98,7 +100,7 @@
 
         <!-- Preview de la función -->
         <div class="card" style="margin-top:1rem;" id="previewCard">
-            <div class="card-header"><h3>👁️ Vista previa</h3></div>
+            <div class="card-header"><h3>Vista previa</h3></div>
             <div class="card-body">
                 <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(150px,1fr));
                             gap:1rem; font-size:0.875rem;">

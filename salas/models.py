@@ -289,7 +289,7 @@ class Funcion(models.Model):
     sala = models.ForeignKey(Sala, on_delete=models.CASCADE, related_name='funciones')
     fecha_hora = models.DateTimeField()
     precio = models.DecimalField(
-        max_digits=10, decimal_places=2, null=True, blank=True,
+        max_digits=10, decimal_places=2, null=True, blank=True, #<= esto faltaba
         help_text="Precio manual de esta función. Si lo dejás vacío, se calcula "
                    "automáticamente: precio base configurado x multiplicador de "
                    "la sala."

@@ -109,6 +109,16 @@ SeccionSalaFormSet = inlineformset_factory(
 # FUNCIONES
 # ============================================================
 class FuncionForm(forms.ModelForm):
+    # Declarado explícito (no solo inferido de blank=True del modelo) para
+    # que quede 100% claro y no dependa de que el estado de la migración
+    # coincida exactamente con models.py: precio SIEMPRE es opcional acá.
+    precio = forms.DecimalField(
+        required=False, max_digits=10, decimal_places=2,
+        widget=forms.NumberInput(attrs={**INPUT_ATTRS, 'step': '0.01', 'min': '0',
+                                          'placeholder': 'Vacío = automático (precio base x multiplicador de sala)'}),
+        label='Precio por entrada ($) — opcional',
+        help_text='Dejalo vacío para que se calcule solo: precio base configurado x multiplicador de la sala.'
+    )
     class Meta:
         model = Funcion
         fields = ['pelicula', 'sala', 'fecha_hora', 'precio', 'disponible']
@@ -119,18 +129,17 @@ class FuncionForm(forms.ModelForm):
                 attrs={**INPUT_ATTRS, 'type': 'datetime-local'},
                 format='%Y-%m-%dT%H:%M'
             ),
-            'precio':     forms.NumberInput(attrs={**INPUT_ATTRS, 'step': '0.01', 'min': '0',
-                                                     'placeholder': 'Vacío = automático (precio base x multiplicador de sala)'}),
+            # 'precio':forms.NumberInput(attrs={**INPUT_ATTRS, 'step': '0.01', 'min': '0', 'placeholder': 'Vacío = automático (precio base x multiplicador de sala)'}),
             'disponible': forms.CheckboxInput(attrs={'class': 'panel-checkbox'}),
         }
         labels = {
             'pelicula':   'Película',
             'sala':       'Sala',
             'fecha_hora': 'Fecha y hora',
-            'precio':     'Precio por entrada ($) — opcional',
+            # 'precio':     'Precio por entrada ($) — opcional',
             'disponible': 'Disponible para reservas',
         }
-
+        
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         # Formatear la fecha correctamente para el input datetime-local
@@ -140,7 +149,6 @@ class FuncionForm(forms.ModelForm):
         self.fields['pelicula'].queryset = Pelicula.objects.filter(
             en_cartelera=True
         ).order_by('titulo')
-
 
 # ============================================================
 # USUARIOS
