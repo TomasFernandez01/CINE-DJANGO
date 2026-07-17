@@ -47,12 +47,13 @@
 <div style="display:grid; grid-template-columns:2fr 1fr; gap:1.5rem; align-items:start;">
 
     <!-- Mapa de asientos -->
-    <div class="card">
-        <div class="card-header">
-            <h3>Mapa de Asientos</h3>
-            <div style="display:flex; gap:0.6rem; font-size:0.72rem; flex-wrap:wrap; align-items:center;">
+    {# modificado (Fase 3): esta card pasa a fondo oscuro para que combine con el mapa del cliente. El resto del panel admin (otras cards, tablas) queda igual, solo se re-viste esta. No se tocó nada del JS. #}
+    <div class="card" style="background-color:#0f0f0f; border-color:#2a2a2a;">
+        <div class="card-header" style="background-color:#0f0f0f; border-color:#2a2a2a; color:#fff;">
+            <h3 style="color:#fff;">Mapa de Asientos</h3>
+            <div style="display:flex; gap:0.6rem; font-size:0.72rem; flex-wrap:wrap; align-items:center; color:#ccc;">
                 <span style="display:flex; align-items:center; gap:4px;">
-                    <span style="width:12px; height:12px; background:#27ae60; border-radius:2px; display:inline-block;"></span> Libre
+                    <span style="width:12px; height:12px; background:#ffffff; border-radius:2px; display:inline-block; border:1px solid #cccccc;"></span> Libre
                 </span>
                 {% for valor, etiqueta in motivo_choices %}
                 <span style="display:flex; align-items:center; gap:4px;">
@@ -72,18 +73,20 @@
                 {% endif %}
             </div>
         </div>
-        <div class="card-body" style="overflow-x:auto;">
-            <div style="text-align:center; margin-bottom:1rem;">
-                <div style="background:linear-gradient(to bottom,#333,#555); color:white;
-                            padding:0.3rem 3rem; border-radius:4px 4px 0 0;
-                            font-size:0.7rem; letter-spacing:2px; display:inline-block;">
+        <div class="card-body" style="overflow-x:auto; background-color:#0f0f0f;">
+            {# modificado (Fase 3): pantalla curva estilo Cinemark, igual que en el cliente (antes era una barra rectangular) #}
+            <div style="text-align:center; margin-bottom:1.5rem;">
+                <div style="width: 60%; max-width: 420px; height: 16px; margin: 0 auto;
+                            border-radius: 50%;
+                            background: radial-gradient(ellipse at center, #6b6b6b 0%, #2a2a2a 75%, transparent 100%);"></div>
+                <div style="color: #9a9a9a; letter-spacing: 0.3em; font-size: 0.65rem; font-weight: bold; margin-top: 0.5rem;">
                     PANTALLA
                 </div>
             </div>
             <div id="mapaAsientos" style="display:flex; flex-direction:column; gap:5px; align-items:center;">
                 {% for fila in layout %}
                 <div style="display:flex; gap:5px; align-items:center;">
-                    <span style="width:20px; font-size:0.7rem; color:#999; text-align:center; font-weight:600;">
+                    <span style="width:20px; font-size:0.7rem; color:#d9a441; text-align:center; font-weight:600;">
                         {{ fila.letra }}
                     </span>
                     {% for asiento in fila.celdas %}
@@ -92,8 +95,8 @@
                             type="button"
                             class="asiento-btn"
                             data-asiento="{{ asiento }}"
-                            style="width:28px; height:24px; border-radius:4px; font-size:8px;
-                                   border:1px solid rgba(0,0,0,0.15); font-weight:700; color:white;
+                            style="width:28px; height:24px; border-radius:6px; font-size:8px;
+                                   border:1px solid rgba(255,255,255,0.15); font-weight:700; color:white;
                                    cursor:pointer; transition:transform 0.12s;">
                             {{ asiento }}
                         </button>
@@ -234,7 +237,11 @@
 </div>
 
 <style>
-    .asiento-btn.libre     { background:#27ae60; }
+    /* modificado (Fase 3): "libre" pasa de verde a blanco para que combine
+       con el mapa del cliente. mantenimiento/reservado/vendido quedan con
+       los mismos colores que ya tenían (gris/azul/gris oscuro), que ya
+       era exactamente lo que se pedía para el admin. */
+    .asiento-btn.libre     { background:#ffffff; color:#111111 !important; border-color:#cccccc !important; }
     .asiento-btn.mantenimiento { background:#6c757d; }
     .asiento-btn.reservado     { background:#007bff; }
     .asiento-btn.vendido       { background:#495057; cursor:not-allowed; opacity:0.75; }

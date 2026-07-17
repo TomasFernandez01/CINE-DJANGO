@@ -357,6 +357,22 @@ class Funcion(models.Model):
             models.Q(funcion__isnull=True) | models.Q(funcion=self)
         )
         return list(bloqueos.values_list('asiento_codigo', flat=True))
+    
+    # modificado: separa asientos_bloqueados() por motivo, para que la vista
+    # y los templates puedan diferenciar "mantenimiento" de "reservado" en
+    # vez de tratarlos todos igual. No reemplaza a asientos_bloqueados() (que
+    # se sigue usando tal cual para el cálculo de disponibilidad), solo
+    # agrega el detalle por motivo para pintarlos distinto más adelante.
+    def asientos_bloqueados_por_motivo(self, motivo):
+        """
+        Igual que asientos_bloqueados(), pero filtrado por motivo
+        ('mantenimiento' o 'reservado').
+        """
+        bloqueos = self.sala.bloqueos_asientos.filter(
+            models.Q(funcion__isnull=True) | models.Q(funcion=self),
+            motivo=motivo,
+        )
+        return list(bloqueos.values_list('asiento_codigo', flat=True))
 
     def asientos_no_disponibles(self):
         """

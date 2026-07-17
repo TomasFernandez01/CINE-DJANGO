@@ -1,4 +1,15 @@
-/* nuevo: dropdown de sugerencias del buscador en vivo */
+/* bloque modificado: tema oscuro + nuevo bloque destacado "Elegí película" (reemplaza el h1 "Catálogo de Películas") */
+
+/* nuevo: caja destacada del buscador, ahora es lo primero que se ve en la pagina */
+.buscador-destacado {
+    margin-bottom: 1.5rem;
+}
+
+.buscador-destacado h2 {
+    color: #f5f5f5;
+    font-size: 1.8rem;
+    margin-bottom: 0.75rem;
+}
 
 .buscar-wrapper {
     position: relative;
@@ -10,10 +21,10 @@
     top: calc(100% + 4px);
     left: 0;
     right: 0;
-    background-color: white;
-    border: 1px solid #ddd;
+    background-color: #1f1f1f;
+    border: 1px solid #3a3a3a;
     border-radius: 8px;
-    box-shadow: 0 8px 20px rgba(0,0,0,0.15);
+    box-shadow: 0 8px 20px rgba(0,0,0,0.5);
     max-height: 340px;
     overflow-y: auto;
     z-index: 50;
@@ -26,7 +37,7 @@
     padding: 0.6rem 0.9rem;
     text-decoration: none;
     color: inherit;
-    border-bottom: 1px solid #f0f0f0;
+    border-bottom: 1px solid #2c2c2c;
 }
 
 .buscar-sugerencia-item:last-child {
@@ -34,7 +45,7 @@
 }
 
 .buscar-sugerencia-item:hover {
-    background-color: #f8f9fa;
+    background-color: #2a2a2a;
 }
 
 .buscar-sugerencia-item img,
@@ -56,19 +67,19 @@
 }
 
 .buscar-sugerencia-titulo {
-    color: #333;
+    color: #eee;
     font-weight: 600;
     font-size: 0.9rem;
 }
 
 .buscar-sugerencia-genero {
-    color: #888;
+    color: #999;
     font-size: 0.75rem;
 }
 
 .buscar-sugerencia-vacio {
     padding: 0.9rem;
-    color: #888;
+    color: #999;
     font-size: 0.9rem;
     text-align: center;
 }

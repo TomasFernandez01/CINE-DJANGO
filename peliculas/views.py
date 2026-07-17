@@ -3,12 +3,12 @@ from django.contrib.admin.views.decorators import staff_member_required
 from django.contrib import messages
 from django.utils import timezone
 from django.db.models import Q
-from .models import Pelicula
-from django.core.files.base import ContentFile
-import requests
 from django.http import JsonResponse  # nuevo: para el endpoint del buscador en vivo
 from django.urls import reverse  # nuevo: para armar la url de cada resultado del buscador en vivo
-
+from .models import Pelicula
+from utils.fechas import generar_proximos_dias  # nuevo: helper compartido del carrusel de fechas
+from django.core.files.base import ContentFile
+import requests
 # Importar cliente TMDB
 try:
     from utils.tmdb_api import TMDBClient, buscar_pelicula_tmdb, importar_pelicula_tmdb
@@ -83,15 +83,18 @@ def lista_peliculas(request):
         )
         peliculas_proximos_estrenos = peliculas.filter(fecha_estreno__gt=hoy)
 
+    # bloque modificado: carrusel de fechas (movido desde inicio.html), ahora con 20 dias
+    # y usando el helper compartido utils.fechas (antes tenia un bug de locale con strftime('%a'))
+    proximas_fechas = generar_proximos_dias(20)
     # nuevo: carrusel de fechas (movido desde inicio.html), apunta a salas:lista_funciones?fecha=YYYY-MM-DD
-    proximas_fechas = []
-    for i in range(8):
-        dia = hoy + timezone.timedelta(days=i)
-        proximas_fechas.append({
-            'valor': dia.strftime('%Y-%m-%d'),
-            'dia_semana': 'Hoy' if i == 0 else dia.strftime('%a').capitalize(),
-            'dia_mes': dia.strftime('%d/%m'),
-        })
+    # proximas_fechas = []
+    # for i in range(8):
+    #     dia = hoy + timezone.timedelta(days=i)
+    #     proximas_fechas.append({
+    #         'valor': dia.strftime('%Y-%m-%d'),
+    #         'dia_semana': 'Hoy' if i == 0 else dia.strftime('%a').capitalize(),
+    #         'dia_mes': dia.strftime('%d/%m'),
+    #     })
 
     contexto = {
         'peliculas': peliculas,

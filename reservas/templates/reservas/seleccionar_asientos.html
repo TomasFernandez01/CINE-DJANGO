@@ -3,8 +3,16 @@
 {% block titulo %}Seleccionar Asientos - {{ funcion.pelicula.titulo }}{% endblock %}
 
 {% block contenido %}
-<div style="max-width: 1000px; margin: 0 auto;">
-    <h1 style="text-align: center; margin-bottom: 1rem;">🎬 Seleccionar Asientos</h1>
+{# ================================================================ #}
+{# modificado: panel oscuro estilo Cinemark envolviendo toda la      #}
+{# selección de asientos. Antes la página usaba el fondo claro       #}
+{# general del sitio (#f4f4f4 de base.html); ahora esta sección      #}
+{# tiene su propio fondo negro, sin tocar base.html ni el resto      #}
+{# del sitio.                                                        #}
+{# ================================================================ #}
+<div style="max-width: 1000px; margin: 0 auto; background-color: #0f0f0f;
+            padding: 1.5rem; border-radius: 12px; color: #f2f2f2;">
+    <h1 style="text-align: center; margin-bottom: 1rem; color: #ffffff;">Seleccionar Asientos</h1>
 
     {# ============================================================ #}
     {# BANNER COUNTDOWN                                             #}
@@ -36,226 +44,231 @@
     {% endif %} {% endcomment %}
 
     {# ============================================================ #}
-    {# INFO DE LA FUNCIÓN                                           #}
+    {# FASE 4: layout de 2 columnas estilo Cinemark                  #}
+    {# modificado: antes todo iba apilado en una sola columna (info  #}
+    {# función, leyenda, pantalla, mapa, resumen, botones, todo uno  #}
+    {# debajo del otro). Ahora el mapa queda a la izquierda y un     #}
+    {# panel "RESUMEN" fijo (sticky) a la derecha, como en la        #}
+    {# captura de Cinemark. Los ids que usa el JS de más abajo       #}
+    {# (asientosSeleccionadosTexto, cantidadSeleccionada, totalPagar,#}
+    {# notaCategoriasSeleccionadas, btnConfirmar, formReserva, etc)  #}
+    {# NO cambiaron de nombre, solo de lugar en el HTML — por eso el #}
+    {# script no necesitó tocarse para nada.                        #}
     {# ============================================================ #}
-    <div style="background-color: white; padding: 1.5rem; border-radius: 8px;
-                box-shadow: 0 2px 4px rgba(0,0,0,0.1); margin-bottom: 1.5rem;">
-        <div style="display: flex; justify-content: space-between; align-items: start;
-                    flex-wrap: wrap; gap: 1rem;">
-            <div>
-                <h2 style="margin: 0 0 0.75rem 0; color: #333;">{{ funcion.pelicula.titulo }}</h2>
-                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 0.75rem;">
-                    <div><strong>Fecha:</strong> {{ funcion.fecha_hora|date:"d/m/Y" }}</div>
-                    <div><strong>Horario:</strong> {{ funcion.fecha_hora|date:"H:i" }} hs</div>
-                    <div><strong>Sala:</strong> {{ sala.nombre }}</div>
-                    <div><strong>Precio:</strong> ${{ funcion.precio_final }} por entrada</div>
-                    <div><strong>Disponibles:</strong>
-                        <span style="color: {% if asientos_disponibles > 10 %}#28a745{% elif asientos_disponibles > 0 %}#fd7e14{% else %}#dc3545{% endif %}; font-weight: bold;">
-                            {{ asientos_disponibles }}
-                        </span>
+    <style>
+        /* modificado (Fase 4): en pantallas angostas el resumen pasa
+           de columna fija al costado a bloque normal abajo del mapa */
+        @media (max-width: 860px) {
+            #layoutAsientos { grid-template-columns: 1fr !important; }
+            #sidebarResumen { position: static !important; }
+        }
+    </style>
+
+    <div id="layoutAsientos" style="display: grid; grid-template-columns: 1fr 320px; gap: 1.5rem; align-items: start;">
+
+        {# ──────────────── COLUMNA IZQUIERDA: leyenda + pantalla + mapa ──────────────── #}
+        <div>
+            {# ============================================================ #}
+            {# LEYENDA                                                      #}
+            {#   Disponible        → cuadrado blanco                        #}
+            {#   No disponible     → gris con "X"                           #}
+            {#   Categoría especial→ dorado                                 #}
+            {#   Seleccionado      → círculo rojo con carita feliz ":)"      #}
+            {# ============================================================ #}
+            <div style="background-color: #1a1a1a; padding: 1rem; border-radius: 8px;
+                        box-shadow: 0 2px 4px rgba(0,0,0,0.4); margin-bottom: 1.5rem;
+                        border: 1px solid #2a2a2a;">
+                <div style="display: flex; justify-content: center; gap: 2rem; flex-wrap: wrap; color: #e0e0e0;">
+                    <div style="display: flex; align-items: center; gap: 0.5rem;">
+                        <div style="width: 28px; height: 28px; background-color: #ffffff; border-radius: 4px; border: 1px solid #cccccc;"></div>
+                        <span>Disponible</span>
+                    </div>
+                    <div style="display: flex; align-items: center; gap: 0.5rem;">
+                        <div style="width: 28px; height: 28px; background-color: #4a4a4a; border-radius: 4px; border: 1px solid #5a5a5a;
+                                    display:flex; align-items:center; justify-content:center; color:#bbbbbb; font-size:13px; font-weight:bold;">✕</div>
+                        <span>No disponible</span>
+                    </div>
+                    <div style="display: flex; align-items: center; gap: 0.5rem;">
+                        <div style="width: 28px; height: 28px; background-color: #f1c40f; border-radius: 4px; border: 1px solid #c29d0b;"></div>
+                        <span>Categoría especial</span>
+                    </div>
+                    <div style="display: flex; align-items: center; gap: 0.5rem;">
+                        <div style="width: 28px; height: 28px; background-color: #e63946; border-radius: 50%; border: 1px solid #b3202c;
+                                    display:flex; align-items:center; justify-content:center; color:#fff; font-size:13px;">:)</div>
+                        <span>Seleccionado</span>
                     </div>
                 </div>
             </div>
 
-            {% if info_categorias %}
-            <div style="font-size: 0.8rem; color: #666; align-self: flex-end;">
-                <div style="display:flex; align-items:center; gap:6px;">
-                    <span style="width:14px; height:14px; border-radius:3px; display:inline-block;
-                                 background: linear-gradient(135deg, #f1c40f, #e67e22);"></span>
-                    Asientos con categoría especial cuestan distinto (mirá el color en el mapa)
+            {# ============================================================ #}
+            {# PANTALLA (curva estilo Cinemark)                             #}
+            {# ============================================================ #}
+            <div style="text-align: center; margin-bottom: 2rem;">
+                <div style="width: 70%; max-width: 620px; height: 22px; margin: 0 auto;
+                            border-radius: 50%;
+                            background: radial-gradient(ellipse at center, #6b6b6b 0%, #2a2a2a 75%, transparent 100%);
+                            box-shadow: 0 8px 20px rgba(255,255,255,0.06);"></div>
+                <div style="color: #9a9a9a; letter-spacing: 0.3em; font-size: 0.8rem;
+                            font-weight: bold; margin-top: 0.6rem;">
+                    {% if funcion.sala.tipo == '3d_premium' %}💎 PANTALLA IMAX/DBOX
+                    {% elif funcion.sala.tipo == '2d_premium' %}⭐ PANTALLA PREMIUM
+                    {% elif funcion.sala.tipo == '3d' %}🥽 PANTALLA 3D
+                    {% else %}PANTALLA{% endif %}
                 </div>
             </div>
-            {% endif %}
 
-            {# Badge tipo sala #}
-            <div style="text-align: center; flex-shrink: 0;">
-                {% if funcion.sala.tipo == '2d' %}
-                    <span style="background-color: #6c757d; color: white; padding: 0.5rem 1.25rem; border-radius: 20px; font-size: 1rem; font-weight: bold; display: inline-block;">🎬 2D</span>
-                {% elif funcion.sala.tipo == '3d' %}
-                    <span style="background-color: #007bff; color: white; padding: 0.5rem 1.25rem; border-radius: 20px; font-size: 1rem; font-weight: bold; display: inline-block;">🥽 3D</span>
-                    <p style="color: #004085; font-size: 0.8rem; margin: 0.4rem 0 0 0;">Lentes incluidos</p>
-                {% elif funcion.sala.tipo == '2d_premium' %}
-                    <span style="background-color: #fd7e14; color: white; padding: 0.5rem 1.25rem; border-radius: 20px; font-size: 1rem; font-weight: bold; display: inline-block;">⭐ 2D Premium</span>
-                    <p style="color: #856404; font-size: 0.8rem; margin: 0.4rem 0 0 0;">Butacas reclinables</p>
-                {% elif funcion.sala.tipo == '3d_premium' %}
-                    <span style="background-color: #6f42c1; color: white; padding: 0.5rem 1.25rem; border-radius: 20px; font-size: 1rem; font-weight: bold; display: inline-block;">💎 3D Premium</span>
-                    <p style="color: #4a2c82; font-size: 0.8rem; margin: 0.4rem 0 0 0;">IMAX/DBOX · Lentes incl.</p>
+            {# ============================================================ #}
+            {# MAPA DE ASIENTOS                                             #}
+            {#   disponible   → blanco, código visible                       #}
+            {#   no disponible→ gris con "X" en vez del código                #}
+            {#   categoría especial (dorado) y seleccionado (rojo) los pinta  #}
+            {#   el JS de más abajo.                                         #}
+            {# ============================================================ #}
+            <div id="mapaAsientos" style="background-color: #0f0f0f; padding: 2rem; border-radius: 8px; margin-bottom: 1.5rem; overflow-x: auto;">
+                <div style="display: inline-block; min-width: 100%;">
+                    {% for fila in layout %}
+                        <div style="display: flex; justify-content: center; gap: 8px; margin-bottom: 8px; align-items: center;">
+                            <div style="width: 30px; text-align: center; font-weight: bold; color: #d9a441;">
+                                {{ fila.letra }}
+                            </div>
+                            {% for asiento in fila.celdas %}
+                                {% if asiento %}
+                                <button
+                                    type="button"
+                                    class="asiento {% if asiento in asientos_ocupados %}ocupado{% else %}disponible{% endif %}"
+                                    data-asiento="{{ asiento }}"
+                                    data-motivo="{% if asiento in asientos_reservados_real %}ocupado{% elif asiento in asientos_bloqueados_mant %}mantenimiento{% elif asiento in asientos_bloqueados_reserv %}reservado{% else %}{% endif %}"
+                                    {% if asiento in asientos_ocupados %}disabled{% endif %}
+                                    style="width: 40px; height: 40px; border: 1px solid; border-radius: 6px;
+                                           font-size: 11px; font-weight: bold; transition: all 0.2s;
+                                           {% if asiento in asientos_ocupados %}
+                                               background-color: #4a4a4a; border-color: #5a5a5a;
+                                               color: #bbbbbb; cursor: not-allowed;
+                                           {% else %}
+                                               background-color: #ffffff; border-color: #cccccc;
+                                               color: #111111; cursor: pointer;
+                                           {% endif %}">
+                                    {% if asiento in asientos_ocupados %}✕{% else %}{{ asiento }}{% endif %}
+                                </button>
+                                {% else %}
+                                {# Pasillo: espacio vacío del mismo tamaño, sin botón #}
+                                <div style="width: 40px; height: 40px;"></div>
+                                {% endif %}
+                            {% endfor %}
+                            <div style="width: 30px; text-align: center; font-weight: bold; color: #d9a441;">
+                                {{ fila.letra }}
+                            </div>
+                        </div>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+
+        {# ──────────────── COLUMNA DERECHA: RESUMEN (sticky) ──────────────── #}
+        <div id="sidebarResumen" style="position: sticky; top: 1rem; display: flex; flex-direction: column; gap: 1rem;">
+
+            <div style="background-color: #1a1a1a; border-radius: 8px; border: 1px solid #2a2a2a; padding: 1.25rem;">
+                <div style="font-weight: bold; letter-spacing: 0.05em; color: #ffffff; margin-bottom: 1rem;">RESUMEN</div>
+
+                {# Película #}
+                <div style="display: flex; gap: 0.75rem; align-items: flex-start; margin-bottom: 1rem;
+                            padding-bottom: 1rem; border-bottom: 1px solid #2a2a2a;">
+                    {% if funcion.pelicula.poster %}
+                    <img src="{{ funcion.pelicula.poster.url }}" alt="{{ funcion.pelicula.titulo }}"
+                         style="width: 52px; height: 76px; object-fit: cover; border-radius: 6px; flex-shrink: 0;">
+                    {% endif %}
+                    <div>
+                        <div style="color: #999999; font-size: 0.75rem; margin-bottom: 0.15rem;">Película</div>
+                        <div style="color: #ffffff; font-weight: bold;">{{ funcion.pelicula.titulo }}</div>
+                        <div style="color: #999999; font-size: 0.8rem; margin-top: 0.15rem;">
+                            {% if funcion.sala.tipo == '2d' %}2D
+                            {% elif funcion.sala.tipo == '3d' %}3D
+                            {% elif funcion.sala.tipo == '2d_premium' %}2D Premium
+                            {% elif funcion.sala.tipo == '3d_premium' %}3D Premium{% endif %}
+                        </div>
+                    </div>
+                </div>
+
+                {# Sala y horario #}
+                <div style="margin-bottom: 1rem; padding-bottom: 1rem; border-bottom: 1px solid #2a2a2a;">
+                    <div style="color: #999999; font-size: 0.75rem; margin-bottom: 0.15rem;">Sala y horario</div>
+                    <div style="color: #ffffff; font-weight: bold;">{{ sala.nombre }}</div>
+                    <div style="color: #cccccc; font-size: 0.85rem; margin-top: 0.15rem;">
+                        {{ funcion.fecha_hora|date:"d/m/Y" }} · {{ funcion.fecha_hora|date:"H:i" }} hs
+                    </div>
+                    <div style="font-size: 0.78rem; margin-top: 0.3rem;
+                                color: {% if asientos_disponibles > 10 %}#3ddc84{% elif asientos_disponibles > 0 %}#fd7e14{% else %}#ff4d4d{% endif %};">
+                        {{ asientos_disponibles }} disponibles
+                    </div>
+                </div>
+
+                {# modificado: la categoría especial ahora se pinta en dorado en el mapa #}
+                {% if info_categorias %}
+                <div style="font-size: 0.75rem; color: #bbbbbb; margin-bottom: 1rem; padding-bottom: 1rem; border-bottom: 1px solid #2a2a2a;">
+                    <div style="display:flex; align-items:center; gap:6px;">
+                        <span style="width:12px; height:12px; border-radius:3px; display:inline-block; flex-shrink:0;
+                                     background-color: #f1c40f;"></span>
+                        Los asientos dorados tienen categoría especial (precio distinto)
+                    </div>
+                </div>
                 {% endif %}
-            </div>
-        </div>
-    </div>
 
-    {# ============================================================ #}
-    {# LEYENDA                                                      #}
-    {# ============================================================ #}
-    <div style="background-color: white; padding: 1rem; border-radius: 8px;
-                box-shadow: 0 2px 4px rgba(0,0,0,0.1); margin-bottom: 1.5rem;">
-        <div style="display: flex; justify-content: center; gap: 2rem; flex-wrap: wrap;">
-            <div style="display: flex; align-items: center; gap: 0.5rem;">
-                <div style="width: 30px; height: 30px; background-color: #28a745; border-radius: 4px; border: 2px solid #1e7e34;"></div>
-                <span>Disponible</span>
-            </div>
-            <div style="display: flex; align-items: center; gap: 0.5rem;">
-                <div style="width: 30px; height: 30px; background-color: #007bff; border-radius: 4px; border: 2px solid #0056b3;"></div>
-                <span>Seleccionado</span>
-            </div>
-            <div style="display: flex; align-items: center; gap: 0.5rem;">
-                <div style="width: 30px; height: 30px; background-color: #dc3545; border-radius: 4px; border: 2px solid #bd2130;"></div>
-                <span>Ocupado</span>
-            </div>
-        </div>
-    </div>
-
-    {# ============================================================ #}
-    {# PANTALLA                                                     #}
-    {# ============================================================ #}
-    <div style="text-align: center; margin-bottom: 2rem;">
-        <div style="background: linear-gradient(to bottom, #333 0%, #666 100%);
-                    color: white; padding: 0.75rem; border-radius: 8px 8px 0 0;
-                    max-width: 80%; margin: 0 auto;
-                    box-shadow: 0 4px 12px rgba(0,0,0,0.3);">
-            {% if funcion.sala.tipo == '3d_premium' %}💎 PANTALLA IMAX/DBOX
-            {% elif funcion.sala.tipo == '2d_premium' %}⭐ PANTALLA PREMIUM
-            {% elif funcion.sala.tipo == '3d' %}🥽 PANTALLA 3D
-            {% else %}🎬 PANTALLA{% endif %}
-        </div>
-    </div>
-
-    {# ============================================================ #}
-    {# MAPA DE ASIENTOS                                             #}
-    {# ============================================================ #}
-    <div id="mapaAsientos" style="background-color: white; padding: 2rem; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); margin-bottom: 1.5rem; overflow-x: auto;">
-        <div style="display: inline-block; min-width: 100%;">
-            {% for fila in layout %}
-                <div style="display: flex; justify-content: center; gap: 8px; margin-bottom: 8px; align-items: center;">
-                    <div style="width: 30px; text-align: center; font-weight: bold; color: #666;">
-                        {{ fila.letra }}
+                {# Butacas seleccionadas #}
+                <div style="margin-bottom: 1rem;">
+                    <div style="color: #999999; font-size: 0.75rem; margin-bottom: 0.15rem;">
+                        Butacas (máx. <span id="maxAsientosLabel">{{ max_asientos }}</span>)
                     </div>
-                    {% for asiento in fila.celdas %}
-                        {% if asiento %}
-                        <button
-                            type="button"
-                            class="asiento {% if asiento in asientos_ocupados %}ocupado{% else %}disponible{% endif %}"
-                            data-asiento="{{ asiento }}"
-                            {% if asiento in asientos_ocupados %}disabled{% endif %}
-                            style="width: 40px; height: 40px; border: 2px solid; border-radius: 6px;
-                                   font-size: 11px; font-weight: bold; transition: all 0.2s;
-                                   {% if asiento in asientos_ocupados %}
-                                       background-color: #dc3545; border-color: #bd2130;
-                                       color: white; cursor: not-allowed; opacity: 0.7;
-                                   {% else %}
-                                       background-color: #28a745; border-color: #1e7e34;
-                                       color: white; cursor: pointer;
-                                   {% endif %}">
-                            {{ asiento }}
-                        </button>
-                        {% else %}
-                        {# Pasillo: espacio vacío del mismo tamaño, sin botón #}
-                        <div style="width: 40px; height: 40px;"></div>
-                        {% endif %}
-                    {% endfor %}
-                    <div style="width: 30px; text-align: center; font-weight: bold; color: #666;">
-                        {{ fila.letra }}
-                    </div>
+                    <div id="asientosSeleccionadosTexto" style="color: #ffffff; font-weight: bold;">Ninguna</div>
+                    <div id="cantidadSeleccionada" style="display:none;">0</div>
+                    <div id="notaCategoriasSeleccionadas" style="margin-top:0.5rem; font-size:0.78rem; color:#e6a23c;"></div>
                 </div>
-            {% endfor %}
-            {% comment %}
-            {% for fila in layout %}
-                <div style="display: flex; justify-content: center; gap: 8px; margin-bottom: 8px; align-items: center;">
-                    <div style="width: 30px; text-align: center; font-weight: bold; color: #666;">
-                        {{ fila.0|slice:":1" }}
-                    </div>
-                    {% for asiento in fila %}
-                        <button
-                            type="button"
-                            class="asiento {% if asiento in asientos_ocupados %}ocupado{% else %}disponible{% endif %}"
-                            data-asiento="{{ asiento }}"
-                            {% if asiento in asientos_ocupados %}disabled{% endif %}
-                            style="width: 40px; height: 40px; border: 2px solid; border-radius: 6px;
-                                   font-size: 11px; font-weight: bold; transition: all 0.2s;
-                                   {% if asiento in asientos_ocupados %}
-                                       background-color: #dc3545; border-color: #bd2130;
-                                       color: white; cursor: not-allowed; opacity: 0.7;
-                                   {% else %}
-                                       background-color: #28a745; border-color: #1e7e34;
-                                       color: white; cursor: pointer;
-                                   {% endif %}">
-                            {{ asiento }}
-                        </button>
-                    {% endfor %}
-                    <div style="width: 30px; text-align: center; font-weight: bold; color: #666;">
-                        {{ fila.0|slice:":1" }}
-                    </div>
+
+                {# Total #}
+                <div style="display: flex; justify-content: space-between; align-items: center;
+                            padding-top: 1rem; border-top: 1px solid #2a2a2a;">
+                    <span style="color: #ffffff; font-weight: bold;">Total</span>
+                    <span id="totalPagar" style="font-size: 1.4rem; font-weight: bold; color: #3ddc84;">$0</span>
                 </div>
-            {% endfor %}
-            {% endcomment %}
-        </div>
-    </div>
-
-    {# ============================================================ #}
-    {# RESUMEN DE SELECCIÓN                                         #}
-    {# ============================================================ #}
-    <div style="background-color: white; padding: 1.5rem; border-radius: 8px;
-                box-shadow: 0 2px 4px rgba(0,0,0,0.1); margin-bottom: 1.5rem;">
-        <div style="display: flex; justify-content: space-between; align-items: center;
-                    flex-wrap: wrap; gap: 1rem;">
-            <div>
-                <div style="font-size: 0.9rem; color: #666; margin-bottom: 0.25rem;">Asientos seleccionados:</div>
-                <div id="asientosSeleccionadosTexto"
-                     style="font-size: 1.25rem; font-weight: bold; color: #333;">Ninguno</div>
             </div>
-            <div>
-                <div style="font-size: 0.9rem; color: #666; margin-bottom: 0.25rem;">
-                    Cantidad (máx. <span id="maxAsientosLabel">{{ max_asientos }}</span>):
+
+            {# ============================================================ #}
+            {# FORMULARIO                                                   #}
+            {# ============================================================ #}
+            <form method="post"
+                  action="{% url 'reservas:confirmar_reserva_asientos' funcion.id %}"
+                  id="formReserva">
+                {% csrf_token %}
+                <input type="hidden" name="asientos_seleccionados" id="asientosSeleccionadosInput" value="">
+
+                <div style="display: flex; flex-direction: column; gap: 0.75rem;">
+                    <button type="submit" id="btnConfirmar" disabled
+                        style="padding: 1rem;
+                               background-color: #28a745; color: white; border: none;
+                               border-radius: 6px; font-weight: bold; font-size: 1.1rem;
+                               cursor: not-allowed; opacity: 0.5;
+                               transition: opacity 0.2s, background-color 0.2s;">
+                        RESERVAR
+                    </button>
+                    <a href="{% url 'peliculas:detalle_pelicula' funcion.pelicula.id %}"
+                        style="padding: 0.85rem;
+                               background-color: transparent; color: #ffffff; border: 1px solid #555555; border-radius: 6px;
+                               font-weight: bold; font-size: 1rem; text-align: center;
+                               text-decoration: none; display: flex;
+                               align-items: center; justify-content: center;">
+                        Cancelar
+                    </a>
                 </div>
-                <div id="cantidadSeleccionada" style="font-size: 1.25rem; font-weight: bold; color: #333;">0</div>
-            </div>
-            <div>
-                <div style="font-size: 0.9rem; color: #666; margin-bottom: 0.25rem;">Total a pagar:</div>
-                <div id="totalPagar" style="font-size: 1.5rem; font-weight: bold; color: #28a745;">$0</div>
+            </form>
+
+            {# modificado: versión oscura y compacta del cartel de aviso, ahora dentro del sidebar #}
+            <div style="background-color: #2a2410; padding: 0.85rem; border-radius: 6px;
+                        border-left: 4px solid #ffc107;">
+                <p style="margin: 0; color: #e6c977; font-size: 0.78rem; line-height: 1.4;">
+                    Seleccioná hasta <strong>{{ max_asientos }}</strong> asientos.
+                    Al confirmar tenés <strong>{{ tiempo_limite_minutos }} minutos</strong> para pagar.
+                </p>
             </div>
         </div>
-        <div id="notaCategoriasSeleccionadas" style="margin-top:0.75rem; font-size:0.8rem; color:#856404;"></div>
-    </div>
-
-    {# ============================================================ #}
-    {# FORMULARIO                                                   #}
-    {# ============================================================ #}
-    <form method="post"
-          action="{% url 'reservas:confirmar_reserva_asientos' funcion.id %}"
-          id="formReserva">
-        {% csrf_token %}
-        <input type="hidden" name="asientos_seleccionados" id="asientosSeleccionadosInput" value="">
-
-        <div style="display: flex; gap: 1rem; flex-wrap: wrap;">
-            <button type="submit" id="btnConfirmar" disabled
-                style="flex: 1; min-width: 200px; padding: 1rem;
-                       background-color: #28a745; color: white; border: none;
-                       border-radius: 6px; font-weight: bold; font-size: 1.1rem;
-                       cursor: not-allowed; opacity: 0.5;
-                       transition: opacity 0.2s, background-color 0.2s;">
-                RESERVAR
-            </button>
-            <a href="{% url 'peliculas:detalle_pelicula' funcion.pelicula.id %}"
-                style="flex: 1; min-width: 200px; padding: 1rem;
-                       background-color: #6c757d; color: white; border-radius: 6px;
-                       font-weight: bold; font-size: 1.1rem; text-align: center;
-                       text-decoration: none; display: flex;
-                       align-items: center; justify-content: center;">
-                Cancelar
-            </a>
-        </div>
-    </form>
-
-    <div style="background-color: #fff3cd; padding: 1rem; border-radius: 6px;
-                border-left: 4px solid #ffc107; margin-top: 1.5rem;">
-        <p style="margin: 0; color: #856404;">
-            <strong>Información:</strong>
-            Seleccioná hasta <strong>{{ max_asientos }}</strong> asientos.
-            Al confirmar se crea tu reserva y <strong>a partir de ese momento</strong>
-            tendrás <strong>{{ tiempo_limite_minutos }} minutos para completar el pago</strong>.
-            El contador de arriba es solo para que no pierdas los asientos que estás viendo.
-        </p>
     </div>
 </div>
 
@@ -369,23 +382,45 @@
     
     // ════════════════════════════════════════════════════════════
     // SELECCIÓN DE ASIENTOS
+    // modificado: paleta nueva estilo Cinemark (Fase 1, solo visual)
+    //   - Disponible normal   → blanco
+    //   - Categoría especial  → rojo fijo (antes usaba info.color, el color
+    //     propio de cada categoría cargado desde el admin; ahora se unifica
+    //     en rojo para que combine con el resto de la paleta. El dato
+    //     info.color de la base sigue existiendo por si en el futuro se
+    //     quiere volver a usarlo por categoría)
+    //   - Seleccionado        → círculo rojo con carita feliz ":)" en vez
+    //     del código, sea cual sea el color que tenía antes de elegirlo
     // ════════════════════════════════════════════════════════════
-    // Pintar de entrada los asientos con categoría especial (ej: "Mejorado"),
-    // guardando su color como "color base" para poder restaurarlo al deseleccionar.
-    // Además se agrega una marca visible (⭐) en el botón, porque antes esto
-    // solo se veía como tooltip al pasar el mouse y no era obvio para el usuario.
 
+    const COLOR_DISPONIBLE       = { fondo: '#ffffff', borde: '#cccccc', texto: '#111111' };
+    const COLOR_CATEGORIA        = { fondo: '#f1c40f', borde: '#c29d0b', texto: '#111111' };
+    const COLOR_SELECCIONADO     = { fondo: '#e63946', borde: '#b3202c', texto: '#ffffff' };
+
+    // Guardar el estado base (blanco) de cada asiento disponible, para
+    // poder restaurarlo tal cual al deseleccionar.
+    botonesAsientos.forEach(function (boton) {
+        boton.dataset.colorBase  = COLOR_DISPONIBLE.fondo;
+        boton.dataset.borderBase = COLOR_DISPONIBLE.borde;
+        boton.dataset.textoBase  = COLOR_DISPONIBLE.texto;
+    });
+
+    // Los asientos con categoría especial pisan ese estado base con rojo.
     Object.entries(INFO_CATEGORIAS).forEach(function ([codigo, info]) {
         const btn = document.querySelector('.asiento.disponible[data-asiento="' + codigo + '"]');
         if (btn) {
-            btn.style.backgroundColor = info.color;
-            btn.style.borderColor     = info.color;
-            btn.dataset.colorBase  = info.color;
-            btn.dataset.borderBase = info.color;
-            // antes terminaba "(x' + info.multiplicador + ')';"
+            btn.dataset.colorBase  = COLOR_CATEGORIA.fondo;
+            btn.dataset.borderBase = COLOR_CATEGORIA.borde;
+            btn.dataset.textoBase  = COLOR_CATEGORIA.texto;
             btn.title = codigo + ' — ' + info.nombre + ' (x' + info.multiplicador + ', +' + Math.round((info.multiplicador - 1) * 100) + '%)';
-            btn.innerHTML = codigo + '<div style="font-size:8px; line-height:1;">⭐</div>';
         }
+    });
+
+    // Pintar cada asiento disponible con su estado base recién calculado.
+    botonesAsientos.forEach(function (boton) {
+        boton.style.backgroundColor = boton.dataset.colorBase;
+        boton.style.borderColor     = boton.dataset.borderBase;
+        boton.style.color           = boton.dataset.textoBase;
     });
 
     botonesAsientos.forEach(function (boton) {
@@ -396,12 +431,14 @@
             const codigo = this.dataset.asiento;
 
             if (asientosSeleccionados.has(codigo)) {
-                // Deseleccionar vuelve a su color base (verde normal, o el
-                // de su categoría si lo tiene) — antes esto quedaba hardcodeado
-                // en verde, por eso los asientos "Mejorado" perdían su color.
+                // Deseleccionar: vuelve a su estado base (blanco, o rojo
+                // si es categoría especial) y al código como texto de nuevo.
                 asientosSeleccionados.delete(codigo);
-                this.style.backgroundColor = this.dataset.colorBase  || '#28a745';
-                this.style.borderColor     = this.dataset.borderBase || '#1e7e34';
+                this.style.backgroundColor = this.dataset.colorBase;
+                this.style.borderColor     = this.dataset.borderBase;
+                this.style.color           = this.dataset.textoBase;
+                this.style.borderRadius    = '6px';
+                this.textContent           = codigo;
                 this.style.transform       = 'scale(1)';
             } else {
                 // Validar límite
@@ -410,17 +447,22 @@
                     return;
                 }
                 asientosSeleccionados.add(codigo);
-                this.style.backgroundColor = '#007bff';
-                this.style.borderColor     = '#0056b3';
+                // Seleccionado: círculo rojo con carita feliz, reemplazando
+                // el código (manda por sobre el color de categoría especial)
+                this.style.backgroundColor = COLOR_SELECCIONADO.fondo;
+                this.style.borderColor     = COLOR_SELECCIONADO.borde;
+                this.style.color           = COLOR_SELECCIONADO.texto;
+                this.style.borderRadius    = '50%';
+                this.textContent           = ':)';
             }
             actualizarResumen();
         });
 
-        // Hover
+        // Hover — modificado: sombra clara en vez de oscura, para que se note sobre el fondo negro
         boton.addEventListener('mouseenter', function () {
             if (!asientosSeleccionados.has(this.dataset.asiento) && !formularioBloqueado) {
                 this.style.transform = 'scale(1.12)';
-                this.style.boxShadow = '0 4px 8px rgba(0,0,0,0.2)';
+                this.style.boxShadow = '0 0 8px rgba(255,255,255,0.5)';
             }
         });
         boton.addEventListener('mouseleave', function () {

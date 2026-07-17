@@ -1,3 +1,5 @@
+/* bloque modificado: tema oscuro aplicado a features, como-funciona (el cta-box ya era oscuro con degrade y no se toca) */
+
 /* nuevo: features cards, CTA de registro/bienvenida y "como funciona", extraído del style="" inline original */
 
 .features-grid {
@@ -8,10 +10,10 @@
 }
 
 .feature-card {
-    background-color: white;
+    background-color: #232323;
     padding: 2rem;
     border-radius: 12px;
-    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    box-shadow: 0 2px 8px rgba(0,0,0,0.35);
     text-align: center;
 }
 
@@ -21,12 +23,12 @@
 }
 
 .feature-card h3 {
-    color: #333;
+    color: #f5f5f5;
     margin-bottom: 0.5rem;
 }
 
 .feature-card p {
-    color: #666;
+    color: #aaa;
     margin: 0;
 }
 
@@ -87,12 +89,12 @@
 .como-funciona {
     margin-top: 3rem;
     padding: 2rem;
-    background-color: #f8f9fa;
+    background-color: #1c1c1c;
     border-radius: 12px;
 }
 
 .como-funciona h3 {
-    color: #333;
+    color: #f5f5f5;
     text-align: center;
     margin-bottom: 1.5rem;
 }
@@ -122,12 +124,12 @@
 }
 
 .como-funciona-paso h4 {
-    color: #333;
+    color: #f0f0f0;
     margin-bottom: 0.5rem;
 }
 
 .como-funciona-paso p {
-    color: #666;
+    color: #999;
     margin: 0;
     font-size: 0.9rem;
 }

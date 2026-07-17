@@ -102,10 +102,19 @@ def seleccionar_asientos(request, funcion_id):
         'funcion': funcion,
         'sala': funcion.sala,
         'layout': layout,
-        # NOTA: por ahora el template sigue tratando todo "no disponible" como
-        # "ocupado" (mismo color). La distinción visual por motivo de bloqueo
-        # (VIP, mantenimiento, etc.) se suma en el paso de templates.
+        # modificado (Fase 2): 'asientos_ocupados' se sigue usando tal cual
+        # para decidir qué botón queda deshabilitado (todo lo no disponible,
+        # sin importar el motivo). Además ahora se manda por separado el
+        # detalle por motivo, para que el template pueda diferenciar más
+        # adelante sin tener que volver a tocar esta vista:
+        #   - asientos_reservados_real   -> ya tiene una reserva (pendiente/confirmada)
+        #   - asientos_bloqueados_mant   -> bloqueado por mantenimiento (admin)
+        #   - asientos_bloqueados_reserv -> bloqueado con motivo "reservado" (admin)
+        # En el cliente, por ahora, los tres se siguen viendo igual (gris + X).
         'asientos_ocupados': funcion.asientos_no_disponibles(),
+        'asientos_reservados_real': funcion.asientos_ocupados(),
+        'asientos_bloqueados_mant': funcion.asientos_bloqueados_por_motivo('mantenimiento'),
+        'asientos_bloqueados_reserv': funcion.asientos_bloqueados_por_motivo('reservado'),
         'asientos_disponibles': funcion.asientos_disponibles(),
         'max_asientos': max_asientos,
         'tiempo_limite_minutos': tiempo_limite,

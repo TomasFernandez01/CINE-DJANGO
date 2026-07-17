@@ -3,6 +3,7 @@ from django.utils import timezone
 from datetime import datetime, timedelta
 from .models import Sala, Funcion
 from peliculas.models import Pelicula
+from utils.fechas import generar_proximos_dias  # nuevo: helper compartido del carrusel de fechas
 
 def lista_salas(request):
     salas = Sala.objects.filter(activa=True)
@@ -80,5 +81,6 @@ def lista_funciones(request):
         'sala_seleccionada': sala_id,
         'orden_seleccionado': orden,
         'total_resultados': funciones.count(),
+        'proximas_fechas': generar_proximos_dias(20),  # nuevo: carrusel de fechas de esta pagina
     }
     return render(request, 'salas/lista_funciones.html', contexto)

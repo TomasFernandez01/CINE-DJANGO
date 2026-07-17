@@ -1,0 +1,114 @@
+/* nuevo: carrusel de fechas compartido entre peliculas y salas (antes duplicado / vivía solo en peliculas).
+   Incluye flechas de scroll horizontal y boton de papelera para quitar el filtro por dia. */
+
+.fechas-carrusel-wrap {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    margin-bottom: 2rem;
+}
+
+.fecha-flecha {
+    flex: 0 0 auto;
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    border: 1px solid #3a3a3a;
+    background-color: #1f1f1f;
+    color: #eee;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    font-size: 1.1rem;
+    transition: border-color 0.2s, background-color 0.2s;
+}
+
+.fecha-flecha:hover {
+    border-color: #e50914;
+    background-color: #2a2a2a;
+}
+
+.fecha-flecha:disabled {
+    opacity: 0.35;
+    cursor: default;
+}
+
+.fecha-flecha:disabled:hover {
+    border-color: #3a3a3a;
+    background-color: #1f1f1f;
+}
+
+/* nuevo: boton de papelera para quitar el filtro de dia activo (solo aparece si hay uno seleccionado) */
+.fecha-quitar {
+    flex: 0 0 auto;
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    border: 1px solid #e50914;
+    background-color: rgba(229,9,20,0.12);
+    color: #ff5c5c;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    font-size: 1rem;
+    text-decoration: none;
+    transition: background-color 0.2s;
+}
+
+.fecha-quitar:hover {
+    background-color: rgba(229,9,20,0.28);
+}
+
+.fechas-carrusel {
+    display: flex;
+    gap: 0.75rem;
+    overflow-x: auto;
+    scroll-behavior: smooth;
+    padding-bottom: 0.25rem;
+    scrollbar-width: thin;
+}
+
+.fecha-item {
+    flex: 0 0 auto;
+    min-width: 68px;
+    text-align: center;
+    background-color: #1f1f1f;
+    border: 2px solid #333;
+    border-radius: 10px;
+    padding: 0.6rem 0.4rem;
+    text-decoration: none;
+    color: #eee;
+    transition: border-color 0.2s, background-color 0.2s;
+}
+
+.fecha-item:hover {
+    border-color: #e50914;
+}
+
+.fecha-item.fecha-hoy {
+    background-color: #e50914;
+    color: white;
+    border-color: #e50914;
+}
+
+/* nuevo: dia efectivamente seleccionado por el usuario (distinto de "Hoy" por defecto) */
+.fecha-item.fecha-activa {
+    background-color: #ffffff;
+    color: #1a1a1a;
+    border-color: #ffffff;
+}
+
+.fecha-item-diasemana {
+    display: block;
+    font-size: 0.75rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    margin-bottom: 0.2rem;
+}
+
+.fecha-item-diames {
+    display: block;
+    font-size: 0.85rem;
+}
