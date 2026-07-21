@@ -1,312 +1,221 @@
- {% extends 'base.html' %}
+{% extends 'base.html' %}
 
 {% block titulo %}Procesar Pago{% endblock %}
-   
+
 {% block contenido %}
-<div style="max-width: 680px; margin: 0 auto;">
+{# ================================================================ #}
+{# FASE F: re-skin completo, mismo estilo dark + layout de 2         #}
+{# columnas que elegir_entrada.html / elegir_combo.html / asientos.  #}
+{# Antes era una sola columna clara, con "Resumen de tu Reserva"     #}
+{# como una card más entre el aviso de simulación y el formulario.   #}
+{# Ahora el resumen vive en el sidebar sticky de la derecha, como en #}
+{# el boceto: Método de Pago a la izquierda, RESUMEN a la derecha.   #}
+{# El JS (selectMetodo, auto-formato de tarjeta, countdown) es el    #}
+{# mismo de antes, no se tocó nada de esa lógica.                    #}
+{# ================================================================ #}
+<style>
+    @media (max-width: 860px) {
+        #layoutPago { grid-template-columns: 1fr !important; }
+        #sidebarResumenPago { position: static !important; }
+    }
+    .metodo-pago-card {
+        display: flex; align-items: center; padding: 1rem 1.1rem; border-radius: 8px;
+        border: 2px solid #2a2a2a; background-color: #1a1a1a; cursor: pointer;
+        margin-bottom: 0.75rem; transition: border-color 0.15s;
+    }
+    .metodo-pago-card:hover { border-color: #555555; }
+    .metodo-pago-card input[type="radio"] { accent-color: #28a745; margin-right: 0.75rem; }
+    .metodo-pago-card.seleccionada { border-color: #28a745; background-color: #142418; }
+</style>
 
-    <h1 style="text-align: center; color: #333; margin-bottom: 1.25rem;">💳 Procesar Pago</h1>
+<div style="max-width: 1000px; margin: 0 auto; background-color: #0f0f0f;
+            padding: 1.5rem; border-radius: 12px; color: #f2f2f2;">
+    <h1 style="text-align: center; margin-bottom: 1.5rem; color: #ffffff;">💳 Procesar Pago</h1>
 
-    <!-- ============================================================ -->
-    <!-- AVISO PAGO SIMULADO                                          -->
-    <!-- ============================================================ -->
-    <div style="background: linear-gradient(135deg, #f39c12 0%, #e67e22 100%); border-radius: 10px; padding: 1.25rem 1.5rem; margin-bottom: 1.25rem; display: flex; align-items: center; gap: 1rem; box-shadow: 0 4px 12px rgba(243,156,18,0.4);">
-        <div style="font-size: 2.5rem; flex-shrink: 0;">🧪</div>
+    {# ============================================================ #}
+    {# AVISO PAGO SIMULADO                                          #}
+    {# ============================================================ #}
+    <div style="background: linear-gradient(135deg, #f39c12 0%, #e67e22 100%); border-radius: 10px; padding: 1.1rem 1.4rem; margin-bottom: 1.25rem; display: flex; align-items: center; gap: 1rem;">
+        <div style="font-size: 2.2rem; flex-shrink: 0;">🧪</div>
         <div style="color: white;">
-            <div style="font-size: 1.1rem; font-weight: bold; margin-bottom: 0.25rem;">ENTORNO DE DEMOSTRACIÓN — PAGO SIMULADO</div>
-            <div style="font-size: 0.9rem; opacity: 0.95; line-height: 1.4;">No se realizará ningún cobro real. Podés usar cualquier número de tarjeta. Este sistema es una simulación educativa.</div>
+            <div style="font-size: 1.05rem; font-weight: bold; margin-bottom: 0.2rem;">ENTORNO DE DEMOSTRACIÓN — PAGO SIMULADO</div>
+            <div style="font-size: 0.85rem; opacity: 0.95; line-height: 1.4;">No se realizará ningún cobro real. Podés usar cualquier número de tarjeta.</div>
         </div>
     </div>
 
-    <!-- ============================================================ -->
-    <!-- CONTADOR REGRESIVO (uno solo)                                -->
-    <!-- ============================================================ -->
+    {# ============================================================ #}
+    {# CONTADOR REGRESIVO                                           #}
+    {# ============================================================ #}
     {% if reserva.tiempo_restante_pago %}
-    <div id="countdownContainer" style="background: linear-gradient(135deg, #ff6b6b 0%, #ff8e53 100%); padding: 1.5rem; border-radius: 8px; margin-bottom: 1.25rem; text-align: center; color: white; box-shadow: 0 4px 12px rgba(255,107,107,0.3);">
-        <div style="font-size: 0.9rem; margin-bottom: 0.5rem; opacity: 0.95;">Completá el pago antes de que expire el tiempo:</div>
-        <div id="countdown" style="font-size: 2.5rem; font-weight: bold; font-family: 'Courier New', monospace; letter-spacing: 0.1em;" data-tiempo="{{ reserva.tiempo_restante_pago }}">
+    <div id="countdownContainer" style="background: linear-gradient(135deg, #ff6b6b 0%, #ff8e53 100%); padding: 1.25rem; border-radius: 8px; margin-bottom: 1.25rem; text-align: center; color: white;">
+        <div style="font-size: 0.85rem; margin-bottom: 0.4rem; opacity: 0.95;">Completá el pago antes de que expire el tiempo:</div>
+        <div id="countdown" style="font-size: 2.2rem; font-weight: bold; font-family: 'Courier New', monospace; letter-spacing: 0.1em;" data-tiempo="{{ reserva.tiempo_restante_pago }}">
             {{ reserva.tiempo_restante_formato }}
         </div>
-        <div style="font-size: 0.8rem; margin-top: 0.5rem; opacity: 0.9;">La reserva se cancelará automáticamente si no completás el pago</div>
+        <div style="font-size: 0.78rem; margin-top: 0.4rem; opacity: 0.9;">La reserva se cancelará automáticamente si no completás el pago</div>
     </div>
     {% endif %}
 
-    <!-- ============================================================ -->
-    <!-- RESUMEN DE RESERVA (uno solo, con precio por entrada y código)-->
-    <!-- ============================================================ -->
-    <div style="background: white; padding: 1.5rem; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.08); margin-bottom: 1.25rem;">
-        <h2 style="color: #333; margin: 0 0 1rem 0; font-size: 1.2rem; border-bottom: 2px solid #007bff; padding-bottom: 0.5rem;">Resumen de tu Reserva</h2>
-        <p style="margin: 0.4rem 0;"><strong>Película:</strong> {{ reserva.funcion.pelicula.titulo }}</p>
-        <p style="margin: 0.4rem 0;"><strong>Sala:</strong> {{ reserva.funcion.sala.nombre }}</p>
-        <p style="margin: 0.4rem 0;"><strong>Fecha:</strong> {{ reserva.funcion.fecha_hora|date:"d/m/Y" }}</p>
-        <p style="margin: 0.4rem 0;"><strong>Horario:</strong> {{ reserva.funcion.fecha_hora|date:"H:i" }} hs</p>
-        <p style="margin: 0.4rem 0;"><strong>Entradas:</strong> {{ reserva.cantidad_entradas }}</p>
-        {% if reserva.asientos_seleccionados %}
-        <p style="margin: 0.4rem 0;"><strong>Asientos:</strong> {{ reserva.asientos_formateados }}</p>
-        {% endif %}
-        <p style="margin: 0.4rem 0;"><strong>Código de Reserva:</strong> <span style="font-family: monospace; font-weight: bold;">{{ reserva.codigo_reserva }}</span></p>
-        <div style="margin-top: 1rem; padding: 1rem; background: #e7f3ff; border-radius: 6px;">
-            {% if reserva.tiene_precios_mixtos %}
-                {% for item in reserva.desglose_precios_asientos %}
-                <p style="margin: 0.15rem 0; font-size: 0.85rem; color: #666;">Asiento {{ item.codigo }}: ${{ item.precio }}</p>
-                {% endfor %}
-            {% else %}
-                <p style="margin: 0; font-size: 0.9rem; color: #666;">Precio por entrada: ${{ reserva.funcion.precio_final }}</p>
-            {% endif %}
-            <p id="totalOriginalDisplay" style="margin: 0.25rem 0 0 0; font-size: 1.4rem; font-weight: bold; color: #333;">Total: ${{ total }}</p>
+    <div id="layoutPago" style="display: grid; grid-template-columns: 1fr 320px; gap: 1.5rem; align-items: start;">
+
+        {# ──────────────── COLUMNA IZQUIERDA: método de pago ──────────────── #}
+        <div style="background-color: #1a1a1a; border: 1px solid #2a2a2a; border-radius: 8px; padding: 1.5rem;">
+            <h2 style="color: #ffffff; margin: 0 0 1rem 0; font-size: 1.15rem; border-bottom: 2px solid #28a745; padding-bottom: 0.5rem;">Método de Pago</h2>
+
+            <form method="post" id="pagoForm">
+                {% csrf_token %}
+
+                <div style="display: flex; flex-direction: column; gap: 0.75rem; margin-bottom: 1.5rem;">
+                    <label class="metodo-pago-card" onclick="selectMetodo('tarjeta_debito', this)">
+                        <input type="radio" name="metodo_pago" value="tarjeta_debito" required>
+                        <div>
+                            <strong style="color:#ffffff;">💳 Tarjeta de Débito</strong>
+                            <p style="margin: 0; font-size: 0.85rem; color: #aaaaaa;">Simulado — cualquier número funciona</p>
+                        </div>
+                    </label>
+                    <label class="metodo-pago-card" onclick="selectMetodo('tarjeta_credito', this)">
+                        <input type="radio" name="metodo_pago" value="tarjeta_credito" required>
+                        <div>
+                            <strong style="color:#ffffff;">💳 Tarjeta de Crédito</strong>
+                            <p style="margin: 0; font-size: 0.85rem; color: #aaaaaa;">Simulado — cualquier número funciona</p>
+                        </div>
+                    </label>
+                    <label class="metodo-pago-card" onclick="selectMetodo('transferencia', this)">
+                        <input type="radio" name="metodo_pago" value="transferencia" required>
+                        <div>
+                            <strong style="color:#ffffff;">🏦 Transferencia</strong>
+                            <p style="margin: 0; font-size: 0.85rem; color: #aaaaaa;">Transferencia bancaria (simulada)</p>
+                        </div>
+                    </label>
+                </div>
+
+                {# Campos de tarjeta (se muestran solo si es tarjeta) #}
+                <div id="datosTarjeta" style="display: none; margin-bottom: 1.5rem; padding: 1.25rem; background: #141414; border-radius: 6px; border: 1px dashed #ffc107;">
+                    <div style="background: #2a2410; padding: 0.65rem 0.9rem; border-radius: 6px; margin-bottom: 1.1rem; display: flex; align-items: center; gap: 0.6rem;">
+                        <span style="font-size: 1.1rem;">🧪</span>
+                        <span style="color: #e6c977; font-size: 0.85rem;"><strong>Modo simulación:</strong> usá cualquier número.</span>
+                    </div>
+                    <h3 style="color: #ffffff; margin: 0 0 0.85rem 0; font-size: 1rem;">Datos de la Tarjeta</h3>
+                    <div style="margin-bottom: 0.75rem;">
+                        <label style="display: block; font-weight: bold; margin-bottom: 0.3rem; color:#cccccc; font-size:0.85rem;">Nombre del Titular:</label>
+                        <input type="text" id="nombre_titular" name="nombre_titular" placeholder="Como aparece en la tarjeta"
+                            style="width: 100%; padding: 0.55rem; border: 1px solid #444444; border-radius: 4px; font-size: 0.95rem; box-sizing: border-box; background-color:#0f0f0f; color:#ffffff;">
+                    </div>
+                    <div style="margin-bottom: 0.75rem;">
+                        <label style="display: block; font-weight: bold; margin-bottom: 0.3rem; color:#cccccc; font-size:0.85rem;">Número de Tarjeta:</label>
+                        <input type="text" id="numero_tarjeta" name="numero_tarjeta" placeholder="1234 5678 9012 3456" maxlength="19"
+                            style="width: 100%; padding: 0.55rem; border: 1px solid #444444; border-radius: 4px; font-size: 0.95rem; box-sizing: border-box; background-color:#0f0f0f; color:#ffffff;">
+                    </div>
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem;">
+                        <div>
+                            <label style="display: block; font-weight: bold; margin-bottom: 0.3rem; color:#cccccc; font-size:0.85rem;">Vencimiento:</label>
+                            <input type="text" id="vencimiento" name="vencimiento" placeholder="MM/AA" maxlength="5"
+                                style="width: 100%; padding: 0.55rem; border: 1px solid #444444; border-radius: 4px; font-size: 0.95rem; box-sizing: border-box; background-color:#0f0f0f; color:#ffffff;">
+                        </div>
+                        <div>
+                            <label style="display: block; font-weight: bold; margin-bottom: 0.3rem; color:#cccccc; font-size:0.85rem;">CVV:</label>
+                            <input type="text" id="cvv" name="cvv" placeholder="123" maxlength="4"
+                                style="width: 100%; padding: 0.55rem; border: 1px solid #444444; border-radius: 4px; font-size: 0.95rem; box-sizing: border-box; background-color:#0f0f0f; color:#ffffff;">
+                        </div>
+                    </div>
+                </div>
+
+                <div style="display: flex; gap: 1rem;">
+                    <button type="submit" id="submitBtn"
+                        style="flex: 1; padding: 1rem; background: #28a745; color: white; border: none; border-radius: 6px; font-weight: bold; font-size: 1rem; cursor: pointer;">
+                        Confirmar
+                    </button>
+                    <a href="{% url 'reservas:mis_reservas' %}"
+                        style="flex: 1; padding: 1rem; background: transparent; color: #ffffff; border: 1px solid #555555; border-radius: 6px; text-align: center; text-decoration: none; font-weight: bold; font-size: 1rem; display: flex; align-items: center; justify-content: center;">
+                        Cancelar
+                    </a>
+                </div>
+            </form>
         </div>
-    </div>
 
-    <!-- ============================================================ -->
-    <!-- SECCIÓN PROMOCIONES                                          -->
-    <!-- ============================================================ -->
-    {% if promociones_disponible %}
+        {# ──────────────── COLUMNA DERECHA: RESUMEN (sticky) ──────────────── #}
+        <div id="sidebarResumenPago" style="position: sticky; top: 1rem; display: flex; flex-direction: column; gap: 1rem;">
+            <div style="background-color: #1a1a1a; border-radius: 8px; border: 1px solid #2a2a2a; padding: 1.25rem;">
+                <div style="font-weight: bold; letter-spacing: 0.05em; color: #ffffff; margin-bottom: 1rem;">RESUMEN DE TU RESERVA</div>
 
-    <!-- Promo del día -->
-    {% if promo_dia %}
-    <div style="background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%); padding: 1.25rem; border-radius: 8px; margin-bottom: 1rem; color: white;">
-        <div style="display: flex; align-items: center; gap: 0.75rem;">
-            <span style="font-size: 2rem;">🎉</span>
-            <div>
-                <div style="font-weight: bold; font-size: 1.1rem;">¡Promoción activa hoy!</div>
-                <div style="opacity: 0.95; font-size: 0.95rem;">
-                    {{ promo_dia.nombre }}
-                    {% if promo_dia.tipo == '2x1' %}— Por cada 2 entradas, pagás solo 1
-                    {% elif promo_dia.tipo == 'descuento' %}— {{ promo_dia.porcentaje_descuento }}% de descuento
+                <div style="margin-bottom: 1rem; padding-bottom: 1rem; border-bottom: 1px solid #2a2a2a;">
+                    <div style="color: #999999; font-size: 0.75rem; margin-bottom: 0.15rem;">Película</div>
+                    <div style="color: #ffffff; font-weight: bold;">{{ reserva.funcion.pelicula.titulo }}</div>
+                    <div style="color: #cccccc; font-size: 0.85rem; margin-top: 0.15rem;">
+                        {{ reserva.funcion.sala.nombre }} · {{ reserva.funcion.fecha_hora|date:"d/m/Y" }} · {{ reserva.funcion.fecha_hora|date:"H:i" }} hs
+                    </div>
+                </div>
+
+                <div style="margin-bottom: 1rem; padding-bottom: 1rem; border-bottom: 1px solid #2a2a2a;">
+                    <div style="color: #999999; font-size: 0.75rem; margin-bottom: 0.15rem;">Entradas</div>
+                    <div style="color: #ffffff; font-weight: bold;">{{ reserva.cantidad_entradas }}</div>
+                    {% if reserva.asientos_seleccionados %}
+                    <div style="color: #cccccc; font-size: 0.85rem; margin-top: 0.15rem;">Asientos: {{ reserva.asientos_formateados }}</div>
+                    {% endif %}
+                    <div style="color: #888888; font-size: 0.78rem; margin-top: 0.3rem;">
+                        Código de reserva: <span style="font-family: monospace;">{{ reserva.codigo_reserva }}</span>
+                    </div>
+                </div>
+
+                <div style="margin-bottom: 1rem; padding-bottom: 1rem; border-bottom: 1px solid #2a2a2a;">
+                    {% if reserva.tiene_precios_mixtos %}
+                        {% for item in reserva.desglose_precios_asientos %}
+                        <div style="display: flex; justify-content: space-between; color: #cccccc; font-size: 0.82rem; margin-bottom: 0.2rem;">
+                            <span>Asiento {{ item.codigo }}</span><span>${{ item.precio }}</span>
+                        </div>
+                        {% endfor %}
+                    {% else %}
+                        <div style="display: flex; justify-content: space-between; color: #cccccc; font-size: 0.85rem;">
+                            <span>Precio por entrada</span><span>${{ reserva.funcion.precio_final }}</span>
+                        </div>
                     {% endif %}
                 </div>
-                {% if promo_dia.descripcion %}
-                <div style="opacity: 0.85; font-size: 0.85rem; margin-top: 0.25rem;">{{ promo_dia.descripcion }}</div>
+
+                {# modificado: promociones ya elegidas en pasos anteriores (paso 2 y paso 5), acá solo se muestran de forma prolija #}
+                {% if mostrar_bloque_promos %}
+                <div style="margin-bottom: 1rem; padding-bottom: 1rem; border-bottom: 1px solid #2a2a2a;">
+                    <div style="color: #999999; font-size: 0.75rem; margin-bottom: 0.4rem;">Promociones aplicadas</div>
+                    {% if promo_dia %}
+                    <div style="display: flex; justify-content: space-between; color: #e6a23c; font-size: 0.82rem; margin-bottom: 0.2rem;">
+                        <span>🎉 {{ promo_dia.nombre }}</span><span>-${{ descuento_promo_dia }}</span>
+                    </div>
+                    {% endif %}
+                    {% if cupon_obj %}
+                    <div style="display: flex; justify-content: space-between; color: #e6a23c; font-size: 0.82rem; margin-bottom: 0.2rem;">
+                        <span>Cupón {{ cupon_obj.codigo }}</span><span>-${{ descuento_cupon }}</span>
+                    </div>
+                    {% endif %}
+                    {% if combo_obj %}
+                    <div style="display: flex; justify-content: space-between; color: #cccccc; font-size: 0.82rem;">
+                        <span>🍿 {% if cantidad_combo > 1 %}{{ cantidad_combo }}x {% endif %}{{ combo_obj.nombre }}</span><span>+${{ precio_combo }}</span>
+                    </div>
+                    {% endif %}
+                </div>
                 {% endif %}
+
+                <div style="display: flex; justify-content: space-between; align-items: center;">
+                    <span style="color: #ffffff; font-weight: bold;">Total</span>
+                    <span style="font-size: 1.4rem; font-weight: bold; color: #3ddc84;">${{ monto_final }}</span>
+                </div>
             </div>
         </div>
     </div>
-    {% endif %}
+</div>
 
-    <!-- Cupón de descuento -->
-    <div style="background: white; padding: 1.5rem; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.08); margin-bottom: 1rem;">
-        <h3 style="margin: 0 0 1rem 0; color: #333; font-size: 1.1rem;">🏷️ Cupón de descuento</h3>
-        <div style="display: flex; gap: 0.75rem;">
-            <input type="text" id="inputCupon" placeholder="Ingresá tu código (ej: DESC25)"
-                style="flex: 1; padding: 0.6rem 1rem; border: 2px solid #ddd; border-radius: 6px; font-size: 1rem; text-transform: uppercase; font-family: monospace;">
-            <button type="button" onclick="verificarCupon()"
-                style="padding: 0.6rem 1.25rem; background: #6c757d; color: white; border: none; border-radius: 6px; font-weight: bold; cursor: pointer;">
-                Aplicar
-            </button>
-        </div>
-        <div id="cuponFeedback" style="margin-top: 0.6rem; font-size: 0.9rem;"></div>
-        <input type="hidden" id="cuponAplicado" value="">
-    </div>
-
-    <!-- Combos -->
-    {% if combos %}
-    <div style="background: white; padding: 1.5rem; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.08); margin-bottom: 1rem;">
-        <h3 style="margin: 0 0 1rem 0; color: #333; font-size: 1.1rem;">🍿 Agregar combo</h3>
-        <div style="display: grid; gap: 0.75rem;" id="combosContainer">
-            {% for combo in combos %}
-            <label style="display: flex; align-items: center; gap: 1rem; padding: 0.85rem 1rem; border: 2px solid #ddd; border-radius: 8px; cursor: pointer; transition: border-color 0.2s;"
-                   onclick="seleccionarCombo(this, '{{ combo.id }}', {{ combo.precio }})">
-                <input type="radio" name="combo_radio" value="{{ combo.id }}" style="margin: 0; flex-shrink: 0;">
-                <div style="flex: 1;">
-                    <div style="font-weight: bold; color: #333;">{{ combo.nombre }}</div>
-                    <div style="font-size: 0.85rem; color: #666; margin-top: 0.1rem;">{{ combo.descripcion }}</div>
-                </div>
-                <div style="font-weight: bold; color: #28a745; font-size: 1.1rem; white-space: nowrap;">+${{ combo.precio }}</div>
-            </label>
-            {% endfor %}
-            <label style="display: flex; align-items: center; gap: 1rem; padding: 0.85rem 1rem; border: 2px solid #007bff; border-radius: 8px; cursor: pointer; background: #f0f7ff;"
-                   onclick="seleccionarCombo(this, '', 0)">
-                <input type="radio" name="combo_radio" value="" checked style="margin: 0; flex-shrink: 0;">
-                <div style="flex: 1;">
-                    <div style="font-weight: bold; color: #333;">Sin combo</div>
-                    <div style="font-size: 0.85rem; color: #666;">Solo las entradas</div>
-                </div>
-                <div style="color: #666; font-size: 0.9rem;">$0</div>
-            </label>
-        </div>
-        <input type="hidden" id="comboSeleccionado" value="">
-    </div>
-    {% endif %}
-
-    <!-- Resumen de descuentos (aparece dinámicamente) -->
-    <div id="resumenDescuentos" style="display: none; background: #d4edda; padding: 1rem 1.5rem; border-radius: 8px; margin-bottom: 1rem; border-left: 4px solid #28a745;">
-        <h4 style="margin: 0 0 0.75rem 0; color: #155724;">✅ Descuentos aplicados</h4>
-        <div id="detalleDescuentos" style="font-size: 0.9rem; color: #155724;"></div>
-        <div style="margin-top: 0.75rem; padding-top: 0.75rem; border-top: 1px solid #b8dab8;">
-            <span style="font-size: 1.25rem; font-weight: bold; color: #155724;">Total final: $<span id="totalFinalDisplay">0</span></span>
-        </div>
-    </div>
-
-    {% endif %} <!-- /promociones_disponible -->
-
-    <!-- ============================================================ -->
-    <!-- FORMULARIO DE PAGO (uno solo, con hidden inputs de promos)   -->
-    <!-- ============================================================ -->
-    <div style="background: white; padding: 1.5rem; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.08);">
-        <h2 style="color: #333; margin: 0 0 1rem 0; font-size: 1.2rem; border-bottom: 2px solid #28a745; padding-bottom: 0.5rem;">Método de Pago</h2>
-
-        <form method="post" id="pagoForm">
-            {% csrf_token %}
-            <!-- Campos ocultos para promociones -->
-            <input type="hidden" name="codigo_cupon" id="hiddenCupon" value="">
-            <input type="hidden" name="combo_id" id="hiddenCombo" value="">
-
-            <!-- Métodos de pago -->
-            <div style="display: flex; flex-direction: column; gap: 0.75rem; margin-bottom: 1.5rem;">              
-                <label style="display: flex; align-items: center; padding: 1rem; border: 2px solid #ddd; border-radius: 6px; cursor: pointer;" onclick="selectMetodo('tarjeta_debito')">
-                    <input type="radio" name="metodo_pago" value="tarjeta_debito" required style="margin-right: 0.75rem;">
-                    <div><strong>💳 Tarjeta de Débito</strong><p style="margin: 0; font-size: 0.85rem; color: #666;">Simulado — cualquier número funciona</p></div>
-                </label>
-                <label style="display: flex; align-items: center; padding: 1rem; border: 2px solid #ddd; border-radius: 6px; cursor: pointer;" onclick="selectMetodo('tarjeta_credito')">
-                    <input type="radio" name="metodo_pago" value="tarjeta_credito" required style="margin-right: 0.75rem;">
-                    <div><strong>💳 Tarjeta de Crédito</strong><p style="margin: 0; font-size: 0.85rem; color: #666;">Simulado — cualquier número funciona</p></div>
-                </label>
-                <label style="display: flex; align-items: center; padding: 1rem; border: 2px solid #ddd; border-radius: 6px; cursor: pointer;" onclick="selectMetodo('transferencia')">
-                    <input type="radio" name="metodo_pago" value="transferencia" required style="margin-right: 0.75rem;">
-                    <div><strong>🏦 Transferencia</strong><p style="margin: 0; font-size: 0.85rem; color: #666;">Transferencia bancaria (simulada)</p></div>
-                </label>
-            </div>
-
-            <!-- Campos de tarjeta (se muestran solo si es tarjeta) -->
-            <div id="datosTarjeta" style="display: none; margin-bottom: 1.5rem; padding: 1.5rem; background: #f8f9fa; border-radius: 6px; border: 2px dashed #ffc107;">
-                <!-- Aviso simulación dentro del formulario -->
-                <div style="background: #fff3cd; padding: 0.75rem 1rem; border-radius: 6px; margin-bottom: 1.25rem; display: flex; align-items: center; gap: 0.75rem;">
-                    <span style="font-size: 1.25rem;">🧪</span>
-                    <span style="color: #856404; font-size: 0.9rem;"><strong>Modo simulación:</strong> Usá cualquier número. No se realizará ningún cobro real.</span>
-                </div>
-                <h3 style="color: #333; margin: 0 0 1rem 0; font-size: 1.1rem;">Datos de la Tarjeta</h3>
-                <div style="margin-bottom: 0.75rem;">
-                    <label style="display: block; font-weight: bold; margin-bottom: 0.3rem;">Nombre del Titular:</label>
-                    <input type="text" id="nombre_titular" name="nombre_titular" placeholder="Como aparece en la tarjeta"
-                        style="width: 100%; padding: 0.5rem; border: 1px solid #ddd; border-radius: 4px; font-size: 1rem; box-sizing: border-box;">
-                </div>
-                <div style="margin-bottom: 0.75rem;">
-                    <label style="display: block; font-weight: bold; margin-bottom: 0.3rem;">Número de Tarjeta:</label>
-                    <input type="text" id="numero_tarjeta" name="numero_tarjeta" placeholder="1234 5678 9012 3456" maxlength="19"
-                        style="width: 100%; padding: 0.5rem; border: 1px solid #ddd; border-radius: 4px; font-size: 1rem; box-sizing: border-box;">
-                </div>
-                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem;">
-                    <div>
-                        <label style="display: block; font-weight: bold; margin-bottom: 0.3rem;">Vencimiento:</label>
-                        <input type="text" id="vencimiento" name="vencimiento" placeholder="MM/AA" maxlength="5"
-                            style="width: 100%; padding: 0.5rem; border: 1px solid #ddd; border-radius: 4px; font-size: 1rem; box-sizing: border-box;">
-                    </div>
-                    <div>
-                        <label style="display: block; font-weight: bold; margin-bottom: 0.3rem;">CVV:</label>
-                        <input type="text" id="cvv" name="cvv" placeholder="123" maxlength="4"
-                            style="width: 100%; padding: 0.5rem; border: 1px solid #ddd; border-radius: 4px; font-size: 1rem; box-sizing: border-box;">
-                    </div>
-                </div>
-            </div>
-
-            <!-- Botones -->
-            <div style="display: flex; gap: 1rem;">
-                <button type="submit" id="submitBtn"
-                    style="flex: 1; padding: 1rem; background: #28a745; color: white; border: none; border-radius: 6px; font-weight: bold; font-size: 1rem; cursor: pointer;">
-                    Confirmar
-                </button>
-                <a href="{% url 'reservas:mis_reservas' %}"
-                    style="flex: 1; padding: 1rem; background: #6c757d; color: white; border-radius: 6px; text-align: center; text-decoration: none; font-weight: bold; font-size: 1rem; display: flex; align-items: center; justify-content: center;">
-                    Cancelar
-                </a>
-            </div>
-        </form>
-    </div>
-
-</div><!-- /max-width wrapper -->
-
-<!-- ============================================================ -->
-<!-- SCRIPT ÚNICO (sin duplicados)                               -->
-<!-- ============================================================ -->
 <script>
-// ===== VARIABLES GLOBALES =====
-const totalOriginal = {{ total }};
-let descuentoPromo = 0;
-let descuentoCupon = 0;
-let precioCombo = 0;
-
-{% if promo_dia %}
-const cantidadEntradas = {{ reserva.cantidad_entradas }};
-{% if promo_dia.tipo == '2x1' %}
-const precioUnitario = totalOriginal / cantidadEntradas;
-descuentoPromo = precioUnitario * Math.floor(cantidadEntradas / 2);
-{% elif promo_dia.tipo == 'descuento' %}
-descuentoPromo = totalOriginal * {{ promo_dia.porcentaje_descuento }} / 100;
-{% endif %}
-{% endif %}
-
-// ===== RESUMEN DE DESCUENTOS =====
-function actualizarResumen() {
-    const totalFinal = Math.max(totalOriginal - descuentoPromo - descuentoCupon, 0) + precioCombo;
-    const hayDescuento = descuentoPromo > 0 || descuentoCupon > 0 || precioCombo > 0;
-    const resumen = document.getElementById('resumenDescuentos');
-    const detalle = document.getElementById('detalleDescuentos');
-    const totalDisplay = document.getElementById('totalFinalDisplay');
-
-    if (hayDescuento) {
-        resumen.style.display = 'block';
-        let html = `<p style="margin:0.25rem 0;">Subtotal entradas: <strong>$${totalOriginal.toFixed(2)}</strong></p>`;
-        if (descuentoPromo > 0) html += `<p style="margin:0.25rem 0;">Descuento promoción día: <strong>-$${descuentoPromo.toFixed(2)}</strong></p>`;
-        if (descuentoCupon > 0) html += `<p style="margin:0.25rem 0;">Descuento cupón: <strong>-$${descuentoCupon.toFixed(2)}</strong></p>`;
-        if (precioCombo > 0) html += `<p style="margin:0.25rem 0;">Combo agregado: <strong>+$${precioCombo.toFixed(2)}</strong></p>`;
-        detalle.innerHTML = html;
-        totalDisplay.textContent = totalFinal.toFixed(2);
-    } else {
-        resumen.style.display = 'none';
-    }
-}
-
-{% if promo_dia %}actualizarResumen();{% endif %}
-
-// ===== CUPÓN =====
-async function verificarCupon() {
-    const codigo = document.getElementById('inputCupon').value.trim().toUpperCase();
-    const feedback = document.getElementById('cuponFeedback');
-    if (!codigo) { feedback.innerHTML = '<span style="color:#dc3545;">Ingresá un código</span>'; return; }
-    feedback.innerHTML = '<span style="color:#6c757d;">Verificando...</span>';
-    const formData = new FormData();
-    formData.append('codigo', codigo);
-    formData.append('monto', totalOriginal);
-    try {
-        const resp = await fetch('{% url "promociones:verificar_cupon" %}', { method: 'POST', body: formData });
-        const data = await resp.json();
-        if (data.success) {
-            descuentoCupon = data.descuento;
-            document.getElementById('cuponAplicado').value = codigo;
-            document.getElementById('hiddenCupon').value = codigo;
-            feedback.innerHTML = `<span style="color:#28a745;">✅ ${data.descripcion} — Descuento: $${data.descuento.toFixed(2)}</span>`;
-        } else {
-            descuentoCupon = 0;
-            document.getElementById('cuponAplicado').value = '';
-            document.getElementById('hiddenCupon').value = '';
-            feedback.innerHTML = `<span style="color:#dc3545;">❌ ${data.error}</span>`;
-        }
-        actualizarResumen();
-    } catch {
-        feedback.innerHTML = '<span style="color:#dc3545;">Error de conexión</span>';
-    }
-}
-
-document.getElementById('inputCupon')?.addEventListener('keypress', e => {
-    if (e.key === 'Enter') { e.preventDefault(); verificarCupon(); }
-});
-
-// ===== COMBOS =====
-function seleccionarCombo(label, comboId, comboPrecio) {
-    document.querySelectorAll('#combosContainer label').forEach(l => {
-        l.style.borderColor = '#ddd';
-        l.style.background = 'white';
-    });
-    label.style.borderColor = '#007bff';
-    label.style.background = '#f0f7ff';
-    precioCombo = comboPrecio;
-    document.getElementById('comboSeleccionado').value = comboId;
-    document.getElementById('hiddenCombo').value = comboId;
-    actualizarResumen();
-}
+// modificado: se sacó todo el JS de cupón/combo/resumen dinámico —
+// esa lógica vive ahora en elegir_entrada.html (paso 2) y
+// elegir_combo.html (paso 5). Esta pantalla ya recibe todo calculado
+// por el servidor (ver bloque "Promociones aplicadas" del sidebar).
 
 // ===== MÉTODO DE PAGO =====
-function selectMetodo(metodo) {
+// modificado: ahora también marca visualmente la tarjeta elegida (clase "seleccionada")
+function selectMetodo(metodo, elLabel) {
+    document.querySelectorAll('.metodo-pago-card').forEach(function (l) {
+        l.classList.remove('seleccionada');
+    });
+    if (elLabel) elLabel.classList.add('seleccionada');
+
     const datosTarjeta = document.getElementById('datosTarjeta');
     const esTarjeta = metodo === 'tarjeta_debito' || metodo === 'tarjeta_credito';
     datosTarjeta.style.display = esTarjeta ? 'block' : 'none';

@@ -1,0 +1,297 @@
+{% extends 'base.html' %}
+
+{% block titulo %}Elegí tu entrada{% endblock %}
+
+{% block contenido %}
+{# ================================================================ #}
+{# NUEVO (paso 2 del flujo reordenado): función -> ESTE PASO -> asientos -> combo -> pago #}
+{# Mismo estilo dark de seleccionar_asientos.html: panel negro, sidebar RESUMEN sticky. #}
+{# ================================================================ #}
+<style>
+    @media (max-width: 860px) {
+        #layoutEntrada { grid-template-columns: 1fr !important; }
+        #sidebarResumenEntrada { position: static !important; }
+    }
+    .tarjeta-tipo-entrada {
+        display: block; cursor: pointer; border-radius: 8px; padding: 1rem 1.1rem;
+        border: 2px solid #2a2a2a; background-color: #1a1a1a; margin-bottom: 0.85rem;
+        transition: border-color 0.15s;
+    }
+    .tarjeta-tipo-entrada:hover { border-color: #555555; }
+    .tarjeta-tipo-entrada input[type="radio"] { accent-color: #e63946; margin-right: 0.6rem; }
+    .tarjeta-tipo-entrada.seleccionada { border-color: #e63946; background-color: #241414; }
+</style>
+
+<div style="max-width: 1000px; margin: 0 auto; background-color: #0f0f0f;
+            padding: 1.5rem; border-radius: 12px; color: #f2f2f2;">
+    <h1 style="text-align: center; margin-bottom: 1.5rem; color: #ffffff;">🎟️ Elegí tu entrada</h1>
+
+    <form method="post" id="formEntrada">
+        {% csrf_token %}
+        <input type="hidden" name="cantidad" id="inputCantidad" value="1">
+
+        <div id="layoutEntrada" style="display: grid; grid-template-columns: 1fr 320px; gap: 1.5rem; align-items: start;">
+
+            {# ──────────────── COLUMNA IZQUIERDA ──────────────── #}
+            <div>
+                {# Cupón #}
+                <label class="tarjeta-tipo-entrada" data-valor="cupon">
+                    <div style="display:flex; align-items:center;">
+                        <input type="radio" name="tipo_entrada" value="cupon">
+                        <span style="font-weight:bold; color:#ffffff;">🏷️ Tengo un cupón</span>
+                    </div>
+                    <input type="text" name="cupon_codigo" id="inputCupon" placeholder="Ingresá tu código (ej: DESC25)"
+                           maxlength="20"
+                           style="margin-top:0.6rem; width:100%; padding:0.6rem 0.75rem; border-radius:6px;
+                                  border:1px solid #444444; background-color:#0f0f0f; color:#ffffff; font-size:0.9rem;">
+                </label>
+
+                {# Entrada general #}
+                <label class="tarjeta-tipo-entrada seleccionada" data-valor="general">
+                    <div style="display:flex; align-items:center;">
+                        <input type="radio" name="tipo_entrada" value="general" checked>
+                        <span style="font-weight:bold; color:#ffffff;">🎫 Entrada General</span>
+                    </div>
+                    <div style="margin-top:0.35rem; margin-left:1.6rem; color:#aaaaaa; font-size:0.85rem;">
+                        ${{ funcion.precio_final }} por entrada
+                    </div>
+                </label>
+
+                {# Promociones del día — una tarjeta por CADA promo activa ese día #}
+                {# modificado (fix): antes solo se mostraba una (promo_dia_activa), #}
+                {# ahora se listan todas las que estén activas para ese día de la semana #}
+                {% for promo in promos_dia_activas %}
+                <label class="tarjeta-tipo-entrada" data-valor="promo_dia_{{ promo.id }}">
+                    <div style="display:flex; align-items:center;">
+                        <input type="radio" name="tipo_entrada" value="promo_dia_{{ promo.id }}">
+                        <span style="font-weight:bold; color:#ffffff;">
+                            {% if promo.tipo == '2x1' %}🎉{% else %}🏷️{% endif %} {{ promo.nombre }}
+                        </span>
+                    </div>
+                    <div style="margin-top:0.35rem; margin-left:1.6rem; color:#aaaaaa; font-size:0.85rem;">
+                        {% if promo.tipo == '2x1' %}
+                            Pagás una entrada, llevás dos — requiere cantidad par
+                        {% else %}
+                            {{ promo.porcentaje_descuento }}% de descuento sobre el total
+                        {% endif %}
+                        {% if promo.descripcion %}<br>{{ promo.descripcion }}{% endif %}
+                    </div>
+                </label>
+                {% endfor %}
+
+                {# Cantidad #}
+                <div style="background-color:#1a1a1a; border:1px solid #2a2a2a; border-radius:8px; padding:1rem 1.1rem; margin-top:1.25rem;">
+                    <div style="font-weight:bold; color:#ffffff; margin-bottom:0.6rem;">¿Cuántas entradas?</div>
+                    <div style="display:flex; align-items:center; gap:1rem;">
+                        <button type="button" id="btnMenos"
+                                style="width:38px; height:38px; border-radius:6px; border:1px solid #555555;
+                                       background:transparent; color:#ffffff; font-size:1.2rem; cursor:pointer;">−</button>
+                        <span id="cantidadVisible" style="font-size:1.3rem; font-weight:bold; color:#ffffff; min-width:2ch; text-align:center;">1</span>
+                        <button type="button" id="btnMas"
+                                style="width:38px; height:38px; border-radius:6px; border:1px solid #555555;
+                                       background:transparent; color:#ffffff; font-size:1.2rem; cursor:pointer;">+</button>
+                        <span style="color:#888888; font-size:0.8rem;">(máx. {{ max_cantidad }})</span>
+                    </div>
+                    <div id="avisoCantidadPar" style="display:none; color:#e6a23c; font-size:0.8rem; margin-top:0.6rem;">
+                        La promoción 2x1 requiere una cantidad par de entradas.
+                    </div>
+                </div>
+            </div>
+
+            {# ──────────────── COLUMNA DERECHA: RESUMEN ──────────────── #}
+            <div id="sidebarResumenEntrada" style="position: sticky; top: 1rem; display: flex; flex-direction: column; gap: 1rem;">
+                <div style="background-color: #1a1a1a; border-radius: 8px; border: 1px solid #2a2a2a; padding: 1.25rem;">
+                    <div style="font-weight: bold; letter-spacing: 0.05em; color: #ffffff; margin-bottom: 1rem;">RESUMEN</div>
+
+                    <div style="display: flex; gap: 0.75rem; align-items: flex-start; margin-bottom: 1rem;
+                                padding-bottom: 1rem; border-bottom: 1px solid #2a2a2a;">
+                        {% if funcion.pelicula.poster %}
+                        <img src="{{ funcion.pelicula.poster.url }}" alt="{{ funcion.pelicula.titulo }}"
+                             style="width: 52px; height: 76px; object-fit: cover; border-radius: 6px; flex-shrink: 0;">
+                        {% endif %}
+                        <div>
+                            <div style="color: #999999; font-size: 0.75rem; margin-bottom: 0.15rem;">Película</div>
+                            <div style="color: #ffffff; font-weight: bold;">{{ funcion.pelicula.titulo }}</div>
+                        </div>
+                    </div>
+
+                    <div style="margin-bottom: 1rem; padding-bottom: 1rem; border-bottom: 1px solid #2a2a2a;">
+                        <div style="color: #999999; font-size: 0.75rem; margin-bottom: 0.15rem;">Sala y horario</div>
+                        <div style="color: #ffffff; font-weight: bold;">{{ funcion.sala.nombre }}</div>
+                        <div style="color: #cccccc; font-size: 0.85rem; margin-top: 0.15rem;">
+                            {{ funcion.fecha_hora|date:"d/m/Y" }} · {{ funcion.fecha_hora|date:"H:i" }} hs
+                        </div>
+                    </div>
+
+                    <div style="margin-bottom: 1rem;">
+                        <div style="color: #999999; font-size: 0.75rem; margin-bottom: 0.15rem;">Entradas</div>
+                        <div id="resumenEntradasTexto" style="color: #ffffff; font-weight: bold;">1 · entrada general</div>
+                    </div>
+
+                    <div style="display: flex; justify-content: space-between; align-items: center;
+                                padding-top: 1rem; border-top: 1px solid #2a2a2a;">
+                        <span style="color: #ffffff; font-weight: bold;">Total estimado</span>
+                        <span id="resumenTotal" style="font-size: 1.4rem; font-weight: bold; color: #3ddc84;">$0</span>
+                    </div>
+                </div>
+
+                <button type="submit"
+                        style="padding: 1rem; background-color: #28a745; color: white; border: none;
+                               border-radius: 6px; font-weight: bold; font-size: 1.1rem; cursor: pointer;">
+                    CONTINUAR
+                </button>
+                <a href="{% url 'peliculas:detalle_pelicula' funcion.pelicula.id %}"
+                    style="padding: 0.85rem; background-color: transparent; color: #ffffff; border: 1px solid #555555;
+                           border-radius: 6px; font-weight: bold; font-size: 1rem; text-align: center;
+                           text-decoration: none; display: flex; align-items: center; justify-content: center;">
+                    Cancelar
+                </a>
+            </div>
+        </div>
+    </form>
+</div>
+
+<script>
+(function () {
+    const PRECIO_UNITARIO = {{ funcion.precio_final }};
+    const MAX_CANTIDAD    = {{ max_cantidad }};
+    // modificado (fix): antes era un solo objeto PROMO (o null). Ahora es
+    // un array, porque puede haber más de una promo activa el mismo día
+    // (ej: 2x1 Y 50% descuento un mismo sábado) — cada una con su propio id.
+    const PROMOS = [
+        {% for promo in promos_dia_activas %}
+        {
+            id: {{ promo.id }},
+            tipo: "{{ promo.tipo }}",
+            porcentaje: {{ promo.porcentaje_descuento|default:0 }},
+            nombre: "{{ promo.nombre|escapejs }}"
+        },
+        {% endfor %}
+    ];
+
+    let cantidad = 1;
+    let tipoSeleccionado = 'general';  // 'general' | 'cupon' | 'promo_dia_<id>'
+
+    const inputCantidad     = document.getElementById('inputCantidad');
+    const cantidadVisible   = document.getElementById('cantidadVisible');
+    const btnMenos          = document.getElementById('btnMenos');
+    const btnMas            = document.getElementById('btnMas');
+    const avisoCantidadPar  = document.getElementById('avisoCantidadPar');
+    const resumenEntradasEl = document.getElementById('resumenEntradasTexto');
+    const resumenTotalEl    = document.getElementById('resumenTotal');
+    const tarjetas          = document.querySelectorAll('.tarjeta-tipo-entrada');
+
+    // modificado: helper nuevo — busca en PROMOS la que corresponde a la
+    // tarjeta actualmente seleccionada (o null si no es una tarjeta de promo)
+    function promoSeleccionada() {
+        if (!tipoSeleccionado.startsWith('promo_dia_')) return null;
+        const id = parseInt(tipoSeleccionado.replace('promo_dia_', ''), 10);
+        return PROMOS.find(function (p) { return p.id === id; }) || null;
+    }
+
+    function pasoIncremento() {
+        // modificado: si eligieron una promo 2x1, conviene moverse de a 2 en 2
+        const promo = promoSeleccionada();
+        return (promo && promo.tipo === '2x1') ? 2 : 1;
+    }
+
+    function calcularTotal() {
+        let subtotal = PRECIO_UNITARIO * cantidad;
+        let descuento = 0;
+        const promo = promoSeleccionada();
+
+        if (promo) {
+            if (promo.tipo === '2x1') {
+                const entradasGratis = Math.floor(cantidad / 2);
+                descuento = (subtotal / cantidad) * entradasGratis;
+            } else if (promo.tipo === 'descuento') {
+                descuento = subtotal * (promo.porcentaje / 100);
+            }
+        }
+        // El cupón se valida recién en el servidor (necesita consultar la base),
+        // acá no se descuenta nada todavía — el total con cupón se confirma
+        // después de enviar el formulario.
+
+        return Math.max(0, subtotal - descuento);
+    }
+
+    function actualizarResumen() {
+        cantidadVisible.textContent = cantidad;
+        inputCantidad.value = cantidad;
+
+        const promo = promoSeleccionada();
+        let etiquetaTipo = 'entrada general';
+        if (promo) etiquetaTipo = promo.nombre;
+        if (tipoSeleccionado === 'cupon') etiquetaTipo = 'con cupón (a validar)';
+
+        resumenEntradasEl.textContent = cantidad + ' · ' + etiquetaTipo;
+        resumenTotalEl.textContent = '$' + calcularTotal().toFixed(2);
+
+        const requierePar = promo && promo.tipo === '2x1';
+        avisoCantidadPar.style.display = (requierePar && cantidad % 2 !== 0) ? 'block' : 'none';
+
+        btnMenos.disabled = cantidad <= 1;
+        btnMas.disabled = cantidad >= MAX_CANTIDAD;
+    }
+
+    btnMenos.addEventListener('click', function () {
+        const paso = pasoIncremento();
+        cantidad = Math.max(1, cantidad - paso);
+        actualizarResumen();
+    });
+
+    btnMas.addEventListener('click', function () {
+        const paso = pasoIncremento();
+        cantidad = Math.min(MAX_CANTIDAD, cantidad + paso);
+        actualizarResumen();
+    });
+
+    // modificado: la lógica de "seleccionar esta tarjeta" se saca a una
+    // función aparte, en vez de vivir solo adentro del listener de click.
+    // Antes, para seleccionar la tarjeta de cupón al enfocar el input de
+    // texto, se llamaba a tarjeta.click() — pero como el <label> envuelve
+    // DOS controles (el radio y el input de texto), el navegador interpreta
+    // ese click() como "activar el primer control del label" (el radio),
+    // y eso le robaba el foco al input apenas lo ganaba: no dejaba escribir
+    // ni una letra. Ahora se llama directamente a esta función, sin pasar
+    // por ningún click() simulado sobre el label.
+    function seleccionarTarjeta(tarjeta) {
+        tarjetas.forEach(function (t) { t.classList.remove('seleccionada'); });
+        tarjeta.classList.add('seleccionada');
+        const radio = tarjeta.querySelector('input[type="radio"]');
+        radio.checked = true;
+        tipoSeleccionado = tarjeta.dataset.valor;
+
+        // Si eligen 2x1 y la cantidad actual es impar, la ajustamos a la par más cercana
+        const promo = promoSeleccionada();
+        if (promo && promo.tipo === '2x1' && cantidad % 2 !== 0) {
+            cantidad = Math.min(MAX_CANTIDAD, cantidad + 1);
+        }
+        actualizarResumen();
+    }
+
+    tarjetas.forEach(function (tarjeta) {
+        tarjeta.addEventListener('click', function () {
+            seleccionarTarjeta(tarjeta);
+        });
+    });
+
+    // Si tocan directo el input de cupón, seleccionamos esa tarjeta también
+    // (llamando a la función de arriba, no a un click() simulado)
+    const inputCupon = document.getElementById('inputCupon');
+    if (inputCupon) {
+        inputCupon.addEventListener('focus', function () {
+            seleccionarTarjeta(document.querySelector('.tarjeta-tipo-entrada[data-valor="cupon"]'));
+        });
+        // Evita que el click dentro del input dispare DE NUEVO el listener
+        // de click del <label> que lo envuelve (quedaría duplicado, aunque
+        // inofensivo — esto lo deja más prolijo y evita el "parpadeo")
+        inputCupon.addEventListener('click', function (e) {
+            e.stopPropagation();
+        });
+    }
+
+    actualizarResumen();
+})();
+</script>
+{% endblock %}

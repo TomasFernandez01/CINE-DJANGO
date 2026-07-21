@@ -2,36 +2,139 @@ from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth.decorators import login_required
 from django.contrib import messages
 from django.utils import timezone
-from django.http import JsonResponse
+from django.http import JsonResponse #, HttpResponse
 from datetime import timedelta , datetime
 from .models import Reserva
 from salas.models import Funcion
 from django.conf import settings
-
+from promociones.models import PromocionDia, Cupon
 try:
     from utils.email_utils import enviar_email_confirmacion_reserva, enviar_email_cancelacion_reserva
     EMAIL_DISPONIBLE = True
 except ImportError:
     EMAIL_DISPONIBLE = False
-
 try:
     from utils.qr_generator import generar_qr_imagen
     QR_DISPONIBLE = True
 except ImportError:
     QR_DISPONIBLE = False
 
-
 def get_max_asientos():
-    return getattr(settings, 'MAX_ASIENTOS_POR_RESERVA', 6)
- 
- 
+    return getattr(settings, 'MAX_ASIENTOS_POR_RESERVA', 6) 
 def get_tiempo_limite():
     return getattr(settings, 'TIEMPO_LIMITE_PAGO_MINUTOS', 15)
 
-# ============================================
-# VISTAS DE SELECCIÓN DE ASIENTOS
-# ============================================
+# ============================================ SELECCIÓN DE ASIENTOS 2 
+CLAVE_SESION_RESERVA_EN_PROGRESO = 'reserva_en_progreso'  # modificado: nombre de la clave de sesión, único lugar donde se define
 
+@login_required
+def elegir_tipo_entrada(request, funcion_id):
+    """
+    usuario elige cuántas y qué tipo, ANTES de asientos. No crea Reserva, guarda elección en la sesión, bajo la clave CLAVE_SESION_RESERVA_EN_PROGRESO. seleccionar_asientos lee clave para saber cuántos asientos como máximo puede elegir.
+    """
+    funcion = get_object_or_404(Funcion, id=funcion_id)
+
+    if funcion.fecha_hora <= timezone.now():
+        messages.error(request, 'No se puede reservar esta función porque ya pasó.')
+        return redirect('salas:lista_funciones')
+
+    if not funcion.disponible:
+        messages.error(request, 'Esta función no está disponible.')
+        return redirect('salas:lista_funciones')
+
+    max_cantidad = get_max_asientos()
+
+    # ─── Promociones del día, TODAS las que estén activas para el día de la función ───
+    # modificado (fix reportado): antes se usaba .first(), que agarraba
+    # solo la primera promo activa de ese día e ignoraba el resto en
+    # silencio. Ahora muestra una tarjeta por cada una —
+    dia_semana_funcion = funcion.fecha_hora.weekday()  # 0=lunes ... 6=domingo
+    promos_dia_activas = list(PromocionDia.objects.filter(
+        dia_semana=dia_semana_funcion, activo=True
+    ))
+    #promo_dia_activa = PromocionDia.objects.filter(
+    #    dia_semana=dia_semana_funcion, activo=True
+    #).first()
+
+    if request.method == 'POST':
+        #tipo_entrada = request.POST.get('tipo_entrada', 'general')
+        tipo_entrada_raw = request.POST.get('tipo_entrada', 'general')
+        cupon_codigo = request.POST.get('cupon_codigo', '').strip().upper()
+
+        try:
+            cantidad = int(request.POST.get('cantidad', 1))
+        except (TypeError, ValueError):
+            cantidad = 0
+        errores = []
+
+        if cantidad < 1 or cantidad > max_cantidad:
+            errores.append(f'La cantidad debe ser entre 1 y {max_cantidad}.')
+        
+        promo_dia_id = None
+        tipo_entrada = tipo_entrada_raw
+        if tipo_entrada_raw.startswith('promo_dia_'):
+            tipo_entrada = 'promo_dia'
+            try:
+                id_elegido = int(tipo_entrada_raw.replace('promo_dia_', ''))
+            except ValueError:
+                id_elegido = None
+            promo_elegida = next((p for p in promos_dia_activas if p.id == id_elegido), None)
+            if not promo_elegida:
+                errores.append('La promoción elegida ya no está disponible.')
+            else:
+                # 2x1 obliga a elegir cantidad par
+                if promo_elegida.tipo == '2x1' and cantidad % 2 != 0:
+                    errores.append('La promoción 2x1 requiere una cantidad par de entradas.')
+                promo_dia_id = promo_elegida.id
+        # if tipo_entrada == 'promo_dia':
+        #     if not promo_dia_activa:
+        #         errores.append('No hay ninguna promoción del día activa para esta función.')
+        #     else:
+        #         # 2x1 obliga a elegir cantidad par
+        #         if promo_dia_activa.tipo == '2x1' and cantidad % 2 != 0:
+        #             errores.append('La promoción 2x1 requiere una cantidad par de entradas.')
+        #         promo_dia_id = promo_dia_activa.id
+
+        cupon_valido = None
+        if tipo_entrada == 'cupon':
+            if not cupon_codigo:
+                errores.append('Ingresá un código de cupón.')
+            else:
+                cupon_valido = Cupon.objects.filter(codigo=cupon_codigo).first()
+                if not cupon_valido:
+                    errores.append('El cupón no existe.')
+                else:
+                    es_valido, motivo = cupon_valido.es_valido()
+                    if not es_valido:
+                        errores.append(motivo)
+
+        if errores:
+            for e in errores:
+                messages.error(request, e)
+            # todavía no hay template al que volver a renderizar con los errores marcados — por ahora solo redirige de nuevo a este mismo paso (GET) y los errores quedan en messages.
+            # esto hay que sumarlo a tareas , manejode errores para darles una solucion a quien controla el programa
+            return redirect('reservas:elegir_tipo_entrada', funcion_id=funcion_id)
+
+        # Todo OK: guardar en sesión y pasar al paso 3 (asientos)
+        request.session[CLAVE_SESION_RESERVA_EN_PROGRESO] = {
+            'funcion_id': funcion_id,
+            'cantidad': cantidad,
+            'tipo_entrada': tipo_entrada,
+            'promo_dia_id': promo_dia_id,
+            'cupon_codigo': cupon_codigo if tipo_entrada == 'cupon' else None,
+        }
+        return redirect('reservas:seleccionar_asientos', funcion_id=funcion_id)
+
+    # ─── GET: mostrar el paso 2 ───
+    contexto = {
+        'funcion': funcion,
+        'sala': funcion.sala,
+        'max_cantidad': max_cantidad,
+        'promos_dia_activas': promos_dia_activas,
+        'precio_unitario': funcion.precio_final(),
+    }
+    return render(request, 'reservas/elegir_entrada.html', contexto)
+# ============================================ SELECCIÓN DE ASIENTOS 1 
 @login_required
 def seleccionar_asientos(request, funcion_id):
     """Vista para seleccionar asientos específicos antes de crear la reserva."""
@@ -45,11 +148,8 @@ def seleccionar_asientos(request, funcion_id):
         messages.error(request, 'Esta función no está disponible.')
         return redirect('salas:lista_funciones')
 
-    ############################################################################
     # ─── Timer de sesión ────────────────────────────────────────
-    # Se guarda el momento exacto en que el usuario entró a esta pantalla. El mismo timer cubre selección de asientos + pago.
-    # Guardar el momento en que el usuario entró a seleccionar asientos
-    # Esto define el inicio del contador de tiempo
+    # Se guarda el momento exacto en que el usuario entró a esta pantalla. El mismo timer cubre selección de asientos + pago. Guardar el momento en que el usuario entró a seleccionar asientos Esto define el inicio del contador de tiempo
     clave_sesion = f'inicio_seleccion_{funcion_id}'
     if clave_sesion not in request.session:
         request.session[clave_sesion] = timezone.now().isoformat()
@@ -58,7 +158,6 @@ def seleccionar_asientos(request, funcion_id):
     tiempo_limite = get_tiempo_limite()
  
     # Calcular segundos restantes desde que entró a la página
-    # from datetime import datetime
     inicio_dt = datetime.fromisoformat(inicio_seleccion_iso)
     # Hacer aware si es naive
     if timezone.is_naive(inicio_dt):
@@ -75,14 +174,15 @@ def seleccionar_asientos(request, funcion_id):
         segundos_restantes = tiempo_limite * 60
 
     # ─────────────────────────────────────────────────────────────
-    ############################################################################
     layout = funcion.sala.layout_asientos()
-    max_asientos = get_max_asientos()
-
-    # Precio real de CADA asiento (ya con el multiplicador de sala y, si
-    # corresponde, el de la categoría especial del asiento aplicado) y datos
-    # de las categorías especiales, para que el mapa de selección muestre el
-    # color/precio real en vez del precio plano de la función.
+    #max_asientos = get_max_asientos()
+    # modificado: si el usuario ya pasó por "elegir-entrada" (paso 2), el máximo de asientos pasa a ser la cantidad que eligió ahí, no el máximo global de configuración. Si todavía no existe ese dato en sesión (por ejemplo, alguien que entra directo a esta URL sin pasar por el paso anterior), se sigue comportando exactamente igual que antes: usa el máximo global. Así no se rompe nada mientras el paso 2 no tenga pantalla todavía.
+    reserva_en_progreso = request.session.get(CLAVE_SESION_RESERVA_EN_PROGRESO)
+    if reserva_en_progreso and reserva_en_progreso.get('funcion_id') == funcion_id:
+        max_asientos = reserva_en_progreso.get('cantidad', get_max_asientos())
+    else:
+        max_asientos = get_max_asientos()
+    # Precio real de CADA asiento (ya con el multiplicador de sala y, si corresponde, el de la categoría especial del asiento aplicado) y datos de las categorías especiales, para que el mapa de selección muestre el color/precio real en vez del precio plano de la función.
     precios_por_asiento = {}
     for fila in layout:
         for codigo in fila['celdas']:
@@ -102,15 +202,6 @@ def seleccionar_asientos(request, funcion_id):
         'funcion': funcion,
         'sala': funcion.sala,
         'layout': layout,
-        # modificado (Fase 2): 'asientos_ocupados' se sigue usando tal cual
-        # para decidir qué botón queda deshabilitado (todo lo no disponible,
-        # sin importar el motivo). Además ahora se manda por separado el
-        # detalle por motivo, para que el template pueda diferenciar más
-        # adelante sin tener que volver a tocar esta vista:
-        #   - asientos_reservados_real   -> ya tiene una reserva (pendiente/confirmada)
-        #   - asientos_bloqueados_mant   -> bloqueado por mantenimiento (admin)
-        #   - asientos_bloqueados_reserv -> bloqueado con motivo "reservado" (admin)
-        # En el cliente, por ahora, los tres se siguen viendo igual (gris + X).
         'asientos_ocupados': funcion.asientos_no_disponibles(),
         'asientos_reservados_real': funcion.asientos_ocupados(),
         'asientos_bloqueados_mant': funcion.asientos_bloqueados_por_motivo('mantenimiento'),
@@ -122,23 +213,6 @@ def seleccionar_asientos(request, funcion_id):
         'precios_por_asiento': precios_por_asiento,
         'info_categorias': info_categorias,
     }
-    
-    # Si falla volver a este contexto
-    # asientos_ocupados = funcion.asientos_ocupados()
-    # layout = funcion.sala.layout_asientos()
-    # max_asientos = get_max_asientos()
-    # contexto = {
-    #     'funcion': funcion,
-    #     'sala': funcion.sala,
-    #     'layout': layout,
-    #     'asientos_ocupados': asientos_ocupados,
-    #     'asientos_disponibles': funcion.asientos_disponibles(),
-    #     'max_asientos': max_asientos,
-    #     'tiempo_limite_minutos': tiempo_limite,
-    #     'segundos_restantes': segundos_restantes,
-    # }
-
-    
     return render(request, 'reservas/seleccionar_asientos.html', contexto)
 
 
@@ -154,8 +228,7 @@ def confirmar_reserva_con_asientos(request, funcion_id):
     tiempo_limite = get_tiempo_limite()
 
     # ─── Verificar timer de sesión ───────────────────────────────
-    # El timer empezó en seleccionar_asientos. Si llegó aquí con tiempo
-    # suficiente, usamos los segundos restantes como fecha_limite_pago.
+    # El timer empezó en seleccionar_asientos. Si llegó aquí con tiempo suficiente, usamos los segundos restantes como fecha_limite_pago.
 
     if not asientos_seleccionados:
         messages.error(request, 'Debes seleccionar al menos un asiento.')
@@ -163,7 +236,7 @@ def confirmar_reserva_con_asientos(request, funcion_id):
     
     asientos_lista = asientos_seleccionados.split(',')
     cantidad = len(asientos_lista)
-    ################################################################################
+    
     """
     # Validar cantidad
     if cantidad < 1 or cantidad > max_asientos:
@@ -188,7 +261,6 @@ def confirmar_reserva_con_asientos(request, funcion_id):
     if cantidad < 1 or cantidad > max_asientos:
         messages.error(request, f'Debés seleccionar entre 1 y {max_asientos} asientos.')
         return redirect('reservas:seleccionar_asientos', funcion_id=funcion_id)
-    ################################################################################
 
     # Calcular fecha_limite_pago desde el inicio de la sesión de selección
     clave_sesion = f'inicio_seleccion_{funcion_id}'
@@ -221,6 +293,17 @@ def confirmar_reserva_con_asientos(request, funcion_id):
         asientos_seleccionados=asientos_seleccionados,
         fecha_limite_pago=fecha_limite_pago,
     )
+
+    # modificado: la elección del paso 2 (tipo_entrada/promo_dia_id/cupon_codigo) vivía en una sesión genérica por función (CLAVE_SESION_RESERVA_EN_PROGRESO), que no distingue entre reservas si el usuario reserva más de una vez. Ahora que ya existe el Reserva, se traslada esa elección a una clave scoped por reserva.id, que es la que van a leer los pasos de combo y pago.
+
+    reserva_en_progreso = request.session.pop(CLAVE_SESION_RESERVA_EN_PROGRESO, None)
+    if reserva_en_progreso and reserva_en_progreso.get('funcion_id') == funcion_id:
+        request.session[f'promo_reserva_{reserva.id}'] = {
+            'tipo_entrada': reserva_en_progreso.get('tipo_entrada'),
+            'promo_dia_id': reserva_en_progreso.get('promo_dia_id'),
+            'cupon_codigo': reserva_en_progreso.get('cupon_codigo'),
+        }
+
     
     msg_base = (
         f'Reserva creada. Asientos: {reserva.asientos_formateados()}. '
@@ -235,6 +318,15 @@ def confirmar_reserva_con_asientos(request, funcion_id):
             messages.success(request, msg_base)
     else:
         messages.success(request, msg_base)
+
+    # modificado (Fase D — reordenamiento de flujo): antes iba a
+    # 'reservas:detalle_reserva' (paso "verificar reserva", en el medio del
+    # flujo de compra). Se saca esa pantalla del medio porque es redundante
+    # con el sidebar RESUMEN que ya se ve en cada paso — ahora va directo
+    # al paso 5 (elegir combo). detalle_reserva sigue existiendo, pero
+    # ahora solo se llega a ella desde "Mis Reservas" (para ver una
+    # reserva pendiente de pago).
+    return redirect('pagos:elegir_combo', reserva_id=reserva.id)
     return redirect('reservas:detalle_reserva', reserva_id=reserva.id)
 
 

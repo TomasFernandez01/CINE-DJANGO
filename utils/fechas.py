@@ -28,3 +28,15 @@ def generar_proximos_dias(cantidad=20):
             'dia_mes': dia.strftime('%d/%m'),
         })
     return dias
+
+
+def formatear_fecha(fecha_obj):
+    """nuevo: da formato a UNA fecha puntual (a diferencia de generar_proximos_dias,
+    que arma un rango consecutivo). Se usa en detalle_pelicula, donde el carrusel
+    solo debe mostrar los dias en los que esa pelicula realmente tiene funcion."""
+    hoy = timezone.now().date()
+    return {
+        'valor': fecha_obj.strftime('%Y-%m-%d'),
+        'dia_semana': 'Hoy' if fecha_obj == hoy else DIAS_ABREV[fecha_obj.weekday()],
+        'dia_mes': fecha_obj.strftime('%d/%m'),
+    }

@@ -65,6 +65,24 @@
             </div>
             {% endif %}
 
+            {# modificado (Fase G): datos del comprador — esto ya existía en #}
+            {# detalle_reserva.html pero faltaba acá. Como detalle_reserva sale #}
+            {# del flujo de compra, esta info tiene que vivir en el comprobante. #}
+            <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 1rem; margin-bottom: 1.5rem; font-size: 0.85rem;">
+                <div>
+                    <div style="font-size: 0.72rem; color: #999; text-transform: uppercase;">TITULAR</div>
+                    <div style="font-weight: bold; color: #333;">{{ reserva.usuario.get_full_name|default:reserva.usuario.username }}</div>
+                </div>
+                <div>
+                    <div style="font-size: 0.72rem; color: #999; text-transform: uppercase;">EMAIL</div>
+                    <div style="font-weight: bold; color: #333;">{{ reserva.usuario.email|default:"—" }}</div>
+                </div>
+                <div>
+                    <div style="font-size: 0.72rem; color: #999; text-transform: uppercase;">FECHA DE RESERVA</div>
+                    <div style="font-weight: bold; color: #333;">{{ reserva.fecha_reserva|date:"d/m/Y H:i" }}</div>
+                </div>
+            </div>
+
             <!-- Código de reserva -->
             <div style="background: linear-gradient(135deg, #d4edda, #c3e6cb); padding: 1rem; border-radius: 8px; text-align: center; margin-bottom: 1.5rem; border: 1px solid #b1dfbb;">
                 <div style="font-size: 0.75rem; color: #155724; letter-spacing: 2px; text-transform: uppercase;">CÓDIGO DE RESERVA</div>
@@ -111,7 +129,7 @@
 
                     {% if pago.combo %}
                     <div style="display: flex; justify-content: space-between; color: #ff8c00; font-weight: 500;">
-                        <span>🍿 {{ pago.combo.nombre }}</span>
+                        <span>🍿 {% if pago.cantidad_combo > 1 %}{{ pago.cantidad_combo }}x {% endif %}{{ pago.combo.nombre }}</span>
                         <span>+${{ pago.precio_combo }}</span>
                     </div>
                     {% endif %}

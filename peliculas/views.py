@@ -2,43 +2,36 @@ from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.admin.views.decorators import staff_member_required
 from django.contrib import messages
 from django.utils import timezone
+from datetime import datetime  
 from django.db.models import Q
-from django.http import JsonResponse  # nuevo: para el endpoint del buscador en vivo
-from django.urls import reverse  # nuevo: para armar la url de cada resultado del buscador en vivo
+from django.http import JsonResponse  
+from django.urls import reverse  
+from django.db.models.functions import TruncDate  
 from .models import Pelicula
-from utils.fechas import generar_proximos_dias  # nuevo: helper compartido del carrusel de fechas
+from salas.models import Sala 
+from utils.fechas import generar_proximos_dias, formatear_fecha 
+from utils.funciones import agrupar_por_tipo_sala  # nuevo: helper compartido de agrupado por tipo de sala
 from django.core.files.base import ContentFile
 import requests
-# Importar cliente TMDB
 try:
     from utils.tmdb_api import TMDBClient, buscar_pelicula_tmdb, importar_pelicula_tmdb
     TMDB_DISPONIBLE = True
 except ImportError:
     TMDB_DISPONIBLE = False
 
-
-# ============================================
-# VISTAS EXISTENTES (mantener como están)
-# ============================================
-
+# ============================================ VISTAS EXISTENTES
 def inicio(request):
-    # se envia la cartelera real al home; el carrusel de fechas se movio a lista_peliculas
-    # (pertenece a la app peliculas / cartelera, no al home) por pedido del cliente
     peliculas_cartelera = Pelicula.objects.filter(en_cartelera=True).order_by('-fecha_estreno')[:8]
-
-    # nuevo: posters disponibles para el hero rotativo (solo las que tienen poster cargado)
     posters_hero = [p for p in peliculas_cartelera if p.poster]
-
     return render(request, 'inicio.html', {
         'peliculas_cartelera': peliculas_cartelera,
         'posters_hero': posters_hero,
     })
 
 def lista_peliculas(request):
-    # ... código existente ...
     peliculas = Pelicula.objects.filter(en_cartelera=True)
-    
     busqueda = request.GET.get('buscar', '')
+    
     if busqueda:
         query = Q(titulo__icontains=busqueda)
         if hasattr(Pelicula, 'director') and Pelicula._meta.get_field('director'):
@@ -67,34 +60,45 @@ def lista_peliculas(request):
         peliculas = peliculas.order_by('genero', 'titulo')
     
     generos_disponibles = Pelicula.GENERO_CHOICES
-    clasificaciones_disponibles = Pelicula.CLASIFICACION_CHOICES
     
-    hay_filtros_activos = bool(busqueda or genero or clasificacion)
+    clasificaciones_disponibles = Pelicula.CLASIFICACION_CHOICES
 
-    # nuevo: separar "en cartelera" (ya estrenada) de "proximos estrenos" (fecha_estreno a futuro),
-    # usando el campo Pelicula.fecha_estreno que ya existia. Solo se separa cuando no hay
-    # filtros activos, porque con busqueda/filtro se muestra un listado plano de resultados.
+    fecha_filtro = request.GET.get('fecha', '')
+    if fecha_filtro:
+        try:
+            fecha_obj = datetime.strptime(fecha_filtro, '%Y-%m-%d').date()
+            peliculas = peliculas.filter(
+                funciones__fecha_hora__date=fecha_obj,
+                funciones__disponible=True
+            ).distinct()
+        except ValueError:
+            fecha_filtro = ''
+
+    hay_filtros_activos = bool(busqueda or genero or clasificacion or fecha_filtro )
     hoy = timezone.now().date()
     peliculas_en_cartelera = None
     peliculas_proximos_estrenos = None
+
     if not hay_filtros_activos:
         peliculas_en_cartelera = peliculas.filter(
             Q(fecha_estreno__isnull=True) | Q(fecha_estreno__lte=hoy)
         )
         peliculas_proximos_estrenos = peliculas.filter(fecha_estreno__gt=hoy)
 
-    # bloque modificado: carrusel de fechas (movido desde inicio.html), ahora con 20 dias
-    # y usando el helper compartido utils.fechas (antes tenia un bug de locale con strftime('%a'))
-    proximas_fechas = generar_proximos_dias(20)
-    # nuevo: carrusel de fechas (movido desde inicio.html), apunta a salas:lista_funciones?fecha=YYYY-MM-DD
-    # proximas_fechas = []
-    # for i in range(8):
-    #     dia = hoy + timezone.timedelta(days=i)
-    #     proximas_fechas.append({
-    #         'valor': dia.strftime('%Y-%m-%d'),
-    #         'dia_semana': 'Hoy' if i == 0 else dia.strftime('%a').capitalize(),
-    #         'dia_mes': dia.strftime('%d/%m'),
-    #     })
+    if not hay_filtros_activos:
+        peliculas_en_cartelera = peliculas  
+
+        peliculas_proximos_estrenos = Pelicula.objects.filter(
+            en_cartelera=False, fecha_estreno__gt=hoy
+        )
+        if orden == 'año' and hasattr(Pelicula, 'año'):
+            peliculas_proximos_estrenos = peliculas_proximos_estrenos.order_by('-año', 'titulo')
+        elif orden == 'genero':
+            peliculas_proximos_estrenos = peliculas_proximos_estrenos.order_by('genero', 'titulo')
+        else:
+            peliculas_proximos_estrenos = peliculas_proximos_estrenos.order_by('titulo')
+
+    proximas_fechas = generar_proximos_dias(10)
 
     contexto = {
         'peliculas': peliculas,
@@ -105,6 +109,7 @@ def lista_peliculas(request):
         'genero_seleccionado': genero,
         'clasificacion_seleccionada': clasificacion,
         'orden_seleccionado': orden,
+        'fecha_seleccionada': fecha_filtro,
         'generos_disponibles': generos_disponibles,
         'clasificaciones_disponibles': clasificaciones_disponibles,
         'total_resultados': peliculas.count(),
@@ -135,6 +140,59 @@ def buscar_vivo(request):
 def detalle_pelicula(request, pelicula_id):
     pelicula = get_object_or_404(Pelicula, id=pelicula_id)
     ahora = timezone.now()
+    funciones_todas = pelicula.funciones.filter(
+        disponible=True,
+        fecha_hora__gt=ahora
+    ).select_related('sala').order_by('fecha_hora')
+
+    fechas_qs = funciones_todas.annotate(dia=TruncDate('fecha_hora')) \
+        .values_list('dia', flat=True).distinct().order_by('dia')
+    fechas_disponibles = [formatear_fecha(d) for d in fechas_qs]
+
+    fecha_filtro = request.GET.get('fecha', '')
+    formato_filtro = request.GET.get('formato', '')
+
+    funciones = funciones_todas
+    if fecha_filtro:
+        try:
+            fecha_obj = datetime.strptime(fecha_filtro, '%Y-%m-%d').date()
+            funciones = funciones.filter(fecha_hora__date=fecha_obj)
+        except ValueError:
+            fecha_filtro = ''
+    if formato_filtro:
+        funciones = funciones.filter(sala__tipo=formato_filtro)
+
+    grupos_funciones = agrupar_por_tipo_sala(funciones)
+    # este helper remplaza toda esta codigo ->
+    # funciones_por_tipo = {}
+    # for funcion in funciones:
+    #     funciones_por_tipo.setdefault(funcion.sala.tipo, []).append(funcion)
+    # grupos_funciones = []
+    # for valor_tipo, etiqueta_tipo in Sala.TIPO_CHOICES:
+    #     if valor_tipo in funciones_por_tipo:
+    #         grupos_funciones.append({
+    #             'tipo': valor_tipo,
+    #             'etiqueta': etiqueta_tipo,
+    #             'funciones': funciones_por_tipo[valor_tipo],
+    #         })
+
+    tambien_en_cartelera = Pelicula.objects.filter(
+        en_cartelera=True
+    ).exclude(id=pelicula.id).order_by('-fecha_estreno')[:8]
+
+    contexto = {
+        'pelicula': pelicula,
+        'funciones': funciones,
+        'fechas_disponibles': fechas_disponibles,
+        'fecha_seleccionada': fecha_filtro,
+        'formato_seleccionado': formato_filtro,
+        'formatos_disponibles': Sala.TIPO_CHOICES,
+        'grupos_funciones': grupos_funciones,
+        'tambien_en_cartelera': tambien_en_cartelera,
+    }
+    return render(request, 'peliculas/detalle_pelicula.html', contexto)
+    pelicula = get_object_or_404(Pelicula, id=pelicula_id)
+    ahora = timezone.now()
     funciones = pelicula.funciones.filter(
         disponible=True,
         fecha_hora__gt=ahora
@@ -146,11 +204,7 @@ def detalle_pelicula(request, pelicula_id):
     }
     return render(request, 'peliculas/detalle_pelicula.html', contexto)
 
-# ============================================
-# UTILIDAD PARA DESCARGAR POSTERS
-# ============================================
-
-############################################################# V 1
+# ============================================ DESCARGAR POSTERS
 def descargar_poster(poster_url, titulo):
     """
     Descarga el poster desde TMDB y retorna un ContentFile.
@@ -167,11 +221,7 @@ def descargar_poster(poster_url, titulo):
     except Exception as e:
         print(f"Error descargando poster: {e}")
         return None
-############################################################# V 2
-
-# ============================================
-# NUEVAS VISTAS PARA TMDB
-# ============================================
+# ============================================ NUEVAS VISTAS PARA TMDB
 
 @staff_member_required  # Solo staff puede acceder
 def buscar_tmdb(request):
@@ -237,23 +287,7 @@ def importar_tmdb(request, tmdb_id):
         messages.warning(request, f'La película "{data["titulo"]}" ya existe en la base de datos.')
         return redirect('admin:peliculas_pelicula_change', pelicula_existente.id)
     
-    # ============================================
-    # CORRECCIÓN: Crear y guardar SIN poster primero
-    # ============================================
-
-    ################################################## V1 : Crear nueva película antes conectado con laárte de POSTER
-    # pelicula = Pelicula.objects.create(
-    #     titulo=data['titulo'][:50],  # Respetar el límite de caracteres
-    #     sinopsis=data.get('sinopsis', ''),
-    #     duracion=data.get('duracion'),
-    #     genero=data.get('genero'),
-    #     clasificacion=data.get('clasificacion', 'ATP'),
-    #     director=data.get('director', ''),
-    #     actores=data.get('actores', ''),
-    #     año=data.get('año'),
-    #     en_cartelera=False,  # Por defecto no en cartelera
-    # )
-    ################################################## V 2
+    # ============================================ CORRECCIÓN: Crear y guardar SIN poster primero
     try:
         pelicula = Pelicula.objects.create(
             titulo=data['titulo'][:50],
@@ -299,18 +333,8 @@ def importar_tmdb(request, tmdb_id):
     except Exception as e:
         messages.error(request, f'Error al crear la película: {str(e)}')
         return redirect('peliculas:buscar_tmdb')
-    ####################################################################### esto era funcional
-    # messages.success(
-    #     request,
-    #     f'✅ Película "{pelicula.titulo}" importada exitosamente. '
-    #     f'Ahora podés editarla y subir el poster manualmente.'
-    # )
-    # # Redirigir al admin para editar
-    # return redirect('admin:peliculas_pelicula_change', pelicula.id)
-    #######################################################################
     
     # ########################################################## POSTER <--------
-    # # NUEVO: Descargar y guardar el poster automáticamente
     poster_url = data.get('poster_url')
     if poster_url:
         try:

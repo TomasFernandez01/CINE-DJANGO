@@ -96,7 +96,7 @@
                                     {# Combo si lo tiene #}
                                     {% if reserva.pago.combo %}
                                         <div style="font-size: 0.8rem; color: #ff8c00; margin-top: 0.2rem;">
-                                            🍿 {{ reserva.pago.combo.nombre }}
+                                            🍿 {% if reserva.pago.cantidad_combo > 1 %}{{ reserva.pago.cantidad_combo }}x {% endif %}{{ reserva.pago.combo.nombre }}
                                         </div>
                                     {% endif %}
                                 {% else %}
@@ -128,13 +128,22 @@
                         {% endif %}
 
                         <div style="display: flex; flex-direction: column; gap: 0.5rem; width: 100%;">
+                            {# modificado (Fase D/H): si ya está pagada, "Ver Detalle" manda directo al comprobante (tiene el QR, detalle_reserva no). Si sigue pendiente, sigue yendo a detalle_reserva #}
+                            {% if reserva.estado == 'confirmada' and reserva.pago %}
+                            <a href="{% url 'pagos:comprobante_pago' reserva.pago.id %}"
+                               style="padding: 0.5rem 1rem; background-color: #007bff; color: white; text-decoration: none; border-radius: 4px; text-align: center; font-weight: bold; white-space: nowrap;">
+                                Ver Comprobante
+                            </a>
+                            {% else %}
                             <a href="{% url 'reservas:detalle_reserva' reserva.id %}"
                                style="padding: 0.5rem 1rem; background-color: #007bff; color: white; text-decoration: none; border-radius: 4px; text-align: center; font-weight: bold; white-space: nowrap;">
                                 Ver Detalle
                             </a>
+                            {% endif %}
 
                             {% if reserva.estado == 'pendiente' %}
-                                <a href="{% url 'pagos:procesar_pago' reserva.id %}"
+                                {# modificado: antes iba directo a procesar_pago; ahora primero pasa por elegir_combo (paso 5), igual que desde detalle_reserva #}
+                                <a href="{% url 'pagos:elegir_combo' reserva.id %}"
                                    style="padding: 0.5rem 1rem; background-color: #28a745; color: white; text-decoration: none; border-radius: 4px; text-align: center; font-weight: bold; white-space: nowrap;">
                                     💳 Pagar Ahora
                                 </a>

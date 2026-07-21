@@ -1,0 +1,79 @@
+/* nuevo: horarios/formato/grupos compartidos entre detalle_pelicula.html y lista_funciones.html
+   (antes vivian solo en css/peliculas/detalle.css, se movieron acá en la tanda 3) */
+
+.formato-filtros {
+    display: flex;
+    gap: 0.5rem;
+    flex-wrap: wrap;
+    margin-bottom: 1.5rem;
+}
+
+.formato-pill {
+    padding: 0.4rem 0.9rem;
+    border-radius: 20px;
+    border: 1px solid #3a3a3a;
+    background-color: #1f1f1f;
+    color: #ccc;
+    text-decoration: none;
+    font-size: 0.85rem;
+    font-weight: 600;
+    transition: border-color 0.2s, background-color 0.2s;
+}
+
+.formato-pill:hover {
+    border-color: #e50914;
+}
+
+.formato-pill.formato-activo {
+    background-color: #e50914;
+    border-color: #e50914;
+    color: white;
+}
+
+.grupo-funciones {
+    margin-bottom: 1.5rem;
+}
+
+.grupo-funciones-titulo {
+    color: #eee;
+    font-size: 1rem;
+    margin-bottom: 0.75rem;
+    font-weight: bold;
+}
+
+.horarios-fila {
+    display: flex;
+    gap: 0.6rem;
+    flex-wrap: wrap;
+}
+
+.horario-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.3rem;
+    padding: 0.55rem 0.9rem;
+    border-radius: 6px;
+    font-weight: bold;
+    font-size: 0.9rem;
+    text-decoration: none;
+    border: none;
+    cursor: pointer;
+}
+
+/* nuevo: color de disponibilidad real (asientos_disponibles vs sala.capacidad) */
+.horario-btn.disp-alta { background-color: #1e7e34; color: white; }
+.horario-btn.disp-media { background-color: #b8860b; color: white; }
+.horario-btn.disp-baja { background-color: #a52834; color: white; }
+.horario-btn.disp-completa {
+    background-color: #333;
+    color: #888;
+    cursor: default;
+}
+
+.sin-funciones-box {
+    background-color: #1c1c1c;
+    border-radius: 8px;
+    padding: 2.5rem;
+    text-align: center;
+    color: #999;
+}

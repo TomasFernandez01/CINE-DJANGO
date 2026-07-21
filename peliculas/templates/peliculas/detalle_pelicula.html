@@ -1,141 +1,142 @@
 {% extends 'base.html' %}
+{% load static %}
 
 {% block titulo %}{{ pelicula.titulo }}{% endblock %}
 
+{% block extra_css %}
+<!-- nuevo: detalle rediseñado estilo Cinemark + carrusel de fechas y horarios compartidos + cards de pelicula reutilizadas -->
+<link rel="stylesheet" href="{% static 'css/shared/fechas_carrusel.css' %}">
+<link rel="stylesheet" href="{% static 'css/shared/horarios.css' %}">
+<link rel="stylesheet" href="{% static 'css/shared/badges.css' %}">
+<link rel="stylesheet" href="{% static 'css/peliculas/detalle.css' %}">
+<link rel="stylesheet" href="{% static 'css/peliculas/cartelera.css' %}">
+{% endblock %}
+
 {% block contenido %}
-<div style="max-width: 1200px; margin: 0 auto;">
-    <div style="display: grid; grid-template-columns: 300px 1fr; gap: 2rem; margin-bottom: 2rem;">
-        <!-- Poster -->
-        <div>
+<div class="detalle-layout">
+    <!-- ===== Columna izquierda: poster + datos ===== -->
+    <div class="detalle-izquierda">
+        <div class="detalle-poster">
             {% if pelicula.poster %}
-                <img src="{{ pelicula.poster.url }}" alt="{{ pelicula.titulo }}" style="width: 100%; border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.2);">
+                <img src="{{ pelicula.poster.url }}" alt="{{ pelicula.titulo }}">
             {% else %}
-                <div style="width: 100%; aspect-ratio: 2/3; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); border-radius: 8px; display: flex; align-items: center; justify-content: center; color: white; font-size: 80px;">
-                    🎬
-                </div>
+                <div class="detalle-poster-placeholder">🎬</div>
             {% endif %}
         </div>
-        
-        <!-- Información -->
-        <div>
-            <h1 style="margin: 0 0 1rem 0; color: #333;">{{ pelicula.titulo }}</h1>
-            
-            <!-- Badges -->
-            <div style="display: flex; gap: 0.5rem; margin-bottom: 1rem; flex-wrap: wrap;">
-                <span style="display: inline-block; padding: 0.25rem 0.75rem; background-color: #007bff; color: white; border-radius: 20px; font-size: 0.875rem; font-weight: bold;">
-                    {{ pelicula.get_clasificacion_display }}
-                </span>
-                <span style="display: inline-block; padding: 0.25rem 0.75rem; background-color: #28a745; color: white; border-radius: 20px; font-size: 0.875rem;">
-                    {{ pelicula.get_genero_display }}
-                </span>
-                <span style="display: inline-block; padding: 0.25rem 0.75rem; background-color: #6c757d; color: white; border-radius: 20px; font-size: 0.875rem;">
-                    {{ pelicula.duracion }} min
-                </span>
-                {% if pelicula.año %}
-                <span style="display: inline-block; padding: 0.25rem 0.75rem; background-color: #ffc107; color: #333; border-radius: 20px; font-size: 0.875rem;">
-                    {{ pelicula.año }}
-                </span>
-                {% endif %}
-            </div>
-            
-            <!-- Sinopsis -->
-            {% if pelicula.sinopsis %}
-            <div style="margin-bottom: 1.5rem;">
-                <h3 style="color: #333; margin-bottom: 0.5rem;">Sinopsis</h3>
-                <p style="color: #666; line-height: 1.6; text-align: justify;">
-                    {{ pelicula.sinopsis }}
-                </p>
-            </div>
+
+        <h1 class="detalle-titulo">{{ pelicula.titulo }}</h1>
+
+        <div class="detalle-badges">
+            {% if pelicula.clasificacion %}
+                <span class="detalle-badge detalle-badge-clasificacion">{{ pelicula.get_clasificacion_display }}</span>
             {% endif %}
-            
-            <!-- Director y Actores -->
-            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 1rem; margin-bottom: 1.5rem;">
-                {% if pelicula.director %}
-                <div style="padding: 1rem; background-color: #f8f9fa; border-radius: 6px; border-left: 3px solid #007bff;">
-                    <div style="font-size: 0.875rem; color: #666; margin-bottom: 0.25rem;">Director</div>
-                    <div style="font-weight: bold; color: #333;">{{ pelicula.director }}</div>
-                </div>
-                {% endif %}
-                
-                {% if pelicula.actores %}
-                <div style="padding: 1rem; background-color: #f8f9fa; border-radius: 6px; border-left: 3px solid #28a745;">
-                    <div style="font-size: 0.875rem; color: #666; margin-bottom: 0.25rem;">Actores principales</div>
-                    <div style="font-weight: bold; color: #333;">{{ pelicula.actores }}</div>
-                </div>
-                {% endif %}
-            </div>
+            {% if pelicula.genero %}
+                <span class="detalle-badge detalle-badge-genero">{{ pelicula.get_genero_display }}</span>
+            {% endif %}
+            {% if pelicula.duracion %}
+                <span class="detalle-badge detalle-badge-gris">⏱ {{ pelicula.duracion_formato }}</span>
+            {% endif %}
+            {% if pelicula.año %}
+                <span class="detalle-badge detalle-badge-gris">📅 {{ pelicula.año }}</span>
+            {% endif %}
         </div>
-    </div>
-    
-    <!-- Funciones disponibles -->
-    <div style="background-color: white; padding: 2rem; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
-        <h2 style="color: #333; margin-bottom: 1.5rem;">🎟️ Funciones Disponibles</h2>
-        
-        {% if funciones %}
-            <div style="display: grid; gap: 1rem;">
-                {% for funcion in funciones %}
-                    <div style="display: flex; justify-content: space-between; align-items: center; padding: 1.5rem; background-color: #f8f9fa; border-radius: 8px; border-left: 4px solid #007bff; transition: transform 0.2s, box-shadow 0.2s;" onmouseover="this.style.transform='translateX(4px)'; this.style.boxShadow='0 4px 12px rgba(0,0,0,0.15)';" onmouseout="this.style.transform='translateX(0)'; this.style.boxShadow='none';">
-                        <div style="flex: 1;">
-                            <div style="display: flex; gap: 1.5rem; flex-wrap: wrap; align-items: center;">
-                                <div>
-                                    <div style="font-size: 0.875rem; color: #666; margin-bottom: 0.25rem;">Fecha</div>
-                                    <div style="font-weight: bold; color: #333;">{{ funcion.fecha_hora|date:"d/m/Y" }}</div>
-                                </div>
-                                <div>
-                                    <div style="font-size: 0.875rem; color: #666; margin-bottom: 0.25rem;">Horario</div>
-                                    <div style="font-weight: bold; color: #333; font-size: 1.25rem;">{{ funcion.fecha_hora|date:"H:i" }} hs</div>
-                                </div>
-                                <div>
-                                    <div style="font-size: 0.875rem; color: #666; margin-bottom: 0.25rem;">Sala</div>
-                                    <div style="font-weight: bold; color: #333;">{{ funcion.sala.nombre }}</div>
-                                </div>
-                                <div>
-                                    <div style="font-size: 0.875rem; color: #666; margin-bottom: 0.25rem;">Disponibles</div>
-                                    <div style="font-weight: bold; color: {% if funcion.asientos_disponibles > 10 %}#28a745{% elif funcion.asientos_disponibles > 0 %}#ffc107{% else %}#dc3545{% endif %};">
-                                        {{ funcion.asientos_disponibles }} asientos
-                                    </div>
-                                </div>
-                                <div>
-                                    <div style="font-size: 0.875rem; color: #666; margin-bottom: 0.25rem;">Precio</div>
-                                    <div style="font-weight: bold; color: #28a745; font-size: 1.25rem;">${{ funcion.precio }}</div>
-                                </div>
-                            </div>
-                        </div>
-                        
-                        <div>
-                            {% if user.is_authenticated %}
-                                {% if funcion.asientos_disponibles > 0 %}
-                                    <!-- ACTUALIZADO: Enlace a selección de asientos -->
-                                    <a href="{% url 'reservas:seleccionar_asientos' funcion.id %}" style="display: inline-block; padding: 0.75rem 1.5rem; background-color: #007bff; color: white; text-decoration: none; border-radius: 6px; font-weight: bold; transition: background-color 0.2s;" onmouseover="this.style.backgroundColor='#0056b3'" onmouseout="this.style.backgroundColor='#007bff'">
-                                        Elegir Lugares
-                                    </a>
-                                {% else %}
-                                    <span style="display: inline-block; padding: 0.75rem 1.5rem; background-color: #6c757d; color: white; border-radius: 6px; font-weight: bold;">
-                                        Agotado
-                                    </span>
-                                {% endif %}
-                            {% else %}
-                                <a href="{% url 'usuarios:login' %}?next={{ request.path }}" style="display: inline-block; padding: 0.75rem 1.5rem; background-color: #28a745; color: white; text-decoration: none; border-radius: 6px; font-weight: bold;">
-                                    Iniciar Sesión
-                                </a>
-                            {% endif %}
-                        </div>
-                    </div>
-                {% endfor %}
+
+        {% if pelicula.sinopsis %}
+            <div class="detalle-sinopsis">
+                <h3>Sinopsis</h3>
+                <p>{{ pelicula.sinopsis }}</p>
             </div>
-        {% else %}
-            <div style="text-align: center; padding: 3rem; background-color: #f8f9fa; border-radius: 8px;">
-                <p style="font-size: 1.25rem; color: #666; margin: 0;">
-                    No hay funciones disponibles para esta película en este momento.
-                </p>
+        {% endif %}
+
+        {% if pelicula.director %}
+            <div class="detalle-info-box">
+                <div class="detalle-info-box-label">Director</div>
+                <div class="detalle-info-box-valor">{{ pelicula.director }}</div>
+            </div>
+        {% endif %}
+
+        {% if pelicula.actores %}
+            <div class="detalle-info-box">
+                <div class="detalle-info-box-label">Actores principales</div>
+                <div class="detalle-info-box-valor">{{ pelicula.actores }}</div>
             </div>
         {% endif %}
     </div>
-    
-    <div style="margin-top: 2rem;">
-        <a href="{% url 'peliculas:lista_peliculas' %}" style="color: #007bff; text-decoration: none; font-weight: bold;">
-            Volver a lista
-        </a>
+
+    <!-- ===== Columna derecha: horarios ===== -->
+    <div class="detalle-horarios">
+        <h2>🎟️ Horarios</h2>
+
+        {% if fechas_disponibles %}
+            <!-- nuevo: carrusel de fechas acotado a los dias reales con funcion (no un rango fijo) -->
+            <div class="fechas-carrusel-wrap">
+                <button type="button" class="fecha-flecha fecha-flecha-prev" aria-label="Días anteriores">‹</button>
+                <div class="fechas-carrusel">
+                    {% for f in fechas_disponibles %}
+                        <a href="?formato={{ formato_seleccionado }}&fecha={{ f.valor }}"
+                           class="fecha-item{% if fecha_seleccionada == f.valor %} fecha-activa{% elif not fecha_seleccionada and forloop.first %} fecha-hoy{% endif %}">
+                            <span class="fecha-item-diasemana">{{ f.dia_semana }}</span>
+                            <span class="fecha-item-diames">{{ f.dia_mes }}</span>
+                        </a>
+                    {% endfor %}
+                </div>
+                <button type="button" class="fecha-flecha fecha-flecha-next" aria-label="Días siguientes">›</button>
+                {% if fecha_seleccionada %}
+                    <a href="?formato={{ formato_seleccionado }}" class="fecha-quitar" title="Quitar filtro de día">🗑</a>
+                {% endif %}
+            </div>
+
+            <!-- nuevo: filtro por formato (Sala.tipo, dato real). Sin selector de Idioma: Funcion no tiene ese campo -->
+            <div class="formato-filtros">
+                <a href="?fecha={{ fecha_seleccionada }}" class="formato-pill{% if not formato_seleccionado %} formato-activo{% endif %}">Todos</a>
+                {% for valor, etiqueta in formatos_disponibles %}
+                    <a href="?fecha={{ fecha_seleccionada }}&formato={{ valor }}"
+                       class="formato-pill{% if formato_seleccionado == valor %} formato-activo{% endif %}">{{ etiqueta }}</a>
+                {% endfor %}
+            </div>
+
+            {% if grupos_funciones %}
+                {% include 'partials/_grupos_funciones.html' %}
+            {% else %}
+                <div class="sin-funciones-box">
+                    No hay funciones que coincidan con ese filtro.
+                    <a href="?">Ver todos los horarios</a>
+                </div>
+            {% endif %}
+        {% else %}
+            <div class="sin-funciones-box">
+                No hay funciones disponibles para esta película en este momento.
+            </div>
+        {% endif %}
     </div>
 </div>
+
+{% if tambien_en_cartelera %}
+    <h3 class="tambien-cartelera-titulo">También en cartelera</h3>
+    <div class="cartelera-grid">
+        {% for otra in tambien_en_cartelera %}
+            <a href="{% url 'peliculas:detalle_pelicula' otra.id %}" class="cartelera-card">
+                {% if otra.poster %}
+                    <img class="cartelera-card-poster" src="{{ otra.poster.url }}" alt="{{ otra.titulo }}">
+                {% else %}
+                    <div class="cartelera-card-poster-placeholder">🎬</div>
+                {% endif %}
+                <div class="cartelera-card-info">
+                    <h4>{{ otra.titulo }}</h4>
+                </div>
+            </a>
+        {% endfor %}
+    </div>
+{% endif %}
+
+<div style="margin-top: 2rem;">
+    <a href="{% url 'peliculas:lista_peliculas' %}" style="color: #ff5c5c; text-decoration: none; font-weight: bold;">
+        Cartelera
+    </a>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<!-- nuevo: flechas del carrusel de fechas -->
+<script src="{% static 'js/shared/fechas_carrusel.js' %}"></script>
 {% endblock %}

@@ -35,6 +35,8 @@ class Pago(models.Model):
     descuento_promo_dia = models.DecimalField(max_digits=10,decimal_places=2,default=0)
     descuento_total = models.DecimalField(max_digits=10,decimal_places=2,default=0)
     precio_combo = models.DecimalField(max_digits=10,decimal_places=2,default=0)
+    # modificado (Fase E):
+    cantidad_combo = models.PositiveIntegerField(default=1)
     monto = models.DecimalField(max_digits=10,decimal_places=2,
                                 help_text="Monto final pagado")
     # =========================

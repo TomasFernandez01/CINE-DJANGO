@@ -1,0 +1,88 @@
+/* nuevo (tanda 3): card de "película + sus funciones" en lista_funciones.html, estilo
+   Cinemark (poster a la izquierda, horarios agrupados por tipo de sala a la derecha) */
+
+.funciones-lista {
+    display: flex;
+    flex-direction: column;
+    gap: 1.25rem;
+}
+
+.funcion-pelicula-card {
+    display: flex;
+    gap: 1.5rem;
+    background-color: #1f1f1f;
+    border-radius: 10px;
+    padding: 1.25rem;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.35);
+}
+
+.funcion-pelicula-poster {
+    flex: 0 0 auto;
+    display: block;
+    width: 130px;
+}
+
+.funcion-pelicula-poster img {
+    width: 100%;
+    border-radius: 8px;
+    aspect-ratio: 2/3;
+    object-fit: cover;
+    display: block;
+}
+
+.funcion-pelicula-poster-placeholder {
+    width: 130px;
+    aspect-ratio: 2/3;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-size: 2.5rem;
+}
+
+.funcion-pelicula-info {
+    flex: 1;
+    min-width: 0;
+}
+
+.funcion-pelicula-encabezado {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    margin-bottom: 0.5rem;
+}
+
+.funcion-pelicula-encabezado h3 {
+    margin: 0;
+    font-size: 1.3rem;
+}
+
+.funcion-pelicula-encabezado h3 a {
+    color: #f5f5f5;
+    text-decoration: none;
+}
+
+.funcion-pelicula-encabezado h3 a:hover {
+    color: #ff5c5c;
+}
+
+.funcion-pelicula-desde {
+    color: #2ecc71;
+    font-weight: bold;
+    font-size: 1rem;
+    white-space: nowrap;
+}
+
+@media (max-width: 600px) {
+    .funcion-pelicula-card {
+        flex-direction: column;
+    }
+    .funcion-pelicula-poster,
+    .funcion-pelicula-poster-placeholder {
+        width: 100px;
+    }
+}

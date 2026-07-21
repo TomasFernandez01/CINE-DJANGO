@@ -1,0 +1,181 @@
+{% extends 'base.html' %}
+
+{% block titulo %}Elegí tu combo{% endblock %}
+
+{% block contenido %}
+{# ================================================================ #}
+{# NUEVO (paso 4 del flujo reordenado): asientos -> ESTE PASO -> pago #}
+{# Antes esto vivía adentro de procesar_pago, mezclado con el método #}
+{# de pago. Mismo estilo dark + sidebar RESUMEN que el resto de los  #}
+{# pasos nuevos (elegir_entrada, seleccionar_asientos).              #}
+{# ================================================================ #}
+<style>
+    @media (max-width: 860px) {
+        #layoutCombo { grid-template-columns: 1fr !important; }
+        #sidebarResumenCombo { position: static !important; }
+    }
+    .tarjeta-combo {
+        display: flex; align-items: center; gap: 1rem; cursor: pointer; border-radius: 8px;
+        padding: 0.9rem 1.1rem; border: 2px solid #2a2a2a; background-color: #1a1a1a;
+        margin-bottom: 0.85rem; transition: border-color 0.15s;
+    }
+    .tarjeta-combo:hover { border-color: #555555; }
+    .tarjeta-combo.seleccionada { border-color: #e63946; background-color: #241414; }
+    .tarjeta-combo input[type="radio"] { accent-color: #e63946; flex-shrink: 0; }
+    .tarjeta-combo img { width: 52px; height: 52px; object-fit: cover; border-radius: 6px; flex-shrink: 0; }
+</style>
+
+<div style="max-width: 1000px; margin: 0 auto; background-color: #0f0f0f;
+            padding: 1.5rem; border-radius: 12px; color: #f2f2f2;">
+    <h1 style="text-align: center; margin-bottom: 1.5rem; color: #ffffff;">🍿 Elegí tu combo</h1>
+
+    <form method="post" id="formCombo">
+        {% csrf_token %}
+        <div id="layoutCombo" style="display: grid; grid-template-columns: 1fr 320px; gap: 1.5rem; align-items: start;">
+
+            {# ──────────────── COLUMNA IZQUIERDA ──────────────── #}
+            <div>
+                {% for combo in combos %}
+                <label class="tarjeta-combo" data-precio="{{ combo.precio }}">
+                    <input type="radio" name="combo_id" value="{{ combo.id }}">
+                    {% if combo.imagen %}
+                    <img src="{{ combo.imagen.url }}" alt="{{ combo.nombre }}">
+                    {% endif %}
+                    <div style="flex: 1;">
+                        <div style="font-weight: bold; color: #ffffff;">{{ combo.nombre }}</div>
+                        <div style="font-size: 0.85rem; color: #aaaaaa; margin-top: 0.15rem;">{{ combo.descripcion }}</div>
+                    </div>
+                    <div style="font-weight: bold; color: #3ddc84; font-size: 1.05rem; white-space: nowrap;">+${{ combo.precio }}</div>
+                </label>
+                {% endfor %}
+
+                <label class="tarjeta-combo seleccionada" data-precio="0">
+                    <input type="radio" name="combo_id" value="" checked>
+                    <div style="flex: 1;">
+                        <div style="font-weight: bold; color: #ffffff;">Sin combo</div>
+                        <div style="font-size: 0.85rem; color: #aaaaaa;">Solo las entradas</div>
+                    </div>
+                    <div style="color: #aaaaaa; font-size: 0.95rem;">$0</div>
+                </label>
+
+                {# modificado (Fase E): cantidad de combos — solo tiene sentido si eligieron un combo real, no "Sin combo" #}
+                <div id="cajaCantidadCombo" style="display:none; background-color:#1a1a1a; border:1px solid #2a2a2a; border-radius:8px; padding:1rem 1.1rem; margin-top:0.5rem;">
+                    <div style="font-weight:bold; color:#ffffff; margin-bottom:0.6rem;">¿Cuántos combos?</div>
+                    <div style="display:flex; align-items:center; gap:1rem;">
+                        <button type="button" id="btnComboMenos"
+                                style="width:38px; height:38px; border-radius:6px; border:1px solid #555555;
+                                       background:transparent; color:#ffffff; font-size:1.2rem; cursor:pointer;">−</button>
+                        <span id="cantidadComboVisible" style="font-size:1.3rem; font-weight:bold; color:#ffffff; min-width:2ch; text-align:center;">1</span>
+                        <button type="button" id="btnComboMas"
+                                style="width:38px; height:38px; border-radius:6px; border:1px solid #555555;
+                                       background:transparent; color:#ffffff; font-size:1.2rem; cursor:pointer;">+</button>
+                    </div>
+                </div>
+                <input type="hidden" name="cantidad_combo" id="inputCantidadCombo" value="1">
+            </div>
+
+            {# ──────────────── COLUMNA DERECHA: RESUMEN ──────────────── #}
+            <div id="sidebarResumenCombo" style="position: sticky; top: 1rem; display: flex; flex-direction: column; gap: 1rem;">
+                <div style="background-color: #1a1a1a; border-radius: 8px; border: 1px solid #2a2a2a; padding: 1.25rem;">
+                    <div style="font-weight: bold; letter-spacing: 0.05em; color: #ffffff; margin-bottom: 1rem;">RESUMEN</div>
+
+                    <div style="margin-bottom: 1rem; padding-bottom: 1rem; border-bottom: 1px solid #2a2a2a;">
+                        <div style="color: #999999; font-size: 0.75rem; margin-bottom: 0.15rem;">Película</div>
+                        <div style="color: #ffffff; font-weight: bold;">{{ reserva.funcion.pelicula.titulo }}</div>
+                        <div style="color: #cccccc; font-size: 0.85rem; margin-top: 0.3rem;">
+                            {{ reserva.funcion.sala.nombre }} · {{ reserva.funcion.fecha_hora|date:"d/m/Y H:i" }} hs
+                        </div>
+                    </div>
+
+                    <div style="margin-bottom: 1rem; padding-bottom: 1rem; border-bottom: 1px solid #2a2a2a;">
+                        <div style="color: #999999; font-size: 0.75rem; margin-bottom: 0.15rem;">Entradas</div>
+                        <div style="color: #ffffff; font-weight: bold;">
+                            {{ reserva.cantidad_entradas }} · {{ reserva.asientos_formateados }}
+                        </div>
+                    </div>
+
+                    <div style="display: flex; justify-content: space-between; color: #cccccc; font-size: 0.9rem; margin-bottom: 0.4rem;">
+                        <span>Subtotal entradas</span>
+                        <span>${{ total_entradas }}</span>
+                    </div>
+                    <div style="display: flex; justify-content: space-between; color: #cccccc; font-size: 0.9rem;">
+                        <span>Combo</span>
+                        <span id="resumenComboPrecio">$0</span>
+                    </div>
+
+                    <div style="display: flex; justify-content: space-between; align-items: center;
+                                padding-top: 1rem; margin-top: 1rem; border-top: 1px solid #2a2a2a;">
+                        <span style="color: #ffffff; font-weight: bold;">Total estimado</span>
+                        <span id="resumenTotal" style="font-size: 1.4rem; font-weight: bold; color: #3ddc84;">${{ total_entradas }}</span>
+                    </div>
+                    <div style="font-size: 0.72rem; color: #888888; margin-top: 0.5rem;">
+                        No incluye descuentos de cupón/promoción — se aplican en el paso de pago.
+                    </div>
+                </div>
+
+                <button type="submit"
+                        style="padding: 1rem; background-color: #28a745; color: white; border: none;
+                               border-radius: 6px; font-weight: bold; font-size: 1.1rem; cursor: pointer;">
+                    CONTINUAR
+                </button>
+            </div>
+        </div>
+    </form>
+</div>
+
+<script>
+(function () {
+    const TOTAL_ENTRADAS = {{ total_entradas }};
+    const tarjetas = document.querySelectorAll('.tarjeta-combo');
+    const resumenComboEl = document.getElementById('resumenComboPrecio');
+    const resumenTotalEl = document.getElementById('resumenTotal');
+
+    // modificado (Fase E): cantidad de combos
+    const cajaCantidad     = document.getElementById('cajaCantidadCombo');
+    const cantidadVisible  = document.getElementById('cantidadComboVisible');
+    const inputCantidad    = document.getElementById('inputCantidadCombo');
+    const btnMenos         = document.getElementById('btnComboMenos');
+    const btnMas           = document.getElementById('btnComboMas');
+    const MAX_COMBOS       = 10;
+
+    let cantidad = 1;
+    let precioComboActual = 0;
+    let hayComboElegido = false;
+
+    function actualizarResumen() {
+        const precioTotal = precioComboActual * cantidad;
+        resumenComboEl.textContent = '$' + precioTotal.toFixed(2);
+        resumenTotalEl.textContent = '$' + (TOTAL_ENTRADAS + precioTotal).toFixed(2);
+        cantidadVisible.textContent = cantidad;
+        inputCantidad.value = cantidad;
+        btnMenos.disabled = cantidad <= 1;
+        btnMas.disabled = cantidad >= MAX_COMBOS;
+    }
+
+    tarjetas.forEach(function (tarjeta) {
+        tarjeta.addEventListener('click', function () {
+            tarjetas.forEach(function (t) { t.classList.remove('seleccionada'); });
+            tarjeta.classList.add('seleccionada');
+            tarjeta.querySelector('input[type="radio"]').checked = true;
+
+            precioComboActual = parseFloat(tarjeta.dataset.precio || '0');
+            // "Sin combo" tiene value="" en su radio — eso es lo que determina si mostramos el selector
+            hayComboElegido = tarjeta.querySelector('input[type="radio"]').value !== '';
+
+            if (!hayComboElegido) cantidad = 1;
+            cajaCantidad.style.display = hayComboElegido ? 'block' : 'none';
+            actualizarResumen();
+        });
+    });
+
+    btnMenos.addEventListener('click', function () {
+        cantidad = Math.max(1, cantidad - 1);
+        actualizarResumen();
+    });
+    btnMas.addEventListener('click', function () {
+        cantidad = Math.min(MAX_COMBOS, cantidad + 1);
+        actualizarResumen();
+    });
+})();
+</script>
+{% endblock %}
