@@ -1,0 +1,35 @@
+/* modificado (Fase 4): en pantallas angostas el resumen pasa
+           de columna fija al costado a bloque normal abajo del mapa */
+        @media (max-width: 860px) {
+            #layoutAsientos { grid-template-columns: 1fr !important; }
+            #sidebarResumen { position: static !important; }
+        }
+
+/* ── Animaciones ─────────────────────────────────── */
+    @keyframes pulso {
+        0%, 100% { transform: scale(1); }
+        50%       { transform: scale(1.06); }
+    }
+
+    @keyframes pulsoRapido {
+        0%, 100% { transform: scale(1);    opacity: 1; }
+        50%       { transform: scale(1.08); opacity: 0.7; }
+    }
+
+    @keyframes sacudida {
+        0%  { transform: translateX(0); }
+        20% { transform: translateX(-6px); }
+        40% { transform: translateX(6px); }
+        60% { transform: translateX(-4px); }
+        80% { transform: translateX(4px); }
+        100%{ transform: translateX(0); }
+    }
+
+    /* ── Responsive ──────────────────────────────────── */
+    @media (max-width: 768px) {
+        .asiento {
+            width:  32px !important;
+            height: 32px !important;
+            font-size: 9px !important;
+        }
+    }

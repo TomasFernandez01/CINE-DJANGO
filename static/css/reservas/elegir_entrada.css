@@ -1,0 +1,12 @@
+@media (max-width: 860px) {
+        #layoutEntrada { grid-template-columns: 1fr !important; }
+        #sidebarResumenEntrada { position: static !important; }
+    }
+    .tarjeta-tipo-entrada {
+        display: block; cursor: pointer; border-radius: 8px; padding: 1rem 1.1rem;
+        border: 2px solid #2a2a2a; background-color: #1a1a1a; margin-bottom: 0.85rem;
+        transition: border-color 0.15s;
+    }
+    .tarjeta-tipo-entrada:hover { border-color: #555555; }
+    .tarjeta-tipo-entrada input[type="radio"] { accent-color: #e63946; margin-right: 0.6rem; }
+    .tarjeta-tipo-entrada.seleccionada { border-color: #e63946; background-color: #241414; }

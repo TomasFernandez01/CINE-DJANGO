@@ -1,5 +1,7 @@
 {% extends 'base.html' %}
 
+{% load static %}
+
 {% block titulo %}Mis Reservas{% endblock %}
 
 {% block contenido %}
@@ -176,8 +178,8 @@
         </a>
     </div>
 {% endif %}
-
-<script>
+<script src="{% static 'js/reservas/mis_reservas.js' %}"></script>
+{% comment %} <script>
 // Cuenta regresiva por cada reserva pendiente, sin recargar toda la página.
 // Antes esto era un location.reload() cada 30s (perdía el scroll y refrescaba
 // todo de golpe). Ahora cada contador descuenta solo en el navegador a partir
@@ -214,5 +216,5 @@
         }, 1000);
     });
 })();
-</script>
+</script> {% endcomment %}
 {% endblock %}

@@ -1,5 +1,5 @@
 {% extends 'base.html' %}
-
+{% load static %}
 {% block titulo %}Seleccionar Asientos - {{ funcion.pelicula.titulo }}{% endblock %}
 
 {% block contenido %}
@@ -595,8 +595,8 @@
 
 })();
 </script>
-
-<style>
+<link rel="stylesheet" href="{% static 'css/reservas/seleccionar_asientos.css' %}">
+{% comment %} <style>
     /* ── Animaciones ─────────────────────────────────── */
     @keyframes pulso {
         0%, 100% { transform: scale(1); }
@@ -625,5 +625,5 @@
             font-size: 9px !important;
         }
     }
-</style>
+</style> {% endcomment %}
 {% endblock %}

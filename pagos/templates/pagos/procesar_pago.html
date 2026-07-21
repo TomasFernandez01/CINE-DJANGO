@@ -1,5 +1,5 @@
 {% extends 'base.html' %}
-
+{% load static %}
 {% block titulo %}Procesar Pago{% endblock %}
 
 {% block contenido %}
@@ -13,6 +13,8 @@
 {# El JS (selectMetodo, auto-formato de tarjeta, countdown) es el    #}
 {# mismo de antes, no se tocó nada de esa lógica.                    #}
 {# ================================================================ #}
+<link rel="stylesheet" href="{% static 'css/pagos/procesar_pago.css' %}">
+{% comment %} 
 <style>
     @media (max-width: 860px) {
         #layoutPago { grid-template-columns: 1fr !important; }
@@ -26,7 +28,7 @@
     .metodo-pago-card:hover { border-color: #555555; }
     .metodo-pago-card input[type="radio"] { accent-color: #28a745; margin-right: 0.75rem; }
     .metodo-pago-card.seleccionada { border-color: #28a745; background-color: #142418; }
-</style>
+</style> {% endcomment %}
 
 <div style="max-width: 1000px; margin: 0 auto; background-color: #0f0f0f;
             padding: 1.5rem; border-radius: 12px; color: #f2f2f2;">

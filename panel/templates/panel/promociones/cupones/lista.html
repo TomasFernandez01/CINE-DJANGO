@@ -1,4 +1,5 @@
 {% extends 'panel/base_panel.html' %}
+{% load static %}
 {% block titulo %}Cupones — Panel{% endblock %}
 {% block breadcrumb %}
 <span class="sep">›</span>
@@ -76,27 +77,6 @@
 </div>
 </form>
 
-<script>
-(function () {
-    const checks = document.querySelectorAll('.chk-cupon');
-    const chkTodos = document.getElementById('chkTodosCupones');
-    const btn = document.getElementById('btnEliminarSeleccionadas');
-    if (!btn) return;
-
-    function actualizarBoton() {
-        const hayAlguno = Array.from(checks).some(c => c.checked);
-        btn.disabled = !hayAlguno;
-        btn.style.opacity = hayAlguno ? '1' : '0.5';
-        btn.style.cursor = hayAlguno ? 'pointer' : 'not-allowed';
-    }
-
-    checks.forEach(c => c.addEventListener('change', actualizarBoton));
-    chkTodos?.addEventListener('change', function () {
-        checks.forEach(c => c.checked = chkTodos.checked);
-        actualizarBoton();
-    });
-    actualizarBoton();
-})();
-</script>
+<script src="{% static 'js/panel/promociones/cupones/lista.js' %}"></script>
 
 {% endblock %}

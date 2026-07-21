@@ -1,5 +1,6 @@
 {% extends 'panel/base_panel.html' %}
 
+{% load static %}
 {% block titulo %}{{ titulo_pagina }} — Panel{% endblock %}
 
 {% block breadcrumb %}
@@ -205,23 +206,6 @@
 
 </div>
 
-<script>
-// Preview del poster al seleccionar archivo
-document.querySelector('.panel-file')?.addEventListener('change', function(e) {
-    const file = e.target.files[0];
-    if (!file) return;
-    const reader = new FileReader();
-    reader.onload = function(ev) {
-        const preview = document.getElementById('posterPreview');
-        const placeholder = document.getElementById('posterPlaceholder');
-        if (preview) {
-            preview.src = ev.target.result;
-            preview.style.display = 'block';
-        }
-        if (placeholder) placeholder.style.display = 'none';
-    };
-    reader.readAsDataURL(file);
-});
-</script>
+<script src="{% static 'js/panel/peliculas/form.js' %}"></script>
 
 {% endblock %}

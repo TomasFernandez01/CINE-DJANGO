@@ -1,5 +1,5 @@
 {% extends 'base.html' %}
-
+{% load static %}
 {% block titulo %}Comprobante de Pago{% endblock %}
 
 {% block contenido %}
@@ -223,7 +223,8 @@
     </div>
 
 </div>
-
+<link rel="stylesheet" href="{% static 'css/pagos/comprobante_pago.css' %}">
+{% comment %} 
 <style>
     @media print {
         nav, h1, .no-print {
@@ -245,5 +246,5 @@
             page-break-inside: avoid;
         }
     }
-</style>
+</style> {% endcomment %}
 {% endblock %}

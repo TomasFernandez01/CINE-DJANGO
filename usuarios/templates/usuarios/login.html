@@ -1,5 +1,7 @@
 {% extends 'base.html' %}
 
+{% load static %}
+
 {% block titulo %}Iniciar Sesión{% endblock %}
 
 {% block contenido %}
@@ -52,8 +54,8 @@
         </div>
     </div>
 </div>
-
-<style>
+<link rel="stylesheet" href="{% static 'css/usuarios/login.css' %}">
+{% comment %} <style>
     .form-control {
         width: 100%;
         padding: 0.5rem;
@@ -67,5 +69,5 @@
         border-color: #007bff;
         box-shadow: 0 0 0 0.2rem rgba(0,123,255,.25);
     }
-</style>
+</style> {% endcomment %}
 {% endblock %}

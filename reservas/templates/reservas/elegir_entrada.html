@@ -1,5 +1,5 @@
 {% extends 'base.html' %}
-
+{% load static %}
 {% block titulo %}Elegí tu entrada{% endblock %}
 
 {% block contenido %}
@@ -7,7 +7,8 @@
 {# NUEVO (paso 2 del flujo reordenado): función -> ESTE PASO -> asientos -> combo -> pago #}
 {# Mismo estilo dark de seleccionar_asientos.html: panel negro, sidebar RESUMEN sticky. #}
 {# ================================================================ #}
-<style>
+<link rel="stylesheet" href="{% static 'css/reservas/elegir_entrada.css' %}">
+{% comment %} <style>
     @media (max-width: 860px) {
         #layoutEntrada { grid-template-columns: 1fr !important; }
         #sidebarResumenEntrada { position: static !important; }
@@ -20,7 +21,7 @@
     .tarjeta-tipo-entrada:hover { border-color: #555555; }
     .tarjeta-tipo-entrada input[type="radio"] { accent-color: #e63946; margin-right: 0.6rem; }
     .tarjeta-tipo-entrada.seleccionada { border-color: #e63946; background-color: #241414; }
-</style>
+</style> {% endcomment %}
 
 <div style="max-width: 1000px; margin: 0 auto; background-color: #0f0f0f;
             padding: 1.5rem; border-radius: 12px; color: #f2f2f2;">

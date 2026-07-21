@@ -1,0 +1,12 @@
+@media (max-width: 860px) {
+        #layoutPago { grid-template-columns: 1fr !important; }
+        #sidebarResumenPago { position: static !important; }
+    }
+    .metodo-pago-card {
+        display: flex; align-items: center; padding: 1rem 1.1rem; border-radius: 8px;
+        border: 2px solid #2a2a2a; background-color: #1a1a1a; cursor: pointer;
+        margin-bottom: 0.75rem; transition: border-color 0.15s;
+    }
+    .metodo-pago-card:hover { border-color: #555555; }
+    .metodo-pago-card input[type="radio"] { accent-color: #28a745; margin-right: 0.75rem; }
+    .metodo-pago-card.seleccionada { border-color: #28a745; background-color: #142418; }

@@ -1,5 +1,7 @@
 {% extends 'base.html' %}
 
+{% load static %}
+
 {% block titulo %}Comprobante de Reserva{% endblock %}
 
 {% block contenido %}
@@ -249,13 +251,19 @@
         {% endif %}
     </div>
 </div>
-
+{% comment %} 
 <style>
 @media print {
     nav, .container > h1:first-child, button { display: none !important; }
 }
-</style>
+</style> 
+{% endcomment %}
 
+<link rel="stylesheet" href="{% static 'css/reservas/detalle_reserva.css' %}">
+{% if reserva.estado == 'pendiente' and reserva.tiempo_restante_pago %}
+<script src="{% static 'js/reservas/detalle_reserva.js' %}"></script>
+{% endif %}
+{% comment %} 
 {% if reserva.estado == 'pendiente' and reserva.tiempo_restante_pago %}
 <script>
 (function() {
@@ -285,7 +293,8 @@
     const iv = setInterval(() => { tick(); if (tiempo < 0) clearInterval(iv); }, 1000);
 })();
 </script>
-{% endif %}
+{% endif %} 
+{% endcomment %}
 
 {% if reserva.estado == 'confirmada' and reserva.pago and reserva.pago.codigo_qr %}
 <script src="https://cdn.jsdelivr.net/npm/qrcode@1.5.3/build/qrcode.min.js"></script>
