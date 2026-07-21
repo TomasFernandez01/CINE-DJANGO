@@ -1,0 +1,24 @@
+.usuario-contenedor { margin: 0 auto; }
+.usuario-contenedor--sm { max-width: 400px; }
+.usuario-contenedor--md { max-width: 500px; }
+.usuario-contenedor--lg { max-width: 600px; }
+.usuario-titulo--centrado { text-align: center; }
+.usuario-tarjeta { margin-top: 1.5rem; padding: 2rem; background-color: #fff; border-radius: 8px; box-shadow: 0 2px 4px rgba(0, 0, 0, .1); }
+.usuario-campo { margin-bottom: 1.5rem; }
+.usuario-etiqueta { display: block; margin-bottom: .5rem; font-weight: bold; }
+.usuario-requerido, .usuario-error { color: #dc3545; }
+.usuario-error { margin-top: .25rem; font-size: .9rem; }
+.usuario-ayuda { display: block; margin-top: .25rem; color: #6c757d; }
+.usuario-alerta { margin-bottom: 1rem; padding: 1rem; border-radius: 4px; }
+.usuario-alerta--error { color: #721c24; background-color: #f8d7da; }
+.usuario-alerta--info { color: #004085; background-color: #e7f3ff; }
+.usuario-boton { width: 100%; padding: .75rem; border: 0; border-radius: 4px; color: #fff; font-size: 1rem; font-weight: bold; cursor: pointer; }
+.usuario-boton--primario { background-color: #007bff; }
+.usuario-boton--exito { background-color: #28a745; }
+.usuario-enlace-pie { margin-top: 1.5rem; padding-top: 1.5rem; border-top: 1px solid #ddd; text-align: center; }
+.usuario-enlace-pie p { margin: 0; color: #666; }
+.usuario-enlace { color: #007bff; font-weight: bold; text-decoration: none; }
+.usuario-subtitulo { margin-bottom: 1rem; padding-bottom: .5rem; color: #333; border-bottom: 2px solid #007bff; }
+.usuario-acciones { display: flex; gap: 1rem; margin-top: 2rem; }
+.usuario-acciones > * { flex: 1; }
+.usuario-enlace-boton { display: flex; align-items: center; justify-content: center; padding: .75rem; border-radius: 4px; color: #fff; background-color: #6c757d; text-align: center; font-size: 1rem; font-weight: bold; text-decoration: none; }

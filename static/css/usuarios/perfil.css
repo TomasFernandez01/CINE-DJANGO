@@ -1,0 +1,13 @@
+.usuario-perfil-estilo-1 { max-width: 800px; margin: 0 auto; }
+.usuario-perfil-estilo-2 { background-color: white; padding: 2rem; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); margin-top: 1.5rem; }
+.usuario-perfil-estilo-3 { display: flex; justify-content: space-between; align-items: start; margin-bottom: 2rem; border-bottom: 2px solid #007bff; padding-bottom: 1rem; }
+.usuario-perfil-estilo-4 { margin: 0; color: #333; }
+.usuario-perfil-estilo-5 { padding: 0.5rem 1rem; background-color: #007bff; color: white; border-radius: 4px; text-decoration: none; font-weight: bold; }
+.usuario-perfil-estilo-6 { display: grid; grid-template-columns: 1fr 1fr; gap: 2rem; }
+.usuario-perfil-estilo-7 { margin-bottom: 1.5rem; }
+.usuario-perfil-estilo-8 { margin: 0 0 0.25rem 0; color: #666; font-size: 0.9rem; }
+.usuario-perfil-estilo-9 { margin: 0; font-size: 1.1rem; font-weight: bold; }
+.usuario-perfil-estilo-10 { margin-top: 2rem; padding-top: 2rem; border-top: 1px solid #ddd; }
+.usuario-perfil-estilo-11 { color: #333; margin-bottom: 1rem; }
+.usuario-perfil-estilo-12 { display: inline-block; padding: 0.5rem 1rem; background-color: #6c757d; color: white; border-radius: 4px; text-decoration: none; font-weight: bold; }
+.usuario-perfil-estilo-13 { color: #666; margin: 0.5rem 0; }

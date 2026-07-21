@@ -1,19 +1,18 @@
 {% extends 'base.html' %}
 
 {% load static %}
-
 {% block titulo %}Iniciar Sesión{% endblock %}
 
 {% block contenido %}
-<div style="max-width: 400px; margin: 0 auto;">
-    <h1 style="text-align: center;">Iniciar Sesión</h1>
+<div class="usuario-contenedor usuario-contenedor--sm">
+    <h1 class="usuario-titulo--centrado">Iniciar Sesión</h1>
     
-    <div style="background-color: white; padding: 2rem; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); margin-top: 1.5rem;">
+    <div class="usuario-tarjeta">
         <form method="post">
             {% csrf_token %}
             
-            <div style="margin-bottom: 1.5rem;">
-                <label for="username" style="display: block; margin-bottom: 0.5rem; font-weight: bold;">
+            <div class="usuario-campo">
+                <label for="username" class="usuario-etiqueta">
                     Nombre de usuario
                 </label>
                 <input 
@@ -26,8 +25,8 @@
                 >
             </div>
             
-            <div style="margin-bottom: 1.5rem;">
-                <label for="password" style="display: block; margin-bottom: 0.5rem; font-weight: bold;">
+            <div class="usuario-campo">
+                <label for="password" class="usuario-etiqueta">
                     Contraseña
                 </label>
                 <input 
@@ -39,35 +38,22 @@
                 >
             </div>
             
-            <button type="submit" style="width: 100%; padding: 0.75rem; background-color: #007bff; color: white; border: none; border-radius: 4px; font-weight: bold; cursor: pointer; font-size: 1rem;">
+            <button type="submit" class="usuario-boton usuario-boton--primario">
                 Iniciar Sesión
             </button>
         </form>
         
-        <div style="text-align: center; margin-top: 1.5rem; padding-top: 1.5rem; border-top: 1px solid #ddd;">
-            <p style="margin: 0; color: #666;">
+        <div class="usuario-enlace-pie">
+            <p>
                 ¿No tenés cuenta? 
-                <a href="{% url 'usuarios:registro' %}" style="color: #007bff; font-weight: bold; text-decoration: none;">
+                <a href="{% url 'usuarios:registro' %}" class="usuario-enlace">
                     Registrate gratis
                 </a>
             </p>
         </div>
     </div>
 </div>
+
 <link rel="stylesheet" href="{% static 'css/usuarios/login.css' %}">
-{% comment %} <style>
-    .form-control {
-        width: 100%;
-        padding: 0.5rem;
-        border: 1px solid #ddd;
-        border-radius: 4px;
-        font-size: 1rem;
-        box-sizing: border-box;
-    }
-    .form-control:focus {
-        outline: none;
-        border-color: #007bff;
-        box-shadow: 0 0 0 0.2rem rgba(0,123,255,.25);
-    }
-</style> {% endcomment %}
+<link rel="stylesheet" href="{% static 'css/usuarios/formularios.css' %}">
 {% endblock %}
