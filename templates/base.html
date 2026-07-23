@@ -5,10 +5,12 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{% block titulo %}Mi Sitio de Películas{% endblock %}</title>
-    <!-- bloque modificado: CSS separado por componente (antes era un <style> unico de 195 lineas) -->
     <link rel="stylesheet" href="{% static 'css/base/general.css' %}">
     <link rel="stylesheet" href="{% static 'css/base/nav.css' %}">
     <link rel="stylesheet" href="{% static 'css/base/toast.css' %}">
+    <!-- nuevo: formularios.css y offcanvas.css se cargan acá de forma global porque el offcanvas de login/cuenta ahora vive en base.html y aparece en TODAS las páginas (antes formularios.css solo lo cargaba cada template de usuarios) -->
+    <link rel="stylesheet" href="{% static 'css/usuarios/formularios.css' %}">
+    <link rel="stylesheet" href="{% static 'css/base/offcanvas.css' %}">
     {% block extra_css %}{% endblock %}
 </head>
 <body>
@@ -29,29 +31,91 @@
                 <li>
                     <a href="{% url 'promociones:lista_combos' %}">🍿 Combos & Promos</a>
                 </li>
+                {% comment %} 
                 <li style="margin-left: auto;">
                     <a href="{% url 'usuarios:perfil' %}">{{ user.username }}</a>
                 </li>
                 <li>
                     <a href="{% url 'usuarios:logout' %}">Cerrar Sesión</a>
+                </li> 
+                {% endcomment %}
+                <!-- bloque modificado: antes había un link con el username y otro de "Cerrar Sesión" sueltos; ahora un solo avatar abre el offcanvas de cuenta (nombre, ajustes, cerrar sesión) -->
+                <li style="margin-left: auto;">
+                    <button type="button" class="nav-avatar-trigger" id="offcanvasAbrir" aria-haspopup="dialog" aria-controls="offcanvasPanel">
+                        <span class="nav-avatar">
+                            <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+                                <path d="M12 12c2.7 0 4.9-2.2 4.9-4.9S14.7 2.2 12 2.2 7.1 4.4 7.1 7.1 9.3 12 12 12Zm0 2.5c-3.3 0-9.8 1.6-9.8 4.9v2.4h19.6v-2.4c0-3.3-6.5-4.9-9.8-4.9Z"/>
+                            </svg>
+                        </span>
+                    </button>
                 </li>
-                {% comment %} no tiene sentido , para esto hacer una app aparte exclisiva para movil que escanea qr
+                {% comment %} 
+                no tiene sentido , para esto hacer una app aparte exclusiva para movil que escanea qr
                 {% if user.is_staff %}
-                    <li>
-                        <a href="{% url 'pagos:verificador_qr' %}">📱 Verificador QR</a>
-                    </li>
-                    <li>
-                        <a href="{% url 'pagos:estadisticas_staff' %}">📊 Estadísticas</a>
-                    </li>
+                href="{% url 'pagos:verificador_qr' %}" Verificador QR
+                href="{% url 'pagos:estadisticas_staff' %}"Estadísticas
                 {% endif %} 
                 {% endcomment %}
             {% else %}
-                <li style="margin-left: auto;"><a href="{% url 'usuarios:login' %}">Iniciar Sesión</a></li>
-                <li><a href="{% url 'usuarios:registro' %}">Registrarse</a></li>
+                <!-- bloque modificado: "Iniciar Sesión" ahora abre el offcanvas con el formulario de login (en vez de ir a una página aparte). "Registrarse" se sacó del nav: ahora vive como pregunta dentro del propio offcanvas ("¿No tenés cuenta? Registrate gratis"), tal como ya lo hacía login.html -->
+                <li style="margin-left: auto;">
+                    <button type="button" class="nav-login-trigger" id="offcanvasAbrir" aria-haspopup="dialog" aria-controls="offcanvasPanel">
+                        Iniciar Sesión
+                    </button>
+                </li>
+                {% comment %} <li style="margin-left: auto;"><a href="{% url 'usuarios:login' %}">Iniciar Sesión</a></li> {% endcomment %}
+                {% comment %} <li><a href="{% url 'usuarios:registro' %}">Registrarse</a></li> {% endcomment %}
             {% endif %}
         </ul>
     </nav>
     
+    <!-- nuevo: offcanvas de login / cuenta (vanilla, ver static/css/base/offcanvas.css y static/js/base/offcanvas.js). Contenido condicional según si hay sesión. -->
+    <div class="offcanvas-overlay" id="offcanvasOverlay"></div>
+    <aside class="offcanvas-panel" id="offcanvasPanel" role="dialog" aria-modal="true" aria-hidden="true" aria-labelledby="offcanvasTitulo">
+        <div class="offcanvas-header">
+            <h2 id="offcanvasTitulo" class="offcanvas-titulo">
+                {% if user.is_authenticated %}Mi Cuenta{% else %}Iniciar Sesión{% endif %}
+            </h2>
+            <button type="button" class="offcanvas-cerrar" id="offcanvasCerrar" aria-label="Cerrar">×</button>
+        </div>
+        <div class="offcanvas-body">
+            {% if user.is_authenticated %}
+                <div class="offcanvas-perfil">
+                    <span class="offcanvas-perfil-avatar">
+                        <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+                            <path d="M12 12c2.7 0 4.9-2.2 4.9-4.9S14.7 2.2 12 2.2 7.1 4.4 7.1 7.1 9.3 12 12 12Zm0 2.5c-3.3 0-9.8 1.6-9.8 4.9v2.4h19.6v-2.4c0-3.3-6.5-4.9-9.8-4.9Z"/>
+                        </svg>
+                    </span>
+                    <p class="offcanvas-perfil-nombre">{{ user.get_full_name|default:user.username }}</p>
+                </div>
+                <nav class="offcanvas-perfil-menu">
+                    <a href="{% url 'usuarios:perfil' %}" class="offcanvas-perfil-link">Mi Perfil</a>
+                    <a href="{% url 'usuarios:logout' %}" class="offcanvas-perfil-link offcanvas-perfil-link--salir">Cerrar Sesión</a>
+                </nav>
+            {% else %}
+                <form method="post" action="{% url 'usuarios:login' %}" class="offcanvas-login-form">
+                    {% csrf_token %}
+                    <input type="hidden" name="next" value="{{ request.path }}">
+                    <div class="usuario-campo">
+                        <label for="offcanvas-username" class="usuario-etiqueta">Nombre de usuario</label>
+                        <input type="text" id="offcanvas-username" name="username" required class="form-control" autocomplete="username">
+                    </div>
+                    <div class="usuario-campo">
+                        <label for="offcanvas-password" class="usuario-etiqueta">Contraseña</label>
+                        <input type="password" id="offcanvas-password" name="password" required class="form-control" autocomplete="current-password">
+                    </div>
+                    <button type="submit" class="usuario-boton usuario-boton--primario">Iniciar Sesión</button>
+                </form>
+                <div class="usuario-enlace-pie">
+                    <p>
+                        ¿No tenés cuenta?
+                        <a href="{% url 'usuarios:registro' %}" class="usuario-enlace">Registrate gratis</a>
+                    </p>
+                </div>
+            {% endif %}
+        </div>
+    </aside>
+
     <!-- Contenedor para notificaciones toast -->
     <div class="toast-container" id="toastContainer"></div>
     
@@ -60,8 +124,10 @@
         {% endblock %}
     </div>
     
-    <!-- bloque modificado: JS del toast movido a static/js/base/toast.js, solo queda el bootstrap de mensajes de Django (no se puede mover a .js estatico porque usa tags de Django) -->
+    
     <script src="{% static 'js/base/toast.js' %}"></script>
+    <!-- nuevo: JS del offcanvas de login/cuenta -->
+    <script src="{% static 'js/base/offcanvas.js' %}"></script>
     <script>
         document.addEventListener('DOMContentLoaded', function() {
             {% if messages %}

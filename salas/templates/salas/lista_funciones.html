@@ -8,7 +8,8 @@
 <link rel="stylesheet" href="{% static 'css/shared/fechas_carrusel.css' %}">
 <link rel="stylesheet" href="{% static 'css/shared/horarios.css' %}">
 <link rel="stylesheet" href="{% static 'css/shared/badges.css' %}">
-<link rel="stylesheet" href="{% static 'css/salas/lista.css' %}">
+{% comment %} <link rel="stylesheet" href="{% static 'css/salas/lista.css' %}"> {% endcomment %}
+<link rel="stylesheet" href="{% static 'css/salas/lista_funciones.css' %}">
 {% endblock %}
 
 {% block contenido %}
@@ -37,13 +38,13 @@
 
 {# ===== FILTROS ===== #}
 <!-- bloque modificado: tema oscuro (antes caja blanca fija por inline style) -->
-<div style="background-color: #1c1c1c; padding: 1.5rem; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.3); margin-bottom: 1.5rem;">
+<div class="salas-estilo-1">
     <form method="get">
-        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 1rem; margin-bottom: 1rem;">
+        <div class="salas-estilo-2">
 
             <div>
-                <label style="display: block; margin-bottom: 0.4rem; font-weight: bold; font-size: 0.9rem; color: #ddd;">🎬 Película</label>
-                <select name="pelicula" style="width: 100%; padding: 0.5rem; border: 1px solid #3a3a3a; border-radius: 6px; font-size: 0.9rem; background-color: #262626; color: #eee;">
+                <label class="salas-estilo-3">🎬 Película</label>
+                <select name="pelicula" class="salas-estilo-4">
                     <option value="">Todas</option>
                     {% for p in peliculas_disponibles %}
                         <option value="{{ p.id }}" {% if pelicula_seleccionada == p.id|stringformat:"s" %}selected{% endif %}>{{ p.titulo }}</option>
@@ -52,8 +53,8 @@
             </div>
 
             <div>
-                <label style="display: block; margin-bottom: 0.4rem; font-weight: bold; font-size: 0.9rem; color: #ddd;">📅 Fecha</label>
-                <select name="fecha" style="width: 100%; padding: 0.5rem; border: 1px solid #3a3a3a; border-radius: 6px; font-size: 0.9rem; background-color: #262626; color: #eee;">
+                <label class="salas-estilo-3">📅 Fecha</label>
+                <select name="fecha" class="salas-estilo-4">
                     <option value="">Todas</option>
                     <option value="hoy" {% if fecha_seleccionada == 'hoy' %}selected{% endif %}>Hoy</option>
                     <option value="mañana" {% if fecha_seleccionada == 'mañana' %}selected{% endif %}>Mañana</option>
@@ -62,8 +63,8 @@
             </div>
 
             <div>
-                <label style="display: block; margin-bottom: 0.4rem; font-weight: bold; font-size: 0.9rem; color: #ddd;">🏢 Sala</label>
-                <select name="sala" style="width: 100%; padding: 0.5rem; border: 1px solid #3a3a3a; border-radius: 6px; font-size: 0.9rem; background-color: #262626; color: #eee;">
+                <label class="salas-estilo-3">🏢 Sala</label>
+                <select name="sala" class="salas-estilo-4">
                     <option value="">Todas</option>
                     {% for s in salas_disponibles %}
                         <option value="{{ s.id }}" {% if sala_seleccionada == s.id|stringformat:"s" %}selected{% endif %}>{{ s.nombre }}</option>
@@ -72,8 +73,8 @@
             </div>
 
             <div>
-                <label style="display: block; margin-bottom: 0.4rem; font-weight: bold; font-size: 0.9rem; color: #ddd;">📊 Ordenar</label>
-                <select name="orden" style="width: 100%; padding: 0.5rem; border: 1px solid #3a3a3a; border-radius: 6px; font-size: 0.9rem; background-color: #262626; color: #eee;">
+                <label class="salas-estilo-3">📊 Ordenar</label>
+                <select name="orden" class="salas-estilo-4">
                     <option value="fecha" {% if orden_seleccionado == 'fecha' %}selected{% endif %}>Por fecha</option>
                     <option value="precio" {% if orden_seleccionado == 'precio' %}selected{% endif %}>Por precio</option>
                     <option value="pelicula" {% if orden_seleccionado == 'pelicula' %}selected{% endif %}>Por película</option>
@@ -81,11 +82,11 @@
             </div>
         </div>
 
-        <div style="display: flex; gap: 1rem;">
-            <button type="submit" style="flex:1; padding: 0.6rem; background-color: #e50914; color: white; border: none; border-radius: 6px; font-weight: bold; cursor: pointer;">
+        <div class="salas-estilo-5">
+            <button type="submit" class="salas-estilo-6">
                 Aplicar Filtros
             </button>
-            <a href="{% url 'salas:lista_funciones' %}" style="flex:1; padding: 0.6rem; background-color: #3a3a3a; color: white; border-radius: 6px; text-align: center; text-decoration: none; font-weight: bold;">
+            <a href="{% url 'salas:lista_funciones' %}" class="salas-estilo-7">
                 Limpiar
             </a>
         </div>
@@ -93,7 +94,7 @@
 </div>
 
 {% if tarjetas_peliculas %}
-    <p style="color: #aaa; margin-bottom: 1rem;">{{ total_resultados }} función(es) encontrada(s)</p>
+    <p class="salas-estilo-8">{{ total_resultados }} función(es) encontrada(s)</p>
 
     <div class="funciones-lista">
         {% for tarjeta in tarjetas_peliculas %}
@@ -132,7 +133,7 @@
         {% endfor %}
     </div>
 {% else %}
-    <p style="background-color: #fff3cd; padding: 1rem; border-radius: 4px; border-left: 4px solid #ffc107;">
+    <p class="salas-estilo-9">
         No hay funciones disponibles en este momento.
     </p>
 {% endif %}

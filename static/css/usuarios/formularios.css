@@ -1,24 +1,154 @@
+/* bloque modificado:
+   1) Se fusiona acá el .form-control que estaba duplicado igual en login.css,
+      registro.css, cambiar_password.css y editar_perfil.css (esos 4 archivos
+      se eliminan, ver aviso en el chat).
+   2) Se lleva toda la paleta al tema oscuro del sitio: tarjetas blancas -> #1f1f1f,
+      acento azul #007bff -> rojo #e50914 (el mismo que usa el resto de la app).
+   3) Este archivo ahora se carga una sola vez de forma global en base.html
+      (lo necesita el offcanvas de login), así que se sacó el <link> individual
+      que tenía cada template de usuarios. */
+
 .usuario-contenedor { margin: 0 auto; }
 .usuario-contenedor--sm { max-width: 400px; }
 .usuario-contenedor--md { max-width: 500px; }
 .usuario-contenedor--lg { max-width: 600px; }
-.usuario-titulo--centrado { text-align: center; }
-.usuario-tarjeta { margin-top: 1.5rem; padding: 2rem; background-color: #fff; border-radius: 8px; box-shadow: 0 2px 4px rgba(0, 0, 0, .1); }
+.usuario-titulo--centrado { text-align: center; color: #f5f5f5; }
+
+.usuario-tarjeta {
+    margin-top: 1.5rem;
+    padding: 2rem;
+    background-color: #1f1f1f;
+    border-radius: 8px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.4);
+    border: 1px solid #2a2a2a;
+}
+
 .usuario-campo { margin-bottom: 1.5rem; }
-.usuario-etiqueta { display: block; margin-bottom: .5rem; font-weight: bold; }
-.usuario-requerido, .usuario-error { color: #dc3545; }
+.usuario-etiqueta { display: block; margin-bottom: .5rem; font-weight: bold; color: #e8e8e8; }
+.usuario-requerido, .usuario-error { color: #ff6b6b; }
 .usuario-error { margin-top: .25rem; font-size: .9rem; }
-.usuario-ayuda { display: block; margin-top: .25rem; color: #6c757d; }
+.usuario-ayuda { display: block; margin-top: .25rem; color: #999; }
+
 .usuario-alerta { margin-bottom: 1rem; padding: 1rem; border-radius: 4px; }
-.usuario-alerta--error { color: #721c24; background-color: #f8d7da; }
-.usuario-alerta--info { color: #004085; background-color: #e7f3ff; }
+.usuario-alerta--error { color: #ff8f8f; background-color: #3a1414; border: 1px solid #5a1f1f; }
+.usuario-alerta--info { color: #9cc7ff; background-color: #12233a; border: 1px solid #1f3a5a; }
+
 .usuario-boton { width: 100%; padding: .75rem; border: 0; border-radius: 4px; color: #fff; font-size: 1rem; font-weight: bold; cursor: pointer; }
-.usuario-boton--primario { background-color: #007bff; }
+.usuario-boton--primario { background-color: #e50914; }
+.usuario-boton--primario:hover { background-color: #c40812; }
 .usuario-boton--exito { background-color: #28a745; }
-.usuario-enlace-pie { margin-top: 1.5rem; padding-top: 1.5rem; border-top: 1px solid #ddd; text-align: center; }
-.usuario-enlace-pie p { margin: 0; color: #666; }
-.usuario-enlace { color: #007bff; font-weight: bold; text-decoration: none; }
-.usuario-subtitulo { margin-bottom: 1rem; padding-bottom: .5rem; color: #333; border-bottom: 2px solid #007bff; }
+.usuario-boton--exito:hover { background-color: #21883a; }
+
+.usuario-enlace-pie { margin-top: 1.5rem; padding-top: 1.5rem; border-top: 1px solid #2a2a2a; text-align: center; }
+.usuario-enlace-pie p { margin: 0; color: #999; }
+.usuario-enlace { color: #e50914; font-weight: bold; text-decoration: none; }
+.usuario-enlace:hover { text-decoration: underline; }
+
+.usuario-subtitulo { margin-bottom: 1rem; padding-bottom: .5rem; color: #f5f5f5; border-bottom: 2px solid #e50914; }
+
 .usuario-acciones { display: flex; gap: 1rem; margin-top: 2rem; }
 .usuario-acciones > * { flex: 1; }
-.usuario-enlace-boton { display: flex; align-items: center; justify-content: center; padding: .75rem; border-radius: 4px; color: #fff; background-color: #6c757d; text-align: center; font-size: 1rem; font-weight: bold; text-decoration: none; }
+.usuario-enlace-boton {
+    display: flex; align-items: center; justify-content: center; padding: .75rem;
+    border-radius: 4px; color: #fff; background-color: #333; text-align: center;
+    font-size: 1rem; font-weight: bold; text-decoration: none;
+}
+.usuario-enlace-boton:hover { background-color: #444; }
+
+/* nuevo: layout tipo "entrada de cine" para login/registro (antes era una caja
+   centrada sola en medio de la pantalla, planita). Panel izquierdo con el borde
+   perforado como una entrada real (truco con radial-gradient, sin imágenes) +
+   panel derecho con el formulario. En mobile se apila. */
+.auth-split {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    min-height: 520px;
+    max-width: 1000px;
+    margin: 2rem auto;
+    background-color: #1f1f1f;
+    border-radius: 12px;
+    overflow: hidden;
+    box-shadow: 0 4px 24px rgba(0, 0, 0, 0.5);
+}
+
+.auth-hero {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    padding: 3rem 2.5rem;
+    background: linear-gradient(155deg, #2a1414 0%, #1a1a2e 55%, #141414 100%);
+}
+/* borde perforado, como el talón de una entrada de cine */
+.auth-hero::after {
+    content: "";
+    position: absolute;
+    top: 0;
+    right: -1px;
+    bottom: 0;
+    width: 22px;
+    background-image: radial-gradient(circle at 11px 0, transparent 10px, #1f1f1f 11px);
+    background-size: 22px 22px;
+    background-repeat: repeat-y;
+}
+
+.auth-hero-icono { font-size: 2.5rem; margin-bottom: 1rem; }
+.auth-hero-titulo { color: #f5f5f5; font-size: 1.9rem; margin-bottom: 0.75rem; line-height: 1.2; }
+.auth-hero-subtitulo { color: #bbb; font-size: 1rem; line-height: 1.5; }
+
+.auth-formulario {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    padding: 3rem 2.5rem;
+}
+.auth-formulario .usuario-titulo--centrado { text-align: left; margin-bottom: 1.5rem; }
+.auth-formulario .usuario-tarjeta,
+.auth-formulario .usuario-contenedor { margin: 0; padding: 0; background: none; box-shadow: none; border: none; max-width: none; }
+
+@media (max-width: 800px) {
+    .auth-split { grid-template-columns: 1fr; max-width: 480px; }
+    .auth-hero::after { display: none; }
+    .auth-hero { padding: 2rem; text-align: center; align-items: center; }
+    .auth-formulario { padding: 2rem; }
+    .auth-formulario .usuario-titulo--centrado { text-align: center; }
+}
+
+/* nuevo: encabezado con ícono para pantallas internas (cambiar contraseña,
+   editar perfil), mismo espíritu que el auth-hero pero para páginas de
+   usuario ya logueado, sin el layout partido */
+.usuario-encabezado-icono {
+    display: flex;
+    align-items: center;
+    gap: 0.9rem;
+    margin-bottom: 0.5rem;
+}
+.usuario-encabezado-icono .icono {
+    width: 48px;
+    height: 48px;
+    border-radius: 50%;
+    background-color: #241414;
+    border: 1px solid #e50914;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.4rem;
+    flex-shrink: 0;
+}
+
+/* fusionado desde login.css / registro.css / cambiar_password.css / editar_perfil.css */
+.form-control {
+    width: 100%;
+    padding: 0.5rem;
+    border: 1px solid #3a3a3a;
+    border-radius: 4px;
+    font-size: 1rem;
+    box-sizing: border-box;
+    background-color: #141414;
+    color: #e8e8e8;
+}
+.form-control:focus {
+    outline: none;
+    border-color: #e50914;
+    box-shadow: 0 0 0 0.2rem rgba(229, 9, 20, 0.25);
+}

@@ -4,23 +4,29 @@
 {% block titulo %}Editar Perfil{% endblock %}
 
 {% block contenido %}
+<!-- bloque modificado: se agrega el encabezado con ícono (.usuario-encabezado-icono,
+     definido en formularios.css). El orden de los campos (Nombre/Apellido primero)
+     ya se resuelve en usuarios/forms.py -> EditarPerfilForm. -->
 <div class="usuario-contenedor usuario-contenedor--lg">
-    <h1>Editar Perfil</h1>
-    
+    <div class="usuario-encabezado-icono">
+        <span class="icono">XD</span>
+        <h1>Editar Perfil</h1>
+    </div>
+
     <div class="usuario-tarjeta">
         <form method="post">
             {% csrf_token %}
-            
+
             {% if form.non_field_errors %}
                 <div class="usuario-alerta usuario-alerta--error">
                     {{ form.non_field_errors }}
                 </div>
             {% endif %}
-            
+
             <h3 class="usuario-subtitulo">
                 Información Personal
             </h3>
-            
+
             {% for field in form %}
                 <div class="usuario-campo">
                     <label for="{{ field.id_for_label }}" class="usuario-etiqueta">
@@ -40,7 +46,7 @@
                     {% endif %}
                 </div>
             {% endfor %}
-            
+
             <div class="usuario-acciones">
                 <button type="submit" class="usuario-boton usuario-boton--exito">
                     Guardar Cambios
@@ -52,7 +58,4 @@
         </form>
     </div>
 </div>
-
-<link rel="stylesheet" href="{% static 'css/usuarios/editar_perfil.css' %}">
-<link rel="stylesheet" href="{% static 'css/usuarios/formularios.css' %}">
 {% endblock %}

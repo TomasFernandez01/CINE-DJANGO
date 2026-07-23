@@ -1,0 +1,141 @@
+/* nuevo: offcanvas propio en vanilla CSS (sin Bootstrap) para el login y el menú
+   de cuenta, disparado desde el botón/avatar del nav. Ver static/js/base/offcanvas.js
+   para la lógica de apertura/cierre, y templates/base.html para el markup. */
+
+.offcanvas-overlay {
+    position: fixed;
+    inset: 0;
+    background-color: rgba(0, 0, 0, 0.6);
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.25s ease;
+    z-index: 200;
+}
+.offcanvas-overlay.activo {
+    opacity: 1;
+    pointer-events: auto;
+}
+
+.offcanvas-panel {
+    position: fixed;
+    top: 0;
+    right: 0;
+    height: 100%;
+    width: min(360px, 90vw);
+    background-color: #1a1a1a;
+    border-left: 1px solid #2a2a2a;
+    box-shadow: -4px 0 20px rgba(0, 0, 0, 0.5);
+    transform: translateX(100%);
+    transition: transform 0.28s ease;
+    z-index: 201;
+    display: flex;
+    flex-direction: column;
+}
+.offcanvas-panel.activo {
+    transform: translateX(0);
+}
+
+.offcanvas-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 1.25rem 1.5rem;
+    border-bottom: 1px solid #2a2a2a;
+}
+
+.offcanvas-titulo { margin: 0; font-size: 1.15rem; color: #f5f5f5; }
+
+.offcanvas-cerrar {
+    background: none;
+    border: none;
+    color: #ccc;
+    font-size: 1.6rem;
+    line-height: 1;
+    cursor: pointer;
+    padding: 0.25rem 0.5rem;
+}
+.offcanvas-cerrar:hover { color: #fff; }
+
+.offcanvas-body {
+    padding: 1.5rem;
+    overflow-y: auto;
+}
+
+/* Menú de cuenta (usuario ya logueado) */
+.offcanvas-perfil {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    margin-bottom: 1.5rem;
+    padding-bottom: 1.5rem;
+    border-bottom: 1px solid #2a2a2a;
+}
+
+.offcanvas-perfil-avatar {
+    width: 72px;
+    height: 72px;
+    border-radius: 50%;
+    background-color: #2a2a2a;
+    border: 2px solid #e50914;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 0.75rem;
+    overflow: hidden;
+}
+.offcanvas-perfil-avatar svg { width: 60%; height: 60%; color: #ccc; }
+
+.offcanvas-perfil-nombre { margin: 0; font-weight: bold; color: #f5f5f5; font-size: 1.05rem; }
+
+.offcanvas-perfil-menu { display: flex; flex-direction: column; gap: 0.5rem; }
+
+.offcanvas-perfil-link {
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+    padding: 0.85rem 1rem;
+    border-radius: 6px;
+    color: #e8e8e8;
+    text-decoration: none;
+    font-weight: 600;
+    background-color: #232323;
+}
+.offcanvas-perfil-link:hover { background-color: #2d2d2d; }
+.offcanvas-perfil-link--salir { color: #ff8f8f; }
+
+/* Trigger del nav: botón "Iniciar Sesión" (usuario anónimo) */
+.nav-login-trigger {
+    background-color: #e50914;
+    color: #fff;
+    border: none;
+    padding: 0.5rem 1.1rem;
+    border-radius: 4px;
+    font-weight: bold;
+    font-size: 0.95rem;
+    cursor: pointer;
+}
+.nav-login-trigger:hover { background-color: #c40812; }
+
+/* Trigger del nav: avatar redondo (usuario logueado) */
+.nav-avatar-trigger {
+    background: none;
+    border: none;
+    padding: 0;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+}
+.nav-avatar {
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    background-color: #2a2a2a;
+    border: 2px solid transparent;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: border-color 0.2s;
+}
+.nav-avatar svg { width: 60%; height: 60%; color: #ccc; }
+.nav-avatar-trigger:hover .nav-avatar { border-color: #e50914; }

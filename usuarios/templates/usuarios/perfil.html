@@ -5,80 +5,87 @@
 
 {% block extra_css %}
 <link rel="stylesheet" href="{% static 'css/usuarios/perfil.css' %}">
-<link rel="stylesheet" href="{% static 'css/usuarios/formularios.css' %}">
 {% endblock %}
 
 {% block contenido %}
-<div class="usuario-perfil-estilo-1">
+<!-- bloque modificado: clases .usuario-perfil-estilo-N renombradas a nombres descriptivos (ver static/css/usuarios/perfil.css). También se agrega, al lado de "Editar Perfil", un link directo al panel de administración si el usuario  es staff/superuser -->
+<div class="perfil-contenedor">
     <h1>Mi Perfil</h1>
     
-    <div class="usuario-perfil-estilo-2">
-        <div class="usuario-perfil-estilo-3">
-            <h2 class="usuario-perfil-estilo-4">Información Personal</h2>
-            <a href="{% url 'usuarios:editar_perfil' %}" class="usuario-perfil-estilo-5">
-                Editar Perfil
-            </a>
+    <div class="perfil-tarjeta">
+        <div class="perfil-encabezado">
+            <h2 class="perfil-encabezado-titulo">Información Personal</h2>
+            <div class="perfil-encabezado-acciones">
+                {% if user.is_staff or user.is_superuser %}
+                <a href="{% url 'panel:inicio' %}" class="perfil-boton-panel">
+                    Ir al Panel
+                </a>
+                {% endif %}
+                <a href="{% url 'usuarios:editar_perfil' %}" class="perfil-boton-editar">
+                    Editar Perfil
+                </a>
+            </div>
         </div>
         
-        <div class="usuario-perfil-estilo-6">
+        <div class="perfil-datos-grid">
             <div>
-                <div class="usuario-perfil-estilo-7">
-                    <p class="usuario-perfil-estilo-8">Nombre de usuario</p>
-                    <p class="usuario-perfil-estilo-9">{{ usuario.username }}</p>
+                <div class="perfil-dato">
+                    <p class="perfil-dato-etiqueta">Nombre de usuario</p>
+                    <p class="perfil-dato-valor">{{ usuario.username }}</p>
                 </div>
                 
-                <div class="usuario-perfil-estilo-7">
-                    <p class="usuario-perfil-estilo-8">Nombre completo</p>
-                    <p class="usuario-perfil-estilo-9">
+                <div class="perfil-dato">
+                    <p class="perfil-dato-etiqueta">Nombre completo</p>
+                    <p class="perfil-dato-valor">
                         {{ usuario.get_full_name|default:"No especificado" }}
                     </p>
                 </div>
                 
-                <div class="usuario-perfil-estilo-7">
-                    <p class="usuario-perfil-estilo-8">Email</p>
-                    <p class="usuario-perfil-estilo-9">{{ usuario.email|default:"No especificado" }}</p>
+                <div class="perfil-dato">
+                    <p class="perfil-dato-etiqueta">Email</p>
+                    <p class="perfil-dato-valor">{{ usuario.email|default:"No especificado" }}</p>
                 </div>
             </div>
             
             <div>
-                <div class="usuario-perfil-estilo-7">
-                    <p class="usuario-perfil-estilo-8">Teléfono</p>
-                    <p class="usuario-perfil-estilo-9">{{ usuario.perfil.telefono|default:"No especificado" }}</p>
+                <div class="perfil-dato">
+                    <p class="perfil-dato-etiqueta">Teléfono</p>
+                    <p class="perfil-dato-valor">{{ usuario.perfil.telefono|default:"No especificado" }}</p>
                 </div>
                 
-                <div class="usuario-perfil-estilo-7">
-                    <p class="usuario-perfil-estilo-8">Fecha de nacimiento</p>
-                    <p class="usuario-perfil-estilo-9">
+                <div class="perfil-dato">
+                    <p class="perfil-dato-etiqueta">Fecha de nacimiento</p>
+                    <p class="perfil-dato-valor">
                         {{ usuario.perfil.fecha_nacimiento|date:"d/m/Y"|default:"No especificado" }}
                     </p>
                 </div>
                 
-                <div class="usuario-perfil-estilo-7">
-                    <p class="usuario-perfil-estilo-8">Dirección</p>
-                    <p class="usuario-perfil-estilo-9">{{ usuario.perfil.direccion|default:"No especificado" }}</p>
+                <div class="perfil-dato">
+                    <p class="perfil-dato-etiqueta">Dirección</p>
+                    <p class="perfil-dato-valor">{{ usuario.perfil.direccion|default:"No especificado" }}</p>
                 </div>
             </div>
         </div>
         
-        <div class="usuario-perfil-estilo-10">
-            <h3 class="usuario-perfil-estilo-11">Seguridad</h3>
-            <a href="{% url 'usuarios:cambiar_password' %}" class="usuario-perfil-estilo-12">
+        <div class="perfil-seccion">
+            <h3 class="perfil-seccion-titulo">Seguridad</h3>
+            <a href="{% url 'usuarios:cambiar_password' %}" class="perfil-boton-secundario">
                 Cambiar Contraseña
             </a>
         </div>
         
-        <div class="usuario-perfil-estilo-10">
-            <h3 class="usuario-perfil-estilo-11">Estadísticas</h3>
-            <p class="usuario-perfil-estilo-13">
+        <div class="perfil-seccion">
+            <h3 class="perfil-seccion-titulo">Estadísticas</h3>
+            <p class="perfil-stat">
                 <strong>Miembro desde:</strong> {{ usuario.date_joined|date:"F Y" }}
             </p>
-            <p class="usuario-perfil-estilo-13">
+            <p class="perfil-stat">
                 <strong>Total de reservas:</strong> {{ total_reservas }}
             </p>
-            <p class="usuario-perfil-estilo-13">
+            <p class="perfil-stat">
                 <strong>Reservas confirmadas:</strong> {{ reservas_activas }}
             </p>
-            <p class="usuario-perfil-estilo-13">
+            <p class="perfil-stat">
                 <strong>Reservas pendientes:</strong> {{ reservas_pendientes }}
             </p>
         </div>

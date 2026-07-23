@@ -1,13 +1,81 @@
-.usuario-perfil-estilo-1 { max-width: 800px; margin: 0 auto; }
-.usuario-perfil-estilo-2 { background-color: white; padding: 2rem; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); margin-top: 1.5rem; }
-.usuario-perfil-estilo-3 { display: flex; justify-content: space-between; align-items: start; margin-bottom: 2rem; border-bottom: 2px solid #007bff; padding-bottom: 1rem; }
-.usuario-perfil-estilo-4 { margin: 0; color: #333; }
-.usuario-perfil-estilo-5 { padding: 0.5rem 1rem; background-color: #007bff; color: white; border-radius: 4px; text-decoration: none; font-weight: bold; }
-.usuario-perfil-estilo-6 { display: grid; grid-template-columns: 1fr 1fr; gap: 2rem; }
-.usuario-perfil-estilo-7 { margin-bottom: 1.5rem; }
-.usuario-perfil-estilo-8 { margin: 0 0 0.25rem 0; color: #666; font-size: 0.9rem; }
-.usuario-perfil-estilo-9 { margin: 0; font-size: 1.1rem; font-weight: bold; }
-.usuario-perfil-estilo-10 { margin-top: 2rem; padding-top: 2rem; border-top: 1px solid #ddd; }
-.usuario-perfil-estilo-11 { color: #333; margin-bottom: 1rem; }
-.usuario-perfil-estilo-12 { display: inline-block; padding: 0.5rem 1rem; background-color: #6c757d; color: white; border-radius: 4px; text-decoration: none; font-weight: bold; }
-.usuario-perfil-estilo-13 { color: #666; margin: 0.5rem 0; }
+/* bloque modificado: clases renombradas de .usuario-perfil-estilo-N (1 a 13, sin
+   significado) a nombres descriptivos. De paso se lleva la paleta al tema oscuro
+   del sitio (antes tarjetas blancas con acento azul #007bff, ahora #1f1f1f / #e50914
+   como el resto de la app). Se agrega .perfil-boton-panel para el acceso al panel
+   de administración (solo se usa si el usuario es staff, ver perfil.html). */
+
+.perfil-contenedor { max-width: 800px; margin: 0 auto; }
+
+.perfil-tarjeta {
+    background-color: #1f1f1f;
+    padding: 2rem;
+    border-radius: 8px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.4);
+    margin-top: 1.5rem;
+    border: 1px solid #2a2a2a;
+}
+
+.perfil-encabezado {
+    display: flex;
+    justify-content: space-between;
+    align-items: start;
+    margin-bottom: 2rem;
+    border-bottom: 2px solid #e50914;
+    padding-bottom: 1rem;
+    gap: 1rem;
+    flex-wrap: wrap;
+}
+
+.perfil-encabezado-titulo { margin: 0; color: #f5f5f5; }
+
+.perfil-encabezado-acciones { display: flex; gap: 0.75rem; flex-wrap: wrap; }
+
+.perfil-boton-editar {
+    padding: 0.5rem 1rem;
+    background-color: #e50914;
+    color: white;
+    border-radius: 4px;
+    text-decoration: none;
+    font-weight: bold;
+    white-space: nowrap;
+}
+.perfil-boton-editar:hover { background-color: #c40812; }
+
+/* nuevo: link al panel de administración, solo visible para staff/superuser */
+.perfil-boton-panel {
+    padding: 0.5rem 1rem;
+    background-color: transparent;
+    color: #e50914;
+    border: 1px solid #e50914;
+    border-radius: 4px;
+    text-decoration: none;
+    font-weight: bold;
+    white-space: nowrap;
+}
+.perfil-boton-panel:hover { background-color: rgba(229, 9, 20, 0.12); }
+
+.perfil-datos-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 2rem; }
+
+@media (max-width: 700px) {
+    .perfil-datos-grid { grid-template-columns: 1fr; }
+}
+
+.perfil-dato { margin-bottom: 1.5rem; }
+.perfil-dato-etiqueta { margin: 0 0 0.25rem 0; color: #999; font-size: 0.9rem; }
+.perfil-dato-valor { margin: 0; font-size: 1.1rem; font-weight: bold; color: #f0f0f0; }
+
+.perfil-seccion { margin-top: 2rem; padding-top: 2rem; border-top: 1px solid #2a2a2a; }
+.perfil-seccion-titulo { color: #f5f5f5; margin-bottom: 1rem; }
+
+.perfil-boton-secundario {
+    display: inline-block;
+    padding: 0.5rem 1rem;
+    background-color: #333;
+    color: white;
+    border-radius: 4px;
+    text-decoration: none;
+    font-weight: bold;
+}
+.perfil-boton-secundario:hover { background-color: #444; }
+
+.perfil-stat { color: #ccc; margin: 0.5rem 0; }

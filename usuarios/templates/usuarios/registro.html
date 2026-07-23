@@ -4,19 +4,30 @@
 {% block titulo %}Registro{% endblock %}
 
 {% block contenido %}
-<div class="usuario-contenedor usuario-contenedor--md">
-    <h1 class="usuario-titulo--centrado">Crear Cuenta</h1>
-    
-    <div class="usuario-tarjeta">
+<!-- bloque modificado: mismo layout .auth-split que login.html, para que las dos
+     pantallas de entrada al sitio se vean parejas -->
+<div class="auth-split">
+    <div class="auth-hero">
+        <div class="auth-hero-icono">🍿</div>
+        <h1 class="auth-hero-titulo">Sumate a la función</h1>
+        <p class="auth-hero-subtitulo">
+            Creá tu cuenta gratis y empezá a reservar tus entradas, guardar
+            promos y llevar el registro de lo que viste.
+        </p>
+    </div>
+
+    <div class="auth-formulario">
+        <h2 class="usuario-titulo--centrado">Crear Cuenta</h2>
+
         <form method="post">
             {% csrf_token %}
-            
+
             {% if form.non_field_errors %}
                 <div class="usuario-alerta usuario-alerta--error">
                     {{ form.non_field_errors }}
                 </div>
             {% endif %}
-            
+
             {% for field in form %}
                 <div class="usuario-campo">
                     <label for="{{ field.id_for_label }}" class="usuario-etiqueta">
@@ -36,15 +47,15 @@
                     {% endif %}
                 </div>
             {% endfor %}
-            
+
             <button type="submit" class="usuario-boton usuario-boton--exito">
                 Registrarse
             </button>
         </form>
-        
+
         <div class="usuario-enlace-pie">
             <p>
-                ¿Ya tenés cuenta? 
+                ¿Ya tenés cuenta?
                 <a href="{% url 'usuarios:login' %}" class="usuario-enlace">
                     Iniciá sesión
                 </a>
@@ -52,7 +63,4 @@
         </div>
     </div>
 </div>
-
-<link rel="stylesheet" href="{% static 'css/usuarios/registro.css' %}">
-<link rel="stylesheet" href="{% static 'css/usuarios/formularios.css' %}">
 {% endblock %}

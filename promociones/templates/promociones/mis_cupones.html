@@ -1,33 +1,38 @@
 {% extends 'base.html' %}
+{% load static %}
 
 {% block titulo %}Mis Cupones{% endblock %}
 
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/promociones/mis_cupones.css' %}">
+{% endblock %}
+
 {% block contenido %}
-<div style="max-width: 800px; margin: 0 auto;">
-    <h1 style="color: #333; margin-bottom: 0.5rem;">🏷️ Historial de Cupones</h1>
-    <p style="color: #666; margin-bottom: 1.5rem;">Cupones que utilizaste en tus compras anteriores</p>
+<div class="promociones-estilo-1">
+    <h1 class="promociones-estilo-2">🏷️ Historial de Cupones</h1>
+    <p class="promociones-estilo-3">Cupones que utilizaste en tus compras anteriores</p>
 
     {% if historial %}
-    <div style="display: flex; flex-direction: column; gap: 1rem;">
+    <div class="promociones-estilo-4">
         {% for uso in historial %}
-        <div style="background: white; padding: 1.25rem 1.5rem; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.08); border-left: 4px solid #28a745;">
-            <div style="display: flex; justify-content: space-between; align-items: start; flex-wrap: wrap; gap: 0.75rem;">
+        <div class="promociones-estilo-5">
+            <div class="promociones-estilo-6">
                 <div>
-                    <div style="display: flex; align-items: center; gap: 0.75rem; margin-bottom: 0.5rem;">
-                        <span style="background: #d4edda; color: #155724; padding: 0.25rem 0.75rem; border-radius: 4px; font-weight: bold; font-family: monospace; font-size: 1rem;">
+                    <div class="promociones-estilo-7">
+                        <span class="promociones-estilo-8">
                             {{ uso.cupon.codigo }}
                         </span>
-                        <span style="color: #28a745; font-weight: bold;">-${{ uso.descuento_aplicado }}</span>
+                        <span class="promociones-estilo-9">-${{ uso.descuento_aplicado }}</span>
                     </div>
-                    <p style="margin: 0; color: #555; font-size: 0.9rem;">{{ uso.cupon.descripcion }}</p>
+                    <p class="promociones-estilo-10">{{ uso.cupon.descripcion }}</p>
                     {% if uso.reserva %}
-                    <p style="margin: 0.3rem 0 0 0; color: #888; font-size: 0.85rem;">
+                    <p class="promociones-estilo-11">
                         Película: <strong>{{ uso.reserva.funcion.pelicula.titulo }}</strong> —
                         Reserva: <strong>{{ uso.reserva.codigo_reserva }}</strong>
                     </p>
                     {% endif %}
                 </div>
-                <div style="text-align: right; color: #888; font-size: 0.85rem; white-space: nowrap;">
+                <div class="promociones-estilo-12">
                     {{ uso.fecha_uso|date:"d/m/Y H:i" }}
                 </div>
             </div>
@@ -35,9 +40,9 @@
         {% endfor %}
     </div>
     {% else %}
-    <div style="background: white; padding: 3rem; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.08); text-align: center;">
-        <p style="font-size: 1.25rem; color: #666; margin: 0 0 1rem 0;">Todavía no usaste ningún cupón.</p>
-        <a href="{% url 'peliculas:lista_peliculas' %}" style="display: inline-block; padding: 0.75rem 1.5rem; background: #007bff; color: white; border-radius: 6px; font-weight: bold; text-decoration: none;">
+    <div class="promociones-estilo-13">
+        <p class="promociones-estilo-14">Todavía no usaste ningún cupón.</p>
+        <a href="{% url 'peliculas:lista_peliculas' %}" class="promociones-estilo-15">
             🎬 Ver Películas
         </a>
     </div>

@@ -27,8 +27,6 @@ def registro(request):
 
 def login_view(request):
     if request.user.is_authenticated:
-        ##################################################### V2 Staff
-        # Ya logueado: redirigir según rol
         if request.user.is_staff or request.user.is_superuser:
             return redirect('panel:inicio')
         return redirect('peliculas:inicio')
@@ -40,19 +38,17 @@ def login_view(request):
         
         if user is not None:
             login(request, user)
-            # ============================================================
-            # REDIRECT SEGÚN ROL
-            # Staff / superuser → panel de gestión
-            # Usuario normal    → sitio público (o ?next= si existe)
-            # ============================================================
-            next_url = request.GET.get('next', '')
+            # bloque modificado: el offcanvas de login manda "next" como campo POST (antes solo se leía por GET), para volver a la página donde estaba el usuario en vez de mandarlo siempre a inicio/panel
+            # next_url = request.GET.get('next', '')
+            next_url = request.POST.get('next') or request.GET.get('next', '')
+            
             if user.is_staff or user.is_superuser:
                 # Si tiene un ?next= válido lo respetamos, sino al panel
                 if next_url and not next_url.startswith('/panel/'):
                     return redirect(next_url)
                 messages.success(
                     request,
-                    f'¡Bienvenido al panel, {user.first_name or user.username}! 👋'
+                    f'¡Bienvenido al panel, {user.first_name or user.username}!'
                 )
                 return redirect('panel:inicio')
             else:
@@ -72,11 +68,9 @@ def login_view(request):
 
 @login_required
 def logout_view(request):
-    ##################################################### V2 Staff
     era_staff = request.user.is_staff or request.user.is_superuser
     logout(request)
     messages.success(request, 'Has cerrado sesión exitosamente.')
-    # Staff vuelve al login, usuario normal al inicio
     if era_staff:
         return redirect('usuarios:login')
     return redirect('peliculas:inicio')
