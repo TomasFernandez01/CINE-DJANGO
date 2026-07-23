@@ -2,7 +2,7 @@ from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth.decorators import login_required
 from django.contrib import messages
 from django.utils import timezone
-from django.http import JsonResponse #, HttpResponse
+from django.http import JsonResponse
 from datetime import timedelta , datetime
 from .models import Reserva
 from salas.models import Funcion
@@ -24,8 +24,7 @@ def get_max_asientos():
 def get_tiempo_limite():
     return getattr(settings, 'TIEMPO_LIMITE_PAGO_MINUTOS', 15)
 
-# ============================================ SELECCIÓN DE ASIENTOS 2 
-CLAVE_SESION_RESERVA_EN_PROGRESO = 'reserva_en_progreso'  # modificado: nombre de la clave de sesión, único lugar donde se define
+CLAVE_SESION_RESERVA_EN_PROGRESO = 'reserva_en_progreso'  
 
 @login_required
 def elegir_tipo_entrada(request, funcion_id):
@@ -44,20 +43,13 @@ def elegir_tipo_entrada(request, funcion_id):
 
     max_cantidad = get_max_asientos()
 
-    # ─── Promociones del día, TODAS las que estén activas para el día de la función ───
-    # modificado (fix reportado): antes se usaba .first(), que agarraba
-    # solo la primera promo activa de ese día e ignoraba el resto en
-    # silencio. Ahora muestra una tarjeta por cada una —
-    dia_semana_funcion = funcion.fecha_hora.weekday()  # 0=lunes ... 6=domingo
+    dia_semana_funcion = funcion.fecha_hora.weekday()  
+    
     promos_dia_activas = list(PromocionDia.objects.filter(
         dia_semana=dia_semana_funcion, activo=True
     ))
-    #promo_dia_activa = PromocionDia.objects.filter(
-    #    dia_semana=dia_semana_funcion, activo=True
-    #).first()
 
     if request.method == 'POST':
-        #tipo_entrada = request.POST.get('tipo_entrada', 'general')
         tipo_entrada_raw = request.POST.get('tipo_entrada', 'general')
         cupon_codigo = request.POST.get('cupon_codigo', '').strip().upper()
 
@@ -82,18 +74,9 @@ def elegir_tipo_entrada(request, funcion_id):
             if not promo_elegida:
                 errores.append('La promoción elegida ya no está disponible.')
             else:
-                # 2x1 obliga a elegir cantidad par
                 if promo_elegida.tipo == '2x1' and cantidad % 2 != 0:
                     errores.append('La promoción 2x1 requiere una cantidad par de entradas.')
                 promo_dia_id = promo_elegida.id
-        # if tipo_entrada == 'promo_dia':
-        #     if not promo_dia_activa:
-        #         errores.append('No hay ninguna promoción del día activa para esta función.')
-        #     else:
-        #         # 2x1 obliga a elegir cantidad par
-        #         if promo_dia_activa.tipo == '2x1' and cantidad % 2 != 0:
-        #             errores.append('La promoción 2x1 requiere una cantidad par de entradas.')
-        #         promo_dia_id = promo_dia_activa.id
 
         cupon_valido = None
         if tipo_entrada == 'cupon':
@@ -111,11 +94,8 @@ def elegir_tipo_entrada(request, funcion_id):
         if errores:
             for e in errores:
                 messages.error(request, e)
-            # todavía no hay template al que volver a renderizar con los errores marcados — por ahora solo redirige de nuevo a este mismo paso (GET) y los errores quedan en messages.
-            # esto hay que sumarlo a tareas , manejode errores para darles una solucion a quien controla el programa
             return redirect('reservas:elegir_tipo_entrada', funcion_id=funcion_id)
 
-        # Todo OK: guardar en sesión y pasar al paso 3 (asientos)
         request.session[CLAVE_SESION_RESERVA_EN_PROGRESO] = {
             'funcion_id': funcion_id,
             'cantidad': cantidad,
@@ -124,17 +104,31 @@ def elegir_tipo_entrada(request, funcion_id):
             'cupon_codigo': cupon_codigo if tipo_entrada == 'cupon' else None,
         }
         return redirect('reservas:seleccionar_asientos', funcion_id=funcion_id)
-
-    # ─── GET: mostrar el paso 2 ───
+    
+    # modificado: lista de promos ya serializada a dicts simples, para poder
+    # pasarla al JS externo (elegir_entrada.js) vía json_script. Antes este
+    # array se armaba directo en un <script> inline recorriendo promos_dia_activas
+    # con un {% for %} de Django; ahora ese <script> no existe más y el JS
+    # necesita los datos ya en formato JSON-serializable.
+    promos_dia_activas_json = [
+        {
+            'id': p.id,
+            'tipo': p.tipo,
+            'porcentaje': p.porcentaje_descuento or 0,
+            'nombre': p.nombre,
+        }
+        for p in promos_dia_activas
+    ]
     contexto = {
         'funcion': funcion,
         'sala': funcion.sala,
         'max_cantidad': max_cantidad,
         'promos_dia_activas': promos_dia_activas,
+        'promos_dia_activas_json': promos_dia_activas_json,
         'precio_unitario': funcion.precio_final(),
     }
     return render(request, 'reservas/elegir_entrada.html', contexto)
-# ============================================ SELECCIÓN DE ASIENTOS 1 
+
 @login_required
 def seleccionar_asientos(request, funcion_id):
     """Vista para seleccionar asientos específicos antes de crear la reserva."""

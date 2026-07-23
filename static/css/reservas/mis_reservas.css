@@ -1,0 +1,268 @@
+/* modificado (punto 6 de revisión): mis_reservas pasa de "card estirada" a
+   lista horizontal poster + info + acciones, mismo lenguaje visual que
+   funcion-pelicula-card (static/css/salas/lista.css) para que ambas
+   pantallas se vean parte del mismo sitio. */
+
+.reserva-mr-filtros {
+    background-color: #1f1f1f;
+    padding: 1rem 1.25rem;
+    border-radius: 10px;
+    margin-bottom: 1.5rem;
+}
+
+.reserva-mr-filtros-form {
+    display: flex;
+    gap: 1.5rem;
+    flex-wrap: wrap;
+    align-items: center;
+}
+
+.reserva-mr-filtro-label {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    cursor: pointer;
+    color: #dddddd;
+}
+
+.reserva-mr-lista {
+    display: flex;
+    flex-direction: column;
+    gap: 1.25rem;
+}
+
+.reserva-mr-card {
+    display: flex;
+    gap: 1.5rem;
+    background-color: #1f1f1f;
+    border-radius: 10px;
+    padding: 1.25rem;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.35);
+    border-left: 4px solid transparent;
+}
+
+/* Color del borde izquierdo según estado (mismo criterio que antes) */
+.reserva-mr-card--confirmada { border-left-color: #28a745; }
+.reserva-mr-card--pendiente { border-left-color: #ffc107; }
+.reserva-mr-card--expirada { border-left-color: #6c757d; }
+.reserva-mr-card--cancelada { border-left-color: #dc3545; }
+
+/* ── Poster (izquierda) ───────────────────────────── */
+.reserva-mr-poster {
+    flex: 0 0 auto;
+    display: block;
+    width: 100px;
+}
+
+.reserva-mr-poster img {
+    width: 100%;
+    border-radius: 8px;
+    aspect-ratio: 2/3;
+    object-fit: cover;
+    display: block;
+}
+
+.reserva-mr-poster-placeholder {
+    width: 100px;
+    aspect-ratio: 2/3;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-size: 2rem;
+}
+
+/* ── Info (centro) ────────────────────────────────── */
+.reserva-mr-info {
+    flex: 1;
+    min-width: 0;
+}
+
+.reserva-mr-titulo {
+    margin: 0 0 0.6rem 0;
+    color: #f5f5f5;
+    font-size: 1.2rem;
+}
+
+.reserva-mr-meta-lista {
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+    margin-bottom: 0.75rem;
+    font-size: 0.88rem;
+}
+
+.reserva-mr-meta-fila {
+    color: #bbbbbb;
+}
+
+.reserva-mr-meta-fila strong {
+    color: #eeeeee;
+    font-weight: 600;
+}
+
+.reserva-mr-meta-fila--codigo strong {
+    font-family: monospace;
+    letter-spacing: 0.05em;
+}
+
+.reserva-mr-asientos {
+    margin-bottom: 0.75rem;
+}
+
+.reserva-mr-asientos-lista {
+    display: flex;
+    gap: 0.4rem;
+    flex-wrap: wrap;
+}
+
+.reserva-mr-asiento-chip {
+    padding: 0.15rem 0.5rem;
+    background-color: #2a2a3d;
+    color: #8ab4ff;
+    border-radius: 4px;
+    font-size: 0.78rem;
+    font-weight: bold;
+}
+
+.reserva-mr-total-fila {
+    display: flex;
+    gap: 1rem;
+    align-items: center;
+    flex-wrap: wrap;
+    font-size: 0.9rem;
+}
+
+.reserva-mr-total-tachado {
+    font-size: 0.82rem;
+    color: #888888;
+    text-decoration: line-through;
+}
+
+.reserva-mr-total-pagado {
+    font-weight: bold;
+    color: #2ecc71;
+    font-size: 1.1rem;
+    margin-left: 0.3rem;
+}
+
+.reserva-mr-total-descuento {
+    display: inline-block;
+    padding: 0.1rem 0.45rem;
+    background: #16331e;
+    color: #6ee091;
+    border-radius: 4px;
+    font-size: 0.75rem;
+    font-weight: bold;
+}
+
+.reserva-mr-total-estimado {
+    font-weight: bold;
+    color: #eeeeee;
+    font-size: 1rem;
+}
+
+.reserva-mr-combo {
+    font-size: 0.78rem;
+    color: #ffb454;
+    margin-top: 0.25rem;
+}
+
+/* ── Acciones (derecha) ───────────────────────────── */
+.reserva-mr-columna-derecha {
+    flex: 0 0 auto;
+    min-width: 180px;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 0.6rem;
+}
+
+.reserva-mr-badge-estado {
+    padding: 0.35rem 0.85rem;
+    border-radius: 6px;
+    font-weight: bold;
+    font-size: 0.82rem;
+    white-space: nowrap;
+}
+
+.reserva-mr-badge-estado--confirmada { background-color: #16331e; color: #6ee091; }
+.reserva-mr-badge-estado--pendiente { background-color: #3a2f0d; color: #ffd966; }
+.reserva-mr-badge-estado--expirada { background-color: #2c2c2c; color: #bbbbbb; }
+.reserva-mr-badge-estado--cancelada { background-color: #3a1518; color: #ff8a8a; }
+
+.reserva-mr-contador {
+    background-color: #e63946;
+    color: white;
+    padding: 0.4rem 0.85rem;
+    border-radius: 6px;
+    font-weight: bold;
+    font-size: 0.85rem;
+    text-align: center;
+    white-space: nowrap;
+}
+
+.reserva-mr-acciones {
+    display: flex;
+    flex-direction: column;
+    gap: 0.45rem;
+    width: 100%;
+}
+
+.reserva-mr-btn {
+    padding: 0.45rem 0.9rem;
+    color: white;
+    text-decoration: none;
+    border-radius: 6px;
+    text-align: center;
+    font-weight: bold;
+    font-size: 0.85rem;
+    white-space: nowrap;
+    border: none;
+    cursor: pointer;
+}
+
+.reserva-mr-btn--detalle { background-color: #3a3a3a; }
+.reserva-mr-btn--pagar { background-color: #28a745; }
+.reserva-mr-btn--cancelar { background-color: transparent; border: 1px solid #dc3545; color: #ff8a8a; }
+.reserva-mr-btn--eliminar { background-color: transparent; border: 1px solid #555555; color: #bbbbbb; }
+
+/* ── Estado vacío ─────────────────────────────────── */
+.reserva-mr-vacio {
+    background-color: #1f1f1f;
+    padding: 3rem;
+    border-radius: 10px;
+    text-align: center;
+}
+
+.reserva-mr-vacio-texto {
+    font-size: 1.15rem;
+    color: #bbbbbb;
+    margin: 0 0 1.5rem 0;
+}
+
+.reserva-mr-vacio-boton {
+    display: inline-block;
+    padding: 1rem 2rem;
+    background-color: #e63946;
+    color: white;
+    text-decoration: none;
+    border-radius: 6px;
+    font-weight: bold;
+}
+
+@media (max-width: 600px) {
+    .reserva-mr-card {
+        flex-direction: column;
+    }
+    .reserva-mr-poster,
+    .reserva-mr-poster-placeholder {
+        width: 90px;
+    }
+    .reserva-mr-columna-derecha {
+        align-items: stretch;
+        min-width: 0;
+    }
+}

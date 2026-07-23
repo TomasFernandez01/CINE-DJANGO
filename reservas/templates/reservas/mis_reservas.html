@@ -5,216 +5,173 @@
 {% block titulo %}Mis Reservas{% endblock %}
 
 {% block contenido %}
+{# ================================================================ #}
+{# modificado (punto 6 de revisión): pasa de "card estirada" a lista    #}
+{# horizontal poster + info + acciones, mismo lenguaje visual que      #}
+{# funcion-pelicula-card (lista_funciones), poster a la izquierda.     #}
+{# ================================================================ #}
+<link rel="stylesheet" href="{% static 'css/reservas/mis_reservas.css' %}">
+
 <h1>🎫 Mis Reservas</h1>
 
 <!-- Filtros -->
-<div style="background-color: white; padding: 1rem; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); margin-bottom: 1.5rem;">
-    <form method="get" id="filtrosForm" style="display: flex; gap: 1rem; flex-wrap: wrap; align-items: center;">
-        <label style="display: flex; align-items: center; gap: 0.5rem; cursor: pointer;">
+<div class="reserva-mr-filtros">
+    <form method="get" id="filtrosForm" class="reserva-mr-filtros-form">
+        <label class="reserva-mr-filtro-label">
             <input type="checkbox" name="mostrar_canceladas" value="si"
-                   {% if mostrar_canceladas == 'si' %}checked{% endif %}
-                   onchange="document.getElementById('filtrosForm').submit()">
+                   {% if mostrar_canceladas == 'si' %}checked{% endif %}>
             Mostrar canceladas
         </label>
-        <label style="display: flex; align-items: center; gap: 0.5rem; cursor: pointer;">
+        <label class="reserva-mr-filtro-label">
             <input type="checkbox" name="mostrar_expiradas" value="si"
-                   {% if mostrar_expiradas == 'si' %}checked{% endif %}
-                   onchange="document.getElementById('filtrosForm').submit()">
+                   {% if mostrar_expiradas == 'si' %}checked{% endif %}>
             Mostrar expiradas
         </label>
     </form>
 </div>
 
 {% if reservas %}
-    <div style="display: grid; gap: 1rem;">
+    <div class="reserva-mr-lista">
         {% for reserva in reservas %}
-            <div style="background-color: white; padding: 1.5rem; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-                {% if reserva.estado == 'confirmada' %}border-left: 4px solid #28a745;
-                {% elif reserva.estado == 'pendiente' %}border-left: 4px solid #ffc107;
-                {% elif reserva.estado == 'expirada' %}border-left: 4px solid #6c757d;
-                {% else %}border-left: 4px solid #dc3545;{% endif %}">
+            <div class="reserva-mr-card reserva-mr-card--{{ reserva.estado }}">
 
-                <div style="display: flex; justify-content: space-between; align-items: start; flex-wrap: wrap; gap: 1rem;">
-                    <div style="flex: 1; min-width: 250px;">
-                        <h3 style="margin: 0 0 1rem 0; color: #333;">{{ reserva.funcion.pelicula.titulo }}</h3>
+                {# ── Poster ── #}
+                <a href="{% url 'peliculas:detalle_pelicula' reserva.funcion.pelicula.id %}" class="reserva-mr-poster">
+                    {% if reserva.funcion.pelicula.poster %}
+                        <img src="{{ reserva.funcion.pelicula.poster.url }}" alt="{{ reserva.funcion.pelicula.titulo }}">
+                    {% else %}
+                        <div class="reserva-mr-poster-placeholder">🎬</div>
+                    {% endif %}
+                </a>
 
-                        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 0.75rem; margin-bottom: 1rem;">
-                            <div>
-                                <div style="font-size: 0.875rem; color: #666;">Código</div>
-                                <div style="font-weight: bold; color: #333; font-family: monospace;">{{ reserva.codigo_reserva }}</div>
-                            </div>
-                            <div>
-                                <div style="font-size: 0.875rem; color: #666;">Fecha</div>
-                                <div style="font-weight: bold; color: #333;">{{ reserva.funcion.fecha_hora|date:"d/m/Y" }}</div>
-                            </div>
-                            <div>
-                                <div style="font-size: 0.875rem; color: #666;">Horario</div>
-                                <div style="font-weight: bold; color: #333;">{{ reserva.funcion.fecha_hora|date:"H:i" }} hs</div>
-                            </div>
-                            <div>
-                                <div style="font-size: 0.875rem; color: #666;">Sala</div>
-                                <div style="font-weight: bold; color: #333;">{{ reserva.funcion.sala.nombre }}</div>
-                            </div>
+                {# ── Info ── #}
+                <div class="reserva-mr-info">
+                    <h3 class="reserva-mr-titulo">{{ reserva.funcion.pelicula.titulo }}</h3>
+
+                    <div class="reserva-mr-meta-lista">
+                        <div class="reserva-mr-meta-fila reserva-mr-meta-fila--codigo">
+                            <strong>{{ reserva.codigo_reserva }}</strong>
                         </div>
-
-                        <!-- Asientos -->
-                        {% if reserva.asientos_seleccionados %}
-                        <div style="margin-bottom: 1rem;">
-                            <div style="font-size: 0.875rem; color: #666; margin-bottom: 0.25rem;">🪑 Asientos</div>
-                            <div style="display: flex; gap: 0.4rem; flex-wrap: wrap;">
-                                {% for asiento in reserva.lista_asientos %}
-                                    <span style="padding: 0.2rem 0.5rem; background-color: #007bff; color: white; border-radius: 4px; font-size: 0.8rem; font-weight: bold;">
-                                        {{ asiento }}
-                                    </span>
-                                {% endfor %}
-                            </div>
+                        <div class="reserva-mr-meta-fila">
+                            {{ reserva.funcion.fecha_hora|date:"d/m/Y" }} · <strong>{{ reserva.funcion.fecha_hora|date:"H:i" }} hs</strong>
                         </div>
-                        {% endif %}
-
-                        <!-- Total con descuento -->
-                        <div style="display: flex; gap: 1.5rem; align-items: center; flex-wrap: wrap;">
-                            <div>
-                                <span style="font-size: 0.875rem; color: #666;">Entradas: </span>
-                                <span style="font-weight: bold; color: #333;">{{ reserva.cantidad_entradas }}</span>
-                            </div>
-                            <div>
-                                {% if reserva.estado == 'confirmada' and reserva.pago %}
-                                    {% if reserva.tuvo_descuento %}
-                                        {# Mostrar precio original tachado y precio final #}
-                                        <span style="font-size: 0.85rem; color: #999; text-decoration: line-through;">
-                                            ${{ reserva.total }}
-                                        </span>
-                                        <span style="font-weight: bold; color: #28a745; font-size: 1.25rem; margin-left: 0.4rem;">
-                                            ${{ reserva.total_pagado }}
-                                        </span>
-                                        <span style="display: inline-block; margin-left: 0.4rem; padding: 0.15rem 0.5rem; background: #d4edda; color: #155724; border-radius: 4px; font-size: 0.78rem; font-weight: bold;">
-                                            -${{ reserva.pago.descuento_total }}
-                                        </span>
-                                    {% else %}
-                                        <span style="font-weight: bold; color: #28a745; font-size: 1.25rem;">
-                                            ${{ reserva.total_pagado }}
-                                        </span>
-                                    {% endif %}
-                                    {# Combo si lo tiene #}
-                                    {% if reserva.pago.combo %}
-                                        <div style="font-size: 0.8rem; color: #ff8c00; margin-top: 0.2rem;">
-                                            🍿 {% if reserva.pago.cantidad_combo > 1 %}{{ reserva.pago.cantidad_combo }}x {% endif %}{{ reserva.pago.combo.nombre }}
-                                        </div>
-                                    {% endif %}
-                                {% else %}
-                                    {# Pendiente o cancelada: mostrar total estimado #}
-                                    <span style="font-weight: bold; color: #333; font-size: 1.1rem;">
-                                        ${{ reserva.total }}
-                                    </span>
-                                {% endif %}
-                            </div>
+                        <div class="reserva-mr-meta-fila">
+                            {{ reserva.funcion.sala.nombre }}
                         </div>
                     </div>
 
-                    <!-- Columna derecha: estado y acciones -->
-                    <div style="display: flex; flex-direction: column; gap: 0.75rem; align-items: flex-end;">
-                        <span style="padding: 0.5rem 1rem; border-radius: 6px; font-weight: bold; white-space: nowrap;
-                            {% if reserva.estado == 'confirmada' %}background-color: #d4edda; color: #155724;
-                            {% elif reserva.estado == 'pendiente' %}background-color: #fff3cd; color: #856404;
-                            {% elif reserva.estado == 'expirada' %}background-color: #e2e3e5; color: #383d41;
-                            {% else %}background-color: #f8d7da; color: #721c24;{% endif %}">
-                            {{ reserva.get_estado_display }}
-                        </span>
+                    {# Asientos #}
+                    {% if reserva.asientos_seleccionados %}
+                    <div class="reserva-mr-asientos">
+                        <div class="reserva-mr-asientos-lista">
+                            {% for asiento in reserva.lista_asientos %}
+                                <span class="reserva-mr-asiento-chip">
+                                    {{ asiento }}
+                                </span>
+                            {% endfor %}
+                        </div>
+                    </div>
+                    {% endif %}
 
-                        {% if reserva.estado == 'pendiente' and reserva.tiempo_restante_pago %}
-                            <div id="contador-{{ reserva.id }}"
-                                 data-segundos="{{ reserva.tiempo_restante_pago }}"
-                                 style="background-color: #ff6b6b; color: white; padding: 0.5rem 1rem; border-radius: 6px; font-weight: bold; text-align: center;">
-                                ⏰ {{ reserva.tiempo_restante_formato }}
-                            </div>
-                        {% endif %}
-
-                        <div style="display: flex; flex-direction: column; gap: 0.5rem; width: 100%;">
-                            {# modificado (Fase D/H): si ya está pagada, "Ver Detalle" manda directo al comprobante (tiene el QR, detalle_reserva no). Si sigue pendiente, sigue yendo a detalle_reserva #}
+                    {# Total con descuento #}
+                    <div class="reserva-mr-total-fila">
+                        <div>
+                            {{ reserva.cantidad_entradas }} entrada{{ reserva.cantidad_entradas|pluralize }}
+                        </div>
+                        <div>
                             {% if reserva.estado == 'confirmada' and reserva.pago %}
-                            <a href="{% url 'pagos:comprobante_pago' reserva.pago.id %}"
-                               style="padding: 0.5rem 1rem; background-color: #007bff; color: white; text-decoration: none; border-radius: 4px; text-align: center; font-weight: bold; white-space: nowrap;">
-                                Ver Comprobante
-                            </a>
+                                {% if reserva.tuvo_descuento %}
+                                    {# Mostrar precio original tachado y precio final #}
+                                    <span class="reserva-mr-total-tachado">
+                                        ${{ reserva.total }}
+                                    </span>
+                                    <span class="reserva-mr-total-pagado">
+                                        ${{ reserva.total_pagado }}
+                                    </span>
+                                    <span class="reserva-mr-total-descuento">
+                                        -${{ reserva.pago.descuento_total }}
+                                    </span>
+                                {% else %}
+                                    <span class="reserva-mr-total-pagado">
+                                        ${{ reserva.total_pagado }}
+                                    </span>
+                                {% endif %}
+                                {# Combo si lo tiene #}
+                                {% if reserva.pago.combo %}
+                                    <div class="reserva-mr-combo">
+                                        🍿 {% if reserva.pago.cantidad_combo > 1 %}{{ reserva.pago.cantidad_combo }}x {% endif %}{{ reserva.pago.combo.nombre }}
+                                    </div>
+                                {% endif %}
                             {% else %}
-                            <a href="{% url 'reservas:detalle_reserva' reserva.id %}"
-                               style="padding: 0.5rem 1rem; background-color: #007bff; color: white; text-decoration: none; border-radius: 4px; text-align: center; font-weight: bold; white-space: nowrap;">
-                                Ver Detalle
-                            </a>
-                            {% endif %}
-
-                            {% if reserva.estado == 'pendiente' %}
-                                {# modificado: antes iba directo a procesar_pago; ahora primero pasa por elegir_combo (paso 5), igual que desde detalle_reserva #}
-                                <a href="{% url 'pagos:elegir_combo' reserva.id %}"
-                                   style="padding: 0.5rem 1rem; background-color: #28a745; color: white; text-decoration: none; border-radius: 4px; text-align: center; font-weight: bold; white-space: nowrap;">
-                                    💳 Pagar Ahora
-                                </a>
-                                <a href="{% url 'reservas:cancelar_reserva' reserva.id %}"
-                                   style="padding: 0.5rem 1rem; background-color: #dc3545; color: white; text-decoration: none; border-radius: 4px; text-align: center; font-weight: bold; white-space: nowrap;"
-                                   onclick="return confirm('¿Seguro que querés cancelar esta reserva?')">
-                                    Cancelar
-                                </a>
-                            {% endif %}
-
-                            {% if reserva.estado in 'cancelada,expirada' %}
-                                <a href="{% url 'reservas:eliminar_reserva' reserva.id %}"
-                                   style="padding: 0.5rem 1rem; background-color: #6c757d; color: white; text-decoration: none; border-radius: 4px; text-align: center; font-weight: bold; white-space: nowrap;"
-                                   onclick="return confirm('¿Eliminar del historial?')">
-                                    🗑️ Eliminar
-                                </a>
+                                {# Pendiente o cancelada: mostrar total estimado #}
+                                <span class="reserva-mr-total-estimado">
+                                    ${{ reserva.total }}
+                                </span>
                             {% endif %}
                         </div>
+                    </div>
+                </div>
+
+                {# ── Acciones (derecha) ── #}
+                <div class="reserva-mr-columna-derecha">
+                    <span class="reserva-mr-badge-estado reserva-mr-badge-estado--{{ reserva.estado }}">
+                        {{ reserva.get_estado_display }}
+                    </span>
+
+                    {% if reserva.estado == 'pendiente' and reserva.tiempo_restante_pago %}
+                        <div id="contador-{{ reserva.id }}"
+                             data-segundos="{{ reserva.tiempo_restante_pago }}"
+                             class="reserva-mr-contador">
+                            ⏰ {{ reserva.tiempo_restante_formato }}
+                        </div>
+                    {% endif %}
+
+                    <div class="reserva-mr-acciones">
+                        {# modificado (Fase D/H): si ya está pagada, "Ver Detalle" manda directo al comprobante (tiene el QR, detalle_reserva no). Si sigue pendiente, sigue yendo a detalle_reserva #}
+                        {% if reserva.estado == 'confirmada' and reserva.pago %}
+                        <a href="{% url 'pagos:comprobante_pago' reserva.pago.id %}" class="reserva-mr-btn reserva-mr-btn--detalle">
+                            Ver Comprobante
+                        </a>
+                        {% else %}
+                        <a href="{% url 'reservas:detalle_reserva' reserva.id %}" class="reserva-mr-btn reserva-mr-btn--detalle">
+                            Ver Detalle
+                        </a>
+                        {% endif %}
+
+                        {% if reserva.estado == 'pendiente' %}
+                            {# modificado: antes iba directo a procesar_pago; ahora primero pasa por elegir_combo (paso 5), igual que desde detalle_reserva #}
+                            <a href="{% url 'pagos:elegir_combo' reserva.id %}" class="reserva-mr-btn reserva-mr-btn--pagar">
+                                💳 Pagar Ahora
+                            </a>
+                            <a href="{% url 'reservas:cancelar_reserva' reserva.id %}" class="reserva-mr-btn reserva-mr-btn--cancelar"
+                               data-confirm="¿Estás seguro de cancelar esta reserva? Esta acción no se puede deshacer."
+                               data-confirm-titulo="Cancelar reserva"
+                               data-confirm-texto="Sí, cancelar">
+                                Cancelar
+                            </a>
+                        {% endif %}
+
+                        {% if reserva.estado in 'cancelada,expirada' %}
+                            <a href="{% url 'reservas:eliminar_reserva' reserva.id %}" class="reserva-mr-btn reserva-mr-btn--eliminar"
+                               data-confirm="¿Eliminar esta reserva del historial? No vas a poder recuperarla."
+                               data-confirm-titulo="Eliminar del historial"
+                               data-confirm-texto="Sí, eliminar">
+                                🗑️ Eliminar
+                            </a>
+                        {% endif %}
                     </div>
                 </div>
             </div>
         {% endfor %}
     </div>
 {% else %}
-    <div style="background-color: white; padding: 3rem; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); text-align: center;">
-        <p style="font-size: 1.25rem; color: #666; margin: 0 0 1.5rem 0;">No tenés reservas en este momento.</p>
-        <a href="{% url 'peliculas:lista_peliculas' %}"
-           style="display: inline-block; padding: 1rem 2rem; background-color: #007bff; color: white; text-decoration: none; border-radius: 6px; font-weight: bold;">
+    <div class="reserva-mr-vacio">
+        <p class="reserva-mr-vacio-texto">No tenés reservas en este momento.</p>
+        <a href="{% url 'peliculas:lista_peliculas' %}" class="reserva-mr-vacio-boton">
             🎬 Explorar Películas
         </a>
     </div>
 {% endif %}
+
 <script src="{% static 'js/reservas/mis_reservas.js' %}"></script>
-{% comment %} <script>
-// Cuenta regresiva por cada reserva pendiente, sin recargar toda la página.
-// Antes esto era un location.reload() cada 30s (perdía el scroll y refrescaba
-// todo de golpe). Ahora cada contador descuenta solo en el navegador a partir
-// del valor que ya vino calculado del server (data-segundos), y solo se hace
-// UN reload cuando una reserva puntual llega a 0 (para reflejar que expiró).
-(function () {
-    const contadores = document.querySelectorAll('[id^="contador-"]');
-    if (!contadores.length) return;
-
-    let huboExpiracion = false;
-
-    function formatoMMSS(segundos) {
-        const m = Math.floor(segundos / 60);
-        const s = segundos % 60;
-        return `${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`;
-    }
-
-    contadores.forEach(el => {
-        let segundos = parseInt(el.dataset.segundos, 10);
-        if (isNaN(segundos)) return;
-
-        const intervalo = setInterval(() => {
-            segundos -= 1;
-            if (segundos <= 0) {
-                clearInterval(intervalo);
-                el.textContent = '⏰ Expirado';
-                huboExpiracion = true;
-                // Un solo reload, con un pequeño margen para que el comando
-                // de cancelación / la vista alcancen a actualizar el estado real.
-                setTimeout(() => location.reload(), 2000);
-            } else {
-                el.textContent = `⏰ ${formatoMMSS(segundos)}`;
-            }
-        }, 1000);
-    });
-})();
-</script> {% endcomment %}
 {% endblock %}

@@ -1,12 +1,238 @@
+/* modificado: se agregan las clases descriptivas que faltaban (antes casi
+   todo el layout de elegir_entrada.html estaba con style="" inline).
+   Se mantienen las reglas que ya existían (media query + tarjeta-tipo-entrada). */
+
 @media (max-width: 860px) {
-        #layoutEntrada { grid-template-columns: 1fr !important; }
-        #sidebarResumenEntrada { position: static !important; }
-    }
-    .tarjeta-tipo-entrada {
-        display: block; cursor: pointer; border-radius: 8px; padding: 1rem 1.1rem;
-        border: 2px solid #2a2a2a; background-color: #1a1a1a; margin-bottom: 0.85rem;
-        transition: border-color 0.15s;
-    }
-    .tarjeta-tipo-entrada:hover { border-color: #555555; }
-    .tarjeta-tipo-entrada input[type="radio"] { accent-color: #e63946; margin-right: 0.6rem; }
-    .tarjeta-tipo-entrada.seleccionada { border-color: #e63946; background-color: #241414; }
+    .reserva-ee-layout { grid-template-columns: 1fr !important; }
+    .reserva-ee-sidebar { position: static !important; }
+}
+
+.tarjeta-tipo-entrada {
+    display: block; cursor: pointer; border-radius: 8px; padding: 1rem 1.1rem;
+    border: 2px solid #2a2a2a; background-color: #1a1a1a; margin-bottom: 0.85rem;
+    transition: border-color 0.15s;
+}
+.tarjeta-tipo-entrada:hover { border-color: #555555; }
+.tarjeta-tipo-entrada input[type="radio"] { accent-color: #e63946; margin-right: 0.6rem; }
+.tarjeta-tipo-entrada.seleccionada { border-color: #e63946; background-color: #241414; }
+
+.reserva-ee-wrapper {
+    max-width: 1000px;
+    margin: 0 auto;
+    background-color: #0f0f0f;
+    padding: 1.5rem;
+    border-radius: 12px;
+    color: #f2f2f2;
+}
+
+.reserva-ee-titulo {
+    text-align: center;
+    margin-bottom: 1.5rem;
+    color: #ffffff;
+}
+
+.reserva-ee-layout {
+    display: grid;
+    grid-template-columns: 1fr 320px;
+    gap: 1.5rem;
+    align-items: start;
+}
+
+.tarjeta-tipo-entrada-header {
+    display: flex;
+    align-items: center;
+}
+
+.tarjeta-tipo-entrada-titulo {
+    font-weight: bold;
+    color: #ffffff;
+}
+
+.reserva-ee-input-cupon {
+    margin-top: 0.6rem;
+    width: 100%;
+    padding: 0.6rem 0.75rem;
+    border-radius: 6px;
+    border: 1px solid #444444;
+    background-color: #0f0f0f;
+    color: #ffffff;
+    font-size: 0.9rem;
+}
+
+.reserva-ee-tarjeta-detalle {
+    margin-top: 0.35rem;
+    margin-left: 1.6rem;
+    color: #aaaaaa;
+    font-size: 0.85rem;
+}
+
+.reserva-ee-cantidad-box {
+    background-color: #1a1a1a;
+    border: 1px solid #2a2a2a;
+    border-radius: 8px;
+    padding: 1rem 1.1rem;
+    margin-top: 1.25rem;
+}
+
+.reserva-ee-cantidad-label {
+    font-weight: bold;
+    color: #ffffff;
+    margin-bottom: 0.6rem;
+}
+
+.reserva-ee-cantidad-controles {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+}
+
+.reserva-ee-btn-cantidad {
+    width: 38px;
+    height: 38px;
+    border-radius: 6px;
+    border: 1px solid #555555;
+    background: transparent;
+    color: #ffffff;
+    font-size: 1.2rem;
+    cursor: pointer;
+}
+
+.reserva-ee-cantidad-valor {
+    font-size: 1.3rem;
+    font-weight: bold;
+    color: #ffffff;
+    min-width: 2ch;
+    text-align: center;
+}
+
+.reserva-ee-cantidad-max {
+    color: #888888;
+    font-size: 0.8rem;
+}
+
+.reserva-ee-aviso-par {
+    display: none;
+    color: #e6a23c;
+    font-size: 0.8rem;
+    margin-top: 0.6rem;
+}
+
+.reserva-ee-aviso-par--visible {
+    display: block;
+}
+
+/* modificado (punto 1b de revisión): la caja de cantidad arranca oculta */
+.reserva-ee-hidden {
+    display: none;
+}
+
+.reserva-ee-sidebar {
+    position: sticky;
+    top: 1rem;
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+
+.reserva-ee-resumen-card {
+    background-color: #1a1a1a;
+    border-radius: 8px;
+    border: 1px solid #2a2a2a;
+    padding: 1.25rem;
+}
+
+.reserva-ee-resumen-titulo {
+    font-weight: bold;
+    letter-spacing: 0.05em;
+    color: #ffffff;
+    margin-bottom: 1rem;
+}
+
+.reserva-ee-resumen-pelicula {
+    display: flex;
+    gap: 0.75rem;
+    align-items: flex-start;
+    margin-bottom: 1rem;
+    padding-bottom: 1rem;
+    border-bottom: 1px solid #2a2a2a;
+}
+
+.reserva-ee-resumen-poster {
+    width: 52px;
+    height: 76px;
+    object-fit: cover;
+    border-radius: 6px;
+    flex-shrink: 0;
+}
+
+.reserva-ee-resumen-label {
+    color: #999999;
+    font-size: 0.75rem;
+    margin-bottom: 0.15rem;
+}
+
+.reserva-ee-resumen-valor {
+    color: #ffffff;
+    font-weight: bold;
+}
+
+.reserva-ee-resumen-sala {
+    margin-bottom: 1rem;
+    padding-bottom: 1rem;
+    border-bottom: 1px solid #2a2a2a;
+}
+
+.reserva-ee-resumen-sala-fecha {
+    color: #cccccc;
+    font-size: 0.85rem;
+    margin-top: 0.15rem;
+}
+
+.reserva-ee-resumen-entradas {
+    margin-bottom: 1rem;
+}
+
+.reserva-ee-resumen-total-fila {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding-top: 1rem;
+    border-top: 1px solid #2a2a2a;
+}
+
+.reserva-ee-resumen-total-label {
+    color: #ffffff;
+    font-weight: bold;
+}
+
+.reserva-ee-resumen-total-valor {
+    font-size: 1.4rem;
+    font-weight: bold;
+    color: #3ddc84;
+}
+
+.reserva-ee-btn-continuar {
+    padding: 1rem;
+    background-color: #28a745;
+    color: white;
+    border: none;
+    border-radius: 6px;
+    font-weight: bold;
+    font-size: 1.1rem;
+    cursor: pointer;
+}
+
+.reserva-ee-btn-cancelar {
+    padding: 0.85rem;
+    background-color: transparent;
+    color: #ffffff;
+    border: 1px solid #555555;
+    border-radius: 6px;
+    font-weight: bold;
+    font-size: 1rem;
+    text-align: center;
+    text-decoration: none;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}

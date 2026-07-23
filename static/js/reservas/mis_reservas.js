@@ -34,3 +34,36 @@
         }, 1000);
     });
 })();
+
+// modificado: filtros (antes onchange="...submit()" inline en cada checkbox)
+(function () {
+    const form = document.getElementById('filtrosForm');
+    if (!form) return;
+    form.querySelectorAll('input[type="checkbox"]').forEach(function (checkbox) {
+        checkbox.addEventListener('change', function () {
+            form.submit();
+        });
+    });
+})();
+
+// modificado (punto 4/2 de revisión): confirmaciones de cancelar/eliminar
+// con el modal compartido en vez de confirm() nativo. data-confirm sigue
+// siendo el mensaje (ya lo traía el template), y data-confirm-titulo /
+// data-confirm-texto son opcionales para personalizar el título y el
+// texto del botón según la acción (cancelar reserva vs. eliminar del historial).
+(function () {
+    document.querySelectorAll('[data-confirm]').forEach(function (enlace) {
+        enlace.addEventListener('click', function (e) {
+            e.preventDefault();
+            window.mostrarModalConfirmacion({
+                titulo: enlace.dataset.confirmTitulo || 'Confirmar',
+                mensaje: enlace.dataset.confirm,
+                textoConfirmar: enlace.dataset.confirmTexto || 'Sí, continuar',
+                textoCancelar: 'Volver',
+                peligro: true
+            }).then(function (confirmado) {
+                if (confirmado) window.location.href = enlace.href;
+            });
+        });
+    });
+})();

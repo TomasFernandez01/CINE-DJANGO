@@ -1,3 +1,368 @@
+/* modificado: extraído de los style="" inline de detalle_reserva.html.
+   Se mantiene la regla @media print que ya existía en este archivo. */
+
 @media print {
     nav, .container > h1:first-child, button { display: none !important; }
 }
+
+.reserva-dr-wrapper {
+    max-width: 700px;
+    margin: 0 auto;
+}
+
+.reserva-dr-ticket {
+    background: white;
+    border-radius: 12px;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+    overflow: hidden;
+    margin-bottom: 1.5rem;
+}
+
+.reserva-dr-header {
+    background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
+    padding: 1.75rem;
+    text-align: center;
+    color: white;
+}
+
+.reserva-dr-header-icon {
+    font-size: 2.2rem;
+    margin-bottom: 0.4rem;
+}
+
+.reserva-dr-header-titulo {
+    font-size: 1.4rem;
+    font-weight: bold;
+    letter-spacing: 1px;
+    margin-bottom: 0.2rem;
+}
+
+.reserva-dr-qr-section {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    padding: 1.75rem;
+    text-align: center;
+    color: white;
+}
+
+.reserva-dr-qr-box {
+    background: white;
+    padding: 1.25rem;
+    border-radius: 10px;
+    display: inline-block;
+    margin-bottom: 1rem;
+}
+
+.reserva-dr-qr-img {
+    display: block;
+    max-width: 220px;
+}
+
+.reserva-dr-qr-codigo {
+    font-family: monospace;
+    font-size: 1rem;
+    letter-spacing: 2px;
+    background: rgba(255, 255, 255, 0.15);
+    display: inline-block;
+    padding: 0.5rem 1.5rem;
+    border-radius: 6px;
+}
+
+.reserva-dr-qr-nota {
+    margin: 0.85rem 0 0 0;
+    font-size: 0.85rem;
+    opacity: 0.9;
+}
+
+.reserva-dr-separador {
+    border-top: 3px dashed #dee2e6;
+    background: repeating-linear-gradient(90deg, #f8f9fa 0px, #f8f9fa 8px, white 8px, white 16px);
+    height: 16px;
+}
+
+.reserva-dr-body {
+    padding: 1.5rem 2rem;
+}
+
+.reserva-dr-codigo-box {
+    background: linear-gradient(135deg, #d4edda, #c3e6cb);
+    padding: 1rem;
+    border-radius: 8px;
+    text-align: center;
+    margin-bottom: 1.5rem;
+    border: 1px solid #b1dfbb;
+}
+
+.reserva-dr-codigo-label {
+    font-size: 0.75rem;
+    color: #155724;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+}
+
+.reserva-dr-codigo-valor {
+    font-size: 1.6rem;
+    font-weight: bold;
+    color: #155724;
+    font-family: 'Courier New', monospace;
+    letter-spacing: 3px;
+    margin-top: 0.2rem;
+}
+
+.reserva-dr-countdown {
+    background: linear-gradient(135deg, #ff6b6b 0%, #ff8e53 100%);
+    padding: 1.25rem;
+    border-radius: 8px;
+    margin-bottom: 1.5rem;
+    text-align: center;
+    color: white;
+}
+
+.reserva-dr-countdown-label {
+    font-size: 0.85rem;
+    margin-bottom: 0.4rem;
+    opacity: 0.95;
+}
+
+.reserva-dr-countdown-valor {
+    font-size: 2.4rem;
+    font-weight: bold;
+    font-family: 'Courier New', monospace;
+}
+
+.reserva-dr-countdown-nota {
+    font-size: 0.78rem;
+    margin-top: 0.4rem;
+    opacity: 0.9;
+}
+
+.reserva-dr-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1rem;
+    margin-bottom: 1.5rem;
+}
+
+.reserva-dr-grid-item {
+    background: #f8f9fa;
+    padding: 1rem;
+    border-radius: 8px;
+    border-left: 3px solid;
+}
+
+.reserva-dr-grid-item--azul { border-left-color: #007bff; }
+.reserva-dr-grid-item--verde { border-left-color: #28a745; }
+
+.reserva-dr-grid-item-label {
+    font-size: 0.75rem;
+    color: #999;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+}
+
+.reserva-dr-grid-item-valor {
+    font-size: 1.05rem;
+    font-weight: bold;
+    color: #333;
+    margin-top: 0.25rem;
+}
+
+.reserva-dr-grid-item-valor--sm {
+    font-size: 1rem;
+}
+
+.reserva-dr-asientos-box {
+    background: #e7f3ff;
+    padding: 1rem;
+    border-radius: 8px;
+    margin-bottom: 1.5rem;
+    border: 1px solid #b8d8f8;
+}
+
+.reserva-dr-asientos-label {
+    font-size: 0.72rem;
+    color: #004085;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    margin-bottom: 0.5rem;
+}
+
+.reserva-dr-asientos-lista {
+    display: flex;
+    gap: 0.5rem;
+    flex-wrap: wrap;
+}
+
+.reserva-dr-asiento-chip {
+    display: inline-block;
+    padding: 0.35rem 0.8rem;
+    background-color: #007bff;
+    color: white;
+    border-radius: 6px;
+    font-weight: bold;
+    font-size: 0.95rem;
+}
+
+.reserva-dr-comprador-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 1rem;
+    margin-bottom: 1.5rem;
+    font-size: 0.85rem;
+}
+
+.reserva-dr-comprador-label {
+    font-size: 0.72rem;
+    color: #999;
+    text-transform: uppercase;
+}
+
+.reserva-dr-comprador-valor {
+    font-weight: bold;
+    color: #333;
+}
+
+.reserva-dr-estado-wrap {
+    margin-bottom: 1.5rem;
+}
+
+.reserva-dr-badge-estado {
+    padding: 0.35rem 0.9rem;
+    border-radius: 6px;
+    font-weight: bold;
+    font-size: 0.9rem;
+}
+
+.reserva-dr-badge-estado--confirmada { background-color: #d4edda; color: #155724; }
+.reserva-dr-badge-estado--pendiente { background-color: #fff3cd; color: #856404; }
+.reserva-dr-badge-estado--expirada { background-color: #e2e3e5; color: #383d41; }
+.reserva-dr-badge-estado--cancelada { background-color: #f8d7da; color: #721c24; }
+
+.reserva-dr-desglose {
+    margin-bottom: 1.5rem;
+}
+
+.reserva-dr-desglose-titulo {
+    color: #333;
+    border-bottom: 2px solid #28a745;
+    padding-bottom: 0.5rem;
+    margin-bottom: 1rem;
+    font-size: 1.05rem;
+}
+
+.reserva-dr-desglose-lista {
+    display: flex;
+    flex-direction: column;
+    gap: 0.4rem;
+}
+
+.reserva-dr-desglose-fila {
+    display: flex;
+    justify-content: space-between;
+    color: #555;
+    font-size: 0.9rem;
+}
+
+.reserva-dr-desglose-fila--sm {
+    font-size: 0.85rem;
+}
+
+.reserva-dr-desglose-subtotal {
+    font-weight: 600;
+    border-top: 1px dashed #ccc;
+    padding-top: 0.4rem;
+}
+
+.reserva-dr-desglose-promo { color: #e91e8c; }
+.reserva-dr-desglose-cupon { color: #28a745; }
+.reserva-dr-desglose-combo { color: #ff8c00; }
+
+.reserva-dr-desglose-total {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-top: 2px solid #333;
+    padding-top: 0.5rem;
+    margin-top: 0.25rem;
+}
+
+.reserva-dr-desglose-total-label {
+    font-size: 1.05rem;
+    font-weight: bold;
+    color: #333;
+}
+
+.reserva-dr-desglose-total-valor {
+    font-size: 1.5rem;
+    font-weight: bold;
+}
+
+.reserva-dr-desglose-total-valor--pagado { color: #28a745; }
+.reserva-dr-desglose-total-valor--estimado { color: #333; }
+
+.reserva-dr-desglose-ahorro {
+    text-align: center;
+    margin-top: 0.25rem;
+    padding: 0.4rem;
+    background: #d4edda;
+    border-radius: 4px;
+    color: #155724;
+    font-size: 0.85rem;
+    font-weight: bold;
+}
+
+.reserva-dr-desglose-nota {
+    margin: 0.3rem 0 0 0;
+    font-size: 0.78rem;
+    color: #888;
+}
+
+.reserva-dr-mensaje-estado {
+    padding: 1rem;
+    border-radius: 6px;
+    border-left: 4px solid;
+    margin-bottom: 1rem;
+}
+
+.reserva-dr-mensaje-estado--pendiente { background-color: #fff3cd; border-left-color: #ffc107; color: #856404; }
+.reserva-dr-mensaje-estado--confirmada { background-color: #d4edda; border-left-color: #28a745; color: #155724; }
+.reserva-dr-mensaje-estado--expirada { background-color: #e2e3e5; border-left-color: #6c757d; color: #383d41; }
+.reserva-dr-mensaje-estado--cancelada { background-color: #f8d7da; border-left-color: #dc3545; color: #721c24; }
+
+.reserva-dr-mensaje-estado p {
+    margin: 0;
+}
+
+.reserva-dr-btn-pagar-wrap {
+    margin-bottom: 0.5rem;
+}
+
+.reserva-dr-btn-pagar {
+    display: block;
+    padding: 1rem;
+    background-color: #28a745;
+    color: white;
+    border-radius: 6px;
+    text-decoration: none;
+    text-align: center;
+    font-weight: bold;
+    font-size: 1.05rem;
+}
+
+.reserva-dr-acciones {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    gap: 1rem;
+}
+
+.reserva-dr-accion-btn {
+    padding: 1rem;
+    color: white;
+    border-radius: 8px;
+    text-decoration: none;
+    text-align: center;
+    font-weight: bold;
+    font-size: 1rem;
+}
+
+.reserva-dr-accion-btn--misreservas { background-color: #007bff; }
+.reserva-dr-accion-btn--comprobante { background-color: #28a745; }

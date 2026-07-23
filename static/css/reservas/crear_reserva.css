@@ -1,0 +1,99 @@
+/* modificado: extraído de los style="" inline de crear_reserva.html */
+
+.reserva-crear-card {
+    background-color: white;
+    padding: 2rem;
+    border-radius: 8px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    max-width: 600px;
+    margin-top: 1.5rem;
+}
+
+.reserva-crear-titulo {
+    color: #333;
+    margin-bottom: 1rem;
+}
+
+.reserva-crear-info {
+    margin-bottom: 1.5rem;
+    padding: 1rem;
+    background-color: #f8f9fa;
+    border-radius: 4px;
+}
+
+.reserva-crear-info p {
+    margin: 0.5rem 0;
+}
+
+.reserva-crear-info-disponibles {
+    color: #28a745;
+}
+
+.reserva-crear-form {
+    margin-top: 1.5rem;
+}
+
+.reserva-crear-campo {
+    margin-bottom: 1rem;
+}
+
+.reserva-crear-label {
+    display: block;
+    margin-bottom: 0.5rem;
+    font-weight: bold;
+}
+
+.reserva-crear-input {
+    width: 100%;
+    padding: 0.5rem;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    font-size: 1rem;
+}
+
+.reserva-crear-ayuda {
+    display: block;
+    color: #6c757d;
+    margin-top: 0.25rem;
+}
+
+.reserva-crear-total {
+    margin-top: 1rem;
+    padding: 1rem;
+    background-color: #e7f3ff;
+    border-radius: 4px;
+}
+
+.reserva-crear-total p {
+    margin: 0;
+    font-size: 1.2rem;
+}
+
+.reserva-crear-acciones {
+    margin-top: 1.5rem;
+    display: flex;
+    gap: 1rem;
+}
+
+.reserva-crear-btn-confirmar,
+.reserva-crear-btn-cancelar {
+    flex: 1;
+    padding: 0.75rem;
+    color: white;
+    border: none;
+    border-radius: 4px;
+    font-weight: bold;
+    font-size: 1rem;
+    cursor: pointer;
+    text-align: center;
+    text-decoration: none;
+    display: block;
+}
+
+.reserva-crear-btn-confirmar {
+    background-color: #28a745;
+}
+
+.reserva-crear-btn-cancelar {
+    background-color: #6c757d;
+}

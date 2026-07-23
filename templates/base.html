@@ -11,6 +11,8 @@
     <!-- nuevo: formularios.css y offcanvas.css se cargan acá de forma global porque el offcanvas de login/cuenta ahora vive en base.html y aparece en TODAS las páginas (antes formularios.css solo lo cargaba cada template de usuarios) -->
     <link rel="stylesheet" href="{% static 'css/usuarios/formularios.css' %}">
     <link rel="stylesheet" href="{% static 'css/base/offcanvas.css' %}">
+    <!-- modificado: modal de confirmación compartido (reemplaza confirm() de JS en toda la app) -->
+    <link rel="stylesheet" href="{% static 'css/shared/modal_confirmacion.css' %}">
     {% block extra_css %}{% endblock %}
 </head>
 <body>
@@ -31,15 +33,6 @@
                 <li>
                     <a href="{% url 'promociones:lista_combos' %}">🍿 Combos & Promos</a>
                 </li>
-                {% comment %} 
-                <li style="margin-left: auto;">
-                    <a href="{% url 'usuarios:perfil' %}">{{ user.username }}</a>
-                </li>
-                <li>
-                    <a href="{% url 'usuarios:logout' %}">Cerrar Sesión</a>
-                </li> 
-                {% endcomment %}
-                <!-- bloque modificado: antes había un link con el username y otro de "Cerrar Sesión" sueltos; ahora un solo avatar abre el offcanvas de cuenta (nombre, ajustes, cerrar sesión) -->
                 <li style="margin-left: auto;">
                     <button type="button" class="nav-avatar-trigger" id="offcanvasAbrir" aria-haspopup="dialog" aria-controls="offcanvasPanel">
                         <span class="nav-avatar">
@@ -49,22 +42,12 @@
                         </span>
                     </button>
                 </li>
-                {% comment %} 
-                no tiene sentido , para esto hacer una app aparte exclusiva para movil que escanea qr
-                {% if user.is_staff %}
-                href="{% url 'pagos:verificador_qr' %}" Verificador QR
-                href="{% url 'pagos:estadisticas_staff' %}"Estadísticas
-                {% endif %} 
-                {% endcomment %}
             {% else %}
-                <!-- bloque modificado: "Iniciar Sesión" ahora abre el offcanvas con el formulario de login (en vez de ir a una página aparte). "Registrarse" se sacó del nav: ahora vive como pregunta dentro del propio offcanvas ("¿No tenés cuenta? Registrate gratis"), tal como ya lo hacía login.html -->
                 <li style="margin-left: auto;">
                     <button type="button" class="nav-login-trigger" id="offcanvasAbrir" aria-haspopup="dialog" aria-controls="offcanvasPanel">
                         Iniciar Sesión
                     </button>
                 </li>
-                {% comment %} <li style="margin-left: auto;"><a href="{% url 'usuarios:login' %}">Iniciar Sesión</a></li> {% endcomment %}
-                {% comment %} <li><a href="{% url 'usuarios:registro' %}">Registrarse</a></li> {% endcomment %}
             {% endif %}
         </ul>
     </nav>
@@ -116,6 +99,20 @@
         </div>
     </aside>
 
+    <!-- modificado: modal de confirmación compartido, único en toda la página. Lo completa/muestra
+         static/js/shared/modal_confirmacion.js vía window.mostrarModalConfirmacion(...) -->
+    <div id="modalConfirmacion" class="modal-confirmacion oculto" role="dialog" aria-modal="true" aria-hidden="true">
+        <div class="modal-confirmacion-fondo" data-modal-cerrar></div>
+        <div class="modal-confirmacion-caja">
+            <h3 id="modalConfirmacionTitulo" class="modal-confirmacion-titulo"></h3>
+            <p id="modalConfirmacionMensaje" class="modal-confirmacion-mensaje"></p>
+            <div class="modal-confirmacion-acciones">
+                <button type="button" id="modalConfirmacionCancelar" class="modal-confirmacion-btn modal-confirmacion-btn--cancelar"></button>
+                <button type="button" id="modalConfirmacionConfirmar" class="modal-confirmacion-btn modal-confirmacion-btn--confirmar"></button>
+            </div>
+        </div>
+    </div>
+
     <!-- Contenedor para notificaciones toast -->
     <div class="toast-container" id="toastContainer"></div>
     
@@ -128,6 +125,8 @@
     <script src="{% static 'js/base/toast.js' %}"></script>
     <!-- nuevo: JS del offcanvas de login/cuenta -->
     <script src="{% static 'js/base/offcanvas.js' %}"></script>
+    <!-- modificado: JS del modal de confirmación compartido -->
+    <script src="{% static 'js/shared/modal_confirmacion.js' %}"></script>
     <script>
         document.addEventListener('DOMContentLoaded', function() {
             {% if messages %}

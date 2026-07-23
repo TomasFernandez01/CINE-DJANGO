@@ -4,20 +4,16 @@
 {% block titulo %}Funciones Disponibles{% endblock %}
 
 {% block extra_css %}
-<!-- bloque modificado (tanda 3): se suman los estilos compartidos de horarios y el layout de card por pelicula -->
 <link rel="stylesheet" href="{% static 'css/shared/fechas_carrusel.css' %}">
 <link rel="stylesheet" href="{% static 'css/shared/horarios.css' %}">
 <link rel="stylesheet" href="{% static 'css/shared/badges.css' %}">
-{% comment %} <link rel="stylesheet" href="{% static 'css/salas/lista.css' %}"> {% endcomment %}
+<link rel="stylesheet" href="{% static 'css/salas/lista.css' %}">
 <link rel="stylesheet" href="{% static 'css/salas/lista_funciones.css' %}">
 {% endblock %}
 
 {% block contenido %}
 <h1>Funciones Disponibles</h1>
 
-<!-- bloque modificado: carrusel de fechas con flechas + botón de papelera. Acá SÍ tiene sentido la papelera
-     porque esta página es la que efectivamente aplica el filtro (?fecha=), a diferencia del carrusel de
-     la página de Películas que solo te trae hasta acá. Se preservan pelicula/sala/orden al cambiar de día. -->
 <div class="fechas-carrusel-wrap">
     <button type="button" class="fecha-flecha fecha-flecha-prev" aria-label="Días anteriores">‹</button>
     <div class="fechas-carrusel">
