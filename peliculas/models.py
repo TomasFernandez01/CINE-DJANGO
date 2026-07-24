@@ -59,8 +59,56 @@ class Pelicula(models.Model):
             return f"{minutos}min"
         return "No especificada"
 
+    # MODIFICACION GEMINI: Métodos para obtener el rating promedio y total de votos
+    def rating_promedio(self):
+        ratings = self.ratings.all()
+        if ratings.exists():
+            from django.db.models import Avg
+            return round(ratings.aggregate(Avg('puntuacion'))['puntuacion__avg'] or 0, 1)
+        return 0.0
+
+    def total_votos(self):
+        return self.ratings.count()
+
     """Correspondiente al admin de django, organiza los datos"""
     class Meta:
         verbose_name = "Pelicula"
         verbose_name_plural = "Peliculas"
         ordering = ['-en_cartelera', 'titulo']
+
+
+# MODIFICACION GEMINI: Registro de historial de peliculas vistas por el usuario
+class HistorialVisto(models.Model):
+    usuario = models.ForeignKey('auth.User', on_delete=models.CASCADE, related_name='historial_vistas')
+    pelicula = models.ForeignKey(Pelicula, on_delete=models.CASCADE, related_name='vistas')
+    fecha_visto = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        verbose_name = "Película Vista"
+        verbose_name_plural = "Películas Vistas"
+        unique_together = ('usuario', 'pelicula')
+        ordering = ['-fecha_visto']
+
+    def __str__(self):
+        return f"{self.usuario.username} vio {self.pelicula.titulo}"
+
+
+# MODIFICACION GEMINI: Calificaciones de peliculas por parte de los usuarios
+class RatingPelicula(models.Model):
+    usuario = models.ForeignKey('auth.User', on_delete=models.CASCADE, related_name='ratings')
+    pelicula = models.ForeignKey(Pelicula, on_delete=models.CASCADE, related_name='ratings')
+    puntuacion = models.PositiveIntegerField(
+        choices=[(i, f"{i} Estrella{'s' if i > 1 else ''}") for i in range(1, 6)],
+        help_text="Puntuación de 1 a 5 estrellas"
+    )
+    comentario = models.TextField(blank=True, null=True, help_text="Comentario opcional")
+    fecha_creacion = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        verbose_name = "Calificación de Película"
+        verbose_name_plural = "Calificaciones de Películas"
+        unique_together = ('usuario', 'pelicula')
+        ordering = ['-fecha_creacion']
+
+    def __str__(self):
+        return f"{self.usuario.username} - {self.pelicula.titulo}: {self.puntuacion}⭐"

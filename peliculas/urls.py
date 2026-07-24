@@ -8,6 +8,8 @@ urlpatterns = [
     path('', views.inicio, name='inicio'),
     path('peliculas/', views.lista_peliculas, name='lista_peliculas'),
     path('pelicula/<int:pelicula_id>/', views.detalle_pelicula, name='detalle_pelicula'),
+    # MODIFICACION GEMINI: URL para votar pelicula
+    path('pelicula/<int:pelicula_id>/votar/', views.votar_pelicula, name='votar_pelicula'),
 
     # nuevo: endpoint JSON para el buscador en vivo (autocompletado) de la cartelera
     path('buscar-vivo/', views.buscar_vivo, name='buscar_vivo'),

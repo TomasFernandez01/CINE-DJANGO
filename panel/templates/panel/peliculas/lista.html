@@ -97,5 +97,24 @@
 {% endif %}
 </form>
 
+<!-- MODIFICACION GEMINI: Controles de Paginación en Panel Admin -->
+{% if page_obj.has_other_pages %}
+<div style="display:flex; justify-content:center; align-items:center; gap:0.5rem; margin-top:2rem; margin-bottom:1.5rem;">
+    {% if page_obj.has_previous %}
+        <a href="?page=1{% if busqueda %}&q={{ busqueda }}{% endif %}{% if en_cartelera %}&cartelera={{ en_cartelera }}{% endif %}" class="btn btn-ghost" style="padding: 0.4rem 0.8rem; font-size: 0.8rem; font-weight: 600;">« Primero</a>
+        <a href="?page={{ page_obj.previous_page_number }}{% if busqueda %}&q={{ busqueda }}{% endif %}{% if en_cartelera %}&cartelera={{ en_cartelera }}{% endif %}" class="btn btn-ghost" style="padding: 0.4rem 0.8rem; font-size: 0.8rem; font-weight: 600;">‹ Anterior</a>
+    {% endif %}
+
+    <span style="font-size:0.85rem; color:#444; font-weight:600; padding: 0.4rem 0.8rem; background: #e9ecef; border-radius: 6px;">
+        Página {{ page_obj.number }} de {{ page_obj.paginator.num_pages }}
+    </span>
+
+    {% if page_obj.has_next %}
+        <a href="?page={{ page_obj.next_page_number }}{% if busqueda %}&q={{ busqueda }}{% endif %}{% if en_cartelera %}&cartelera={{ en_cartelera }}{% endif %}" class="btn btn-ghost" style="padding: 0.4rem 0.8rem; font-size: 0.8rem; font-weight: 600;">Siguiente ›</a>
+        <a href="?page={{ page_obj.paginator.num_pages }}{% if busqueda %}&q={{ busqueda }}{% endif %}{% if en_cartelera %}&cartelera={{ en_cartelera }}{% endif %}" class="btn btn-ghost" style="padding: 0.4rem 0.8rem; font-size: 0.8rem; font-weight: 600;">Último »</a>
+    {% endif %}
+</div>
+{% endif %}
+
 <script src="{% static 'js/panel/peliculas/lista.js' %}"></script>
 {% endblock %}

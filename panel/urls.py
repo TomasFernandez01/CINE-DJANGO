@@ -4,9 +4,9 @@ from . import views
 app_name = 'panel'
 
 urlpatterns = [
-    # Dashboard principal----------------------------------------------------------------------------
+    # Dashboard 
     path('',                                    views.inicio,                   name='inicio'),
-    # # ---- Películas ----------------------------------------------------------------------------
+    # ---- Películas ----------------------------------------------------------------------------
     path('peliculas/',                          views.peliculas_lista,          name='peliculas_lista'),
     # CRUD
     path('peliculas/crear/',                    views.peliculas_crear,          name='peliculas_crear'),
@@ -30,6 +30,8 @@ urlpatterns = [
     path('salas/<int:sala_id>/asientos/categoria/quitar/',  views.salas_categoria_quitar,  name='salas_categoria_quitar'),
     # ---- Funciones --------------------------------------------------------------------------------
     path('funciones/',                          views.funciones_lista,          name='funciones_lista'),
+    # MODIFICACION GEMINI: endpoint para verificar margen de tiempo entre funciones
+    path('funciones/margen-tiempo/',            views.funciones_margen_tiempo,  name='funciones_margen_tiempo'),
     # CRUD
     path('funciones/crear/',                    views.funciones_crear,          name='funciones_crear'),
     path('funciones/<int:funcion_id>/',         views.funciones_detalle,        name='funciones_detalle'),
@@ -39,11 +41,12 @@ urlpatterns = [
     # ---- Reservas --------------------------------------------------------------------------------
     path('reservas/',                           views.reservas_lista,           name='reservas_lista'),
     path('reservas/<int:reserva_id>/',          views.reservas_detalle,         name='reservas_detalle'),
-#   path('reservas/crear/',                     views.reservas_crear,           name='reservas_crear'),   # si lo agregás después
-    path('reservas/<int:reserva_id>/editar/',   views.reservas_editar,          name='reservas_editar'),  # <-- ESTA
+    path('reservas/<int:reserva_id>/editar/',   views.reservas_editar,          name='reservas_editar'),
+
     # ---- Pagos --------------------------------------------------------------------------------
     path('pagos/',                              views.pagos_lista,              name='pagos_lista'),
     path('pagos/estadisticas/',                 views.pagos_estadisticas,       name='pagos_estadisticas'),
+
     # ---- Usuarios (solo superuser) --------------------------------------------------------------------------------
     path('usuarios/',                           views.usuarios_lista,           name='usuarios_lista'),
     path('usuarios/crear/',                     views.usuarios_crear,           name='usuarios_crear'),

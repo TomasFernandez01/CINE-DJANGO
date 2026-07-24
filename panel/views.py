@@ -2,19 +2,18 @@ from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib import messages
 from django.utils import timezone
 from django.db.models import Sum, Count, Q
-from django.http import JsonResponse                    # mapa-salas
-from django.views.decorators.http import require_POST   # mapa-salas
-from django.core.exceptions import ValidationError      # mapa-salas
+from django.http import JsonResponse                 
+from django.views.decorators.http import require_POST
+from django.core.exceptions import ValidationError   
 from datetime import timedelta
 from .decorators import staff_required, superuser_required
 from peliculas.models import Pelicula
-from salas.models import Sala, Funcion, AsientoBloqueado, CategoriaAsiento # mapa-salas
+from salas.models import Sala, Funcion, AsientoBloqueado, CategoriaAsiento 
 from reservas.models import Reserva
 from pagos.models import Pago
 from promociones.models import Cupon, PromocionDia, Combo, CuponUsado
 from django.contrib.auth.models import User
-# ============================================================
-                                                                # V2
+
 from .forms import (
     PeliculaForm, SalaForm, FuncionForm,
     CrearUsuarioForm, EditarUsuarioForm, ReservaForm,
@@ -42,8 +41,6 @@ def peliculas_crear(request):
         form = PeliculaForm(request.POST, request.FILES)
         if form.is_valid():
             pelicula = form.save()
-            #---------------------------------------------------------------------------------
-            # Si el formulario venía precargado desde TMDB (peliculas_importar_tmdb) y el usuario no subió un poster propio, bajamos ahora el poster original de TMDB. Recién acá se toca el disco/la base por eso.
             poster_url_tmdb = request.POST.get('poster_url_tmdb', '').strip()
             if poster_url_tmdb and not pelicula.poster:
                 try:
@@ -52,8 +49,7 @@ def peliculas_crear(request):
                     nombre = f"{pelicula.titulo.lower().replace(' ', '_')[:40]}.jpg"
                     pelicula.poster.save(nombre, ContentFile(resp.content), save=True)
                 except Exception:
-                    pass  # se crea igual sin poster, no es un error bloqueante
-            #---------------------------------------------------------------------------------
+                    pass 
             messages.success(request, f'✅ Película "{pelicula.titulo}" creada exitosamente.')
             if request.POST.get('guardar_y_agregar_otro'):
                 return redirect('panel:peliculas_crear')
@@ -68,12 +64,6 @@ def peliculas_crear(request):
         'seccion_activa': 'peliculas',
         # Si Validacion falla y formulario lo rellena TMDB (trae el campo oculto poster_url_tmdb en el POST), lo re-pasamos al contexto para no perder la preview del poster al re-renderizar.
         'poster_url_tmdb': request.POST.get('poster_url_tmdb', '') if request.method == 'POST' else '',
-    })
-    return render(request, 'panel/peliculas/form.html', {
-        'form': form,
-        'titulo_pagina': 'Agregar Película',
-        'accion': 'crear',
-        'seccion_activa': 'peliculas',
     })
 
 
@@ -188,7 +178,6 @@ def peliculas_importar_tmdb(request, tmdb_id):
 
     data = response['data']
 
-    # Verificar duplicado.Si ya existe una película con ese título, no tiene sentido precargar. un formulario de creación: mandamos a editar la que ya está.
     existente = Pelicula.objects.filter(titulo__iexact=data['titulo']).first()
     if existente:
         messages.warning(request, f'"{data["titulo"]}" ya existe. Podés editarla.')
@@ -214,36 +203,6 @@ def peliculas_importar_tmdb(request, tmdb_id):
         'seccion_activa': 'peliculas',
         'poster_url_tmdb': data.get('poster_url', ''),
     })
-    # Crear película , comentar el anterior si no sirve y volver a este
-    pelicula = Pelicula.objects.create(
-        titulo=data['titulo'][:50],
-        sinopsis=data.get('sinopsis', ''),
-        duracion=data.get('duracion'),
-        genero=data.get('genero'),
-        clasificacion=data.get('clasificacion', 'ATP'),
-        director=data.get('director', ''),
-        actores=data.get('actores', ''),
-        año=data.get('año'),
-        en_cartelera=False,
-    )
-
-    # Descargar poster
-    poster_url = data.get('poster_url')
-    if poster_url:
-        try:
-            resp = requests.get(poster_url, timeout=10)
-            resp.raise_for_status()
-            nombre = f"{data['titulo'].lower().replace(' ', '_')[:40]}.jpg"
-            pelicula.poster.save(nombre, ContentFile(resp.content), save=True)
-            messages.success(request, f'✅ "{pelicula.titulo}" importada con poster.')
-        except Exception:
-            pelicula.save()
-            messages.success(request, f'✅ "{pelicula.titulo}" importada (sin poster).')
-    else:
-        pelicula.save()
-        messages.success(request, f'✅ "{pelicula.titulo}" importada.')
-
-    return redirect('panel:peliculas_editar', pelicula_id=pelicula.id)
 
 # ============================================================
 # SALAS — CRUD
@@ -253,7 +212,6 @@ def salas_crear(request):
     if request.method == 'POST':
         form = SalaForm(request.POST)
         if form.is_valid():
-            # No confirmamos en DB todavía: necesitamos que el formset valide las secciones contra los filas/columnas YA actualizados (aunque sea solo en memoria), no contra los valores viejos.
             sala_temp = form.save(commit=False)
             formset = SeccionSalaFormSet(request.POST, instance=sala_temp)
 
@@ -273,21 +231,6 @@ def salas_crear(request):
     return render(request, 'panel/salas/form.html', {
         'form': form,
         'formset': formset,
-        'titulo_pagina': 'Agregar Sala',
-        'accion': 'crear',
-        'seccion_activa': 'salas',
-    })
-    ##############
-    if request.method == 'POST':
-        form = SalaForm(request.POST)
-        if form.is_valid():
-            sala = form.save()
-            messages.success(request, f'✅ Sala "{sala.nombre}" creada.')
-            return redirect('panel:salas_lista')
-    else:
-        form = SalaForm()    
-    return render(request, 'panel/salas/form.html', {
-        'form': form,
         'titulo_pagina': 'Agregar Sala',
         'accion': 'crear',
         'seccion_activa': 'salas',
@@ -319,24 +262,6 @@ def salas_editar(request, sala_id):
     return render(request, 'panel/salas/form.html', {
         'form': form,
         'formset': formset,
-        'objeto': sala,
-        'titulo_pagina': f'Editar sala: {sala.nombre}',
-        'accion': 'editar',
-        'seccion_activa': 'salas',
-    })
-
-    sala = get_object_or_404(Sala, id=sala_id)
-    if request.method == 'POST':
-        form = SalaForm(request.POST, instance=sala)
-        if form.is_valid():
-            form.save()
-            messages.success(request, f'✅ Sala "{sala.nombre}" actualizada.')
-            return redirect('panel:salas_lista')
-    else:
-        form = SalaForm(instance=sala)
-
-    return render(request, 'panel/salas/form.html', {
-        'form': form,
         'objeto': sala,
         'titulo_pagina': f'Editar sala: {sala.nombre}',
         'accion': 'editar',
@@ -385,8 +310,6 @@ def salas_eliminar(request):
         'seccion_activa': 'salas',
     })
 
-
-################ SALAS — MAPA VISUAL DE ASIENTOS BLOQUEADOS
 @staff_required
 def salas_asientos(request, sala_id):
     """
@@ -446,26 +369,54 @@ def salas_asientos(request, sala_id):
     }
     return render(request, 'panel/salas/asientos.html', contexto)
 
-    contexto = {
-        'sala': sala,
-        'layout': sala.layout_asientos(),
-        'bloqueos_por_codigo': bloqueos_por_codigo,
-        'todos_los_bloqueos': todos_los_bloqueos,
-        'funcion_seleccionada': funcion_seleccionada,
-        'funciones_sala': funciones_sala,
-        'asientos_ocupados_reserva': asientos_ocupados_reserva,
-        'motivo_choices': AsientoBloqueado.MOTIVO_CHOICES,
-        'seccion_activa': 'salas',
-    }
-    return render(request, 'panel/salas/asientos.html', contexto)
 
+# @staff_required
+# @require_POST
+# def salas_asientos_bloquear(request, sala_id):
+#     """Endpoint AJAX: crea un bloqueo para un asiento."""
+#     sala = get_object_or_404(Sala, id=sala_id)
+
+#     asiento_codigo = request.POST.get('asiento_codigo', '').strip()
+#     motivo = request.POST.get('motivo', 'admin')
+#     nota = request.POST.get('nota', '').strip()
+#     funcion_id = request.POST.get('funcion_id') or None
+
+#     funcion = None
+#     if funcion_id:
+#         funcion = get_object_or_404(Funcion, id=funcion_id, sala=sala)
+
+#     bloqueo = AsientoBloqueado(
+#         sala=sala,
+#         asiento_codigo=asiento_codigo,
+#         motivo=motivo,
+#         nota=nota,
+#         funcion=funcion,
+#     )
+#     try:
+#         bloqueo.full_clean()
+#     except ValidationError as e:
+#         errores = e.message_dict if hasattr(e, 'message_dict') else {'__all__': e.messages}
+#         return JsonResponse({'success': False, 'errors': errores}, status=400)
+
+#     bloqueo.save(skip_validation=True)  # ya se validó arriba con full_clean()
+
+#     return JsonResponse({
+#         'success': True,
+#         'bloqueo_id': bloqueo.id,
+#         'asiento_codigo': bloqueo.asiento_codigo,
+#         'motivo': bloqueo.motivo,
+#         'motivo_display': bloqueo.get_motivo_display(),
+#         'nota': bloqueo.nota,
+#         'permanente': bloqueo.funcion_id is None,
+#     })
+
+# MODIFICACION GEMINI: Endpoint AJAX adaptado para bloqueo masivo (admite codigos separados por comas)
 @staff_required
 @require_POST
 def salas_asientos_bloquear(request, sala_id):
-    """Endpoint AJAX: crea un bloqueo para un asiento."""
     sala = get_object_or_404(Sala, id=sala_id)
 
-    asiento_codigo = request.POST.get('asiento_codigo', '').strip()
+    asiento_codigo_raw = request.POST.get('asiento_codigo', '').strip()
     motivo = request.POST.get('motivo', 'admin')
     nota = request.POST.get('nota', '').strip()
     funcion_id = request.POST.get('funcion_id') or None
@@ -474,31 +425,47 @@ def salas_asientos_bloquear(request, sala_id):
     if funcion_id:
         funcion = get_object_or_404(Funcion, id=funcion_id, sala=sala)
 
-    bloqueo = AsientoBloqueado(
-        sala=sala,
-        asiento_codigo=asiento_codigo,
-        motivo=motivo,
-        nota=nota,
-        funcion=funcion,
-    )
-    try:
-        bloqueo.full_clean()
-    except ValidationError as e:
-        errores = e.message_dict if hasattr(e, 'message_dict') else {'__all__': e.messages}
-        return JsonResponse({'success': False, 'errors': errores}, status=400)
+    # Separar codigos por comas
+    codigos = [c.strip() for c in asiento_codigo_raw.split(',') if c.strip()]
+    if not codigos:
+        return JsonResponse({'success': False, 'errors': {'asiento_codigo': ['Debe indicar al menos un asiento.']}}, status=400)
 
-    bloqueo.save(skip_validation=True)  # ya se validó arriba con full_clean()
+    bloqueados_data = []
+    for codigo in codigos:
+        # Evitar duplicar bloqueo si ya existe para esta funcion o permanente
+        existente = AsientoBloqueado.objects.filter(sala=sala, asiento_codigo=codigo, funcion=funcion).first()
+        if existente:
+            continue
+            
+        bloqueo = AsientoBloqueado(
+            sala=sala,
+            asiento_codigo=codigo,
+            motivo=motivo,
+            nota=nota,
+            funcion=funcion,
+        )
+        try:
+            bloqueo.full_clean()
+            bloqueo.save(skip_validation=True)
+            bloqueados_data.append({
+                'bloqueo_id': bloqueo.id,
+                'asiento_codigo': bloqueo.asiento_codigo,
+                'motivo': bloqueo.motivo,
+                'motivo_display': bloqueo.get_motivo_display(),
+                'nota': bloqueo.nota,
+                'permanente': bloqueo.funcion_id is None,
+            })
+        except ValidationError as e:
+            # Si uno falla, seguimos con los demas, o devolvemos error si fue el unico
+            if len(codigos) == 1:
+                errores = e.message_dict if hasattr(e, 'message_dict') else {'__all__': e.messages}
+                return JsonResponse({'success': False, 'errors': errores}, status=400)
 
     return JsonResponse({
         'success': True,
-        'bloqueo_id': bloqueo.id,
-        'asiento_codigo': bloqueo.asiento_codigo,
-        'motivo': bloqueo.motivo,
-        'motivo_display': bloqueo.get_motivo_display(),
-        'nota': bloqueo.nota,
-        'permanente': bloqueo.funcion_id is None,
+        'bloqueados': bloqueados_data,
+        'asiento_codigo': asiento_codigo_raw  # compatibilidad con JS antiguo
     })
-
 
 @staff_required
 @require_POST
@@ -513,48 +480,95 @@ def salas_asientos_desbloquear(request, sala_id):
 
     return JsonResponse({'success': True, 'asiento_codigo': asiento_codigo})
 
+# @staff_required
+# @require_POST
+# def salas_categoria_asignar(request, sala_id):
+#     """
+#     Endpoint AJAX: crea o actualiza la categoría especial (ej: "Mejorado")
+#     de un asiento puntual. A diferencia de los bloqueos, esto es SIEMPRE
+#     permanente por sala (no depende de la función seleccionada).
+#     """
+#     sala = get_object_or_404(Sala, id=sala_id)
+
+#     asiento_codigo = request.POST.get('asiento_codigo', '').strip()
+#     nombre = request.POST.get('nombre', 'Mejorado').strip() or 'Mejorado'
+#     multiplicador = request.POST.get('multiplicador', '1.25').strip()
+#     color = request.POST.get('color', '#f1c40f').strip()
+
+#     # Si ya existe una categoría para ese asiento, la actualizamos en vez de
+#     # crear un duplicado (el modelo tiene unique_together sala+asiento_codigo).
+#     categoria = CategoriaAsiento.objects.filter(sala=sala, asiento_codigo=asiento_codigo).first()
+#     if categoria is None:
+#         categoria = CategoriaAsiento(sala=sala, asiento_codigo=asiento_codigo)
+
+#     categoria.nombre = nombre
+#     categoria.multiplicador = multiplicador or '1.25'
+#     categoria.color = color or '#f1c40f'
+
+#     try:
+#         categoria.full_clean()
+#     except ValidationError as e:
+#         errores = e.message_dict if hasattr(e, 'message_dict') else {'__all__': e.messages}
+#         return JsonResponse({'success': False, 'errors': errores}, status=400)
+
+#     categoria.save(skip_validation=True)  # ya se validó arriba con full_clean()
+
+#     return JsonResponse({
+#         'success': True,
+#         'categoria_id': categoria.id,
+#         'asiento_codigo': categoria.asiento_codigo,
+#         'nombre': categoria.nombre,
+#         'multiplicador': str(categoria.multiplicador),
+#         'color': categoria.color,
+#     })
+# MODIFICACION GEMINI: Endpoint AJAX adaptado para categorizacion masiva (admite codigos separados por comas)
+
 @staff_required
 @require_POST
 def salas_categoria_asignar(request, sala_id):
-    """
-    Endpoint AJAX: crea o actualiza la categoría especial (ej: "Mejorado")
-    de un asiento puntual. A diferencia de los bloqueos, esto es SIEMPRE
-    permanente por sala (no depende de la función seleccionada).
-    """
     sala = get_object_or_404(Sala, id=sala_id)
 
-    asiento_codigo = request.POST.get('asiento_codigo', '').strip()
+    asiento_codigo_raw = request.POST.get('asiento_codigo', '').strip()
     nombre = request.POST.get('nombre', 'Mejorado').strip() or 'Mejorado'
     multiplicador = request.POST.get('multiplicador', '1.25').strip()
     color = request.POST.get('color', '#f1c40f').strip()
 
-    # Si ya existe una categoría para ese asiento, la actualizamos en vez de
-    # crear un duplicado (el modelo tiene unique_together sala+asiento_codigo).
-    categoria = CategoriaAsiento.objects.filter(sala=sala, asiento_codigo=asiento_codigo).first()
-    if categoria is None:
-        categoria = CategoriaAsiento(sala=sala, asiento_codigo=asiento_codigo)
+    # Separar codigos por comas
+    codigos = [c.strip() for c in asiento_codigo_raw.split(',') if c.strip()]
+    if not codigos:
+        return JsonResponse({'success': False, 'errors': {'asiento_codigo': ['Debe indicar al menos un asiento.']}}, status=400)
 
-    categoria.nombre = nombre
-    categoria.multiplicador = multiplicador or '1.25'
-    categoria.color = color or '#f1c40f'
+    categorias_data = []
+    for codigo in codigos:
+        # Si ya existe una categoría para ese asiento, la actualizamos
+        categoria = CategoriaAsiento.objects.filter(sala=sala, asiento_codigo=codigo).first()
+        if categoria is None:
+            categoria = CategoriaAsiento(sala=sala, asiento_codigo=codigo)
 
-    try:
-        categoria.full_clean()
-    except ValidationError as e:
-        errores = e.message_dict if hasattr(e, 'message_dict') else {'__all__': e.messages}
-        return JsonResponse({'success': False, 'errors': errores}, status=400)
+        categoria.nombre = nombre
+        categoria.multiplicador = multiplicador or '1.25'
+        categoria.color = color or '#f1c40f'
 
-    categoria.save(skip_validation=True)  # ya se validó arriba con full_clean()
+        try:
+            categoria.full_clean()
+            categoria.save(skip_validation=True)
+            categorias_data.append({
+                'categoria_id': categoria.id,
+                'asiento_codigo': categoria.asiento_codigo,
+                'nombre': categoria.nombre,
+                'multiplicador': str(categoria.multiplicador),
+                'color': categoria.color,
+            })
+        except ValidationError as e:
+            if len(codigos) == 1:
+                errores = e.message_dict if hasattr(e, 'message_dict') else {'__all__': e.messages}
+                return JsonResponse({'success': False, 'errors': errores}, status=400)
 
     return JsonResponse({
         'success': True,
-        'categoria_id': categoria.id,
-        'asiento_codigo': categoria.asiento_codigo,
-        'nombre': categoria.nombre,
-        'multiplicador': str(categoria.multiplicador),
-        'color': categoria.color,
+        'categorias': categorias_data,
+        'asiento_codigo': asiento_codigo_raw  # compatibilidad con JS antiguo
     })
-
 
 @staff_required
 @require_POST
@@ -752,6 +766,68 @@ def _stats_generales():
 # DASHBOARD PRINCIPAL
 # ============================================================
 
+# @staff_required
+# def inicio(request):
+#     ahora = timezone.now()
+#     hoy = ahora.replace(hour=0, minute=0, second=0, microsecond=0)
+#     semana = hoy - timedelta(days=7)
+
+#     # Tarjetas de resumen
+#     stats = {
+#         'peliculas_cartelera': Pelicula.objects.filter(en_cartelera=True).count(),
+#         'peliculas_total': Pelicula.objects.count(),
+#         'funciones_hoy': Funcion.objects.filter(
+#             fecha_hora__gte=hoy,
+#             fecha_hora__lt=hoy + timedelta(days=1),
+#             disponible=True
+#         ).count(),
+#         'funciones_proximas': Funcion.objects.filter(
+#             fecha_hora__gte=ahora, disponible=True
+#         ).count(),
+#         'reservas_pendientes': Reserva.objects.filter(estado='pendiente').count(),
+#         'reservas_hoy': Reserva.objects.filter(fecha_reserva__gte=hoy).count(),
+#         'reservas_confirmadas_hoy': Reserva.objects.filter(
+#             estado='confirmada', fecha_reserva__gte=hoy
+#         ).count(),
+#         'recaudado_hoy': Pago.objects.filter(
+#             estado='aprobado', fecha_pago__gte=hoy
+#         ).aggregate(t=Sum('monto'))['t'] or 0,
+#         'recaudado_semana': Pago.objects.filter(
+#             estado='aprobado', fecha_pago__gte=semana
+#         ).aggregate(t=Sum('monto'))['t'] or 0,
+#         'qr_escaneados_hoy': Pago.objects.filter(
+#             qr_escaneado=True, fecha_escaneo__gte=hoy
+#         ).count(),
+#     }
+
+#     # Próximas funciones (hoy y mañana)
+#     proximas_funciones = Funcion.objects.filter(
+#         fecha_hora__gte=ahora,
+#         fecha_hora__lt=hoy + timedelta(days=2),
+#         disponible=True
+#     ).select_related('pelicula', 'sala').order_by('fecha_hora')[:8]
+
+#     # Últimas reservas
+#     ultimas_reservas = Reserva.objects.select_related(
+#         'usuario', 'funcion__pelicula'
+#     ).order_by('-fecha_reserva')[:8]
+
+#     # Últimos pagos
+#     ultimos_pagos = Pago.objects.filter(
+#         estado='aprobado'
+#     ).select_related(
+#         'reserva__usuario', 'reserva__funcion__pelicula'
+#     ).order_by('-fecha_pago')[:5]
+
+#     contexto = {
+#         'stats': stats,
+#         'proximas_funciones': proximas_funciones,
+#         'ultimas_reservas': ultimas_reservas,
+#         'ultimos_pagos': ultimos_pagos,
+#         'seccion_activa': 'inicio',
+#     }
+#     return render(request, 'panel/inicio.html', contexto)
+# MODIFICACION GEMINI: Dashboard con datos para graficos de recaudacion y promociones
 @staff_required
 def inicio(request):
     ahora = timezone.now()
@@ -786,6 +862,38 @@ def inicio(request):
         ).count(),
     }
 
+    # MODIFICACION GEMINI: Calculo de recaudacion ultimos 7 dias para grafico
+    chart_recaudacion_valores = []
+    chart_recaudacion_labels = []
+    for i in range(6, -1, -1):
+        dia = hoy - timedelta(days=i)
+        monto_dia = Pago.objects.filter(
+            estado='aprobado',
+            fecha_pago__date=dia.date()
+        ).aggregate(t=Sum('monto'))['t'] or 0
+        chart_recaudacion_valores.append(float(monto_dia))
+        chart_recaudacion_labels.append(dia.strftime('%d/%m'))
+
+    # MODIFICACION GEMINI: Estadisticas de combos vendidos para grafico
+    top_combos = Pago.objects.filter(estado='aprobado').exclude(combo=None).values(
+        'combo__nombre'
+    ).annotate(
+        cantidad=Sum('cantidad_combo')
+    ).order_by('-cantidad')[:5]
+    
+    chart_combos_labels = [c['combo__nombre'] for c in top_combos]
+    chart_combos_valores = [c['cantidad'] for c in top_combos]
+
+    # MODIFICACION GEMINI: Estadisticas de cupones mas usados para grafico
+    top_cupones = CuponUsado.objects.values(
+        'cupon__codigo'
+    ).annotate(
+        cantidad=Count('id')
+    ).order_by('-cantidad')[:5]
+
+    chart_cupones_labels = [c['cupon__codigo'] for c in top_cupones]
+    chart_cupones_valores = [c['cantidad'] for c in top_cupones]
+
     # Próximas funciones (hoy y mañana)
     proximas_funciones = Funcion.objects.filter(
         fecha_hora__gte=ahora,
@@ -811,6 +919,13 @@ def inicio(request):
         'ultimas_reservas': ultimas_reservas,
         'ultimos_pagos': ultimos_pagos,
         'seccion_activa': 'inicio',
+        # MODIFICACION GEMINI: pasar datos para graficos al template
+        'chart_recaudacion_valores': chart_recaudacion_valores,
+        'chart_recaudacion_labels': chart_recaudacion_labels,
+        'chart_combos_labels': chart_combos_labels,
+        'chart_combos_valores': chart_combos_valores,
+        'chart_cupones_labels': chart_cupones_labels,
+        'chart_cupones_valores': chart_cupones_valores,
     }
     return render(request, 'panel/inicio.html', contexto)
 
@@ -835,7 +950,22 @@ def peliculas_lista(request):
         peliculas = peliculas.filter(en_cartelera=False)
 
     peliculas = peliculas.order_by('-en_cartelera', 'titulo')
+    
+    # MODIFICACION GEMINI: Paginacion en la lista de peliculas del panel (8 por pagina)
+    from django.core.paginator import Paginator
+    paginator = Paginator(peliculas, 8)
+    page_number = request.GET.get('page')
+    page_obj = paginator.get_page(page_number)
 
+    contexto = {
+        'peliculas': page_obj,
+        'page_obj': page_obj,
+        'busqueda': busqueda,
+        'en_cartelera': en_cartelera,
+        'total': peliculas.count(),
+        'seccion_activa': 'peliculas',
+    }
+    return render(request, 'panel/peliculas/lista.html', contexto)
     contexto = {
         'peliculas': peliculas,
         'busqueda': busqueda,
@@ -853,10 +983,14 @@ def peliculas_detalle(request, pelicula_id):
     funciones = pelicula.funciones.filter(
         fecha_hora__gte=ahora
     ).select_related('sala').order_by('fecha_hora')
+    
+    # MODIFICACION GEMINI: Obtener calificaciones para el panel admin
+    ratings = pelicula.ratings.all().select_related('usuario').order_by('-fecha_creacion')
 
     contexto = {
         'pelicula': pelicula,
         'funciones': funciones,
+        'ratings': ratings,
         'seccion_activa': 'peliculas',
     }
     return render(request, 'panel/peliculas/detalle.html', contexto)
@@ -966,7 +1100,50 @@ def funciones_detalle(request, funcion_id):
     }
     return render(request, 'panel/funciones/detalle.html', contexto)
 
-
+# MODIFICACION GEMINI: Vista para retornar las funciones de una sala en un dia específico y sus tiempos
+@staff_required
+def funciones_margen_tiempo(request):
+    sala_id = request.GET.get('sala_id')
+    fecha_str = request.GET.get('fecha')  # Formato YYYY-MM-DD
+    
+    if not sala_id or not fecha_str:
+        return JsonResponse({'error': 'Faltan parámetros'}, status=400)
+        
+    try:
+        sala = Sala.objects.get(id=sala_id)
+        from django.utils.dateparse import parse_date
+        fecha_date = parse_date(fecha_str)
+        if not fecha_date:
+            return JsonResponse({'error': 'Fecha inválida'}, status=400)
+            
+        # Rango completo del dia en la zona horaria actual
+        inicio_dia = timezone.make_aware(timezone.datetime.combine(fecha_date, timezone.datetime.min.time()))
+        fin_dia = timezone.make_aware(timezone.datetime.combine(fecha_date, timezone.datetime.max.time()))
+        
+        funciones = Funcion.objects.filter(
+            sala=sala,
+            fecha_hora__range=(inicio_dia, fin_dia)
+        ).select_related('pelicula').order_by('fecha_hora')
+        
+        funciones_data = []
+        for f in funciones:
+            fin = f.calcular_hora_fin()
+            # Convertir a hora local para mostrar correctamente al admin
+            hora_local_inicio = timezone.localtime(f.fecha_hora)
+            hora_local_fin = timezone.localtime(fin)
+            funciones_data.append({
+                'id': f.id,
+                'pelicula': f.pelicula.titulo,
+                'inicio': hora_local_inicio.strftime('%H:%M'),
+                'fin': hora_local_fin.strftime('%H:%M'),
+                'duracion': f.pelicula.duracion or 120,
+            })
+            
+        return JsonResponse({
+            'funciones': funciones_data,
+        })
+    except Exception as e:
+        return JsonResponse({'error': str(e)}, status=500)
 # ============================================================
 # RESERVAS
 # ============================================================

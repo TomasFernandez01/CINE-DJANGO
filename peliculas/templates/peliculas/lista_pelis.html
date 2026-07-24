@@ -117,6 +117,37 @@
                 {% include 'peliculas/_card_pelicula.html' %}
             {% endfor %}
         </div>
+        
+        <!-- MODIFICACION GEMINI: Paginacion en listado filtrado -->
+        {% if page_obj.has_other_pages %}
+        <div class="paginacion-wrap" style="display:flex; justify-content:center; align-items:center; gap:0.5rem; margin-top:2.5rem; margin-bottom:1.5rem;">
+            {% if page_obj.has_previous %}
+                <a href="?page=1{% if busqueda %}&buscar={{ busqueda }}{% endif %}{% if genero_seleccionado %}&genero={{ genero_seleccionado }}{% endif %}{% if clasificacion_seleccionada %}&clasificacion={{ clasificacion_seleccionada }}{% endif %}{% if orden_seleccionado %}&orden={{ orden_seleccionado }}{% endif %}{% if fecha_seleccionada %}&fecha={{ fecha_seleccionada }}{% endif %}" 
+                   style="background:#222; color:#fff; border:1px solid #444; padding:0.5rem 1rem; border-radius:20px; text-decoration:none; font-size:0.85rem; font-weight:600; transition:all 0.2s;"
+                   onmouseover="this.style.background='#ff5c5c'; this.style.borderColor='#ff5c5c'"
+                   onmouseout="this.style.background='#222'; this.style.borderColor='#444'">« Primero</a>
+                <a href="?page={{ page_obj.previous_page_number }}{% if busqueda %}&buscar={{ busqueda }}{% endif %}{% if genero_seleccionado %}&genero={{ genero_seleccionado }}{% endif %}{% if clasificacion_seleccionada %}&clasificacion={{ clasificacion_seleccionada }}{% endif %}{% if orden_seleccionado %}&orden={{ orden_seleccionado }}{% endif %}{% if fecha_seleccionada %}&fecha={{ fecha_seleccionada }}{% endif %}" 
+                   style="background:#222; color:#fff; border:1px solid #444; padding:0.5rem 1rem; border-radius:20px; text-decoration:none; font-size:0.85rem; font-weight:600; transition:all 0.2s;"
+                   onmouseover="this.style.background='#ff5c5c'; this.style.borderColor='#ff5c5c'"
+                   onmouseout="this.style.background='#222'; this.style.borderColor='#444'">‹ Anterior</a>
+            {% endif %}
+
+            <span style="font-size:0.85rem; color:#fff; font-weight:600; padding:0.5rem 1rem; background:#ff5c5c; border-radius:20px; box-shadow:0 2px 8px rgba(255,92,92,0.3);">
+                Página {{ page_obj.number }} de {{ page_obj.paginator.num_pages }}
+            </span>
+
+            {% if page_obj.has_next %}
+                <a href="?page={{ page_obj.next_page_number }}{% if busqueda %}&buscar={{ busqueda }}{% endif %}{% if genero_seleccionado %}&genero={{ genero_seleccionado }}{% endif %}{% if clasificacion_seleccionada %}&clasificacion={{ clasificacion_seleccionada }}{% endif %}{% if orden_seleccionado %}&orden={{ orden_seleccionado }}{% endif %}{% if fecha_seleccionada %}&fecha={{ fecha_seleccionada }}{% endif %}" 
+                   style="background:#222; color:#fff; border:1px solid #444; padding:0.5rem 1rem; border-radius:20px; text-decoration:none; font-size:0.85rem; font-weight:600; transition:all 0.2s;"
+                   onmouseover="this.style.background='#ff5c5c'; this.style.borderColor='#ff5c5c'"
+                   onmouseout="this.style.background='#222'; this.style.borderColor='#444'">Siguiente ›</a>
+                <a href="?page={{ page_obj.paginator.num_pages }}{% if busqueda %}&buscar={{ busqueda }}{% endif %}{% if genero_seleccionado %}&genero={{ genero_seleccionado }}{% endif %}{% if clasificacion_seleccionada %}&clasificacion={{ clasificacion_seleccionada }}{% endif %}{% if orden_seleccionado %}&orden={{ orden_seleccionado }}{% endif %}{% if fecha_seleccionada %}&fecha={{ fecha_seleccionada }}{% endif %}" 
+                   style="background:#222; color:#fff; border:1px solid #444; padding:0.5rem 1rem; border-radius:20px; text-decoration:none; font-size:0.85rem; font-weight:600; transition:all 0.2s;"
+                   onmouseover="this.style.background='#ff5c5c'; this.style.borderColor='#ff5c5c'"
+                   onmouseout="this.style.background='#222'; this.style.borderColor='#444'">Último »</a>
+            {% endif %}
+        </div>
+        {% endif %}
     {% else %}
         <div class="pelis-vacio">
             <p>😕 No se encontraron películas</p>
@@ -135,6 +166,37 @@
                 {% include 'peliculas/_card_pelicula.html' %}
             {% endfor %}
         </div>
+        
+        <!-- MODIFICACION GEMINI: Paginacion en listado general de cartelera -->
+        {% if page_obj.has_other_pages %}
+        <div class="paginacion-wrap" style="display:flex; justify-content:center; align-items:center; gap:0.5rem; margin-top:2.5rem; margin-bottom:1.5rem;">
+            {% if page_obj.has_previous %}
+                <a href="?page=1{% if busqueda %}&buscar={{ busqueda }}{% endif %}{% if genero_seleccionado %}&genero={{ genero_seleccionado }}{% endif %}{% if clasificacion_seleccionada %}&clasificacion={{ clasificacion_seleccionada }}{% endif %}{% if orden_seleccionado %}&orden={{ orden_seleccionado }}{% endif %}{% if fecha_seleccionada %}&fecha={{ fecha_seleccionada }}{% endif %}" 
+                   style="background:#222; color:#fff; border:1px solid #444; padding:0.5rem 1rem; border-radius:20px; text-decoration:none; font-size:0.85rem; font-weight:600; transition:all 0.2s;"
+                   onmouseover="this.style.background='#ff5c5c'; this.style.borderColor='#ff5c5c'"
+                   onmouseout="this.style.background='#222'; this.style.borderColor='#444'">« Primero</a>
+                <a href="?page={{ page_obj.previous_page_number }}{% if busqueda %}&buscar={{ busqueda }}{% endif %}{% if genero_seleccionado %}&genero={{ genero_seleccionado }}{% endif %}{% if clasificacion_seleccionada %}&clasificacion={{ clasificacion_seleccionada }}{% endif %}{% if orden_seleccionado %}&orden={{ orden_seleccionado }}{% endif %}{% if fecha_seleccionada %}&fecha={{ fecha_seleccionada }}{% endif %}" 
+                   style="background:#222; color:#fff; border:1px solid #444; padding:0.5rem 1rem; border-radius:20px; text-decoration:none; font-size:0.85rem; font-weight:600; transition:all 0.2s;"
+                   onmouseover="this.style.background='#ff5c5c'; this.style.borderColor='#ff5c5c'"
+                   onmouseout="this.style.background='#222'; this.style.borderColor='#444'">‹ Anterior</a>
+            {% endif %}
+
+            <span style="font-size:0.85rem; color:#fff; font-weight:600; padding:0.5rem 1rem; background:#ff5c5c; border-radius:20px; box-shadow:0 2px 8px rgba(255,92,92,0.3);">
+                Página {{ page_obj.number }} de {{ page_obj.paginator.num_pages }}
+            </span>
+
+            {% if page_obj.has_next %}
+                <a href="?page={{ page_obj.next_page_number }}{% if busqueda %}&buscar={{ busqueda }}{% endif %}{% if genero_seleccionado %}&genero={{ genero_seleccionado }}{% endif %}{% if clasificacion_seleccionada %}&clasificacion={{ clasificacion_seleccionada }}{% endif %}{% if orden_seleccionado %}&orden={{ orden_seleccionado }}{% endif %}{% if fecha_seleccionada %}&fecha={{ fecha_seleccionada }}{% endif %}" 
+                   style="background:#222; color:#fff; border:1px solid #444; padding:0.5rem 1rem; border-radius:20px; text-decoration:none; font-size:0.85rem; font-weight:600; transition:all 0.2s;"
+                   onmouseover="this.style.background='#ff5c5c'; this.style.borderColor='#ff5c5c'"
+                   onmouseout="this.style.background='#222'; this.style.borderColor='#444'">Siguiente ›</a>
+                <a href="?page={{ page_obj.paginator.num_pages }}{% if busqueda %}&buscar={{ busqueda }}{% endif %}{% if genero_seleccionado %}&genero={{ genero_seleccionado }}{% endif %}{% if clasificacion_seleccionada %}&clasificacion={{ clasificacion_seleccionada }}{% endif %}{% if orden_seleccionado %}&orden={{ orden_seleccionado }}{% endif %}{% if fecha_seleccionada %}&fecha={{ fecha_seleccionada }}{% endif %}" 
+                   style="background:#222; color:#fff; border:1px solid #444; padding:0.5rem 1rem; border-radius:20px; text-decoration:none; font-size:0.85rem; font-weight:600; transition:all 0.2s;"
+                   onmouseover="this.style.background='#ff5c5c'; this.style.borderColor='#ff5c5c'"
+                   onmouseout="this.style.background='#222'; this.style.borderColor='#444'">Último »</a>
+            {% endif %}
+        </div>
+        {% endif %}
     {% else %}
         <div class="pelis-vacio">
             <p>No hay películas en cartelera en este momento.</p>

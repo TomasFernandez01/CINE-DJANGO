@@ -99,6 +99,21 @@
             </div>
         </div>
 
+        <!-- MODIFICACION GEMINI: Margen de tiempo entre funciones -->
+        <div class="card" style="margin-top:1rem; display:none;" id="cronogramaCard">
+            <div class="card-header">
+                <h3>📅 Cronograma de la Sala (Mismo día)</h3>
+            </div>
+            <div class="card-body">
+                <p style="font-size:0.8rem; color:#666; margin-top:0; margin-bottom:0.75rem;">
+                    A continuación se listan las funciones programadas para el mismo día en esta sala (incluye un margen de 30 min de limpieza al final de cada una):
+                </p>
+                <div id="cronograma-lista" style="font-size:0.875rem; display:flex; flex-direction:column; gap:0.5rem;">
+                    <!-- Se rellena dinámicamente con JS -->
+                </div>
+            </div>
+        </div>
+
         <!-- Preview de la función -->
         <div class="card" style="margin-top:1rem;" id="previewCard">
             <div class="card-header"><h3>Vista previa</h3></div>

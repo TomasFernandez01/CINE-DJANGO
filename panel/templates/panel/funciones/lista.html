@@ -30,8 +30,17 @@
        style="padding:0.5rem 1rem; border-radius:20px; text-decoration:none; font-size:0.85rem; font-weight:600; transition:all 0.2s; {% if filtro == valor %} background:#1a1a2e; color:white; {% else %} background:white; color:#666; box-shadow:0 1px 4px rgba(0,0,0,0.1); {% endif %}">{{ label }}</a>
     {% endfor %}
 </div>
+
+<!-- MODIFICACION GEMINI: Buscador estilo Netflix interactivo -->
+<div class="card" style="margin-bottom: 1.25rem;">
+    <div class="card-body" style="padding: 0.85rem 1.25rem; display: flex; align-items: center; gap: 0.75rem;">
+        <span style="font-size: 1.2rem;">🔍</span>
+        <input type="text" id="buscadorFunciones" class="panel-input" placeholder="Buscar funciones por película, sala, fecha (ej: Inception, Sala 2D)..." style="border: none; padding: 0.2rem; font-size: 0.95rem; flex: 1; outline: none;">
+    </div>
+</div>
+
 <!-- Contador -->
-<div style="font-size:0.85rem; color:#666; margin-bottom:0.75rem;">{{ total }} función(es)</div>
+<div style="font-size:0.85rem; color:#666; margin-bottom:0.75rem;"><span id="contadorFunciones">{{ total }}</span> función(es)</div>
 <!-- Tabla -->
 <div class="card">
     {% if funciones %}

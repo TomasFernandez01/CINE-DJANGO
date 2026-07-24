@@ -61,6 +61,118 @@
                 <div class="detalle-info-box-valor">{{ pelicula.actores }}</div>
             </div>
         {% endif %}
+
+        <!-- MODIFICACION GEMINI: Calificaciones y Reseñas de Usuarios -->
+        <div class="detalle-sinopsis" style="margin-top: 2rem; border-top: 1px solid rgba(255,255,255,0.1); padding-top: 1.5rem;">
+            <h3>⭐ Calificaciones y Reseñas</h3>
+            
+            <div style="display:flex; align-items:center; gap:0.75rem; margin-bottom:1.5rem;">
+                <span style="font-size:2.5rem; font-weight:700; color:#f1c40f; line-height: 1;">{{ pelicula.rating_promedio }}</span>
+                <div>
+                    <div style="color:#f1c40f; font-size:1.2rem;">
+                        <!-- Estrellas segun promedio -->
+                        {% if pelicula.rating_promedio >= 1 %}★{% else %}☆{% endif %}
+                        {% if pelicula.rating_promedio >= 2 %}★{% else %}☆{% endif %}
+                        {% if pelicula.rating_promedio >= 3 %}★{% else %}☆{% endif %}
+                        {% if pelicula.rating_promedio >= 4 %}★{% else %}☆{% endif %}
+                        {% if pelicula.rating_promedio >= 5 %}★{% else %}☆{% endif %}
+                    </div>
+                    <div style="font-size:0.75rem; color:#888;">{{ pelicula.total_votos }} calificaciones</div>
+                </div>
+            </div>
+
+            {% if puede_calificar %}
+                <form method="post" action="{% url 'peliculas:votar_pelicula' pelicula.id %}" style="background:rgba(255,255,255,0.04); padding:1.25rem; border-radius:12px; margin-bottom:1.5rem; border: 1px solid rgba(255,255,255,0.05);">
+                    {% csrf_token %}
+                    <h4 style="margin:0 0 0.5rem 0; font-size:0.9rem; color:#eee;">{% if mi_rating %}Actualizar tu calificación{% else %}Calificar esta película{% endif %}</h4>
+                    
+                    <!-- Estrellas interactivas -->
+                    <div class="rating-estrellas" style="display:flex; gap:0.4rem; font-size:1.75rem; color:#888; cursor:pointer; margin-bottom:0.75rem;">
+                        {% for i in "12345" %}
+                            <span class="estrella-btn" data-valor="{{ forloop.counter }}" style="transition:color 0.2s; color:{% if mi_rating and mi_rating.puntuacion >= forloop.counter %}#f1c40f{% else %}#888{% endif %};">
+                                {% if mi_rating and mi_rating.puntuacion >= forloop.counter %}★{% else %}☆{% endif %}
+                            </span>
+                        {% endfor %}
+                    </div>
+                    <input type="hidden" name="puntuacion" id="inputPuntuacion" value="{{ mi_rating.puntuacion|default:'' }}" required>
+
+                    <textarea name="comentario" placeholder="Escribí una reseña opcional..." style="background:rgba(0,0,0,0.3); border:1px solid rgba(255,255,255,0.15); color:#fff; border-radius:8px; padding:0.6rem; width:100%; font-size:0.85rem; margin-bottom:0.75rem; resize:vertical; min-height:80px; font-family:inherit;">{{ mi_rating.comentario|default:'' }}</textarea>
+                    
+                    <button type="submit" class="btn btn-primary" style="font-size:0.8rem; padding:0.5rem 1.2rem; border-radius:6px; background:#ff5c5c; border:none; color:white; font-weight:600; cursor:pointer; transition: opacity 0.2s;">Enviar calificación</button>
+                </form>
+
+                <script>
+                    document.addEventListener("DOMContentLoaded", function() {
+                        const estrellas = document.querySelectorAll(".estrella-btn");
+                        const inputPuntuacion = document.getElementById("inputPuntuacion");
+
+                        if (estrellas.length > 0 && inputPuntuacion) {
+                            function pintarEstrellas(valor) {
+                                estrellas.forEach(est => {
+                                    const estVal = parseInt(est.dataset.valor);
+                                    if (estVal <= valor) {
+                                        est.textContent = "★";
+                                        est.style.color = "#f1c40f";
+                                    } else {
+                                        est.textContent = "☆";
+                                        est.style.color = "#888";
+                                    }
+                                });
+                            }
+
+                            estrellas.forEach(est => {
+                                est.addEventListener("click", function() {
+                                    const valor = parseInt(this.dataset.valor);
+                                    inputPuntuacion.value = valor;
+                                    pintarEstrellas(valor);
+                                });
+
+                                est.addEventListener("mouseover", function() {
+                                    const valor = parseInt(this.dataset.valor);
+                                    pintarEstrellas(valor);
+                                });
+
+                                est.addEventListener("mouseout", function() {
+                                    const valor = parseInt(inputPuntuacion.value) || 0;
+                                    pintarEstrellas(valor);
+                                });
+                            });
+                        }
+                    });
+                </script>
+            {% else %}
+                <div style="background:rgba(255,255,255,0.02); border-left:3px solid #ff5c5c; padding:0.75rem 1rem; border-radius:8px; font-size:0.8rem; color:#bbb; margin-bottom:1.5rem; display: flex; align-items: center; gap: 8px;">
+                    <span>🔒</span> Solo los usuarios que asistieron a ver esta película pueden calificarla.
+                </div>
+            {% endif %}
+
+            <!-- Listado de reseñas -->
+            <div style="display:flex; flex-direction:column; gap:0.75rem; margin-top: 1rem;">
+                <h4 style="margin:0; font-size:0.9rem; color:#ccc;">Reseñas de la comunidad</h4>
+                {% if ratings_list %}
+                    {% for r in ratings_list %}
+                        <div style="background:rgba(255,255,255,0.02); padding:0.75rem; border-radius:8px; border:1px solid rgba(255,255,255,0.05);">
+                            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:0.25rem;">
+                                <strong style="font-size:0.85rem; color:#eee;">{{ r.usuario.get_full_name|default:r.usuario.username }}</strong>
+                                <span style="color:#f1c40f; font-size:0.8rem;">
+                                    {% if r.puntuacion >= 1 %}★{% else %}☆{% endif %}
+                                    {% if r.puntuacion >= 2 %}★{% else %}☆{% endif %}
+                                    {% if r.puntuacion >= 3 %}★{% else %}☆{% endif %}
+                                    {% if r.puntuacion >= 4 %}★{% else %}☆{% endif %}
+                                    {% if r.puntuacion >= 5 %}★{% else %}☆{% endif %}
+                                </span>
+                            </div>
+                            {% if r.comentario %}
+                                <p style="margin:0; font-size:0.8rem; color:#bbb; line-height:1.4;">{{ r.comentario }}</p>
+                            {% endif %}
+                            <div style="font-size:0.7rem; color:#666; margin-top:0.4rem; text-align:right;">{{ r.fecha_creacion|date:"d/m/Y H:i" }}</div>
+                        </div>
+                    {% endfor %}
+                {% else %}
+                    <div style="font-size:0.8rem; color:#666; font-style:italic;">No hay reseñas todavía.</div>
+                {% endif %}
+            </div>
+        </div>
     </div>
 
     <!-- ===== Columna derecha: horarios ===== -->

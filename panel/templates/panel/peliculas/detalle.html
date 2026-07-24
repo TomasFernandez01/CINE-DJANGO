@@ -144,6 +144,48 @@
             {% endif %}
         </div>
 
+        <!-- MODIFICACION GEMINI: Visualizacion de Calificaciones en el Panel Admin -->
+        <div class="card" style="margin-top: 1rem;">
+            <div class="card-header" style="display:flex; justify-content:space-between; align-items:center;">
+                <h3>⭐ Calificaciones y Reseñas de Usuarios ({{ ratings.count }})</h3>
+                <span style="font-weight:700; color:#e2b96f; font-size:1.1rem;">★ {{ pelicula.rating_promedio }} / 5</span>
+            </div>
+            <div style="max-height: 400px; overflow-y: auto;">
+                {% if ratings %}
+                <table class="tabla">
+                    <thead>
+                        <tr>
+                            <th>Usuario</th>
+                            <th>Puntuación</th>
+                            <th>Comentario</th>
+                            <th>Fecha</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for r in ratings %}
+                        <tr>
+                            <td style="font-weight:600;">{{ r.usuario.get_full_name|default:r.usuario.username }}</td>
+                            <td style="color:#e2b96f; font-weight:700; font-size:1.1rem;">
+                                {% if r.puntuacion >= 1 %}★{% else %}☆{% endif %}
+                                {% if r.puntuacion >= 2 %}★{% else %}☆{% endif %}
+                                {% if r.puntuacion >= 3 %}★{% else %}☆{% endif %}
+                                {% if r.puntuacion >= 4 %}★{% else %}☆{% endif %}
+                                {% if r.puntuacion >= 5 %}★{% else %}☆{% endif %}
+                            </td>
+                            <td style="color:#555; font-size:0.875rem;">{{ r.comentario|default:"—" }}</td>
+                            <td style="color:#999; font-size:0.8rem;">{{ r.fecha_creacion|date:"d/m/Y H:i" }}</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+                {% else %}
+                <div class="card-body" style="text-align:center; color:#999; font-size:0.9rem; padding: 2rem;">
+                    Esta película aún no tiene calificaciones ni reseñas de usuarios.
+                </div>
+                {% endif %}
+            </div>
+        </div>
+
     </div>
 </div>
 

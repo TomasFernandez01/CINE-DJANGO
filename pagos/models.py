@@ -142,6 +142,17 @@ class Pago(models.Model):
         if self.estado == 'aprobado' and not self.codigo_qr:
             self.generar_codigo_qr()
         
+        # MODIFICACION GEMINI: Agregar automáticamente al historial de vistas del usuario
+        if self.estado == 'aprobado':
+            try:
+                from peliculas.models import HistorialVisto
+                HistorialVisto.objects.get_or_create(
+                    usuario=self.reserva.usuario,
+                    pelicula=self.reserva.funcion.pelicula
+                )
+            except Exception:
+                pass
+        
         super().save(*args, **kwargs)
     
     class Meta:

@@ -9,10 +9,11 @@
         color: #222;
         font-family: inherit;
     }
+    /* MODIFICACION GEMINI: Foco estilizado con color de acento dorado y transiciones suaves */
     .panel-input:focus, .panel-select:focus, .panel-textarea:focus {
         outline: none;
-        border-color: #1a1a2e;
-        box-shadow: 0 0 0 3px rgba(26,26,46,0.1);
+        border-color: #e2b96f;
+        box-shadow: 0 0 0 3px rgba(226, 185, 111, 0.15);
     }
     .panel-textarea { resize: vertical; min-height: 90px; }
     .panel-file {

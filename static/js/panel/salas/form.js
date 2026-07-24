@@ -1,8 +1,10 @@
 // Autocompletar el multiplicador sugerido al elegir el tipo de sala (el admin
 // lo puede pisar después con cualquier valor, esto es solo un atajo).
+// MODIFICACION GEMINI: Sugerir nombre de sala automatico segun tipo de sala
 (function () {
     const tipoSelect = document.getElementById('id_tipo');
     const multInput = document.getElementById('id_multiplicador_precio');
+    const nombreInput = document.getElementById('id_nombre');
     if (!tipoSelect || !multInput) return;
 
     const MULTIPLICADORES_SUGERIDOS = {
@@ -12,10 +14,32 @@
         '3d_premium': '1.50',
     };
 
+    const NOMBRES_SUGERIDOS = {
+        '2d': 'Sala 2D',
+        '3d': 'Sala 3D',
+        '2d_premium': 'Sala Premium 2D',
+        '3d_premium': 'Sala Premium 3D',
+    };
+
+    function sugerirNombre() {
+        if (!nombreInput) return;
+        const nombreActual = nombreInput.value.trim();
+        // Si esta vacio, es 'SALA' (default) o coincide con alguno de los sugeridos previos, actualizamos
+        if (nombreActual === '' || nombreActual === 'SALA' || Object.values(NOMBRES_SUGERIDOS).includes(nombreActual)) {
+            nombreInput.value = NOMBRES_SUGERIDOS[tipoSelect.value] || 'Sala';
+        }
+    }
+
     tipoSelect.addEventListener('change', function () {
         const sugerido = MULTIPLICADORES_SUGERIDOS[tipoSelect.value];
         if (sugerido) multInput.value = sugerido;
+        sugerirNombre();
     });
+
+    // Ejecutar al inicio si es una sala nueva
+    if (nombreInput && (nombreInput.value.trim() === '' || nombreInput.value.trim() === 'SALA')) {
+        sugerirNombre();
+    }
 })();
 
 (function () {

@@ -100,6 +100,18 @@ def lista_peliculas(request):
 
     proximas_fechas = generar_proximos_dias(10)
 
+    # MODIFICACION GEMINI: Paginacion en la cartelera publica (8 peliculas por pagina)
+    from django.core.paginator import Paginator
+    lista_principal = peliculas_en_cartelera if peliculas_en_cartelera is not None else peliculas
+    paginator = Paginator(lista_principal, 8)
+    page_number = request.GET.get('page')
+    page_obj = paginator.get_page(page_number)
+    
+    if peliculas_en_cartelera is not None:
+        peliculas_en_cartelera = page_obj
+    else:
+        peliculas = page_obj
+
     contexto = {
         'peliculas': peliculas,
         'peliculas_en_cartelera': peliculas_en_cartelera,
@@ -112,8 +124,10 @@ def lista_peliculas(request):
         'fecha_seleccionada': fecha_filtro,
         'generos_disponibles': generos_disponibles,
         'clasificaciones_disponibles': clasificaciones_disponibles,
-        'total_resultados': peliculas.count(),
+        'total_resultados': paginator.count,
         'proximas_fechas': proximas_fechas,
+        # MODIFICACION GEMINI: Pasar objeto de pagina para controles del template
+        'page_obj': page_obj,
     }
     return render(request, 'peliculas/lista_pelis.html', contexto)
 
@@ -137,6 +151,7 @@ def buscar_vivo(request):
             })
     return JsonResponse({'resultados': resultados})
 
+# MODIFICACION GEMINI: detalle de pelicula con soporte de rating
 def detalle_pelicula(request, pelicula_id):
     pelicula = get_object_or_404(Pelicula, id=pelicula_id)
     ahora = timezone.now()
@@ -163,22 +178,22 @@ def detalle_pelicula(request, pelicula_id):
         funciones = funciones.filter(sala__tipo=formato_filtro)
 
     grupos_funciones = agrupar_por_tipo_sala(funciones)
-    # este helper remplaza toda esta codigo ->
-    # funciones_por_tipo = {}
-    # for funcion in funciones:
-    #     funciones_por_tipo.setdefault(funcion.sala.tipo, []).append(funcion)
-    # grupos_funciones = []
-    # for valor_tipo, etiqueta_tipo in Sala.TIPO_CHOICES:
-    #     if valor_tipo in funciones_por_tipo:
-    #         grupos_funciones.append({
-    #             'tipo': valor_tipo,
-    #             'etiqueta': etiqueta_tipo,
-    #             'funciones': funciones_por_tipo[valor_tipo],
-    #         })
 
     tambien_en_cartelera = Pelicula.objects.filter(
         en_cartelera=True
     ).exclude(id=pelicula.id).order_by('-fecha_estreno')[:8]
+
+    # MODIFICACION GEMINI: evaluar si el usuario ha visto la pelicula y puede calificar
+    from .models import HistorialVisto, RatingPelicula
+    puede_calificar = False
+    mi_rating = None
+    if request.user.is_authenticated:
+        ha_visto = HistorialVisto.objects.filter(usuario=request.user, pelicula=pelicula).exists()
+        if ha_visto:
+            puede_calificar = True
+            mi_rating = RatingPelicula.objects.filter(usuario=request.user, pelicula=pelicula).first()
+
+    ratings_list = pelicula.ratings.all().select_related('usuario').order_by('-fecha_creacion')[:10]
 
     contexto = {
         'pelicula': pelicula,
@@ -189,20 +204,53 @@ def detalle_pelicula(request, pelicula_id):
         'formatos_disponibles': Sala.TIPO_CHOICES,
         'grupos_funciones': grupos_funciones,
         'tambien_en_cartelera': tambien_en_cartelera,
+        # MODIFICACION GEMINI: pasar rating al contexto
+        'puede_calificar': puede_calificar,
+        'mi_rating': mi_rating,
+        'ratings_list': ratings_list,
     }
     return render(request, 'peliculas/detalle_pelicula.html', contexto)
+
+
+# MODIFICACION GEMINI: Vista para votar una película
+from django.contrib.auth.decorators import login_required
+from django.views.decorators.http import require_POST
+
+@login_required
+@require_POST
+def votar_pelicula(request, pelicula_id):
     pelicula = get_object_or_404(Pelicula, id=pelicula_id)
-    ahora = timezone.now()
-    funciones = pelicula.funciones.filter(
-        disponible=True,
-        fecha_hora__gt=ahora
-    ).select_related('sala').order_by('fecha_hora')
+    from .models import HistorialVisto, RatingPelicula
     
-    contexto = {
-        'pelicula': pelicula,
-        'funciones': funciones,
-    }
-    return render(request, 'peliculas/detalle_pelicula.html', contexto)
+    # Verificar que el usuario la haya visto
+    ha_visto = HistorialVisto.objects.filter(usuario=request.user, pelicula=pelicula).exists()
+    if not ha_visto:
+        messages.error(request, '⚠️ Solo podés calificar películas que hayas asistido a ver.')
+        return redirect('peliculas:detalle_pelicula', pelicula_id=pelicula.id)
+        
+    puntuacion_str = request.POST.get('puntuacion')
+    comentario = request.POST.get('comentario', '').strip()
+    
+    try:
+        puntuacion = int(puntuacion_str)
+        if not (1 <= puntuacion <= 5):
+            raise ValueError()
+    except (TypeError, ValueError):
+        messages.error(request, '⚠️ Calificación inválida.')
+        return redirect('peliculas:detalle_pelicula', pelicula_id=pelicula.id)
+        
+    rating, creado = RatingPelicula.objects.update_or_create(
+        usuario=request.user,
+        pelicula=pelicula,
+        defaults={'puntuacion': puntuacion, 'comentario': comentario}
+    )
+    
+    if creado:
+        messages.success(request, '⭐ ¡Muchas gracias por calificar la película!')
+    else:
+        messages.success(request, '⭐ Tu calificación ha sido actualizada.')
+        
+    return redirect('peliculas:detalle_pelicula', pelicula_id=pelicula.id)
 
 # ============================================ DESCARGAR POSTERS
 def descargar_poster(poster_url, titulo):
