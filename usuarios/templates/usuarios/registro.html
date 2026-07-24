@@ -4,16 +4,29 @@
 {% block titulo %}Registro{% endblock %}
 
 {% block contenido %}
-<!-- bloque modificado: mismo layout .auth-split que login.html, para que las dos
-     pantallas de entrada al sitio se vean parejas -->
+<!-- MODIFICACION DE GEMINI -->
 <div class="auth-split">
     <div class="auth-hero">
-        <div class="auth-hero-icono">🍿</div>
-        <h1 class="auth-hero-titulo">Sumate a la función</h1>
-        <p class="auth-hero-subtitulo">
-            Creá tu cuenta gratis y empezá a reservar tus entradas, guardar
-            promos y llevar el registro de lo que viste.
-        </p>
+        <div class="auth-hero-collage">
+            {% for p in peliculas_poster %}
+                {% if p.poster %}
+                    <img src="{{ p.poster.url }}" alt="{{ p.titulo }}" class="auth-hero-poster">
+                {% endif %}
+            {% endfor %}
+        </div>
+        <div class="auth-hero-overlay"></div>
+        
+        <div class="auth-hero-content">
+            <div class="auth-hero-icono">
+                <svg viewBox="0 0 24 24" fill="currentColor" width="48" height="48" style="color: #e50914;">
+                    <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 17.93c-3.95-.49-7-3.85-7-7.93 0-.62.08-1.21.21-1.79L9 15v1c0 1.1.9 2 2 2v1.93zm6.9-2.54c-.26-.81-1-1.39-1.9-1.39h-1v-3c0-.55-.45-1-1-1H8v-2h2c.55 0 1-.45 1-1V7h2c1.66 0 3 1.34 3 3v1.78c.89.4 1.5 1.28 1.5 2.22 0 .97-.47 1.83-1.18 2.39z"/>
+                </svg>
+            </div>
+            <h1 class="auth-hero-titulo">Súmate a la función</h1>
+            <p class="auth-hero-subtitulo">
+                Crea tu cuenta gratis y empieza a reservar tus entradas, guardar promociones y llevar el registro de lo que viste.
+            </p>
+        </div>
     </div>
 
     <div class="auth-formulario">
@@ -34,7 +47,25 @@
                         {{ field.label }}
                         {% if field.field.required %}<span class="usuario-requerido">*</span>{% endif %}
                     </label>
-                    {{ field }}
+                    
+                    {% if field.field.widget.input_type == 'password' %}
+                        <div class="contraseña-contenedor">
+                            {{ field }}
+                            <button type="button" class="ojo-toggle toggle-registro-password" aria-label="Mostrar contraseña">
+                                <svg class="ojo-abierto" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="20" height="20">
+                                    <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
+                                    <circle cx="12" cy="12" r="3"></circle>
+                                </svg>
+                                <svg class="ojo-cerrado" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="20" height="20" style="display: none;">
+                                    <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"></path>
+                                    <line x1="1" y1="1" x2="23" y2="23"></line>
+                                </svg>
+                            </button>
+                        </div>
+                    {% else %}
+                        {{ field }}
+                    {% endif %}
+                    
                     {% if field.errors %}
                         <div class="usuario-error">
                             {{ field.errors }}
@@ -55,12 +86,41 @@
 
         <div class="usuario-enlace-pie">
             <p>
-                ¿Ya tenés cuenta?
+                ¿Ya tienes cuenta?
                 <a href="{% url 'usuarios:login' %}" class="usuario-enlace">
-                    Iniciá sesión
+                    Inicia sesión
                 </a>
             </p>
         </div>
     </div>
 </div>
+<!-- FIN MODIFICACION DE GEMINI -->
+{% endblock %}
+
+{% block extra_js %}
+<!-- MODIFICACION DE GEMINI -->
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const toggles = document.querySelectorAll('.toggle-registro-password');
+    toggles.forEach(btn => {
+        btn.addEventListener('click', function() {
+            const container = btn.closest('.contraseña-contenedor');
+            const input = container.querySelector('input');
+            const openEye = container.querySelector('.ojo-abierto');
+            const closedEye = container.querySelector('.ojo-cerrado');
+            
+            if (input.type === 'password') {
+                input.type = 'text';
+                openEye.style.display = 'none';
+                closedEye.style.display = 'block';
+            } else {
+                input.type = 'password';
+                openEye.style.display = 'block';
+                closedEye.style.display = 'none';
+            }
+        });
+    });
+});
+</script>
+<!-- FIN MODIFICACION DE GEMINI -->
 {% endblock %}

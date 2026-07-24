@@ -77,10 +77,14 @@
                 banner.style.boxShadow  = 'none';
                 countdownEl.textContent = '00:00';
 
-                // Alerta y redirige
+                // modificado (punto 2 de revisión): alert() nativo -> toast.
+                // Se corre el redirect un poco más lejos (2.5s en vez de
+                // 0.8s) para que dé tiempo a leer el aviso.
                 setTimeout(function () {
-                    alert('⏰ El tiempo para seleccionar asientos expiró. Serás redirigido a las funciones disponibles.');
-                    window.location.href = URL_LISTA_FUNCIONES;
+                    toast.error('⏰ El tiempo para seleccionar asientos expiró. Serás redirigido a las funciones disponibles.', 2500);
+                    setTimeout(function () {
+                        window.location.href = URL_LISTA_FUNCIONES;
+                    }, 2500);
                 }, 800);
             };
 
@@ -211,7 +215,8 @@
             btnConfirmar.style.animation = 'sacudida 0.4s';
             setTimeout(() => { btnConfirmar.style.animation = ''; }, 400);
         }
-        alert('⚠️ Solo podés seleccionar hasta ' + MAX_ASIENTOS + ' asientos por reserva.');
+        // modificado (punto 2 de revisión): alert() nativo -> toast
+        toast.warning('⚠️ Solo podés seleccionar hasta ' + MAX_ASIENTOS + ' asientos por reserva.');
     }
 
     // ─── Actualizar resumen inferior ────────────────────────────
@@ -256,26 +261,27 @@
 
     // ════════════════════════════════════════════════════════════
     // VALIDACIÓN AL ENVIAR
+    // modificado (punto 2 de revisión): los 3 alert() de acá abajo -> toast
     // ════════════════════════════════════════════════════════════
     formReserva.addEventListener('submit', function (e) {
         // Bloqueo por tiempo
         if (formularioBloqueado) {
             e.preventDefault();
-            alert('⏰ El tiempo expiró. Por favor, volvé a las funciones y comenzá de nuevo.');
+            toast.warning('⏰ El tiempo expiró. Por favor, volvé a las funciones y comenzá de nuevo.');
             return false;
         }
 
         // Sin asientos
         if (asientosSeleccionados.size === 0) {
             e.preventDefault();
-            alert('⚠️ Debés seleccionar al menos un asiento antes de confirmar.');
+            toast.warning('⚠️ Debés seleccionar al menos un asiento antes de confirmar.');
             return false;
         }
 
         // Excede el límite (doble-check)
         if (asientosSeleccionados.size > MAX_ASIENTOS) {
             e.preventDefault();
-            alert('⚠️ Solo podés reservar hasta ' + MAX_ASIENTOS + ' asientos.');
+            toast.warning('⚠️ Solo podés reservar hasta ' + MAX_ASIENTOS + ' asientos.');
             return false;
         }
 
@@ -340,8 +346,12 @@
 
                 if (conflicto) {
                     actualizarResumen();
-                    alert('Algunos asientos que seleccionaste acaban de ser reservados por otro usuario. Por favor, elegí otros.');
-                    location.reload();
+                    // modificado (punto 2 de revisión): alert() nativo -> toast.
+                    // Se agrega el margen de 2.5s antes del reload para que
+                    // dé tiempo a leerlo (antes el alert() bloqueaba solo hasta
+                    // que el usuario lo cerraba, el toast no bloquea nada).
+                    toast.warning('Algunos asientos que seleccionaste acaban de ser reservados por otro usuario. Por favor, elegí otros.', 2500);
+                    setTimeout(function () { location.reload(); }, 2500);
                 }
             })
             .catch(function () { /* silenciar errores de red */ });

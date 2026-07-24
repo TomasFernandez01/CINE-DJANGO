@@ -13,7 +13,14 @@
                 pagarBtn.style.pointerEvents = 'none';
                 pagarBtn.innerHTML = '⏰ Tiempo Expirado';
             }
-            setTimeout(() => { alert('⏰ El tiempo de pago expiró.'); window.location.reload(); }, 1000);
+            // modificado (punto 2 de revisión): alert() nativo -> toast. Se
+            // deja un poco más de margen antes del reload (2.5s en vez de
+            // 0) para que el toast alcance a verse antes de que la página
+            // se recargue y lo borre.
+            setTimeout(() => {
+                toast.error('⏰ El tiempo de pago expiró.');
+                setTimeout(() => window.location.reload(), 2500);
+            }, 1000);
             return;
         }
         const m = Math.floor(tiempo / 60), s = tiempo % 60;

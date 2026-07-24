@@ -4,6 +4,9 @@ from django.contrib.auth.decorators import login_required
 from django.contrib.auth.forms import PasswordChangeForm
 from django.contrib import messages
 from .forms import RegistroForm, EditarPerfilForm
+# MODIFICACION DE GEMINI
+from peliculas.models import Pelicula
+# FIN MODIFICACION DE GEMINI
 
 def registro(request):
     if request.user.is_authenticated:
@@ -18,12 +21,17 @@ def registro(request):
             return redirect('peliculas:inicio')
     else:
         form = RegistroForm()
-    
+
+    # MODIFICACION DE GEMINI
+    peliculas_poster = Pelicula.objects.filter(poster__isnull=False)[:6]
     contexto = {
-        'form': form
+        'form': form,
+        'peliculas_poster': peliculas_poster
     }
+    # FIN MODIFICACION DE GEMINI
     return render(request, 'usuarios/registro.html', contexto)
 
+############################################################################
 
 def login_view(request):
     if request.user.is_authenticated:
@@ -38,12 +46,9 @@ def login_view(request):
         
         if user is not None:
             login(request, user)
-            # bloque modificado: el offcanvas de login manda "next" como campo POST (antes solo se leía por GET), para volver a la página donde estaba el usuario en vez de mandarlo siempre a inicio/panel
-            # next_url = request.GET.get('next', '')
             next_url = request.POST.get('next') or request.GET.get('next', '')
             
             if user.is_staff or user.is_superuser:
-                # Si tiene un ?next= válido lo respetamos, sino al panel
                 if next_url and not next_url.startswith('/panel/'):
                     return redirect(next_url)
                 messages.success(
@@ -63,8 +68,15 @@ def login_view(request):
         else:
             messages.error(request, 'Usuario o contraseña incorrectos.')
  
-    return render(request, 'usuarios/login.html')
+    # MODIFICACION DE GEMINI
+    peliculas_poster = Pelicula.objects.filter(poster__isnull=False)[:6]
+    contexto = {
+        'peliculas_poster': peliculas_poster
+    }
+    return render(request, 'usuarios/login.html', contexto)
+    # FIN MODIFICACION DE GEMINI
 
+############################################################################
 
 @login_required
 def logout_view(request):
@@ -75,22 +87,28 @@ def logout_view(request):
         return redirect('usuarios:login')
     return redirect('peliculas:inicio')
 
-
+############################################################################
 
 @login_required
 def perfil(request):
     total_reservas = request.user.reservas.count()
     reservas_activas = request.user.reservas.filter(estado='confirmada').count()
     reservas_pendientes = request.user.reservas.filter(estado='pendiente').count()
-    
+    # MODIFICACION DE GEMINI
+    form = EditarPerfilForm(instance=request.user.perfil)
+    password_form = PasswordChangeForm(request.user)
     contexto = {
         'usuario': request.user,
         'total_reservas': total_reservas,
         'reservas_activas': reservas_activas,
         'reservas_pendientes': reservas_pendientes,
+        'form': form,
+        'password_form': password_form,
     }
+    # FIN MODIFICACION DE GEMINI
     return render(request, 'usuarios/perfil.html', contexto)
 
+############################################################################
 
 @login_required
 def editar_perfil(request):
@@ -108,6 +126,7 @@ def editar_perfil(request):
     }
     return render(request, 'usuarios/editar_perfil.html', contexto)
 
+############################################################################
 
 @login_required
 def cambiar_password(request):

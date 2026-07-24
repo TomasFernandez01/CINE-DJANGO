@@ -4,92 +4,368 @@
 {% block titulo %}Mi Perfil{% endblock %}
 
 {% block extra_css %}
+<!-- MODIFICACION DE GEMINI -->
 <link rel="stylesheet" href="{% static 'css/usuarios/perfil.css' %}">
+<!-- FIN MODIFICACION DE GEMINI -->
 {% endblock %}
 
 {% block contenido %}
-<!-- bloque modificado: clases .usuario-perfil-estilo-N renombradas a nombres descriptivos (ver static/css/usuarios/perfil.css). También se agrega, al lado de "Editar Perfil", un link directo al panel de administración si el usuario  es staff/superuser -->
+<!-- MODIFICACION DE GEMINI -->
 <div class="perfil-contenedor">
-    <h1>Mi Perfil</h1>
+    <h1 style="color: #f5f5f5; margin-bottom: 0.5rem;">Mi Perfil</h1>
     
-    <div class="perfil-tarjeta">
-        <div class="perfil-encabezado">
-            <h2 class="perfil-encabezado-titulo">Información Personal</h2>
-            <div class="perfil-encabezado-acciones">
+    <div class="perfil-dashboard">
+        <!-- Columna izquierda: Sidebar -->
+        <div class="perfil-sidebar">
+            <div class="perfil-avatar-wrapper">
+                <svg class="perfil-avatar-img" viewBox="0 0 24 24" fill="currentColor" style="color: #ccc; padding: 15px;">
+                    <path d="M12 12c2.7 0 4.9-2.2 4.9-4.9S14.7 2.2 12 2.2 7.1 4.4 7.1 7.1 9.3 12 12 12Zm0 2.5c-3.3 0-9.8 1.6-9.8 4.9v2.4h19.6v-2.4c0-3.3-6.5-4.9-9.8-4.9Z"/>
+                </svg>
+                <div class="perfil-avatar-overlay">Cambiar</div>
+            </div>
+            
+            <div class="perfil-user-info">
+                <h3 class="perfil-user-name">{{ usuario.get_full_name|default:usuario.username }}</h3>
+                <p class="perfil-user-username">@{{ usuario.username }}</p>
+            </div>
+            
+            <!-- Club Cine Card (Membresía) -->
+            <div class="perfil-tier-card">
+                <div class="perfil-tier-header">
+                    <span class="perfil-tier-title" style="font-weight: bold; color: #fff; font-size: 0.9rem;">Club Cine</span>
+                    <span id="tier-badge" class="perfil-tier-badge">Cargando...</span>
+                </div>
+                <p class="perfil-tier-info">Suma reservas para subir de nivel y obtener cupones de descuento.</p>
+                <div class="perfil-progreso-barra-bg">
+                    <div id="tier-progress" class="perfil-progreso-barra"></div>
+                </div>
+                <span id="tier-progress-text" class="perfil-progreso-texto"></span>
+            </div>
+            
+            <!-- Pestañas (Tabs) -->
+            <div class="perfil-tab-btn-list">
+                <button class="perfil-tab-btn activa" data-tab="info">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+                        <circle cx="12" cy="7" r="4"></circle>
+                    </svg>
+                    Información Personal
+                </button>
+                <button class="perfil-tab-btn" data-tab="editar">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
+                        <path d="M18.5 2.5a2.121 2.121 0 1 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
+                    </svg>
+                    Editar Perfil
+                </button>
+                <button class="perfil-tab-btn" data-tab="seguridad">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
+                        <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
+                    </svg>
+                    Seguridad
+                </button>
                 {% if user.is_staff or user.is_superuser %}
-                <a href="{% url 'panel:inicio' %}" class="perfil-boton-panel">
-                    Ir al Panel
+                <a href="{% url 'panel:inicio' %}" class="perfil-tab-btn" style="text-decoration: none;">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <rect x="3" y="3" width="7" height="9"></rect>
+                        <rect x="14" y="3" width="7" height="5"></rect>
+                        <rect x="14" y="12" width="7" height="9"></rect>
+                        <rect x="3" y="16" width="7" height="5"></rect>
+                    </svg>
+                    Ir al Panel Staff
                 </a>
                 {% endif %}
-                <a href="{% url 'usuarios:editar_perfil' %}" class="perfil-boton-editar">
-                    Editar Perfil
-                </a>
             </div>
         </div>
         
-        <div class="perfil-datos-grid">
-            <div>
-                <div class="perfil-dato">
-                    <p class="perfil-dato-etiqueta">Nombre de usuario</p>
-                    <p class="perfil-dato-valor">{{ usuario.username }}</p>
+        <!-- Columna derecha: Paneles de Contenido -->
+        <div class="perfil-content-panel">
+            
+            <!-- Pestaña 1: Info -->
+            <div id="tab-info" class="perfil-tab-seccion activa">
+                <h2 class="perfil-encabezado-titulo" style="border-bottom: 2px solid #e50914; padding-bottom: 0.5rem; margin-bottom: 1.5rem;">Información Personal</h2>
+                
+                <div class="perfil-datos-grid">
+                    <div>
+                        <div class="perfil-dato">
+                            <p class="perfil-dato-etiqueta">Nombre de usuario</p>
+                            <p class="perfil-dato-valor">{{ usuario.username }}</p>
+                        </div>
+                        <div class="perfil-dato">
+                            <p class="perfil-dato-etiqueta">Nombre completo</p>
+                            <p class="perfil-dato-valor">{{ usuario.get_full_name|default:"No especificado" }}</p>
+                        </div>
+                        <div class="perfil-dato">
+                            <p class="perfil-dato-etiqueta">Email</p>
+                            <p class="perfil-dato-valor">{{ usuario.email|default:"No especificado" }}</p>
+                        </div>
+                    </div>
+                    <div>
+                        <div class="perfil-dato">
+                            <p class="perfil-dato-etiqueta">Teléfono</p>
+                            <p class="perfil-dato-valor">{{ usuario.perfil.telefono|default:"No especificado" }}</p>
+                        </div>
+                        <div class="perfil-dato">
+                            <p class="perfil-dato-etiqueta">Fecha de nacimiento</p>
+                            <p class="perfil-dato-valor">{{ usuario.perfil.fecha_nacimiento|date:"d/m/Y"|default:"No especificado" }}</p>
+                        </div>
+                        <div class="perfil-dato">
+                            <p class="perfil-dato-etiqueta">Dirección</p>
+                            <p class="perfil-dato-valor">{{ usuario.perfil.direccion|default:"No especificado" }}</p>
+                        </div>
+                    </div>
                 </div>
                 
-                <div class="perfil-dato">
-                    <p class="perfil-dato-etiqueta">Nombre completo</p>
-                    <p class="perfil-dato-valor">
-                        {{ usuario.get_full_name|default:"No especificado" }}
-                    </p>
-                </div>
-                
-                <div class="perfil-dato">
-                    <p class="perfil-dato-etiqueta">Email</p>
-                    <p class="perfil-dato-valor">{{ usuario.email|default:"No especificado" }}</p>
+                <!-- Estadísticas en Widgets -->
+                <h3 style="color: #f5f5f5; border-top: 1px solid #2a2a2a; margin-top: 2rem; padding-top: 1.5rem; margin-bottom: 1rem;">Estadísticas de Actividad</h3>
+                <div class="perfil-widgets-grid">
+                    <div class="perfil-widget-card">
+                        <div class="perfil-widget-val">{{ total_reservas }}</div>
+                        <div class="perfil-widget-label">Reservas Totales</div>
+                    </div>
+                    <div class="perfil-widget-card">
+                        <div class="perfil-widget-val">{{ reservas_activas }}</div>
+                        <div class="perfil-widget-label">Confirmadas</div>
+                    </div>
+                    <div class="perfil-widget-card">
+                        <div class="perfil-widget-val">{{ reservas_pendientes }}</div>
+                        <div class="perfil-widget-label">Pendientes</div>
+                    </div>
                 </div>
             </div>
             
-            <div>
-                <div class="perfil-dato">
-                    <p class="perfil-dato-etiqueta">Teléfono</p>
-                    <p class="perfil-dato-valor">{{ usuario.perfil.telefono|default:"No especificado" }}</p>
-                </div>
+            <!-- Pestaña 2: Editar Perfil -->
+            <div id="tab-editar" class="perfil-tab-seccion">
+                <h2 class="perfil-encabezado-titulo" style="border-bottom: 2px solid #e50914; padding-bottom: 0.5rem; margin-bottom: 1.5rem;">Editar Perfil</h2>
                 
-                <div class="perfil-dato">
-                    <p class="perfil-dato-etiqueta">Fecha de nacimiento</p>
-                    <p class="perfil-dato-valor">
-                        {{ usuario.perfil.fecha_nacimiento|date:"d/m/Y"|default:"No especificado" }}
-                    </p>
-                </div>
-                
-                <div class="perfil-dato">
-                    <p class="perfil-dato-etiqueta">Dirección</p>
-                    <p class="perfil-dato-valor">{{ usuario.perfil.direccion|default:"No especificado" }}</p>
-                </div>
+                <form method="post" action="{% url 'usuarios:editar_perfil' %}">
+                    {% csrf_token %}
+                    {% for field in form %}
+                        <div class="usuario-campo">
+                            <label for="{{ field.id_for_label }}" class="usuario-etiqueta">
+                                {{ field.label }}
+                                {% if field.field.required %}<span class="usuario-requerido">*</span>{% endif %}
+                            </label>
+                            <div class="input-icono-wrapper">
+                                <span class="input-icono">
+                                    {% if field.name == 'first_name' or field.name == 'last_name' %}
+                                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
+                                    {% elif field.name == 'email' %}
+                                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"></path><polyline points="22,6 12,13 2,6"></polyline></svg>
+                                    {% elif field.name == 'telefono' %}
+                                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.5 19.5 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"></path></svg>
+                                    {% elif field.name == 'fecha_nacimiento' %}
+                                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg>
+                                    {% else %}
+                                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path><circle cx="12" cy="10" r="3"></circle></svg>
+                                    {% endif %}
+                                </span>
+                                {{ field }}
+                            </div>
+                            {% if field.errors %}
+                                <div class="usuario-error">{{ field.errors }}</div>
+                            {% endif %}
+                            {% if field.help_text %}
+                                <small class="usuario-ayuda">{{ field.help_text }}</small>
+                            {% endif %}
+                        </div>
+                    {% endfor %}
+                    <div class="usuario-acciones">
+                        <button type="submit" class="usuario-boton usuario-boton--exito">
+                            Guardar Cambios
+                        </button>
+                    </div>
+                </form>
             </div>
-        </div>
-        
-        <div class="perfil-seccion">
-            <h3 class="perfil-seccion-titulo">Seguridad</h3>
-            <a href="{% url 'usuarios:cambiar_password' %}" class="perfil-boton-secundario">
-                Cambiar Contraseña
-            </a>
-        </div>
-        
-        <div class="perfil-seccion">
-            <h3 class="perfil-seccion-titulo">Estadísticas</h3>
-            <p class="perfil-stat">
-                <strong>Miembro desde:</strong> {{ usuario.date_joined|date:"F Y" }}
-            </p>
-            <p class="perfil-stat">
-                <strong>Total de reservas:</strong> {{ total_reservas }}
-            </p>
-            <p class="perfil-stat">
-                <strong>Reservas confirmadas:</strong> {{ reservas_activas }}
-            </p>
-            <p class="perfil-stat">
-                <strong>Reservas pendientes:</strong> {{ reservas_pendientes }}
-            </p>
+            
+            <!-- Pestaña 3: Seguridad (Cambiar Contraseña) -->
+            <div id="tab-seguridad" class="perfil-tab-seccion">
+                <h2 class="perfil-encabezado-titulo" style="border-bottom: 2px solid #e50914; padding-bottom: 0.5rem; margin-bottom: 1.5rem;">Seguridad</h2>
+                
+                <form method="post" action="{% url 'usuarios:cambiar_password' %}">
+                    {% csrf_token %}
+                    {% for field in password_form %}
+                        <div class="usuario-campo">
+                            <label for="{{ field.id_for_label }}" class="usuario-etiqueta">
+                                {{ field.label }}
+                            </label>
+                            <div class="contraseña-contenedor">
+                                <input
+                                    type="password"
+                                    id="{{ field.id_for_label }}"
+                                    name="{{ field.name }}"
+                                    class="form-control"
+                                    {% if field.field.required %}required{% endif %}
+                                >
+                                <button type="button" class="ojo-toggle toggle-password-campo" aria-label="Mostrar contraseña">
+                                    <svg class="ojo-abierto" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="20" height="20">
+                                        <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
+                                        <circle cx="12" cy="12" r="3"></circle>
+                                    </svg>
+                                    <svg class="ojo-cerrado" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="20" height="20" style="display: none;">
+                                        <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"></path>
+                                        <line x1="1" y1="1" x2="23" y2="23"></line>
+                                    </svg>
+                                </button>
+                            </div>
+                            {% if field.errors %}
+                                <div class="usuario-error">{{ field.errors }}</div>
+                            {% endif %}
+                            {% if field.name == 'new_password1' %}
+                                <div class="password-strength-container">
+                                    <div class="password-strength-bar-bg">
+                                        <div id="strength-bar" class="password-strength-bar"></div>
+                                    </div>
+                                    <span id="strength-text" class="password-strength-text">Escribe una contraseña</span>
+                                </div>
+                            {% endif %}
+                        </div>
+                    {% endfor %}
+                    
+                    <div class="usuario-alerta usuario-alerta--info">
+                        <p class="usuario-consejo">
+                            <strong>Consejos de seguridad:</strong><br>
+                            • Usa al menos 8 caracteres<br>
+                            • Combina letras, números y símbolos<br>
+                            • No uses información personal obvia
+                        </p>
+                    </div>
+                    
+                    <div class="usuario-acciones">
+                        <button type="submit" class="usuario-boton usuario-boton--exito">
+                            Cambiar Contraseña
+                        </button>
+                    </div>
+                </form>
+            </div>
+            
         </div>
     </div>
 </div>
+<!-- FIN MODIFICACION DE GEMINI -->
+{% endblock %}
 
+{% block extra_js %}
+<!-- MODIFICACION DE GEMINI -->
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // 1. Pestañas (Tabs)
+    const tabs = document.querySelectorAll('.perfil-tab-btn');
+    const sections = document.querySelectorAll('.perfil-tab-seccion');
+    
+    tabs.forEach(tab => {
+        tab.addEventListener('click', function() {
+            const target = tab.dataset.tab;
+            if (!target) return; // Enlace al panel de administración staff
+            
+            tabs.forEach(t => t.classList.remove('activa'));
+            sections.forEach(s => s.classList.remove('activa'));
+            
+            tab.classList.add('activa');
+            const targetSec = document.getElementById(`tab-${target}`);
+            if (targetSec) {
+                targetSec.classList.add('activa');
+            }
+        });
+    });
+
+    // 2. Calcular Nivel del Club y Progreso
+    const totalReservas = parseInt("{{ total_reservas }}");
+    const badgeEl = document.getElementById('tier-badge');
+    const barEl = document.getElementById('tier-progress');
+    const textEl = document.getElementById('tier-progress-text');
+    
+    if (badgeEl && barEl && textEl) {
+        let tier = 'Bronce';
+        let percent = 0;
+        let text = '';
+        
+        if (totalReservas < 5) {
+            tier = 'Bronce';
+            percent = (totalReservas / 5) * 100;
+            const faltantes = 5 - totalReservas;
+            text = `${faltantes} reserva(s) para nivel Plata`;
+            badgeEl.classList.add('bronce');
+        } else if (totalReservas < 10) {
+            tier = 'Plata';
+            percent = ((totalReservas - 5) / 5) * 100;
+            const faltantes = 10 - totalReservas;
+            text = `${faltantes} reserva(s) para nivel Oro`;
+            badgeEl.classList.add('plata');
+        } else {
+            tier = 'Oro';
+            percent = 100;
+            text = '¡Nivel máximo alcanzado!';
+            badgeEl.classList.add('oro');
+        }
+        
+        badgeEl.textContent = tier;
+        barEl.style.width = `${percent}%`;
+        textEl.textContent = text;
+    }
+
+    // 3. Mostrar/Ocultar contraseñas
+    const pwdToggles = document.querySelectorAll('.toggle-password-campo');
+    pwdToggles.forEach(btn => {
+        btn.addEventListener('click', function() {
+            const container = btn.closest('.contraseña-contenedor');
+            const input = container.querySelector('input');
+            const openEye = container.querySelector('.ojo-abierto');
+            const closedEye = container.querySelector('.ojo-cerrado');
+            
+            if (input.type === 'password') {
+                input.type = 'text';
+                openEye.style.display = 'none';
+                closedEye.style.display = 'block';
+            } else {
+                input.type = 'password';
+                openEye.style.display = 'block';
+                closedEye.style.display = 'none';
+            }
+        });
+    });
+
+    // 4. Medidor de fuerza de contraseña
+    const newPwdInput = document.getElementById('id_new_password1');
+    const strengthBar = document.getElementById('strength-bar');
+    const strengthText = document.getElementById('strength-text');
+    
+    if (newPwdInput && strengthBar && strengthText) {
+        newPwdInput.addEventListener('input', function() {
+            const val = newPwdInput.value;
+            let score = 0;
+            if (!val) {
+                strengthBar.style.width = '0%';
+                strengthText.textContent = 'Escribe una contraseña';
+                return;
+            }
+            
+            if (val.length >= 8) score++;
+            if (/[A-Z]/.test(val)) score++;
+            if (/[a-z]/.test(val)) score++;
+            if (/[0-9]/.test(val)) score++;
+            if (/[^A-Za-z0-9]/.test(val)) score++;
+            
+            let percent = (score / 5) * 100;
+            strengthBar.style.width = `${percent}%`;
+            
+            if (score <= 2) {
+                strengthBar.style.backgroundColor = '#ff6b6b';
+                strengthText.textContent = 'Fuerza: Débil';
+                strengthText.style.color = '#ff6b6b';
+            } else if (score <= 4) {
+                strengthBar.style.backgroundColor = '#ffc107';
+                strengthText.textContent = 'Fuerza: Media';
+                strengthText.style.color = '#ffc107';
+            } else {
+                strengthBar.style.backgroundColor = '#28a745';
+                strengthText.textContent = 'Fuerza: Fuerte';
+                strengthText.style.color = '#28a745';
+            }
+        });
+    }
+});
+</script>
+<!-- FIN MODIFICACION DE GEMINI -->
 {% endblock %}

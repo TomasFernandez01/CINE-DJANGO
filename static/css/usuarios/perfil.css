@@ -79,3 +79,275 @@
 .perfil-boton-secundario:hover { background-color: #444; }
 
 .perfil-stat { color: #ccc; margin: 0.5rem 0; }
+
+/* MODIFICACION DE GEMINI */
+.perfil-dashboard {
+    display: grid;
+    grid-template-columns: 280px 1fr;
+    gap: 2rem;
+    margin-top: 1.5rem;
+}
+
+@media (max-width: 900px) {
+    .perfil-dashboard {
+        grid-template-columns: 1fr;
+    }
+}
+
+.perfil-sidebar {
+    background-color: #1f1f1f;
+    border: 1px solid #2a2a2a;
+    border-radius: 8px;
+    padding: 1.5rem;
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+    height: fit-content;
+}
+
+.perfil-avatar-wrapper {
+    position: relative;
+    width: 120px;
+    height: 120px;
+    margin: 0 auto;
+    border-radius: 50%;
+    overflow: hidden;
+    border: 3px solid #e50914;
+    cursor: pointer;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.4);
+}
+
+.perfil-avatar-img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.perfil-avatar-overlay {
+    position: absolute;
+    inset: 0;
+    background-color: rgba(0, 0, 0, 0.6);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #fff;
+    font-size: 0.8rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    opacity: 0;
+    transition: opacity 0.2s ease;
+}
+
+.perfil-avatar-wrapper:hover .perfil-avatar-overlay {
+    opacity: 1;
+}
+
+.perfil-user-info {
+    text-align: center;
+}
+
+.perfil-user-name {
+    color: #f5f5f5;
+    font-size: 1.2rem;
+    font-weight: bold;
+    margin-bottom: 0.25rem;
+}
+
+.perfil-user-username {
+    color: #888;
+    font-size: 0.9rem;
+}
+
+.perfil-tab-btn-list {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+.perfil-tab-btn {
+    background: none;
+    border: none;
+    padding: 0.85rem 1.25rem;
+    text-align: left;
+    color: #bbb;
+    font-size: 0.95rem;
+    font-weight: 600;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: background-color 0.2s, color 0.2s;
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+}
+
+.perfil-tab-btn:hover {
+    background-color: #2a2a2a;
+    color: #fff;
+}
+
+.perfil-tab-btn.activa {
+    background-color: #e50914;
+    color: #fff;
+}
+
+.perfil-tab-btn svg {
+    width: 18px;
+    height: 18px;
+}
+
+.perfil-content-panel {
+    background-color: #1f1f1f;
+    border: 1px solid #2a2a2a;
+    border-radius: 8px;
+    padding: 2rem;
+}
+
+.perfil-tab-seccion {
+    display: none;
+}
+
+.perfil-tab-seccion.activa {
+    display: block;
+    animation: fadeIn 0.3s ease;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(5px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+/* Membresía Cine Club */
+.perfil-tier-card {
+    background: linear-gradient(135deg, #2b1c1c 0%, #1a1a2e 100%);
+    border: 1px solid #3c2323;
+    border-radius: 8px;
+    padding: 1.25rem;
+    color: #e8e8e8;
+}
+
+.perfil-tier-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 0.75rem;
+}
+
+.perfil-tier-badge {
+    font-size: 1.1rem;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    padding: 0.2rem 0.6rem;
+    border-radius: 4px;
+    display: inline-block;
+}
+
+.perfil-tier-badge.bronce {
+    background-color: #cd7f32;
+    color: #fff;
+}
+
+.perfil-tier-badge.plata {
+    background-color: #c0c0c0;
+    color: #111;
+}
+
+.perfil-tier-badge.oro {
+    background-color: #ffd700;
+    color: #111;
+}
+
+.perfil-tier-info {
+    font-size: 0.85rem;
+    color: #aaa;
+    margin-bottom: 0.75rem;
+}
+
+.perfil-progreso-barra-bg {
+    height: 6px;
+    background-color: #333;
+    border-radius: 3px;
+    overflow: hidden;
+    margin-bottom: 0.25rem;
+}
+
+.perfil-progreso-barra {
+    height: 100%;
+    background-color: #e50914;
+    width: 0%;
+    transition: width 0.5s ease;
+}
+
+.perfil-progreso-texto {
+    font-size: 0.75rem;
+    color: #888;
+    display: block;
+    text-align: right;
+}
+
+/* Widgets de Estadísticas */
+.perfil-widgets-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    gap: 1.25rem;
+    margin-top: 1.5rem;
+}
+
+.perfil-widget-card {
+    background-color: #242424;
+    border: 1px solid #333;
+    border-radius: 8px;
+    padding: 1.25rem;
+    text-align: center;
+    transition: transform 0.2s ease, border-color 0.2s ease;
+}
+
+.perfil-widget-card:hover {
+    transform: translateY(-2px);
+    border-color: #e50914;
+}
+
+.perfil-widget-val {
+    font-size: 2.2rem;
+    font-weight: 800;
+    color: #fff;
+    line-height: 1.2;
+    margin-bottom: 0.25rem;
+}
+
+.perfil-widget-label {
+    font-size: 0.85rem;
+    color: #999;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.02em;
+}
+
+/* Inputs decorados con iconos */
+.input-icono-wrapper {
+    position: relative;
+    display: flex;
+    align-items: center;
+}
+
+.input-icono-wrapper .form-control {
+    padding-left: 2.5rem;
+}
+
+.input-icono {
+    position: absolute;
+    left: 0.85rem;
+    color: #777;
+    pointer-events: none;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 16px;
+    height: 16px;
+}
+
+.input-icono svg {
+    width: 100%;
+    height: 100%;
+}
+/* FIN MODIFICACION DE GEMINI */
