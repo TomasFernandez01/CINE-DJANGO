@@ -65,9 +65,6 @@
             </div>
             {% endif %}
 
-            {# modificado (Fase G): datos del comprador — esto ya existía en #}
-            {# detalle_reserva.html pero faltaba acá. Como detalle_reserva sale #}
-            {# del flujo de compra, esta info tiene que vivir en el comprobante. #}
             <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 1rem; margin-bottom: 1.5rem; font-size: 0.85rem;">
                 <div>
                     <div style="font-size: 0.72rem; color: #999; text-transform: uppercase;">TITULAR</div>
@@ -127,7 +124,21 @@
                     </div>
                     {% endif %}
 
-                    {% if pago.combo %}
+                    {% comment %} {% if pago.combo %}
+                    <div style="display: flex; justify-content: space-between; color: #ff8c00; font-weight: 500;">
+                        <span>🍿 {% if pago.cantidad_combo > 1 %}{{ pago.cantidad_combo }}x {% endif %}{{ pago.combo.nombre }}</span>
+                        <span>+${{ pago.precio_combo }}</span>
+                    </div>
+                    {% endif %} {% endcomment %}
+                    {# modificado (combos múltiples): se itera pago.items (el detalle real, uno por cada ítem elegido). Si el pago es viejo y no tiene ItemPago cargados, se cae al campo legacy pago.combo/cantidad_combo/precio_combo de toda la vida #}
+                    {% if pago.items.all %}
+                        {% for item in pago.items.all %}
+                        <div style="display: flex; justify-content: space-between; color: #ff8c00; font-weight: 500;">
+                            <span>🍿 {% if item.cantidad > 1 %}{{ item.cantidad }}x {% endif %}{{ item.combo.nombre|default:"Ítem eliminado" }}</span>
+                            <span>+${{ item.subtotal }}</span>
+                        </div>
+                        {% endfor %}
+                    {% elif pago.combo %}
                     <div style="display: flex; justify-content: space-between; color: #ff8c00; font-weight: 500;">
                         <span>🍿 {% if pago.cantidad_combo > 1 %}{{ pago.cantidad_combo }}x {% endif %}{{ pago.combo.nombre }}</span>
                         <span>+${{ pago.precio_combo }}</span>
@@ -193,7 +204,15 @@
         <div style="background: #1a1a2e; padding: 1rem 2rem; text-align: center; color: rgba(255,255,255,0.6); font-size: 0.8rem;">
             <div style="margin-bottom: 0.25rem;">Llegá al menos <strong style="color: white;">30 minutos antes</strong> de la función</div>
             <div>Las entradas no son reembolsables · Conservá este comprobante</div>
-            {% if pago.combo %}
+            
+            {% comment %} {% if pago.combo %}
+            <div style="margin-top: 0.25rem;">🍿 Retirá tu <strong style="color: white;">{{ pago.combo.nombre }}</strong> en el mostrador de combos</div>
+            {% endif %} {% endcomment %}
+
+            {# modificado (combos múltiples): mismo criterio — items reales primero, fallback a pago.combo legacy #}
+            {% if pago.items.all %}
+            <div style="margin-top: 0.25rem;">🍿 Retirá tu pedido en el mostrador de combos</div>
+            {% elif pago.combo %}
             <div style="margin-top: 0.25rem;">🍿 Retirá tu <strong style="color: white;">{{ pago.combo.nombre }}</strong> en el mostrador de combos</div>
             {% endif %}
         </div>
@@ -224,27 +243,4 @@
 
 </div>
 <link rel="stylesheet" href="{% static 'css/pagos/comprobante_pago.css' %}">
-{% comment %} 
-<style>
-    @media print {
-        nav, h1, .no-print {
-            display: none !important;
-        }
-        body {
-            background: white !important;
-            padding: 0 !important;
-            margin: 0 !important;
-        }
-        .container {
-            max-width: 100% !important;
-            margin: 0 !important;
-            padding: 0 !important;
-        }
-        #ticket {
-            box-shadow: none !important;
-            border: 1px solid #333 !important;
-            page-break-inside: avoid;
-        }
-    }
-</style> {% endcomment %}
 {% endblock %}

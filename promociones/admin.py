@@ -87,8 +87,9 @@ class PromocionDiaAdmin(admin.ModelAdmin):
 
 @admin.register(Combo)
 class ComboAdmin(admin.ModelAdmin):
-    list_display = ['nombre', 'descripcion', 'precio', 'activo', 'tiene_imagen']
-    list_filter = ['activo']
+    # modificado (combos múltiples): se suma categoria a la lista y al filtro
+    list_display = ['nombre','categoria', 'descripcion', 'precio', 'activo', 'tiene_imagen']
+    list_filter = ['activo','categoria']
     # list_editable = ['activo', 'precio']
     search_fields = ['nombre', 'descripcion']
     # def tiene_imagen(self, obj):

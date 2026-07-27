@@ -152,13 +152,26 @@
                             <span>-${{ reserva.pago.descuento_cupon }}</span>
                         </div>
                     {% endif %}
-
-                    {% if reserva.pago.combo %}
+                    {# modificado (combos múltiples): se itera reserva.pago.items (el detalle real). Fallback a pago.combo legacy para pagos viejos sin ItemPago #}
+                    {% if reserva.pago.items.all %}
+                        {% for item in reserva.pago.items.all %}
+                        <div class="reserva-dr-desglose-fila reserva-dr-desglose-combo">
+                            <span>🍿 {% if item.cantidad > 1 %}{{ item.cantidad }}x {% endif %}{{ item.combo.nombre|default:"Ítem eliminado" }}</span>
+                            <span>+${{ item.subtotal }}</span>
+                        </div>
+                        {% endfor %}
+                    {% elif reserva.pago.combo %}
                         <div class="reserva-dr-desglose-fila reserva-dr-desglose-combo">
                             <span>🍿 {% if reserva.pago.cantidad_combo > 1 %}{{ reserva.pago.cantidad_combo }}x {% endif %}{{ reserva.pago.combo.nombre }}</span>
                             <span>+${{ reserva.pago.precio_combo }}</span>
                         </div>
                     {% endif %}
+                    {% comment %} {% if reserva.pago.combo %}
+                        <div class="reserva-dr-desglose-fila reserva-dr-desglose-combo">
+                            <span>🍿 {% if reserva.pago.cantidad_combo > 1 %}{{ reserva.pago.cantidad_combo }}x {% endif %}{{ reserva.pago.combo.nombre }}</span>
+                            <span>+${{ reserva.pago.precio_combo }}</span>
+                        </div>
+                    {% endif %} {% endcomment %}
 
                     <div class="reserva-dr-desglose-total">
                         <span class="reserva-dr-desglose-total-label">Total pagado</span>

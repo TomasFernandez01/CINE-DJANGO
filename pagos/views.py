@@ -5,7 +5,7 @@ from django.http import JsonResponse
 from django.views.decorators.csrf import csrf_exempt
 from django.utils import timezone
 from decimal import Decimal
-from .models import Pago
+from .models import Pago, ItemPago
 from reservas.models import Reserva
 from django.db.models import Sum, Count, Q
 from datetime import timedelta
@@ -39,24 +39,63 @@ def _obtener_promo_dia():
     return PromocionDia.objects.filter(dia_semana=dia_actual, activo=True).first()
  
 def _obtener_combos():
+    """Retorna los ítems de concesión activos (combos/bebidas/snacks/pochoclos), agrupados por categoría."""
+    if not PROMOCIONES_DISPONIBLE:
+        return {}
+    items = Combo.objects.filter(activo=True)
+    # modificado (combos múltiples): se agrupan acá (no en el template) para
+    # poder mostrar una sección por categoría en elegir_combo.html
+    agrupados = {}
+    for clave, etiqueta in Combo.CATEGORIA_CHOICES:
+        del etiqueta  # solo interesa la clave acá, la etiqueta la resuelve el template con get_categoria_display
+        agrupados[clave] = [i for i in items if i.categoria == clave]
+    return agrupados
     """Retorna combos activos."""
     if not PROMOCIONES_DISPONIBLE:
         return []
     return Combo.objects.filter(activo=True)
  
-def _calcular_descuentos(monto_original, cantidad_entradas, codigo_cupon, combo_id, usuario, promo_dia):
+def _parsear_items_seleccionados(items_crudos):
     """
-    Calcula todos los descuentos y retorna un dict con los resultados.
-    La promo_dia y el cupón se aplican sobre el monto de entradas.
-    El combo es un adicional.
+    modificado (combos múltiples): reemplaza el viejo combo_id único por una
+    lista de {id, cantidad}. Valida cada id contra los ítems activos reales
+    y capa la cantidad entre 1 y 10 (mismo límite que tenía cantidad_combo).
+    Ítems con cantidad 0 o inválida se descartan silenciosamente (el usuario
+    los dejó en el stepper en 0, no significa que quiera "0 unidades").
+    Devuelve una lista de dicts [{'combo_id': int, 'cantidad': int}, ...]
+    lista para guardar en sesión.
+    """
+    if not PROMOCIONES_DISPONIBLE or not items_crudos:
+        return []
+    resultado = []
+    for entrada in items_crudos:
+        try:
+            combo_id = int(entrada.get('id'))
+            cantidad = int(entrada.get('cantidad', 0))
+        except (TypeError, ValueError, AttributeError):
+            continue
+        if cantidad < 1:
+            continue
+        cantidad = min(cantidad, 10)
+        if Combo.objects.filter(id=combo_id, activo=True).exists():
+            resultado.append({'combo_id': combo_id, 'cantidad': cantidad})
+    return resultado
+
+
+# def _calcular_descuentos(monto_original, cantidad_entradas, codigo_cupon, combo_id, usuario, promo_dia):
+def _calcular_descuentos(monto_original, cantidad_entradas, codigo_cupon, items_seleccionados, usuario, promo_dia):
+    """
+    Calcula todos los descuentos y retorna un dict con los resultados. La promo_dia y el cupón se aplican sobre el monto de entradas.
+    Los ítems de concesión (combos/bebidas/snacks/pochoclos) son un adicional.
+    modificado (combos múltiples): `combo_id` (uno solo) pasa a ser `items_seleccionados`, una lista de {'combo_id', 'cantidad'} — puede haber varios ítems distintos, cada uno con su propia cantidad.
     """
     descuento_promo = Decimal('0')
     descuento_cupon_val = Decimal('0')
     cupon_obj = None
-    combo_obj = None
+    # combo_obj = None
     promo_dia_obj = None
     error_cupon = None
- 
+
     # 1. Promo del día
     if promo_dia:
         descuento_promo = promo_dia.calcular_descuento(monto_original, cantidad_entradas)
@@ -82,7 +121,40 @@ def _calcular_descuentos(monto_original, cantidad_entradas, codigo_cupon, combo_
                 cupon_obj = cupon
         except Cupon.DoesNotExist:
             error_cupon = 'Código de cupón no encontrado'
- 
+    # 3. Ítems de concesión (combo/bebida/snack/pochoclo) — modificado (combos múltiples)
+    items_detalle = []
+    precio_items_total = Decimal('0')
+    if items_seleccionados and PROMOCIONES_DISPONIBLE:
+        for entrada in items_seleccionados:
+            try:
+                combo_obj = Combo.objects.get(id=entrada['combo_id'], activo=True)
+            except Combo.DoesNotExist:
+                continue
+            cantidad = entrada.get('cantidad', 1)
+            subtotal = combo_obj.precio * cantidad
+            items_detalle.append({
+                'combo_obj': combo_obj,
+                'cantidad': cantidad,
+                'precio_unitario': combo_obj.precio,
+                'subtotal': subtotal,
+            })
+            precio_items_total += subtotal
+
+    descuento_total = descuento_promo + descuento_cupon_val
+    monto_final = max(monto_original - descuento_total, Decimal('0')) + precio_items_total
+
+    return {
+        'monto_original': monto_original,
+        'descuento_promo_dia': descuento_promo,
+        'descuento_cupon': descuento_cupon_val,
+        'descuento_total': descuento_total,
+        'precio_combo': precio_items_total,
+        'items_detalle': items_detalle,
+        'monto_final': monto_final,
+        'cupon_obj': cupon_obj,
+        'promo_dia_obj': promo_dia_obj,
+        'error_cupon': error_cupon,
+    }
     # 3. Combo
     if combo_id and PROMOCIONES_DISPONIBLE:
         try:
@@ -129,21 +201,41 @@ def elegir_combo(request, reserva_id):
         messages.error(request, 'Esta reserva ya tiene un pago registrado.')
         return redirect('reservas:detalle_reserva', reserva_id=reserva.id)
 
-    combos = _obtener_combos()
+    #combos = _obtener_combos()
+    items_por_categoria = _obtener_combos()
 
     if request.method == 'POST':
+        # modificado (combos múltiples): antes venía combo_id + cantidad_combo (un solo ítem). Ahora el JS arma un JSON con todos los ítems elegidos (cada uno con su propia cantidad) en un input oculto.
+        import json
+        try:
+            items_crudos = json.loads(request.POST.get('items_json', '[]'))
+        except (json.JSONDecodeError, TypeError):
+            items_crudos = []
+        items_validados = _parsear_items_seleccionados(items_crudos)
+        # se guarda como lista (antes era un dict {combo_id, cantidad} o None)
+        request.session[f'combo_reserva_{reserva.id}'] = items_validados
+        return redirect('pagos:procesar_pago', reserva_id=reserva.id)
         combo_id = request.POST.get('combo_id', '').strip()
         try:
             cantidad_combo = int(request.POST.get('cantidad_combo', 1))
         except (TypeError, ValueError):
             cantidad_combo = 1
-        cantidad_combo = max(1, min(cantidad_combo, 10)) 
-        # modificado (Fase E): ahora se guarda un dict {combo_id, cantidad} en vez de solo el id — procesar_pago ya sabe leer ambos formatos (por compatibilidad, si combo_id viene vacío se guarda None)
+        cantidad_combo = max(1, min(cantidad_combo, 10))
         request.session[f'combo_reserva_{reserva.id}'] = (
             {'combo_id': combo_id, 'cantidad': cantidad_combo} if combo_id else None
         )
         return redirect('pagos:procesar_pago', reserva_id=reserva.id)
-
+    contexto = {
+        'reserva': reserva,
+        'items_por_categoria': items_por_categoria,
+        # modificado (combos múltiples): lista plana {id, nombre, precio} para el JS del carrito (elegir_combo.js), vía json_script.
+        'items_json': [
+            {'id': i.id, 'nombre': i.nombre, 'precio': float(i.precio)}
+            for lista in items_por_categoria.values() for i in lista
+        ],
+        'total_entradas': reserva.total(),
+    }
+    return render(request, 'pagos/elegir_combo.html', contexto)
     contexto = {
         'reserva': reserva,
         'combos': combos,
@@ -170,28 +262,30 @@ def procesar_pago(request, reserva_id):
         messages.error(request, 'Esta reserva ya tiene un pago registrado.')
         return redirect('reservas:detalle_reserva', reserva_id=reserva.id)
     
-    #---------------------------------------------------------------------
-    #promo_dia = _obtener_promo_dia(); combos = _obtener_combos(); monto_original = reserva.total()
-    
-    # modificado: promo_dia/cupón ya se eligieron y validaron en el paso 2 ("elegir-entrada"), y el combo en el paso 4 ("elegir-combo"). Esta vista ya NO vuelve a pedirlos por formulario — los lee de la sesión, guardada scoped por reserva.id en esos dos pasos. Antes acá se llamaba a _obtener_promo_dia(), que buscaba la promo del DÍA DE HOY (timezone.now().weekday()) en vez del día de la FUNCIÓN — quedaba mal si pagabas un día distinto al de la función. Ahora se usa el promo_dia_id que ya se resolvió correctamente en el paso 2 con el día de la función.
     datos_promo = request.session.get(f'promo_reserva_{reserva.id}', {}) or {}
     codigo_cupon = datos_promo.get('cupon_codigo') or ''
     promo_dia = None
     if datos_promo.get('promo_dia_id') and PROMOCIONES_DISPONIBLE:
         promo_dia = PromocionDia.objects.filter(id=datos_promo['promo_dia_id'], activo=True).first()
 
-    # modificado (Fase E): combo_reserva_<id> ahora guarda un dict
-    # {combo_id, cantidad} en vez de solo el id — se soporta también el
-    # formato viejo (un string con solo el id) por si quedó algo en sesión
-    # de antes de este cambio.
+    # modificado (combos múltiples): combo_reserva_<id> ahora guarda una LISTA de {'combo_id', 'cantidad'} (uno por cada ítem elegido, no uno solo). Se soportan también los formatos viejos (dict único o string con un solo id) por si quedó algo en sesión de antes de este cambio.
     datos_combo = request.session.get(f'combo_reserva_{reserva.id}')
-    combo_id = None
-    cantidad_combo = 1
-    if isinstance(datos_combo, dict):
-        combo_id = datos_combo.get('combo_id')
-        cantidad_combo = datos_combo.get('cantidad', 1) or 1
+    if isinstance(datos_combo, list):
+        items_seleccionados = datos_combo
+    elif isinstance(datos_combo, dict):
+        items_seleccionados = [{'combo_id': datos_combo.get('combo_id'), 'cantidad': datos_combo.get('cantidad', 1) or 1}]
     elif datos_combo:
-        combo_id = datos_combo
+        items_seleccionados = [{'combo_id': datos_combo, 'cantidad': 1}]
+    else:
+        items_seleccionados = []
+    #datos_combo = request.session.get(f'combo_reserva_{reserva.id}')
+    #combo_id = None
+    #cantidad_combo = 1
+    #if isinstance(datos_combo, dict):
+    #    combo_id = datos_combo.get('combo_id')
+    #    cantidad_combo = datos_combo.get('cantidad', 1) or 1
+    #elif datos_combo:
+    #    combo_id = datos_combo
     #combo_id = request.session.get(f'combo_reserva_{reserva.id}')
     
     monto_original = reserva.total()
@@ -200,25 +294,25 @@ def procesar_pago(request, reserva_id):
         monto_original=monto_original,
         cantidad_entradas=reserva.cantidad_entradas,
         codigo_cupon=codigo_cupon,
-        combo_id=combo_id,
+        #combo_id=combo_id,
+        items_seleccionados=items_seleccionados,
         usuario=request.user,
         promo_dia=promo_dia,
     )
     if calc['error_cupon']:
-        # El cupón se validó en el paso 2, pero puede haber cambiado algo entre medio (se agotó, venció) — avisamos y seguimos sin él.
         messages.warning(request, f'⚠️ Cupón inválido: {calc["error_cupon"]}. El pago se procesará sin descuento por cupón.')
         calc['descuento_cupon'] = Decimal('0')
         calc['cupon_obj'] = None
         calc['descuento_total'] = calc['descuento_promo_dia']
         calc['monto_final'] = max(monto_original - calc['descuento_total'], Decimal('0')) + calc['precio_combo']
-    # modificado (Fase E): _calcular_descuentos no sabe de cantidad, calcula
-    # el precio de 1 solo combo — acá se multiplica por la cantidad elegida
-    if calc['combo_obj']:
-        calc['precio_combo'] = calc['precio_combo'] * cantidad_combo
-        calc['monto_final'] = max(monto_original - calc['descuento_total'], Decimal('0')) + calc['precio_combo']
-    else:
-        cantidad_combo = 1
-        
+    #---------------------------------------------------------------------
+    # modificado (combos múltiples): ya no hace falta multiplicar acá — cada ítem de calc['items_detalle'] ya viene con su propio subtotal calculado (precio_unitario x cantidad de ESE ítem en particular).
+    # modificado (Fase E): _calcular_descuentos no sabe de cantidad, calcula el precio de 1 solo combo — acá se multiplica por la cantidad elegida
+    #if calc['combo_obj']:
+    #    calc['precio_combo'] = calc['precio_combo'] * cantidad_combo
+    #    calc['monto_final'] = max(monto_original - calc['descuento_total'], Decimal('0')) + calc['precio_combo']
+    #else:
+    #    cantidad_combo = 1
     #---------------------------------------------------------------------
     if request.method == 'POST':
         if reserva.expiro_tiempo_pago():
@@ -227,43 +321,41 @@ def procesar_pago(request, reserva_id):
             messages.error(request, '⏰ Lo sentimos, el tiempo de pago expiró mientras procesabas la transacción. Por favor, creá una nueva reserva.')
             return redirect('salas:lista_funciones')
     #---------------------------------------------------------------------
-        # AHORA SI SE CREA EL PAGO
+        # SE CREA EL PAGO
         metodo_pago = request.POST.get('metodo_pago')
-        # MODIFICACION
-        # codigo_cupon = request.POST.get('codigo_cupon', '').strip()
-        # combo_id = request.POST.get('combo_id', '').strip()
-        # calc = _calcular_descuentos(
-        #     monto_original=monto_original,
-        #     cantidad_entradas=reserva.cantidad_entradas,
-        #     codigo_cupon=codigo_cupon,
-        #     combo_id=combo_id if combo_id else None,
-        #     usuario=request.user,
-        #     promo_dia=promo_dia,
-        # )
-        # if calc['error_cupon']:
-        #     messages.warning(request, f'⚠️ Cupón inválido: {calc["error_cupon"]}. El pago se procesará sin descuento por cupón.')
-        #     calc['descuento_cupon'] = Decimal('0')
-        #     calc['cupon_obj'] = None
-        #     calc['descuento_total'] = calc['descuento_promo_dia']
-        #     calc['monto_final'] = max(monto_original - calc['descuento_total'], Decimal('0')) + calc['precio_combo']
-        # # Antes
-        # pago = Pago.objects.create( reserva=reserva, metodo_pago=metodo_pago, monto=reserva.total(), estado='aprobado')
-        # Crear el pago
+        
+        # modificado (combos múltiples): combo/precio_combo/cantidad_combo en Pago quedan como espejo "legacy" de solo lectura — se completan con el PRIMER ítem elegido y los totales sumados, para que nada que todavía lea pago.combo directo (algún reporte viejo, el admin panel) se rompa. El detalle real y completo vive en pago.items.
+        primer_item = calc['items_detalle'][0]['combo_obj'] if calc['items_detalle'] else None
+        cantidad_items_total = sum(d['cantidad'] for d in calc['items_detalle']) or 1
+        
         pago = Pago.objects.create(
             reserva=reserva,
             metodo_pago=metodo_pago,
             monto_original=monto_original,
+
             descuento_cupon=calc['descuento_cupon'],
             descuento_promo_dia=calc['descuento_promo_dia'],
             descuento_total=calc['descuento_total'],
             precio_combo=calc['precio_combo'],
-            cantidad_combo=cantidad_combo,
+            # cantidad_combo=cantidad_combo,
+            cantidad_combo=cantidad_items_total,
             monto=calc['monto_final'],
             estado='aprobado',
             cupon_usado=calc['cupon_obj'],
-            combo=calc['combo_obj'],
+            #combo=calc['combo_obj'],
+            combo=primer_item,
             promo_dia=calc['promo_dia_obj'],
         )
+        # modificado (combos múltiples): acá se crea el detalle real,
+        # un ItemPago por cada ítem distinto elegido (con su propia cantidad
+        # y el precio que tenía en el momento de la compra)
+        for detalle in calc['items_detalle']:
+            ItemPago.objects.create(
+                pago=pago,
+                combo=detalle['combo_obj'],
+                cantidad=detalle['cantidad'],
+                precio_unitario=detalle['precio_unitario'],
+            )
         # DATOS DE TARJETA
         if metodo_pago in ['tarjeta_debito', 'tarjeta_credito']:
             numero_tarjeta = request.POST.get('numero_tarjeta', '')
@@ -306,21 +398,21 @@ def procesar_pago(request, reserva_id):
         return redirect('pagos:comprobante_pago', pago_id=pago.id)
     #-----------------------------------------------------------
     # GET — contexto para el template
-    # modificado: ya no manda 'combos' (se eligen en el paso anterior); manda el detalle de lo ya elegido para mostrarlo de solo lectura.
+    # modificado (combos múltiples): ya no manda 'combos' (se eligen en el paso anterior); manda items_detalle (lista) en vez de un solo combo_obj/cantidad_combo, para poder itemizar el resumen.
     contexto = {
         'reserva': reserva,
         'total': monto_original,
         'promo_dia': calc['promo_dia_obj'],
         'cupon_obj': calc['cupon_obj'],
-        'combo_obj': calc['combo_obj'],
+        'items_detalle': calc['items_detalle'],
         'descuento_cupon': calc['descuento_cupon'],
         'descuento_promo_dia': calc['descuento_promo_dia'],
         'descuento_total': calc['descuento_total'],
         'precio_combo': calc['precio_combo'],
-        'cantidad_combo': cantidad_combo,
+        #'combo_obj': calc['combo_obj'],
+        #'cantidad_combo': cantidad_combo,
         'monto_final': calc['monto_final'],
-        # modificado: se calcula acá (no en el template) para evitar la
-        # ambigüedad de precedencia de "and/or" en {% if %} de Django
+        # modificado: se calcula acá (no en el template) para evitar la ambigüedad de precedencia de "and/or" en {% if %} de Django
         'mostrar_bloque_promos': PROMOCIONES_DISPONIBLE and (calc['descuento_total'] > 0 or calc['precio_combo'] > 0),
         'promociones_disponible': PROMOCIONES_DISPONIBLE,
     }

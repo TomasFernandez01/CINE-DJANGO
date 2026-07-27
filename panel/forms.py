@@ -268,19 +268,22 @@ class ReservaForm(forms.ModelForm):
 class ComboForm(forms.ModelForm):
     class Meta:
         model = Combo
-        fields = ['nombre', 'descripcion', 'precio', 'activo', 'imagen']
+        # modificado (combos múltiples): se suma categoria
+        fields = ['nombre', 'descripcion', 'precio','categoria', 'activo', 'imagen']
         widgets = {
             'nombre':      forms.TextInput(attrs=INPUT_ATTRS),
             'descripcion': forms.TextInput(attrs=INPUT_ATTRS),
             'precio':      forms.NumberInput(attrs={**INPUT_ATTRS, 'step': '0.01', 'min': '0'}),
+            'categoria':   forms.Select(attrs=INPUT_ATTRS),
             'activo':      forms.CheckboxInput(attrs={'class': 'panel-checkbox'}),
             'imagen':      forms.ClearableFileInput(attrs={'class': 'panel-file'}),
         }
         labels = {
-            'nombre':      'Nombre del combo',
+            'nombre':      'Nombre del item',
             'descripcion': 'Descripción (Ej: 1 entrada + Pochoclo + Bebida)',
             'precio':      'Precio ($)',
-            'activo':      'Combo activo',
+            'categoria':   'Categoría',
+            # 'activo':      'Combo activo',
             'imagen':      'Imagen',
         }
 

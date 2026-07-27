@@ -2,26 +2,12 @@
 .venv
 manage.py
 db.sqlite3
-
 # cache
 __pycache__
 __pycache__/
 .pyc
-
 # settings 
 configuracion
-
-# app que no funcionan todavia
-# templates
-# peliculas
-# salas
-# reservas
-# usuarios
-borradores
+# ARCHIVOS EXTERNOS
 media
-archivosRotos
-basura
-.instrucciones
-.mds
-.claude
-.htmls
+.ias

@@ -9,7 +9,6 @@ def get_qr_minutos():
 
 class Pago(models.Model):
     METODO_PAGO_CHOICES = [
-        # ('efectivo', 'Efectivo'),
         ('tarjeta_debito', 'Tarjeta de Débito'),
         ('tarjeta_credito', 'Tarjeta de Crédito'),
         ('transferencia', 'Transferencia Bancaria'),
@@ -35,7 +34,6 @@ class Pago(models.Model):
     descuento_promo_dia = models.DecimalField(max_digits=10,decimal_places=2,default=0)
     descuento_total = models.DecimalField(max_digits=10,decimal_places=2,default=0)
     precio_combo = models.DecimalField(max_digits=10,decimal_places=2,default=0)
-    # modificado (Fase E):
     cantidad_combo = models.PositiveIntegerField(default=1)
     monto = models.DecimalField(max_digits=10,decimal_places=2,
                                 help_text="Monto final pagado")
@@ -65,7 +63,6 @@ class Pago(models.Model):
     def __str__(self):
         return f"Pago {self.numero_transaccion} - {self.reserva.usuario.username}"
     
-    # -B.PROMOCIONES
     def tuvo_descuento(self):
         return self.descuento_total > 0
     
@@ -105,15 +102,13 @@ class Pago(models.Model):
         if self.reserva.funcion.fecha_hora < timezone.now():
             return False, "La función ya pasó"
 
-        # CAMBIO ESTO
         # Verificar que no falte mucho para la función (máximo 2 horas antes)
         #tiempo_restante = self.reserva.funcion.fecha_hora - timezone.now()
         #if tiempo_restante.total_seconds() > 7200:  # 2 horas
         #    horas = int(tiempo_restante.total_seconds() / 3600)
         #    return False, f"Falta {horas} horas para la función. Llegá 30 min antes."
         #return True, "QR válido"
-        
-        # POR ESTO
+
         # Ventana configurable: se puede escanear hasta N minutos antes
         ahora = timezone.now()
         minutos_antes = get_qr_minutos()
@@ -159,3 +154,29 @@ class Pago(models.Model):
         verbose_name = 'Pago'
         verbose_name_plural = 'Pagos'
         ordering = ['-fecha_pago']
+
+# modificado (combos múltiples): antes Pago solo podía tener UN combo (FK
+# `combo` + `precio_combo` + `cantidad_combo`, arriba). Esos 3 campos se
+# dejan tal cual están — por compatibilidad con los pagos ya existentes en
+# la base, y como resumen rápido/legacy (se siguen completando en cada pago
+# nuevo, con el primer ítem elegido y los totales sumados). Pero el detalle
+# real de "qué eligió y cuánto de cada cosa" ahora vive acá, uno por cada
+# ítem distinto del pedido.
+class ItemPago(models.Model):
+    pago = models.ForeignKey(Pago, on_delete=models.CASCADE, related_name='items')
+    combo = models.ForeignKey('promociones.Combo', on_delete=models.SET_NULL, null=True, related_name='items_pago')
+    cantidad = models.PositiveIntegerField(default=1)
+    # snapshot del precio al momento de la compra: si el admin cambia el
+    # precio del ítem después, el ticket viejo no debe cambiar retroactivamente.
+    precio_unitario = models.DecimalField(max_digits=10, decimal_places=2)
+
+    def subtotal(self):
+        return self.precio_unitario * self.cantidad
+
+    def __str__(self):
+        nombre = self.combo.nombre if self.combo else '(ítem eliminado)'
+        return f"{self.cantidad}x {nombre} — Pago {self.pago_id}"
+
+    class Meta:
+        verbose_name = 'Ítem de Pago'
+        verbose_name_plural = 'Ítems de Pago'

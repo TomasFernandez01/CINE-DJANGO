@@ -3,32 +3,8 @@
 {% block titulo %}Procesar Pago{% endblock %}
 
 {% block contenido %}
-{# ================================================================ #}
-{# FASE F: re-skin completo, mismo estilo dark + layout de 2         #}
-{# columnas que elegir_entrada.html / elegir_combo.html / asientos.  #}
-{# Antes era una sola columna clara, con "Resumen de tu Reserva"     #}
-{# como una card más entre el aviso de simulación y el formulario.   #}
-{# Ahora el resumen vive en el sidebar sticky de la derecha, como en #}
-{# el boceto: Método de Pago a la izquierda, RESUMEN a la derecha.   #}
-{# El JS (selectMetodo, auto-formato de tarjeta, countdown) es el    #}
-{# mismo de antes, no se tocó nada de esa lógica.                    #}
-{# ================================================================ #}
+
 <link rel="stylesheet" href="{% static 'css/pagos/procesar_pago.css' %}">
-{% comment %} 
-<style>
-    @media (max-width: 860px) {
-        #layoutPago { grid-template-columns: 1fr !important; }
-        #sidebarResumenPago { position: static !important; }
-    }
-    .metodo-pago-card {
-        display: flex; align-items: center; padding: 1rem 1.1rem; border-radius: 8px;
-        border: 2px solid #2a2a2a; background-color: #1a1a1a; cursor: pointer;
-        margin-bottom: 0.75rem; transition: border-color 0.15s;
-    }
-    .metodo-pago-card:hover { border-color: #555555; }
-    .metodo-pago-card input[type="radio"] { accent-color: #28a745; margin-right: 0.75rem; }
-    .metodo-pago-card.seleccionada { border-color: #28a745; background-color: #142418; }
-</style> {% endcomment %}
 
 <div style="max-width: 1000px; margin: 0 auto; background-color: #0f0f0f;
             padding: 1.5rem; border-radius: 12px; color: #f2f2f2;">
@@ -173,7 +149,6 @@
                     {% endif %}
                 </div>
 
-                {# modificado: promociones ya elegidas en pasos anteriores (paso 2 y paso 5), acá solo se muestran de forma prolija #}
                 {% if mostrar_bloque_promos %}
                 <div style="margin-bottom: 1rem; padding-bottom: 1rem; border-bottom: 1px solid #2a2a2a;">
                     <div style="color: #999999; font-size: 0.75rem; margin-bottom: 0.4rem;">Promociones aplicadas</div>
@@ -187,11 +162,18 @@
                         <span>Cupón {{ cupon_obj.codigo }}</span><span>-${{ descuento_cupon }}</span>
                     </div>
                     {% endif %}
-                    {% if combo_obj %}
+
+                    {% comment %} {% if combo_obj %}
                     <div style="display: flex; justify-content: space-between; color: #cccccc; font-size: 0.82rem;">
                         <span>🍿 {% if cantidad_combo > 1 %}{{ cantidad_combo }}x {% endif %}{{ combo_obj.nombre }}</span><span>+${{ precio_combo }}</span>
                     </div>
-                    {% endif %}
+                    {% endif %} {% endcomment %}
+                    {# modificado (combos múltiples): antes un solo combo_obj/cantidad_combo/precio_combo, ahora se itera items_detalle (uno por cada ítem elegido) #}
+                    {% for item in items_detalle %}
+                    <div style="display: flex; justify-content: space-between; color: #cccccc; font-size: 0.82rem;">
+                        <span>🍿 {% if item.cantidad > 1 %}{{ item.cantidad }}x {% endif %}{{ item.combo_obj.nombre }}</span><span>+${{ item.subtotal }}</span>
+                    </div>
+                    {% endfor %}
                 </div>
                 {% endif %}
 
@@ -205,13 +187,6 @@
 </div>
 
 <script>
-// modificado: se sacó todo el JS de cupón/combo/resumen dinámico —
-// esa lógica vive ahora en elegir_entrada.html (paso 2) y
-// elegir_combo.html (paso 5). Esta pantalla ya recibe todo calculado
-// por el servidor (ver bloque "Promociones aplicadas" del sidebar).
-
-// ===== MÉTODO DE PAGO =====
-// modificado: ahora también marca visualmente la tarjeta elegida (clase "seleccionada")
 function selectMetodo(metodo, elLabel) {
     document.querySelectorAll('.metodo-pago-card').forEach(function (l) {
         l.classList.remove('seleccionada');

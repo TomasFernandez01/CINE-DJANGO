@@ -97,11 +97,24 @@
                                     </span>
                                 {% endif %}
                                 {# Combo si lo tiene #}
-                                {% if reserva.pago.combo %}
+                                {% comment %} {% if reserva.pago.combo %}
+                                    <div class="reserva-mr-combo">
+                                        🍿 {% if reserva.pago.cantidad_combo > 1 %}{{ reserva.pago.cantidad_combo }}x {% endif %}{{ reserva.pago.combo.nombre }}
+                                    </div>
+                                {% endif %} {% endcomment %}
+                                {# Ítems de concesión si los tiene — modificado (combos múltiples): itera reserva.pago.items, con fallback legacy #}
+                                {% if reserva.pago.items.all %}
+                                    {% for item in reserva.pago.items.all %}
+                                    <div class="reserva-mr-combo">
+                                        🍿 {% if item.cantidad > 1 %}{{ item.cantidad }}x {% endif %}{{ item.combo.nombre|default:"Ítem eliminado" }}
+                                    </div>
+                                    {% endfor %}
+                                {% elif reserva.pago.combo %}
                                     <div class="reserva-mr-combo">
                                         🍿 {% if reserva.pago.cantidad_combo > 1 %}{{ reserva.pago.cantidad_combo }}x {% endif %}{{ reserva.pago.combo.nombre }}
                                     </div>
                                 {% endif %}
+
                             {% else %}
                                 {# Pendiente o cancelada: mostrar total estimado #}
                                 <span class="reserva-mr-total-estimado">
@@ -141,7 +154,7 @@
                         {% if reserva.estado == 'pendiente' %}
                             {# modificado: antes iba directo a procesar_pago; ahora primero pasa por elegir_combo (paso 5), igual que desde detalle_reserva #}
                             <a href="{% url 'pagos:elegir_combo' reserva.id %}" class="reserva-mr-btn reserva-mr-btn--pagar">
-                                💳 Pagar Ahora
+                                Pagar Ahora
                             </a>
                             <a href="{% url 'reservas:cancelar_reserva' reserva.id %}" class="reserva-mr-btn reserva-mr-btn--cancelar"
                                data-confirm="¿Estás seguro de cancelar esta reserva? Esta acción no se puede deshacer."
@@ -156,7 +169,7 @@
                                data-confirm="¿Eliminar esta reserva del historial? No vas a poder recuperarla."
                                data-confirm-titulo="Eliminar del historial"
                                data-confirm-texto="Sí, eliminar">
-                                🗑️ Eliminar
+                                Eliminar
                             </a>
                         {% endif %}
                     </div>

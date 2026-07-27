@@ -117,6 +117,19 @@ class PromocionDia(models.Model):
 
 
 class Combo(models.Model):
+    # modificado (combos múltiples): categoría del ítem, para poder agrupar
+    # y elegir varios tipos distintos en el mismo pedido (antes solo existía
+    # "Combo" como concepto único). El nombre del modelo se mantiene como
+    # "Combo" para no romper las FKs/imports que ya lo usan en todo el
+    # proyecto (pagos, panel, admin) — pero ahora representa "un ítem de
+    # concesión" en general, sea combo armado, bebida suelta o snack.
+    CATEGORIA_CHOICES = [
+        ('combo', 'Combo'),
+        ('bebida', 'Bebida'),
+        ('snack', 'Snack'),
+        ('pochoclo', 'Pochoclo'),
+    ]
+
     nombre = models.CharField(max_length=100)
     descripcion = models.CharField(
         max_length=300,
@@ -125,7 +138,11 @@ class Combo(models.Model):
     precio = models.DecimalField(max_digits=10, decimal_places=2)
     activo = models.BooleanField(default=True)
     imagen = models.ImageField(upload_to='combos/', blank=True, null=True)
-
+    # modificado (combos múltiples): default 'combo' para que los ítems ya
+    # cargados en la base (todos combos armados hasta ahora) no queden sin
+    # categoría tras la migración.
+    categoria = models.CharField(max_length=20, choices=CATEGORIA_CHOICES, default='combo')
+    
     def __str__(self):
         return f"{self.nombre} — ${self.precio}"
 

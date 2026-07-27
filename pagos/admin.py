@@ -1,10 +1,17 @@
 from django.contrib import admin
-from .models import Pago
+from .models import Pago, ItemPago
 from django.utils.html import format_html
+
+# modificado (combos múltiples): inline de solo lectura para ver el detalle
+# de ítems (combo/bebida/snack/etc) de cada pago desde el admin
+class ItemPagoInline(admin.TabularInline):
+    model = ItemPago
+    extra = 0
+    readonly_fields = ['combo', 'cantidad', 'precio_unitario']
+    can_delete = False
 
 @admin.register(Pago)
 class PagoAdmin(admin.ModelAdmin):
-    # list_display = ['numero_transaccion', 'reserva', 'metodo_pago', 'monto', 'estado', 'fecha_pago']
     list_display = [
         'numero_transaccion', 'reserva', 'metodo_pago',
         'monto_original', 'descuento_total_display', 'monto',
@@ -12,21 +19,12 @@ class PagoAdmin(admin.ModelAdmin):
     ]
     list_filter = ['estado', 'metodo_pago', 'fecha_pago']
     search_fields = ['numero_transaccion', 'reserva__codigo_reserva', 'reserva__usuario__username']
-    # readonly_fields = ['numero_transaccion', 'fecha_pago']
     readonly_fields = [
         'numero_transaccion', 'fecha_pago',
         'monto_original', 'descuento_cupon',
         'descuento_promo_dia', 'descuento_total',
         'codigo_qr', 'fecha_escaneo',
     ]
-    # fieldsets = (
-    #     ('Información de Pago', {
-    #         'fields': ('reserva', 'monto', 'metodo_pago', 'estado')
-    #     }),
-    #     ('Detalles de Transacción', {
-    #         'fields': ('numero_transaccion', 'fecha_pago', 'ultimos_4_digitos')
-    #     }),
-    # )
     fieldsets = (
         ('Información de Pago', {
             'fields': ('reserva', 'metodo_pago', 'estado')
