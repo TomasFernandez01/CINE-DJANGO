@@ -85,3 +85,173 @@
     font-size: 1.4rem;
     margin: 1rem 0 1.25rem;
 }
+
+/* modificado: bloque de Calificaciones y Reseñas (estaba con estilos inline en el template, migrado a clases) */
+.detalle-rating-bloque {
+    margin-top: 2rem;
+    border-top: 1px solid rgba(255, 255, 255, 0.1);
+    padding-top: 1.5rem;
+}
+
+.detalle-rating-resumen {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    margin-bottom: 1.5rem;
+}
+
+.detalle-rating-resumen-numero {
+    font-size: 2.5rem;
+    font-weight: 700;
+    color: #f1c40f;
+    line-height: 1;
+}
+
+.detalle-rating-resumen-estrellas {
+    color: #f1c40f;
+    font-size: 1.2rem;
+}
+
+.detalle-rating-resumen-total {
+    font-size: 0.75rem;
+    color: #888;
+}
+
+.detalle-rating-form {
+    background: rgba(255, 255, 255, 0.04);
+    padding: 1.25rem;
+    border-radius: 12px;
+    margin-bottom: 1.5rem;
+    border: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.detalle-rating-form-titulo {
+    margin: 0 0 0.5rem 0;
+    font-size: 0.9rem;
+    color: #eee;
+}
+
+.detalle-rating-estrellas-input {
+    display: flex;
+    gap: 0.4rem;
+    font-size: 1.75rem;
+    color: #888;
+    cursor: pointer;
+    margin-bottom: 0.75rem;
+}
+
+.detalle-rating-estrellas-input .estrella-btn {
+    transition: color 0.2s;
+    color: #888;
+}
+
+.detalle-rating-estrellas-input .estrella-btn.detalle-rating-estrella-activa {
+    color: #f1c40f;
+}
+
+.detalle-rating-textarea {
+    background: rgba(0, 0, 0, 0.3);
+    border: 1px solid rgba(255, 255, 255, 0.15);
+    color: #fff;
+    border-radius: 8px;
+    padding: 0.6rem;
+    width: 100%;
+    font-size: 0.85rem;
+    margin-bottom: 0.75rem;
+    resize: vertical;
+    min-height: 80px;
+    font-family: inherit;
+}
+
+.detalle-rating-submit-btn {
+    font-size: 0.8rem;
+    padding: 0.5rem 1.2rem;
+    border-radius: 6px;
+    background: #ff5c5c;
+    border: none;
+    color: white;
+    font-weight: 600;
+    cursor: pointer;
+    transition: opacity 0.2s;
+}
+
+.detalle-rating-bloqueado {
+    background: rgba(255, 255, 255, 0.02);
+    border-left: 3px solid #ff5c5c;
+    padding: 0.75rem 1rem;
+    border-radius: 8px;
+    font-size: 0.8rem;
+    color: #bbb;
+    margin-bottom: 1.5rem;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.detalle-rating-reviews-wrap {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+    margin-top: 1rem;
+}
+
+.detalle-rating-reviews-titulo {
+    margin: 0;
+    font-size: 0.9rem;
+    color: #ccc;
+}
+
+.detalle-rating-review-card {
+    background: rgba(255, 255, 255, 0.02);
+    padding: 0.75rem;
+    border-radius: 8px;
+    border: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.detalle-rating-review-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 0.25rem;
+}
+
+.detalle-rating-review-autor {
+    font-size: 0.85rem;
+    color: #eee;
+}
+
+.detalle-rating-review-estrellas {
+    color: #f1c40f;
+    font-size: 0.8rem;
+}
+
+.detalle-rating-review-comentario {
+    margin: 0;
+    font-size: 0.8rem;
+    color: #bbb;
+    line-height: 1.4;
+}
+
+.detalle-rating-review-fecha {
+    font-size: 0.7rem;
+    color: #666;
+    margin-top: 0.4rem;
+    text-align: right;
+}
+
+.detalle-rating-review-vacio {
+    font-size: 0.8rem;
+    color: #666;
+    font-style: italic;
+}
+
+/* modificado: link "Cartelera" al pie de la pagina, tenia estilo inline */
+.detalle-volver-wrap {
+    margin-top: 2rem;
+}
+
+.detalle-volver-link {
+    color: #ff5c5c;
+    text-decoration: none;
+    font-weight: bold;
+}

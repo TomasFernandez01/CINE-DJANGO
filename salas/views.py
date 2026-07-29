@@ -3,10 +3,18 @@ from django.utils import timezone
 from datetime import datetime, timedelta
 from .models import Sala, Funcion
 from peliculas.models import Pelicula
-from utils.fechas import generar_proximos_dias  # nuevo: helper compartido del carrusel de fechas
-from utils.funciones import agrupar_por_tipo_sala  # nuevo: helper compartido (tanda 3)
+from utils.fechas import generar_proximos_dias  
+from utils.funciones import agrupar_por_tipo_sala  
+
 def lista_salas(request):
-    salas = Sala.objects.filter(activa=True)
+    
+    salas = Sala.objects.filter(activa=True).prefetch_related('bloqueos_asientos', 'categorias_asientos')
+    for sala in salas:
+        sala.mapa_layout = sala.layout_asientos()
+        sala.mapa_bloqueados = {
+            b.asiento_codigo for b in sala.bloqueos_asientos.all() if b.funcion_id is None
+        }
+        sala.mapa_categoria = {c.asiento_codigo for c in sala.categorias_asientos.all()}
     contexto = {
         'salas': salas
     }
@@ -107,26 +115,4 @@ def lista_funciones(request):
         'proximas_fechas': generar_proximos_dias(20),  # nuevo: carrusel de fechas de esta pagina
     }
     return render(request, 'salas/lista_funciones.html', contexto)
-    # Obtener opciones para los filtros
-    peliculas_con_funciones = Pelicula.objects.filter(
-        funciones__disponible=True,
-        funciones__fecha_hora__gt=ahora
-    ).distinct().order_by('titulo')
     
-    salas_con_funciones = Sala.objects.filter(
-        funciones__disponible=True,
-        funciones__fecha_hora__gt=ahora
-    ).distinct().order_by('nombre')
-    
-    contexto = {
-        'funciones': funciones,
-        'peliculas_disponibles': peliculas_con_funciones,
-        'salas_disponibles': salas_con_funciones,
-        'pelicula_seleccionada': pelicula_id,
-        'fecha_seleccionada': fecha_filtro,
-        'sala_seleccionada': sala_id,
-        'orden_seleccionado': orden,
-        'total_resultados': funciones.count(),
-        'proximas_fechas': generar_proximos_dias(20),  # nuevo: carrusel de fechas de esta pagina
-    }
-    return render(request, 'salas/lista_funciones.html', contexto)

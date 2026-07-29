@@ -231,20 +231,10 @@ def confirmar_reserva_con_asientos(request, funcion_id):
     asientos_lista = asientos_seleccionados.split(',')
     cantidad = len(asientos_lista)
     
-    """
-    # Validar cantidad
-    if cantidad < 1 or cantidad > max_asientos:
-        messages.error(request, f'Debés seleccionar entre 1 y {max_asientos} asientos.')
-        return redirect('reservas:seleccionar_asientos', funcion_id=funcion_id)
- 
-    # Validar disponibilidad
-    asientos_ocupados = funcion.asientos_ocupados()
-    for asiento in asientos_lista:
-        if asiento in asientos_ocupados:
-            messages.error(request, f'El asiento {asiento} ya no está disponible.')
-            return redirect('reservas:seleccionar_asientos', funcion_id=funcion_id)
-    """
     # VALIDACIÓN: Verificar que los asientos estén disponibles
+    # modificado: se borró un bloque de código muerto (una validación vieja, dejada como
+    # string sin usar, que hacía lo mismo que este bloque pero en otro orden) que estaba
+    # pegado justo arriba de esto.
     asientos_ocupados = funcion.asientos_ocupados()
     for asiento in asientos_lista:
         if asiento in asientos_ocupados:
@@ -321,7 +311,9 @@ def confirmar_reserva_con_asientos(request, funcion_id):
     # ahora solo se llega a ella desde "Mis Reservas" (para ver una
     # reserva pendiente de pago).
     return redirect('pagos:elegir_combo', reserva_id=reserva.id)
-    return redirect('reservas:detalle_reserva', reserva_id=reserva.id)
+    # modificado: se borró un "return redirect('reservas:detalle_reserva', ...)" duplicado
+    # que quedó pegado después de este return (código muerto de antes del reordenamiento
+    # de Fase D, nunca se ejecutaba).
 
 
 @login_required
@@ -337,11 +329,8 @@ def verificar_asientos_disponibles(request, funcion_id):
     })
 
 
-@login_required
-def crear_reserva(request, funcion_id):
-    """Vista antigua - redirige a selección de asientos."""
-    return redirect('reservas:seleccionar_asientos', funcion_id=funcion_id)
-
+# modificado: se borró la vista crear_reserva() de acá (era solo un redirect viejo a
+# seleccionar_asientos, sin ninguna ruta ni link que la usara). Ver reservas/urls.py.
 
 # ============================================
 # VISTAS PRINCIPALES

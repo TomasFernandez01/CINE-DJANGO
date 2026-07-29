@@ -34,13 +34,14 @@
 
 {# ===== FILTROS ===== #}
 <!-- bloque modificado: tema oscuro (antes caja blanca fija por inline style) -->
-<div class="salas-estilo-1">
+<!-- modificado: clases salas-estilo-1..9 renombradas a nombres descriptivos (funciones-filtros-box, funciones-filtro-label, etc.) -->
+<div class="funciones-filtros-box">
     <form method="get">
-        <div class="salas-estilo-2">
+        <div class="funciones-filtros-grid">
 
             <div>
-                <label class="salas-estilo-3">🎬 Película</label>
-                <select name="pelicula" class="salas-estilo-4">
+                <label class="funciones-filtro-label">🎬 Película</label>
+                <select name="pelicula" class="funciones-filtro-select">
                     <option value="">Todas</option>
                     {% for p in peliculas_disponibles %}
                         <option value="{{ p.id }}" {% if pelicula_seleccionada == p.id|stringformat:"s" %}selected{% endif %}>{{ p.titulo }}</option>
@@ -49,8 +50,8 @@
             </div>
 
             <div>
-                <label class="salas-estilo-3">📅 Fecha</label>
-                <select name="fecha" class="salas-estilo-4">
+                <label class="funciones-filtro-label">📅 Fecha</label>
+                <select name="fecha" class="funciones-filtro-select">
                     <option value="">Todas</option>
                     <option value="hoy" {% if fecha_seleccionada == 'hoy' %}selected{% endif %}>Hoy</option>
                     <option value="mañana" {% if fecha_seleccionada == 'mañana' %}selected{% endif %}>Mañana</option>
@@ -59,8 +60,8 @@
             </div>
 
             <div>
-                <label class="salas-estilo-3">🏢 Sala</label>
-                <select name="sala" class="salas-estilo-4">
+                <label class="funciones-filtro-label">🏢 Sala</label>
+                <select name="sala" class="funciones-filtro-select">
                     <option value="">Todas</option>
                     {% for s in salas_disponibles %}
                         <option value="{{ s.id }}" {% if sala_seleccionada == s.id|stringformat:"s" %}selected{% endif %}>{{ s.nombre }}</option>
@@ -69,8 +70,8 @@
             </div>
 
             <div>
-                <label class="salas-estilo-3">📊 Ordenar</label>
-                <select name="orden" class="salas-estilo-4">
+                <label class="funciones-filtro-label">📊 Ordenar</label>
+                <select name="orden" class="funciones-filtro-select">
                     <option value="fecha" {% if orden_seleccionado == 'fecha' %}selected{% endif %}>Por fecha</option>
                     <option value="precio" {% if orden_seleccionado == 'precio' %}selected{% endif %}>Por precio</option>
                     <option value="pelicula" {% if orden_seleccionado == 'pelicula' %}selected{% endif %}>Por película</option>
@@ -78,11 +79,11 @@
             </div>
         </div>
 
-        <div class="salas-estilo-5">
-            <button type="submit" class="salas-estilo-6">
+        <div class="funciones-filtros-acciones">
+            <button type="submit" class="funciones-filtro-btn-aplicar">
                 Aplicar Filtros
             </button>
-            <a href="{% url 'salas:lista_funciones' %}" class="salas-estilo-7">
+            <a href="{% url 'salas:lista_funciones' %}" class="funciones-filtro-btn-limpiar">
                 Limpiar
             </a>
         </div>
@@ -90,7 +91,7 @@
 </div>
 
 {% if tarjetas_peliculas %}
-    <p class="salas-estilo-8">{{ total_resultados }} función(es) encontrada(s)</p>
+    <p class="funciones-resultado-info">{{ total_resultados }} función(es) encontrada(s)</p>
 
     <div class="funciones-lista">
         {% for tarjeta in tarjetas_peliculas %}
@@ -129,7 +130,7 @@
         {% endfor %}
     </div>
 {% else %}
-    <p class="salas-estilo-9">
+    <p class="funciones-vacio">
         No hay funciones disponibles en este momento.
     </p>
 {% endif %}

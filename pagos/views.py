@@ -7,9 +7,7 @@ from django.utils import timezone
 from decimal import Decimal
 from .models import Pago, ItemPago
 from reservas.models import Reserva
-from django.db.models import Sum, Count, Q
-from datetime import timedelta
-from salas.models import Funcion
+from django.db.models import Count, Q
 try:
     from utils.email_utils import enviar_email_pago_confirmado
     EMAIL_DISPONIBLE = True
@@ -439,17 +437,11 @@ def comprobante_pago(request, pago_id):
 # ============================================
 # NUEVAS VISTAS PARA VERIFICACIÓN DE QR
 # ============================================
-
-@login_required
-def verificador_qr(request):
-    """Vista para que el personal del cine escanee y verifique QR codes."""
-    if not request.user.is_staff:
-        messages.error(request, 'No tenés permisos para acceder a esta sección.')
-        return redirect('peliculas:inicio')
-    
-    contexto = {}
-    return render(request, 'pagos/verificador_qr.html', contexto)
-
+# modificado (Tanda B pagos): se borró la vista verificador_qr (page-render) de
+# esta app porque estaba huérfana - panel/views.py tiene su propia versión
+# funcionando (panel:verificador_qr -> panel/templates/panel/verificador_qr.html).
+# Las APIs verificar_qr_api y marcar_qr_escaneado de ACÁ ABAJO se mantienen
+# intactas porque las sigue usando ese template de panel.
 
 @csrf_exempt  # Permitir POST desde scanner
 def verificar_qr_api(request):
@@ -549,110 +541,7 @@ def marcar_qr_escaneado(request):
         })
     
 # ============================================================
-# PANEL DE ESTADÍSTICAS PARA STAFF
+# modificado (Tanda B pagos): se borró la vista estadisticas_staff completa
+# (era huérfana, sin ningún link real en el sitio) - panel/views.py tiene su
+# propia versión funcionando (panel:pagos_estadisticas).
 # ============================================================
- 
-@login_required
-def estadisticas_staff(request):
-    """
-    Panel de estadísticas para staff.
-    Muestra métricas de ventas, ocupación y escaneos.
-    """
-    if not request.user.is_staff:
-        messages.error(request, 'No tenés permisos para acceder a esta sección.')
-        return redirect('peliculas:inicio')
- 
-    ahora = timezone.now()
-    hoy_inicio = ahora.replace(hour=0, minute=0, second=0, microsecond=0)
-    semana_inicio = hoy_inicio - timedelta(days=7)
- 
-    # ---- RESUMEN GENERAL ----
-    total_pagos_aprobados = Pago.objects.filter(estado='aprobado').count()
-    total_recaudado = Pago.objects.filter(
-        estado='aprobado'
-    ).aggregate(total=Sum('monto'))['total'] or 0
- 
-    pagos_hoy = Pago.objects.filter(
-        estado='aprobado',
-        fecha_pago__gte=hoy_inicio
-    )
-    recaudado_hoy = pagos_hoy.aggregate(total=Sum('monto'))['total'] or 0
-    entradas_hoy = pagos_hoy.aggregate(
-        total=Sum('reserva__cantidad_entradas')
-    )['total'] or 0
- 
-    # ---- QR ----
-    qr_escaneados_hoy = Pago.objects.filter(
-        qr_escaneado=True,
-        fecha_escaneo__gte=hoy_inicio
-    ).count()
-    qr_total_escaneados = Pago.objects.filter(qr_escaneado=True).count()
-    qr_pendientes = Pago.objects.filter(
-        estado='aprobado',
-        qr_escaneado=False,
-        reserva__estado='confirmada',
-        reserva__funcion__fecha_hora__gte=ahora
-    ).count()
- 
-    # ---- FUNCIONES DE HOY ----
-    funciones_hoy = Funcion.objects.filter(
-        fecha_hora__gte=hoy_inicio,
-        fecha_hora__lt=hoy_inicio + timedelta(days=1)
-    ).select_related('pelicula', 'sala').order_by('fecha_hora')
- 
-    funciones_con_stats = []
-    for f in funciones_hoy:
-        reservas_confirmadas = f.reservas.filter(estado='confirmada').count()
-        entradas_vendidas = f.reservas.filter(
-            estado='confirmada'
-        ).aggregate(total=Sum('cantidad_entradas'))['total'] or 0
-        capacidad = f.sala.capacidad
-        ocupacion_pct = int((entradas_vendidas / capacidad * 100)) if capacidad > 0 else 0
-        qr_escaneados = Pago.objects.filter(
-            reserva__funcion=f,
-            qr_escaneado=True
-        ).count()
-        funciones_con_stats.append({
-            'funcion': f,
-            'entradas_vendidas': entradas_vendidas,
-            'capacidad': capacidad,
-            'ocupacion_pct': ocupacion_pct,
-            'qr_escaneados': qr_escaneados,
-            'reservas': reservas_confirmadas,
-        })
- 
-    # ---- ÚLTIMOS PAGOS ----
-    ultimos_pagos = Pago.objects.filter(
-        estado='aprobado'
-    ).select_related(
-        'reserva__usuario',
-        'reserva__funcion__pelicula'
-    ).order_by('-fecha_pago')[:10]
- 
-    # ---- ÚLTIMOS ESCANEOS ----
-    ultimos_escaneos = Pago.objects.filter(
-        qr_escaneado=True
-    ).select_related(
-        'reserva__usuario',
-        'reserva__funcion__pelicula',
-        'reserva__funcion__sala'
-    ).order_by('-fecha_escaneo')[:10]
- 
-    contexto = {
-        'ahora': ahora,
-        # Resumen
-        'total_pagos_aprobados': total_pagos_aprobados,
-        'total_recaudado': total_recaudado,
-        'recaudado_hoy': recaudado_hoy,
-        'entradas_hoy': entradas_hoy,
-        # QR
-        'qr_escaneados_hoy': qr_escaneados_hoy,
-        'qr_total_escaneados': qr_total_escaneados,
-        'qr_pendientes': qr_pendientes,
-        # Funciones
-        'funciones_con_stats': funciones_con_stats,
-        # Listas
-        'ultimos_pagos': ultimos_pagos,
-        'ultimos_escaneos': ultimos_escaneos,
-    }
-    return render(request, 'pagos/estadisticas_staff.html', contexto)

@@ -1,20 +1,150 @@
+/* modificado (Tanda B pagos): separación CSS completa - clases nuevas para
+   reemplazar los ~81 estilos inline que tenía comprobante_pago.html. Colores
+   respetados tal cual estaban (el ticket queda en tema claro tipo "papel",
+   es un efecto de diseño intencional contra el fondo oscuro del sitio -
+   ver mss/plantear_punto4_pagos.txt). */
+
+.comprobante-container { max-width: 800px; margin: 0 auto; }
+.comprobante-titulo { text-align: center; color: #28a745; margin-bottom: 1.5rem; }
+
+/* ---- Ticket ---- */
+.ticket-card {
+    background: white; border-radius: 12px; box-shadow: 0 4px 20px rgba(0,0,0,0.15);
+    overflow: hidden; margin-bottom: 2rem;
+}
+.ticket-header {
+    background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
+    padding: 2rem; text-align: center; color: white;
+}
+.ticket-header-icono { font-size: 2.5rem; margin-bottom: 0.5rem; }
+.ticket-header-marca { font-size: 1.8rem; font-weight: bold; letter-spacing: 2px; margin-bottom: 0.25rem; }
+.ticket-header-subtitulo { font-size: 1rem; opacity: 0.7; letter-spacing: 4px; }
+
+.ticket-perforado {
+    border-top: 3px dashed #dee2e6; margin: 0;
+    background: repeating-linear-gradient(90deg, #f8f9fa 0px, #f8f9fa 8px, white 8px, white 16px);
+    height: 16px;
+}
+
+.ticket-contenido { padding: 1.5rem 2rem; }
+
+.ticket-pelicula-box { text-align: center; margin-bottom: 1.5rem; padding-bottom: 1.5rem; border-bottom: 1px solid #e9ecef; }
+.ticket-label-mini { font-size: 0.8rem; color: #999; letter-spacing: 2px; text-transform: uppercase; margin-bottom: 0.5rem; }
+.ticket-pelicula-titulo { font-size: 1.6rem; font-weight: bold; color: #1a1a2e; }
+
+.ticket-detalles-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 1.5rem; }
+.ticket-detalle-box-azul { background: #f8f9fa; padding: 1rem; border-radius: 8px; border-left: 3px solid #007bff; }
+.ticket-detalle-box-verde { background: #f8f9fa; padding: 1rem; border-radius: 8px; border-left: 3px solid #28a745; }
+.ticket-detalle-label { font-size: 0.75rem; color: #999; letter-spacing: 1px; text-transform: uppercase; }
+.ticket-detalle-valor { font-size: 1.1rem; font-weight: bold; color: #333; margin-top: 0.25rem; }
+.ticket-detalle-valor-grande { font-size: 1.4rem; font-weight: bold; color: #1a1a2e; margin-top: 0.25rem; }
+
+.ticket-asientos-box { background: #e7f3ff; padding: 1rem; border-radius: 8px; margin-bottom: 1.5rem; border: 1px solid #b8d8f8; }
+.ticket-asientos-label { font-size: 0.75rem; color: #004085; letter-spacing: 1px; text-transform: uppercase; margin-bottom: 0.5rem; }
+.ticket-asientos-lista { display: flex; gap: 0.5rem; flex-wrap: wrap; }
+.ticket-asiento-badge {
+    display: inline-block; padding: 0.4rem 0.9rem; background-color: #007bff; color: white;
+    border-radius: 6px; font-weight: bold; font-size: 1rem;
+}
+
+.ticket-info-grid-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 1rem; margin-bottom: 1.5rem; font-size: 0.85rem; }
+.ticket-info-label { font-size: 0.72rem; color: #999; text-transform: uppercase; }
+.ticket-info-valor { font-weight: bold; color: #333; }
+.ticket-info-valor-transaccion { font-weight: bold; color: #333; font-family: monospace; font-size: 0.9rem; }
+.ticket-info-valor-grande { font-size: 1.4rem; font-weight: bold; color: #28a745; }
+
+.ticket-codigo-box {
+    background: linear-gradient(135deg, #d4edda, #c3e6cb); padding: 1rem; border-radius: 8px;
+    text-align: center; margin-bottom: 1.5rem; border: 1px solid #b1dfbb;
+}
+.ticket-codigo-label { font-size: 0.75rem; color: #155724; letter-spacing: 2px; text-transform: uppercase; }
+.ticket-codigo-valor {
+    font-size: 1.75rem; font-weight: bold; color: #155724; font-family: 'Courier New', monospace;
+    letter-spacing: 3px; margin-top: 0.25rem;
+}
+
+.ticket-precios-seccion { margin-bottom: 1.5rem; }
+.ticket-precios-titulo { color: #333; border-bottom: 2px solid #28a745; padding-bottom: 0.5rem; margin-bottom: 1rem; }
+.ticket-precios-lista { display: flex; flex-direction: column; gap: 0.5rem; }
+.ticket-precio-fila { display: flex; justify-content: space-between; color: #555; font-size: 0.9rem; }
+.ticket-precio-fila-subtotal {
+    display: flex; justify-content: space-between; color: #555; font-weight: 600;
+    border-top: 1px dashed #ccc; padding-top: 0.4rem;
+}
+.ticket-precio-fila-descuento-promo { display: flex; justify-content: space-between; color: #e91e8c; font-weight: 500; }
+.ticket-precio-fila-descuento-cupon { display: flex; justify-content: space-between; color: #28a745; font-weight: 500; }
+.ticket-precio-fila-combo { display: flex; justify-content: space-between; color: #ff8c00; font-weight: 500; }
+
+.ticket-precio-total {
+    display: flex; justify-content: space-between; align-items: center;
+    border-top: 2px solid #333; padding-top: 0.5rem; margin-top: 0.25rem;
+}
+.ticket-precio-total-label { font-size: 1.1rem; font-weight: bold; color: #333; }
+.ticket-precio-total-valor { font-size: 1.75rem; font-weight: bold; color: #28a745; }
+
+.ticket-ahorro-box { background: #d4edda; padding: 0.5rem 1rem; border-radius: 4px; text-align: center; color: #155724; font-size: 0.9rem; }
+
+.ticket-pago-info-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 1rem; }
+
+/* ---- QR ---- */
+.ticket-qr-seccion { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); padding: 2rem; text-align: center; color: white; }
+.ticket-qr-titulo { font-size: 1.1rem; font-weight: bold; margin-bottom: 1rem; letter-spacing: 1px; }
+.ticket-qr-box {
+    background: white; padding: 1.25rem; border-radius: 10px; display: inline-block;
+    margin-bottom: 1rem; box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+}
+.ticket-qr-img { display: block; width: 220px; height: 220px; }
+.ticket-qr-codigo {
+    font-family: monospace; font-size: 1rem; letter-spacing: 2px; background: rgba(255,255,255,0.15);
+    display: inline-block; padding: 0.5rem 1.5rem; border-radius: 6px;
+}
+
+/* ---- Footer del ticket ---- */
+.ticket-footer { background: #1a1a2e; padding: 1rem 2rem; text-align: center; color: rgba(255,255,255,0.6); font-size: 0.8rem; }
+.ticket-footer-linea { margin-bottom: 0.25rem; }
+.ticket-footer-destacado { color: white; }
+.ticket-footer-combo { margin-top: 0.25rem; }
+
+/* ---- Bloques externos (no se imprimen) ---- */
+.comprobante-acciones { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 1rem; margin-bottom: 2rem; }
+.comprobante-btn-imprimir {
+    padding: 1rem; background-color: #1a1a2e; color: white; border: none; border-radius: 8px;
+    font-weight: bold; cursor: pointer; font-size: 1rem;
+}
+.comprobante-btn-reservas {
+    padding: 1rem; background-color: #007bff; color: white; border-radius: 8px;
+    font-weight: bold; text-decoration: none; text-align: center; font-size: 1rem;
+}
+.comprobante-btn-peliculas {
+    padding: 1rem; background-color: #6c757d; color: white; border-radius: 8px;
+    font-weight: bold; text-decoration: none; text-align: center; font-size: 1rem;
+}
+
+.comprobante-agradecimiento {
+    background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%); padding: 1.5rem 2rem;
+    border-radius: 12px; text-align: center; color: white;
+}
+.comprobante-agradecimiento-titulo { font-size: 1.5rem; font-weight: bold; }
+.comprobante-agradecimiento-subtitulo { opacity: 0.9; margin-top: 0.25rem; }
+
+/* ---- Impresión (ya existía) ---- */
 @media print {
-        nav, h1, .no-print {
-            display: none !important;
-        }
-        body {
-            background: white !important;
-            padding: 0 !important;
-            margin: 0 !important;
-        }
-        .container {
-            max-width: 100% !important;
-            margin: 0 !important;
-            padding: 0 !important;
-        }
-        #ticket {
-            box-shadow: none !important;
-            border: 1px solid #333 !important;
-            page-break-inside: avoid;
-        }
+    nav, h1, .no-print {
+        display: none !important;
     }
+    body {
+        background: white !important;
+        padding: 0 !important;
+        margin: 0 !important;
+    }
+    .container {
+        max-width: 100% !important;
+        margin: 0 !important;
+        padding: 0 !important;
+    }
+    #ticket {
+        box-shadow: none !important;
+        border: 1px solid #333 !important;
+        page-break-inside: avoid;
+    }
+}

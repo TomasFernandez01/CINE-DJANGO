@@ -1,5 +1,6 @@
 {% extends 'base.html' %}
 {% load static %}
+<!-- modificado: etiquetado descriptivo (Tanda A promociones) - clases promociones-estilo-N reemplazadas por nombres semánticos cupones-* -->
 
 {% block titulo %}Mis Cupones{% endblock %}
 
@@ -8,31 +9,31 @@
 {% endblock %}
 
 {% block contenido %}
-<div class="promociones-estilo-1">
-    <h1 class="promociones-estilo-2">🏷️ Historial de Cupones</h1>
-    <p class="promociones-estilo-3">Cupones que utilizaste en tus compras anteriores</p>
+<div class="cupones-page">
+    <h1 class="cupones-titulo">🏷️ Historial de Cupones</h1>
+    <p class="cupones-subtitulo">Cupones que utilizaste en tus compras anteriores</p>
 
     {% if historial %}
-    <div class="promociones-estilo-4">
+    <div class="cupones-lista">
         {% for uso in historial %}
-        <div class="promociones-estilo-5">
-            <div class="promociones-estilo-6">
+        <div class="cupones-card">
+            <div class="cupones-card-header">
                 <div>
-                    <div class="promociones-estilo-7">
-                        <span class="promociones-estilo-8">
+                    <div class="cupones-card-codigo-linea">
+                        <span class="cupones-card-codigo">
                             {{ uso.cupon.codigo }}
                         </span>
-                        <span class="promociones-estilo-9">-${{ uso.descuento_aplicado }}</span>
+                        <span class="cupones-card-descuento">-${{ uso.descuento_aplicado }}</span>
                     </div>
-                    <p class="promociones-estilo-10">{{ uso.cupon.descripcion }}</p>
+                    <p class="cupones-card-descripcion">{{ uso.cupon.descripcion }}</p>
                     {% if uso.reserva %}
-                    <p class="promociones-estilo-11">
+                    <p class="cupones-card-reserva-info">
                         Película: <strong>{{ uso.reserva.funcion.pelicula.titulo }}</strong> —
                         Reserva: <strong>{{ uso.reserva.codigo_reserva }}</strong>
                     </p>
                     {% endif %}
                 </div>
-                <div class="promociones-estilo-12">
+                <div class="cupones-card-fecha">
                     {{ uso.fecha_uso|date:"d/m/Y H:i" }}
                 </div>
             </div>
@@ -40,9 +41,9 @@
         {% endfor %}
     </div>
     {% else %}
-    <div class="promociones-estilo-13">
-        <p class="promociones-estilo-14">Todavía no usaste ningún cupón.</p>
-        <a href="{% url 'peliculas:lista_peliculas' %}" class="promociones-estilo-15">
+    <div class="cupones-vacio">
+        <p class="cupones-vacio-texto">Todavía no usaste ningún cupón.</p>
+        <a href="{% url 'peliculas:lista_peliculas' %}" class="cupones-vacio-btn">
             🎬 Ver Películas
         </a>
     </div>

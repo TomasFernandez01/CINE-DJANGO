@@ -11,8 +11,8 @@
 
 {% block contenido %}
 <!-- MODIFICACION DE GEMINI -->
-<div class="perfil-contenedor">
-    <h1 style="color: #f5f5f5; margin-bottom: 0.5rem;">Mi Perfil</h1>
+<div class="perfil-contenedor" data-total-reservas="{{ total_reservas }}">
+    <h1 class="perfil-titulo">Mi Perfil</h1>
     
     <div class="perfil-dashboard">
         <!-- Columna izquierda: Sidebar -->
@@ -32,7 +32,7 @@
             <!-- Club Cine Card (Membresía) -->
             <div class="perfil-tier-card">
                 <div class="perfil-tier-header">
-                    <span class="perfil-tier-title" style="font-weight: bold; color: #fff; font-size: 0.9rem;">Club Cine</span>
+                    <span class="perfil-tier-title">Club Cine</span>
                     <span id="tier-badge" class="perfil-tier-badge">Cargando...</span>
                 </div>
                 <p class="perfil-tier-info">Suma reservas para subir de nivel y obtener cupones de descuento.</p>
@@ -65,8 +65,16 @@
                     </svg>
                     Seguridad
                 </button>
+                <!-- nuevo: pestaña de historial de películas vistas (modelo HistorialVisto, ya existía pero no se mostraba en ningún lado) -->
+                <button class="perfil-tab-btn" data-tab="historial">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <circle cx="12" cy="12" r="10"></circle>
+                        <polyline points="12 6 12 12 16 14"></polyline>
+                    </svg>
+                    Historial
+                </button>
                 {% if user.is_staff or user.is_superuser %}
-                <a href="{% url 'panel:inicio' %}" class="perfil-tab-btn" style="text-decoration: none;">
+                <a href="{% url 'panel:inicio' %}" class="perfil-tab-btn">
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                         <rect x="3" y="3" width="7" height="9"></rect>
                         <rect x="14" y="3" width="7" height="5"></rect>
@@ -84,7 +92,7 @@
             
             <!-- Pestaña 1: Info -->
             <div id="tab-info" class="perfil-tab-seccion activa">
-                <h2 class="perfil-encabezado-titulo" style="border-bottom: 2px solid #e50914; padding-bottom: 0.5rem; margin-bottom: 1.5rem;">Información Personal</h2>
+                <h2 class="perfil-encabezado-titulo">Información Personal</h2>
                 
                 <div class="perfil-datos-grid">
                     <div>
@@ -118,7 +126,7 @@
                 </div>
                 
                 <!-- Estadísticas en Widgets -->
-                <h3 style="color: #f5f5f5; border-top: 1px solid #2a2a2a; margin-top: 2rem; padding-top: 1.5rem; margin-bottom: 1rem;">Estadísticas de Actividad</h3>
+                <h3 class="perfil-subtitulo-stats">Estadísticas de Actividad</h3>
                 <div class="perfil-widgets-grid">
                     <div class="perfil-widget-card">
                         <div class="perfil-widget-val">{{ total_reservas }}</div>
@@ -137,7 +145,7 @@
             
             <!-- Pestaña 2: Editar Perfil -->
             <div id="tab-editar" class="perfil-tab-seccion">
-                <h2 class="perfil-encabezado-titulo" style="border-bottom: 2px solid #e50914; padding-bottom: 0.5rem; margin-bottom: 1.5rem;">Editar Perfil</h2>
+                <h2 class="perfil-encabezado-titulo">Editar Perfil</h2>
                 
                 <form method="post" action="{% url 'usuarios:editar_perfil' %}">
                     {% csrf_token %}
@@ -181,7 +189,7 @@
             
             <!-- Pestaña 3: Seguridad (Cambiar Contraseña) -->
             <div id="tab-seguridad" class="perfil-tab-seccion">
-                <h2 class="perfil-encabezado-titulo" style="border-bottom: 2px solid #e50914; padding-bottom: 0.5rem; margin-bottom: 1.5rem;">Seguridad</h2>
+                <h2 class="perfil-encabezado-titulo">Seguridad</h2>
                 
                 <form method="post" action="{% url 'usuarios:cambiar_password' %}">
                     {% csrf_token %}
@@ -239,7 +247,32 @@
                     </div>
                 </form>
             </div>
-            
+
+            <!-- nuevo: Pestaña 4: Historial de películas vistas -->
+            <div id="tab-historial" class="perfil-tab-seccion">
+                <h2 class="perfil-encabezado-titulo">Historial de Películas Vistas</h2>
+
+                {% if historial %}
+                    <div class="perfil-historial-lista">
+                        {% for entrada in historial %}
+                            <a href="{% url 'peliculas:detalle_pelicula' entrada.pelicula.id %}" class="perfil-historial-item">
+                                {% if entrada.pelicula.poster %}
+                                    <img src="{{ entrada.pelicula.poster.url }}" alt="{{ entrada.pelicula.titulo }}" class="perfil-historial-poster">
+                                {% endif %}
+                                <div class="perfil-historial-info">
+                                    <span class="perfil-historial-titulo">{{ entrada.pelicula.titulo }}</span>
+                                    <span class="perfil-historial-fecha">Vista el {{ entrada.fecha_visto|date:"d/m/Y" }}</span>
+                                </div>
+                            </a>
+                        {% endfor %}
+                    </div>
+                {% else %}
+                    <p class="perfil-historial-vacio">
+                        Todavía no viste ninguna película. Cuando confirmes el pago de una reserva, aparecerá acá.
+                    </p>
+                {% endif %}
+            </div>
+
         </div>
     </div>
 </div>
@@ -248,124 +281,11 @@
 
 {% block extra_js %}
 <!-- MODIFICACION DE GEMINI -->
-<script>
-document.addEventListener('DOMContentLoaded', function() {
-    // 1. Pestañas (Tabs)
-    const tabs = document.querySelectorAll('.perfil-tab-btn');
-    const sections = document.querySelectorAll('.perfil-tab-seccion');
-    
-    tabs.forEach(tab => {
-        tab.addEventListener('click', function() {
-            const target = tab.dataset.tab;
-            if (!target) return; // Enlace al panel de administración staff
-            
-            tabs.forEach(t => t.classList.remove('activa'));
-            sections.forEach(s => s.classList.remove('activa'));
-            
-            tab.classList.add('activa');
-            const targetSec = document.getElementById(`tab-${target}`);
-            if (targetSec) {
-                targetSec.classList.add('activa');
-            }
-        });
-    });
-
-    // 2. Calcular Nivel del Club y Progreso
-    const totalReservas = parseInt("{{ total_reservas }}");
-    const badgeEl = document.getElementById('tier-badge');
-    const barEl = document.getElementById('tier-progress');
-    const textEl = document.getElementById('tier-progress-text');
-    
-    if (badgeEl && barEl && textEl) {
-        let tier = 'Bronce';
-        let percent = 0;
-        let text = '';
-        
-        if (totalReservas < 5) {
-            tier = 'Bronce';
-            percent = (totalReservas / 5) * 100;
-            const faltantes = 5 - totalReservas;
-            text = `${faltantes} reserva(s) para nivel Plata`;
-            badgeEl.classList.add('bronce');
-        } else if (totalReservas < 10) {
-            tier = 'Plata';
-            percent = ((totalReservas - 5) / 5) * 100;
-            const faltantes = 10 - totalReservas;
-            text = `${faltantes} reserva(s) para nivel Oro`;
-            badgeEl.classList.add('plata');
-        } else {
-            tier = 'Oro';
-            percent = 100;
-            text = '¡Nivel máximo alcanzado!';
-            badgeEl.classList.add('oro');
-        }
-        
-        badgeEl.textContent = tier;
-        barEl.style.width = `${percent}%`;
-        textEl.textContent = text;
-    }
-
-    // 3. Mostrar/Ocultar contraseñas
-    const pwdToggles = document.querySelectorAll('.toggle-password-campo');
-    pwdToggles.forEach(btn => {
-        btn.addEventListener('click', function() {
-            const container = btn.closest('.contraseña-contenedor');
-            const input = container.querySelector('input');
-            const openEye = container.querySelector('.ojo-abierto');
-            const closedEye = container.querySelector('.ojo-cerrado');
-            
-            if (input.type === 'password') {
-                input.type = 'text';
-                openEye.style.display = 'none';
-                closedEye.style.display = 'block';
-            } else {
-                input.type = 'password';
-                openEye.style.display = 'block';
-                closedEye.style.display = 'none';
-            }
-        });
-    });
-
-    // 4. Medidor de fuerza de contraseña
-    const newPwdInput = document.getElementById('id_new_password1');
-    const strengthBar = document.getElementById('strength-bar');
-    const strengthText = document.getElementById('strength-text');
-    
-    if (newPwdInput && strengthBar && strengthText) {
-        newPwdInput.addEventListener('input', function() {
-            const val = newPwdInput.value;
-            let score = 0;
-            if (!val) {
-                strengthBar.style.width = '0%';
-                strengthText.textContent = 'Escribe una contraseña';
-                return;
-            }
-            
-            if (val.length >= 8) score++;
-            if (/[A-Z]/.test(val)) score++;
-            if (/[a-z]/.test(val)) score++;
-            if (/[0-9]/.test(val)) score++;
-            if (/[^A-Za-z0-9]/.test(val)) score++;
-            
-            let percent = (score / 5) * 100;
-            strengthBar.style.width = `${percent}%`;
-            
-            if (score <= 2) {
-                strengthBar.style.backgroundColor = '#ff6b6b';
-                strengthText.textContent = 'Fuerza: Débil';
-                strengthText.style.color = '#ff6b6b';
-            } else if (score <= 4) {
-                strengthBar.style.backgroundColor = '#ffc107';
-                strengthText.textContent = 'Fuerza: Media';
-                strengthText.style.color = '#ffc107';
-            } else {
-                strengthBar.style.backgroundColor = '#28a745';
-                strengthText.textContent = 'Fuerza: Fuerte';
-                strengthText.style.color = '#28a745';
-            }
-        });
-    }
-});
-</script>
+<!-- modificado: el <script> inline que estaba acá se separó en 3 archivos:
+     perfil.js (tabs + progreso Club Cine, especifico de esta pagina),
+     password_toggle.js y password_strength.js (compartidos con login/registro/cambiar_password) -->
+<script src="{% static 'js/usuarios/perfil.js' %}"></script>
+<script src="{% static 'js/usuarios/password_toggle.js' %}"></script>
+<script src="{% static 'js/usuarios/password_strength.js' %}"></script>
 <!-- FIN MODIFICACION DE GEMINI -->
 {% endblock %}

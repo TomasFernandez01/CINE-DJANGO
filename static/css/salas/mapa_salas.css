@@ -1,0 +1,120 @@
+/* nuevo: mapa de asientos de solo lectura para el cliente en lista_salas.html.
+   Se pensó en oscuro (a diferencia del resto de esta página, que todavía está en tema claro
+   y queda pendiente para el punto 4) porque reutiliza el mismo lenguaje visual que ya usa el
+   mapa real de reservas (static/css/reservas/seleccionar_asientos.css), para no inventar un
+   tercer estilo de asiento en el sitio. No es clickeable: es solo para mostrar la distribución. */
+
+.salas-mapa-toggle-btn {
+    margin-top: 1rem;
+    width: 100%;
+    padding: 0.6rem;
+    background-color: transparent;
+    border: 1px solid #6c757d;
+    color: #495057;
+    border-radius: 6px;
+    font-weight: bold;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.salas-mapa-toggle-btn:hover {
+    background-color: #6c757d;
+    color: #fff;
+}
+
+.salas-mapa-panel {
+    display: none;
+    margin-top: 1rem;
+    background-color: #0f0f0f;
+    border-radius: 8px;
+    padding: 1.25rem 1rem;
+    overflow-x: auto;
+}
+
+.salas-mapa-panel.salas-mapa-abierto {
+    display: block;
+}
+
+.salas-mapa-leyenda {
+    display: flex;
+    justify-content: center;
+    gap: 1.25rem;
+    flex-wrap: wrap;
+    margin-bottom: 1rem;
+    color: #d9d9d9;
+    font-size: 0.75rem;
+}
+
+.salas-mapa-leyenda-item {
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+}
+
+.salas-mapa-leyenda-swatch {
+    width: 16px;
+    height: 16px;
+    border-radius: 3px;
+    display: inline-block;
+}
+
+.salas-mapa-leyenda-swatch--disponible { background-color: #ffffff; border: 1px solid #cccccc; }
+.salas-mapa-leyenda-swatch--bloqueado { background-color: #4a4a4a; border: 1px solid #5a5a5a; }
+.salas-mapa-leyenda-swatch--categoria { background-color: #f1c40f; border: 1px solid #c29d0b; }
+
+.salas-mapa-pantalla-curva {
+    width: 60%;
+    max-width: 420px;
+    height: 14px;
+    margin: 0 auto 1.25rem auto;
+    border-radius: 50%;
+    background: radial-gradient(ellipse at center, #6b6b6b 0%, #2a2a2a 75%, transparent 100%);
+}
+
+.salas-mapa-inner {
+    display: inline-block;
+    min-width: 100%;
+}
+
+.salas-mapa-fila {
+    display: flex;
+    justify-content: center;
+    gap: 5px;
+    margin-bottom: 5px;
+    align-items: center;
+}
+
+.salas-mapa-fila-letra {
+    width: 18px;
+    text-align: center;
+    font-size: 0.7rem;
+    font-weight: bold;
+    color: #d9a441;
+}
+
+.salas-mapa-pasillo {
+    width: 22px;
+    height: 22px;
+}
+
+.salas-mapa-asiento {
+    width: 22px;
+    height: 22px;
+    border-radius: 4px;
+    border: 1px solid;
+}
+
+.salas-mapa-asiento--disponible {
+    background-color: #ffffff;
+    border-color: #cccccc;
+}
+
+.salas-mapa-asiento--bloqueado {
+    background-color: #4a4a4a;
+    border-color: #5a5a5a;
+}
+
+.salas-mapa-asiento--categoria {
+    background-color: #f1c40f;
+    border-color: #c29d0b;
+}

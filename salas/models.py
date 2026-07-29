@@ -7,11 +7,6 @@ from decimal import Decimal, ROUND_HALF_UP
 
 
 def redondear_precio(monto, paso=Decimal('50')):
-    """
-    Redondea un monto al múltiplo de `paso` más cercano (por defecto $50), para
-    que combinar multiplicadores (sala x categoría de asiento) no deje precios
-    feos con muchos decimales.
-    """
     monto = Decimal(monto)
     return (monto / paso).quantize(Decimal('1'), rounding=ROUND_HALF_UP) * paso
 
@@ -22,9 +17,7 @@ class Sala(models.Model):
         ('2d_premium', '2D Premium'),
         ('3d_premium', '3D Premium (IMAX/DBOX)'),
     ]
-    # 'multiplicador' es el valor SUGERIDO al elegir ese tipo (autocompleta el
-    # campo Sala.multiplicador_precio en el formulario), no un valor fijo: el
-    # admin siempre puede pisarlo con cualquier decimal.
+
     TIPO_CONFIG = {
         '2d':        {'icono': '🎬', 'color': '#6c757d', 'badge': 'secondary'},
         '3d':        {'icono': '🥽', 'color': '#007bff', 'badge': 'primary'},
@@ -65,7 +58,6 @@ class Sala(models.Model):
                    "usar el valor sugerido de tu tipo de sala o poner cualquier otro."
     )
     
-    ###############################################################
     def __str__(self):
         return f"{self.nombre} [{self.get_tipo_display()}] (Cap: {self.capacidad})"
  
@@ -85,45 +77,15 @@ class Sala(models.Model):
  
     def es_3d(self):
         return '3d' in self.tipo
-    ###############################################################
-    # antes---
-    # def __str__(self):
-    #     return f"{self.nombre} (Cap: {self.capacidad})"
     
     def layout_asientos(self):
-        """
-        V1--Retorna el layout de asientos como lista de listas de códigos. Si la sala tiene SeccionSala definidas, cada celda del lienzo (fila x columna) solo aparece si alguna sección la cubre — esto permite secciones lado a lado, con distinta profundidad de filas, y "pasillos" (columnas/filas sin ninguna sección).
-        Si la sala todavía no tiene secciones (caso legacy / recién creada), se usa el comportamiento anterior: grilla uniforme filas x columnas.
-        V2--
-        Retorna el layout de asientos como lista de filas.
-        Cada fila es un dict: {'letra': 'A', 'celdas': [...]}
-          - 'letra': la letra de esa fila (A, B, C...), explícita para no
-            depender de adivinarla a partir del primer asiento (que puede
-            no existir si esa fila arranca con un pasillo).
-          - 'celdas': lista de longitud fija (una posición por columna del
-            lienzo). Cada posición es el código del asiento si alguna
-            sección la cubre, o None si es un pasillo (columna/fila sin
-            ninguna sección). Mantener la posición exacta es necesario
-            para que los templates dibujen el espacio vacío del pasillo
-            en vez de "amontonar" los asientos.
-
-        Se omiten las filas que no tienen NINGÚN asiento en toda su
-        extensión (ninguna sección la cubre).
-
-        Si la sala todavía no tiene secciones (caso legacy / recién creada),
-        se usa el comportamiento anterior: grilla uniforme sin huecos.
-        """
+        """Retorna el layout de asientos """
         letras = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'
-        ######################################
-        # Un objeto sin pk todavía (recién instanciado, no guardado) no puede
-        # tener secciones relacionadas en la base de datos. entonces agrego la condicion if self.pk else []
         secciones = list(self.secciones.all()) if self.pk else []
 
         if not secciones:
             layout = []
             for i in range(self.filas):
-                # fila = [f"{letras[i]}{j}" for j in range(1, self.columnas + 1)]
-                # layout.append(fila)
                 celdas = [f"{letras[i]}{j}" for j in range(1, self.columnas + 1)]
                 layout.append({'letra': letras[i], 'celdas': celdas})
             return layout
@@ -141,43 +103,12 @@ class Sala(models.Model):
             if any(fila_celdas):
                 layout.append({'letra': letras[fila_num - 1], 'celdas': fila_celdas})
         return layout
-        #####################################
-        layout = []
-        for fila_num in range(1, self.filas + 1):
-            fila_codigos = []
-            for col_num in range(1, self.columnas + 1):
-                cubierta = any(
-                    s.fila_inicio <= fila_num <= s.fila_fin and
-                    s.columna_inicio <= col_num <= s.columna_fin
-                    for s in secciones
-                )
-                if cubierta:
-                    fila_codigos.append(f"{letras[fila_num - 1]}{col_num}")
-            if fila_codigos:
-                layout.append(fila_codigos)
-        return layout
-        ###################################### 
-        layout = []
-        for i in range(self.filas):
-            fila = []
-            for j in range(1, self.columnas + 1):
-                fila.append(f"{letras[i]}{j}")
-            layout.append(fila)
-        return layout
     
     def total_asientos(self):
-        """
-        Calcula el total de asientos. Si hay secciones definidas, suma el
-        área real de cada una (evita contar pasillos). Si no hay secciones
-        todavía, usa el cálculo legacy filas x columnas.
-        """
-        ################################# if self.pk else [] para la sala si no existe
         secciones = list(self.secciones.all()) if self.pk else []
         if not secciones:
             return self.filas * self.columnas
         return sum(s.total_asientos() for s in secciones)
-        #################################
-        return self.filas * self.columnas
     
     def save(self, *args, **kwargs):
         # Auto-ajustar capacidad si no está definida
@@ -185,12 +116,6 @@ class Sala(models.Model):
             self.capacidad = self.total_asientos()
         super().save(*args, **kwargs)
 
-    # PROBAR si no anda
-    # def save(self, *args, **kwargs):
-    #     # SIEMPRE auto-calcular capacidad
-    #     self.capacidad = self.total_asientos()
-    #     super().save(*args, **kwargs)
-    
     class Meta:
         verbose_name = 'Sala'
         verbose_name_plural = 'Salas'
@@ -296,8 +221,6 @@ class Funcion(models.Model):
     )
     disponible = models.BooleanField(default=True)
     
-    # def __str__(self):
-    #     return f"{self.pelicula.titulo} - {self.sala.nombre} - {self.fecha_hora.strftime('%d/%m/%Y %H:%M')}"
     def __str__(self):
         return f"{self.pelicula.titulo} - {self.sala.nombre} [{self.sala.get_tipo_display()}] - {self.fecha_hora.strftime('%d/%m/%Y %H:%M')}"
 
@@ -358,11 +281,6 @@ class Funcion(models.Model):
         )
         return list(bloqueos.values_list('asiento_codigo', flat=True))
     
-    # modificado: separa asientos_bloqueados() por motivo, para que la vista
-    # y los templates puedan diferenciar "mantenimiento" de "reservado" en
-    # vez de tratarlos todos igual. No reemplaza a asientos_bloqueados() (que
-    # se sigue usando tal cual para el cálculo de disponibilidad), solo
-    # agrega el detalle por motivo para pintarlos distinto más adelante.
     def asientos_bloqueados_por_motivo(self, motivo):
         """
         Igual que asientos_bloqueados(), pero filtrado por motivo
@@ -390,16 +308,6 @@ class Funcion(models.Model):
         """Verifica si un asiento específico está disponible (ni ocupado ni bloqueado)"""
         return asiento_codigo not in self.asientos_no_disponibles()
     
-    ###################################################
-    # def asientos_disponibles(self):
-    #     try:
-    #         reservados = self.reservas.filter(estado__in=['pendiente', 'confirmada']).aggregate(
-    #             total=models.Sum('cantidad_entradas')
-    #         )['total'] or 0
-    #         return self.sala.capacidad - reservados
-    #     except AttributeError:
-    #         return self.sala.capacidad
-
     def asientos_disponibles(self):
         """Retorna la cantidad de asientos disponibles"""
         ocupados = len(self.asientos_ocupados())
@@ -528,8 +436,6 @@ class Funcion(models.Model):
             models.Index(fields=['sala', 'fecha_hora']),
         ]
 
-
-########################################################################33
 class AsientoBloqueado(models.Model):
     MOTIVO_CHOICES = [
         ('mantenimiento', 'Mantenimiento'),

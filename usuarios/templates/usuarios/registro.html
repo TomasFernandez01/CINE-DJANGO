@@ -99,28 +99,7 @@
 
 {% block extra_js %}
 <!-- MODIFICACION DE GEMINI -->
-<script>
-document.addEventListener('DOMContentLoaded', function() {
-    const toggles = document.querySelectorAll('.toggle-registro-password');
-    toggles.forEach(btn => {
-        btn.addEventListener('click', function() {
-            const container = btn.closest('.contraseña-contenedor');
-            const input = container.querySelector('input');
-            const openEye = container.querySelector('.ojo-abierto');
-            const closedEye = container.querySelector('.ojo-cerrado');
-            
-            if (input.type === 'password') {
-                input.type = 'text';
-                openEye.style.display = 'none';
-                closedEye.style.display = 'block';
-            } else {
-                input.type = 'password';
-                openEye.style.display = 'block';
-                closedEye.style.display = 'none';
-            }
-        });
-    });
-});
-</script>
+<!-- modificado: unificado con login.html/cambiar_password.html/perfil.html, ver static/js/usuarios/password_toggle.js -->
+<script src="{% static 'js/usuarios/password_toggle.js' %}"></script>
 <!-- FIN MODIFICACION DE GEMINI -->
 {% endblock %}

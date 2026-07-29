@@ -1,12 +1,117 @@
+/* modificado (Tanda B pagos): separación CSS/JS completa - clases nuevas para
+   reemplazar los ~65 estilos inline que tenía procesar_pago.html. Colores
+   respetados tal cual estaban (el template ya usaba paleta oscura). */
+
+.pago-container {
+    max-width: 1000px; margin: 0 auto; background-color: #0f0f0f;
+    padding: 1.5rem; border-radius: 12px; color: #f2f2f2;
+}
+.pago-titulo { text-align: center; margin-bottom: 1.5rem; color: #ffffff; }
+
+/* ---- Aviso pago simulado ---- */
+.pago-aviso-simulado {
+    background: linear-gradient(135deg, #f39c12 0%, #e67e22 100%); border-radius: 10px;
+    padding: 1.1rem 1.4rem; margin-bottom: 1.25rem; display: flex; align-items: center; gap: 1rem;
+}
+.pago-aviso-simulado-icono { font-size: 2.2rem; flex-shrink: 0; }
+.pago-aviso-simulado-texto { color: white; }
+.pago-aviso-simulado-titulo { font-size: 1.05rem; font-weight: bold; margin-bottom: 0.2rem; }
+.pago-aviso-simulado-desc { font-size: 0.85rem; opacity: 0.95; line-height: 1.4; }
+
+/* ---- Contador regresivo ---- */
+.pago-countdown {
+    background: linear-gradient(135deg, #ff6b6b 0%, #ff8e53 100%); padding: 1.25rem;
+    border-radius: 8px; margin-bottom: 1.25rem; text-align: center; color: white;
+}
+.pago-countdown-label { font-size: 0.85rem; margin-bottom: 0.4rem; opacity: 0.95; }
+.pago-countdown-numero {
+    font-size: 2.2rem; font-weight: bold; font-family: 'Courier New', monospace; letter-spacing: 0.1em;
+}
+.pago-countdown-footer { font-size: 0.78rem; margin-top: 0.4rem; opacity: 0.9; }
+.pago-countdown-urgente { background: linear-gradient(135deg, #dc3545 0%, #c82333 100%); }
+.pago-countdown-expirado { background: linear-gradient(135deg, #6c757d 0%, #495057 100%); }
+
+/* ---- Layout general ---- */
+#layoutPago.pago-layout { display: grid; grid-template-columns: 1fr 320px; gap: 1.5rem; align-items: start; }
+
+/* ---- Columna izquierda: método de pago ---- */
+.pago-metodo-panel { background-color: #1a1a1a; border: 1px solid #2a2a2a; border-radius: 8px; padding: 1.5rem; }
+.pago-metodo-titulo {
+    color: #ffffff; margin: 0 0 1rem 0; font-size: 1.15rem;
+    border-bottom: 2px solid #28a745; padding-bottom: 0.5rem;
+}
+.pago-metodos-lista { display: flex; flex-direction: column; gap: 0.75rem; margin-bottom: 1.5rem; }
+.pago-metodo-nombre { color: #ffffff; }
+.pago-metodo-desc { margin: 0; font-size: 0.85rem; color: #aaaaaa; }
+
+.pago-datos-tarjeta {
+    display: none; margin-bottom: 1.5rem; padding: 1.25rem;
+    background: #141414; border-radius: 6px; border: 1px dashed #ffc107;
+}
+.pago-datos-tarjeta-visible { display: block; }
+.pago-datos-tarjeta-aviso {
+    background: #2a2410; padding: 0.65rem 0.9rem; border-radius: 6px; margin-bottom: 1.1rem;
+    display: flex; align-items: center; gap: 0.6rem;
+}
+.pago-datos-tarjeta-aviso-icono { font-size: 1.1rem; }
+.pago-datos-tarjeta-aviso-texto { color: #e6c977; font-size: 0.85rem; }
+.pago-datos-tarjeta-titulo { color: #ffffff; margin: 0 0 0.85rem 0; font-size: 1rem; }
+
+.pago-campo { margin-bottom: 0.75rem; }
+.pago-campo-label { display: block; font-weight: bold; margin-bottom: 0.3rem; color: #cccccc; font-size: 0.85rem; }
+.pago-campo-input {
+    width: 100%; padding: 0.55rem; border: 1px solid #444444; border-radius: 4px;
+    font-size: 0.95rem; box-sizing: border-box; background-color: #0f0f0f; color: #ffffff;
+}
+.pago-campo-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem; }
+
+.pago-acciones { display: flex; gap: 1rem; }
+.pago-btn-confirmar {
+    flex: 1; padding: 1rem; background: #28a745; color: white; border: none;
+    border-radius: 6px; font-weight: bold; font-size: 1rem; cursor: pointer;
+}
+.pago-btn-confirmar-deshabilitado { background-color: #6c757d; }
+.pago-btn-cancelar {
+    flex: 1; padding: 1rem; background: transparent; color: #ffffff; border: 1px solid #555555;
+    border-radius: 6px; text-align: center; text-decoration: none; font-weight: bold;
+    font-size: 1rem; display: flex; align-items: center; justify-content: center;
+}
+.pago-form-deshabilitado { opacity: 0.5; pointer-events: none; }
+
+/* ---- Columna derecha: resumen (sticky) ---- */
+#sidebarResumenPago.pago-resumen-sidebar {
+    position: sticky; top: 1rem; display: flex; flex-direction: column; gap: 1rem;
+}
+.pago-resumen-card { background-color: #1a1a1a; border-radius: 8px; border: 1px solid #2a2a2a; padding: 1.25rem; }
+.pago-resumen-header { font-weight: bold; letter-spacing: 0.05em; color: #ffffff; margin-bottom: 1rem; }
+
+.pago-resumen-seccion { margin-bottom: 1rem; padding-bottom: 1rem; border-bottom: 1px solid #2a2a2a; }
+.pago-resumen-label { color: #999999; font-size: 0.75rem; margin-bottom: 0.15rem; }
+.pago-resumen-valor { color: #ffffff; font-weight: bold; }
+.pago-resumen-detalle { color: #cccccc; font-size: 0.85rem; margin-top: 0.15rem; }
+.pago-resumen-codigo-linea { color: #888888; font-size: 0.78rem; margin-top: 0.3rem; }
+.pago-resumen-codigo { font-family: monospace; }
+
+.pago-resumen-fila { display: flex; justify-content: space-between; color: #cccccc; font-size: 0.82rem; margin-bottom: 0.2rem; }
+.pago-resumen-fila-descuento { display: flex; justify-content: space-between; color: #e6a23c; font-size: 0.82rem; margin-bottom: 0.2rem; }
+.pago-resumen-fila-combo { display: flex; justify-content: space-between; color: #cccccc; font-size: 0.82rem; }
+
+.pago-resumen-total { display: flex; justify-content: space-between; align-items: center; }
+.pago-resumen-total-label { color: #ffffff; font-weight: bold; }
+.pago-resumen-total-valor { font-size: 1.4rem; font-weight: bold; color: #3ddc84; }
+
+/* ---- Responsive (ya existía) ---- */
 @media (max-width: 860px) {
-        #layoutPago { grid-template-columns: 1fr !important; }
-        #sidebarResumenPago { position: static !important; }
-    }
-    .metodo-pago-card {
-        display: flex; align-items: center; padding: 1rem 1.1rem; border-radius: 8px;
-        border: 2px solid #2a2a2a; background-color: #1a1a1a; cursor: pointer;
-        margin-bottom: 0.75rem; transition: border-color 0.15s;
-    }
-    .metodo-pago-card:hover { border-color: #555555; }
-    .metodo-pago-card input[type="radio"] { accent-color: #28a745; margin-right: 0.75rem; }
-    .metodo-pago-card.seleccionada { border-color: #28a745; background-color: #142418; }
+    #layoutPago.pago-layout { grid-template-columns: 1fr !important; }
+    #sidebarResumenPago.pago-resumen-sidebar { position: static !important; }
+}
+
+/* ---- Método de pago (ya existía) ---- */
+.metodo-pago-card {
+    display: flex; align-items: center; padding: 1rem 1.1rem; border-radius: 8px;
+    border: 2px solid #2a2a2a; background-color: #1a1a1a; cursor: pointer;
+    margin-bottom: 0.75rem; transition: border-color 0.15s;
+}
+.metodo-pago-card:hover { border-color: #555555; }
+.metodo-pago-card input[type="radio"] { accent-color: #28a745; margin-right: 0.75rem; }
+.metodo-pago-card.seleccionada { border-color: #28a745; background-color: #142418; }

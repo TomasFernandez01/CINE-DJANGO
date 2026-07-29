@@ -1,0 +1,27 @@
+{% comment %}
+modificado: partial nuevo, extraido de lista_pelis.html (el mismo bloque de paginacion estaba
+pegado 2 veces: una para el listado filtrado y otra para "En cartelera"). Recibe page_obj y
+los filtros activos (busqueda, genero_seleccionado, clasificacion_seleccionada, orden_seleccionado,
+fecha_seleccionada) desde el contexto del template que lo incluye, para no perderlos al cambiar de pagina.
+{% endcomment %}
+{% if page_obj.has_other_pages %}
+<div class="paginacion-wrap">
+    {% if page_obj.has_previous %}
+        <a href="?page=1{% if busqueda %}&buscar={{ busqueda }}{% endif %}{% if genero_seleccionado %}&genero={{ genero_seleccionado }}{% endif %}{% if clasificacion_seleccionada %}&clasificacion={{ clasificacion_seleccionada }}{% endif %}{% if orden_seleccionado %}&orden={{ orden_seleccionado }}{% endif %}{% if fecha_seleccionada %}&fecha={{ fecha_seleccionada }}{% endif %}"
+           class="paginacion-link">« Primero</a>
+        <a href="?page={{ page_obj.previous_page_number }}{% if busqueda %}&buscar={{ busqueda }}{% endif %}{% if genero_seleccionado %}&genero={{ genero_seleccionado }}{% endif %}{% if clasificacion_seleccionada %}&clasificacion={{ clasificacion_seleccionada }}{% endif %}{% if orden_seleccionado %}&orden={{ orden_seleccionado }}{% endif %}{% if fecha_seleccionada %}&fecha={{ fecha_seleccionada }}{% endif %}"
+           class="paginacion-link">‹ Anterior</a>
+    {% endif %}
+
+    <span class="paginacion-actual">
+        Página {{ page_obj.number }} de {{ page_obj.paginator.num_pages }}
+    </span>
+
+    {% if page_obj.has_next %}
+        <a href="?page={{ page_obj.next_page_number }}{% if busqueda %}&buscar={{ busqueda }}{% endif %}{% if genero_seleccionado %}&genero={{ genero_seleccionado }}{% endif %}{% if clasificacion_seleccionada %}&clasificacion={{ clasificacion_seleccionada }}{% endif %}{% if orden_seleccionado %}&orden={{ orden_seleccionado }}{% endif %}{% if fecha_seleccionada %}&fecha={{ fecha_seleccionada }}{% endif %}"
+           class="paginacion-link">Siguiente ›</a>
+        <a href="?page={{ page_obj.paginator.num_pages }}{% if busqueda %}&buscar={{ busqueda }}{% endif %}{% if genero_seleccionado %}&genero={{ genero_seleccionado }}{% endif %}{% if clasificacion_seleccionada %}&clasificacion={{ clasificacion_seleccionada }}{% endif %}{% if orden_seleccionado %}&orden={{ orden_seleccionado }}{% endif %}{% if fecha_seleccionada %}&fecha={{ fecha_seleccionada }}{% endif %}"
+           class="paginacion-link">Último »</a>
+    {% endif %}
+</div>
+{% endif %}

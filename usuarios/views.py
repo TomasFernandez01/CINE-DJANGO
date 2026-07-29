@@ -97,6 +97,9 @@ def perfil(request):
     # MODIFICACION DE GEMINI
     form = EditarPerfilForm(instance=request.user.perfil)
     password_form = PasswordChangeForm(request.user)
+    # nuevo: historial de películas vistas (modelo HistorialVisto ya existía, se usaba para
+    # habilitar el rating en detalle_pelicula, pero no se mostraba en ningún lado como lista)
+    historial = request.user.historial_vistas.select_related('pelicula').all()[:20]
     contexto = {
         'usuario': request.user,
         'total_reservas': total_reservas,
@@ -104,6 +107,7 @@ def perfil(request):
         'reservas_pendientes': reservas_pendientes,
         'form': form,
         'password_form': password_form,
+        'historial': historial,
     }
     # FIN MODIFICACION DE GEMINI
     return render(request, 'usuarios/perfil.html', contexto)

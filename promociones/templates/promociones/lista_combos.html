@@ -1,5 +1,6 @@
 {% extends 'base.html' %}
 {% load static %}
+<!-- modificado: etiquetado descriptivo (Tanda A promociones) - clases promociones-estilo-N reemplazadas por nombres semánticos combos-* -->
 
 {% block titulo %}Combos y Promociones{% endblock %}
 
@@ -8,27 +9,27 @@
 {% endblock %}
 
 {% block contenido %}
-<div class="promociones-estilo-1">
-    <h1 class="promociones-estilo-2">🍿 Combos y Promociones</h1>
-    <p class="promociones-estilo-3">Aprovechá nuestras ofertas al reservar tus entradas</p>
+<div class="combos-page">
+    <h1 class="combos-titulo">🍿 Combos y Promociones</h1>
+    <p class="combos-subtitulo">Aprovechá nuestras ofertas al reservar tus entradas</p>
 
     <!-- Promos del día -->
     {% if promos_hoy %}
-    <div class="promociones-estilo-4">
-        <h2 class="promociones-estilo-5">🎉 Promociones de Hoy</h2>
-        <div class="promociones-estilo-6">
+    <div class="combos-promodia-seccion">
+        <h2 class="combos-seccion-subtitulo">🎉 Promociones de Hoy</h2>
+        <div class="combos-promodia-grid">
             {% for promo in promos_hoy %}
-            <div class="promociones-estilo-7">
-                <h3 class="promociones-estilo-8">{{ promo.nombre }}</h3>
-                <p class="promociones-estilo-9">
+            <div class="combos-promodia-card">
+                <h3 class="combos-promodia-nombre">{{ promo.nombre }}</h3>
+                <p class="combos-promodia-tipo">
                     {% if promo.tipo == '2x1' %}2x1 — Pagás una entrada, llevás dos
                     {% elif promo.tipo == 'descuento' %}{{ promo.porcentaje_descuento }}% de descuento
                     {% endif %}
                 </p>
                 {% if promo.descripcion %}
-                <p class="promociones-estilo-10">{{ promo.descripcion }}</p>
+                <p class="combos-promodia-descripcion">{{ promo.descripcion }}</p>
                 {% endif %}
-                <div class="promociones-estilo-11 promociones-combo-tarjeta">
+                <div class="combos-promodia-badge combos-promodia-badge-hover">
                     Solo hoy — {{ promo.get_dia_semana_display }}
                 </div>
             </div>
@@ -40,24 +41,24 @@
     <!-- Combos -->
     {% if combos %}
     <div>
-        <h2 class="promociones-estilo-5">🍟 Nuestros Combos</h2>
-        <div class="promociones-estilo-12">
+        <h2 class="combos-seccion-subtitulo">🍟 Nuestros Combos</h2>
+        <div class="combos-grid">
             {% for combo in combos %}
-            <div class="promociones-estilo-13"
+            <div class="combos-card"
 >
                 {% if combo.imagen %}
-                <img src="{{ combo.imagen.url }}" alt="{{ combo.nombre }}" class="promociones-estilo-14">
+                <img src="{{ combo.imagen.url }}" alt="{{ combo.nombre }}" class="combos-card-imagen">
                 {% else %}
-                <div class="promociones-estilo-15">
+                <div class="combos-card-imagen-placeholder">
                     🍿
                 </div>
                 {% endif %}
-                <div class="promociones-estilo-16">
-                    <h3 class="promociones-estilo-17">{{ combo.nombre }}</h3>
-                    <p class="promociones-estilo-18">{{ combo.descripcion }}</p>
-                    <div class="promociones-estilo-19">
-                        <span class="promociones-estilo-20">${{ combo.precio }}</span>
-                        <a href="{% url 'salas:lista_funciones' %}" class="promociones-estilo-21">
+                <div class="combos-card-info">
+                    <h3 class="combos-card-nombre">{{ combo.nombre }}</h3>
+                    <p class="combos-card-descripcion">{{ combo.descripcion }}</p>
+                    <div class="combos-card-footer">
+                        <span class="combos-card-precio">${{ combo.precio }}</span>
+                        <a href="{% url 'salas:lista_funciones' %}" class="combos-card-btn">
                             Reservar →
                         </a>
                     </div>
@@ -69,8 +70,8 @@
     {% endif %}
 
     {% if not combos and not promos_hoy %}
-    <div class="promociones-estilo-22">
-        <p class="promociones-estilo-23">No hay promociones disponibles en este momento.</p>
+    <div class="combos-vacio">
+        <p class="combos-vacio-texto">No hay promociones disponibles en este momento.</p>
     </div>
     {% endif %}
 </div>

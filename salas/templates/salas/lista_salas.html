@@ -5,70 +5,120 @@
 
 {% block extra_css %}
 <link rel="stylesheet" href="{% static 'css/salas/lista_salas.css' %}">
+<!-- nuevo: mapa de asientos de solo lectura -->
+<link rel="stylesheet" href="{% static 'css/salas/mapa_salas.css' %}">
 {% endblock %}
 
 {% block contenido %}
 <h1>Nuestras Salas</h1>
 
+<!-- modificado: clases salas-estilo-1..14 renombradas a nombres descriptivos (salas-grid, salas-tarjeta-nombre, salas-badge-2d, etc.) -->
 {% if salas %}
-    <div class="salas-estilo-1">
+    <div class="salas-grid">
         {% for sala in salas %}
             <div class="salas-tarjeta salas-tarjeta--{{ sala.tipo }}">
-                <div class="salas-estilo-2">
-                    <h3 class="salas-estilo-3">{{ sala.nombre }}</h3>
+                <div class="salas-tarjeta-header">
+                    <h3 class="salas-tarjeta-nombre">{{ sala.nombre }}</h3>
                     
                     {# Badge tipo sala #}
                     {% if sala.tipo == '2d' %}
-                        <span class="salas-estilo-4">
+                        <span class="salas-badge-2d">
                             🎬 2D
                         </span>
                     {% elif sala.tipo == '3d' %}
-                        <span class="salas-estilo-5">
+                        <span class="salas-badge-3d">
                             🥽 3D
                         </span>
                     {% elif sala.tipo == '2d_premium' %}
-                        <span class="salas-estilo-6">
+                        <span class="salas-badge-2d-premium">
                             ⭐ 2D Premium
                         </span>
                     {% elif sala.tipo == '3d_premium' %}
-                        <span class="salas-estilo-7">
+                        <span class="salas-badge-3d-premium">
                             💎 3D Premium
                         </span>
                     {% endif %}
                 </div>
 
-                <p class="salas-estilo-8">
+                <p class="salas-tarjeta-dato">
                     <strong>Capacidad:</strong> {{ sala.capacidad }} personas
                 </p>
-                <p class="salas-estilo-8">
+                <p class="salas-tarjeta-dato">
                     <strong>Distribución:</strong> {{ sala.filas }} filas × {{ sala.columnas }} columnas
                 </p>
 
                 {% if sala.es_premium %}
-                    <div class="salas-estilo-9">
-                        <p class="salas-estilo-10">
+                    <div class="salas-aviso-premium">
+                        <p class="salas-aviso-premium-texto">
                             ✨ Sala Premium — butacas reclinables, audio Dolby Atmos
                         </p>
                     </div>
                 {% endif %}
 
                 {% if sala.es_3d %}
-                    <div class="salas-estilo-11">
-                        <p class="salas-estilo-12">
+                    <div class="salas-aviso-3d">
+                        <p class="salas-aviso-3d-texto">
                             🥽 Tecnología 3D — lentes incluidos en el precio
                         </p>
                     </div>
                 {% endif %}
 
-                <p class="salas-estilo-13">
+                <p class="salas-tarjeta-disponible">
                     ✓ Disponible
                 </p>
+
+                <!-- nuevo: mapa de asientos de solo lectura, para que el cliente vea la distribución sin reservar -->
+                <button type="button" class="salas-mapa-toggle-btn" data-sala-id="{{ sala.id }}">
+                    Ver mapa de asientos
+                </button>
+                <div id="salas-mapa-panel-{{ sala.id }}" class="salas-mapa-panel">
+                    <div class="salas-mapa-leyenda">
+                        <div class="salas-mapa-leyenda-item">
+                            <span class="salas-mapa-leyenda-swatch salas-mapa-leyenda-swatch--disponible"></span>
+                            <span>Asiento</span>
+                        </div>
+                        {% if sala.mapa_categoria %}
+                        <div class="salas-mapa-leyenda-item">
+                            <span class="salas-mapa-leyenda-swatch salas-mapa-leyenda-swatch--categoria"></span>
+                            <span>Categoría especial</span>
+                        </div>
+                        {% endif %}
+                        {% if sala.mapa_bloqueados %}
+                        <div class="salas-mapa-leyenda-item">
+                            <span class="salas-mapa-leyenda-swatch salas-mapa-leyenda-swatch--bloqueado"></span>
+                            <span>No disponible</span>
+                        </div>
+                        {% endif %}
+                    </div>
+                    <div class="salas-mapa-pantalla-curva"></div>
+                    <div class="salas-mapa-inner">
+                        {% for fila in sala.mapa_layout %}
+                            <div class="salas-mapa-fila">
+                                <span class="salas-mapa-fila-letra">{{ fila.letra }}</span>
+                                {% for asiento in fila.celdas %}
+                                    {% if asiento %}
+                                        <span class="salas-mapa-asiento {% if asiento in sala.mapa_bloqueados %}salas-mapa-asiento--bloqueado{% elif asiento in sala.mapa_categoria %}salas-mapa-asiento--categoria{% else %}salas-mapa-asiento--disponible{% endif %}"
+                                              title="{{ asiento }}"></span>
+                                    {% else %}
+                                        <span class="salas-mapa-pasillo"></span>
+                                    {% endif %}
+                                {% endfor %}
+                                <span class="salas-mapa-fila-letra">{{ fila.letra }}</span>
+                            </div>
+                        {% endfor %}
+                    </div>
+                </div>
             </div>
         {% endfor %}
     </div>
 {% else %}
-    <p class="salas-estilo-14">
+    <p class="salas-vacio">
         No hay salas disponibles en este momento.
     </p>
 {% endif %}
+{% endblock %}
+
+{% block extra_js %}
+<!-- nuevo: toggle del mapa de asientos de solo lectura -->
+<script src="{% static 'js/salas/mapa_asientos.js' %}"></script>
 {% endblock %}

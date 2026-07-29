@@ -2,62 +2,67 @@
 {% load static %}
 {% block titulo %}Comprobante de Pago{% endblock %}
 
-{% block contenido %}
-<div style="max-width: 800px; margin: 0 auto;">
+<!-- modificado (Tanda B pagos): separación CSS completa - se sacaron los ~81 estilos inline y se movieron a static/css/pagos/comprobante_pago.css (el <link> también se movió al bloque extra_css, antes estaba suelto al final del contenido) -->
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/pagos/comprobante_pago.css' %}">
+{% endblock %}
 
-    <h1 style="text-align: center; color: #28a745; margin-bottom: 1.5rem;">PAGO REALIZADO</h1>
+{% block contenido %}
+<div class="comprobante-container">
+
+    <h1 class="comprobante-titulo">PAGO REALIZADO</h1>
 
     <!-- ====================================================== -->
     <!-- TICKET IMPRIMIBLE                                       -->
     <!-- ====================================================== -->
-    <div id="ticket" style="background: white; border-radius: 12px; box-shadow: 0 4px 20px rgba(0,0,0,0.15); overflow: hidden; margin-bottom: 2rem;">
+    <div id="ticket" class="ticket-card">
 
         <!-- Header del ticket -->
-        <div style="background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%); padding: 2rem; text-align: center; color: white;">
-            <div style="font-size: 2.5rem; margin-bottom: 0.5rem;">🎬</div>
-            <div style="font-size: 1.8rem; font-weight: bold; letter-spacing: 2px; margin-bottom: 0.25rem;">CINE ONLINE</div>
-            <div style="font-size: 1rem; opacity: 0.7; letter-spacing: 4px;">ENTRADA OFICIAL</div>
+        <div class="ticket-header">
+            <div class="ticket-header-icono">🎬</div>
+            <div class="ticket-header-marca">CINE ONLINE</div>
+            <div class="ticket-header-subtitulo">ENTRADA OFICIAL</div>
         </div>
 
         <!-- Línea punteada superior (efecto perforado) -->
-        <div style="border-top: 3px dashed #dee2e6; margin: 0; background: repeating-linear-gradient(90deg, #f8f9fa 0px, #f8f9fa 8px, white 8px, white 16px); height: 16px;"></div>
+        <div class="ticket-perforado"></div>
 
         <!-- Contenido principal del ticket -->
-        <div style="padding: 1.5rem 2rem;">
+        <div class="ticket-contenido">
 
             <!-- Película destacada -->
-            <div style="text-align: center; margin-bottom: 1.5rem; padding-bottom: 1.5rem; border-bottom: 1px solid #e9ecef;">
-                <div style="font-size: 0.8rem; color: #999; letter-spacing: 2px; text-transform: uppercase; margin-bottom: 0.5rem;">PELÍCULA</div>
-                <div style="font-size: 1.6rem; font-weight: bold; color: #1a1a2e;">{{ reserva.funcion.pelicula.titulo }}</div>
+            <div class="ticket-pelicula-box">
+                <div class="ticket-label-mini">PELÍCULA</div>
+                <div class="ticket-pelicula-titulo">{{ reserva.funcion.pelicula.titulo }}</div>
             </div>
 
             <!-- Grid de detalles -->
-            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 1.5rem;">
-                <div style="background: #f8f9fa; padding: 1rem; border-radius: 8px; border-left: 3px solid #007bff;">
-                    <div style="font-size: 0.75rem; color: #999; letter-spacing: 1px; text-transform: uppercase;">FECHA</div>
-                    <div style="font-size: 1.1rem; font-weight: bold; color: #333; margin-top: 0.25rem;">{{ reserva.funcion.fecha_hora|date:"d/m/Y" }}</div>
+            <div class="ticket-detalles-grid">
+                <div class="ticket-detalle-box-azul">
+                    <div class="ticket-detalle-label">FECHA</div>
+                    <div class="ticket-detalle-valor">{{ reserva.funcion.fecha_hora|date:"d/m/Y" }}</div>
                 </div>
-                <div style="background: #f8f9fa; padding: 1rem; border-radius: 8px; border-left: 3px solid #007bff;">
-                    <div style="font-size: 0.75rem; color: #999; letter-spacing: 1px; text-transform: uppercase;">HORARIO</div>
-                    <div style="font-size: 1.4rem; font-weight: bold; color: #1a1a2e; margin-top: 0.25rem;">{{ reserva.funcion.fecha_hora|date:"H:i" }} hs</div>
+                <div class="ticket-detalle-box-azul">
+                    <div class="ticket-detalle-label">HORARIO</div>
+                    <div class="ticket-detalle-valor-grande">{{ reserva.funcion.fecha_hora|date:"H:i" }} hs</div>
                 </div>
-                <div style="background: #f8f9fa; padding: 1rem; border-radius: 8px; border-left: 3px solid #28a745;">
-                    <div style="font-size: 0.75rem; color: #999; letter-spacing: 1px; text-transform: uppercase;">SALA</div>
-                    <div style="font-size: 1.1rem; font-weight: bold; color: #333; margin-top: 0.25rem;">{{ reserva.funcion.sala.nombre }}</div>
+                <div class="ticket-detalle-box-verde">
+                    <div class="ticket-detalle-label">SALA</div>
+                    <div class="ticket-detalle-valor">{{ reserva.funcion.sala.nombre }}</div>
                 </div>
-                <div style="background: #f8f9fa; padding: 1rem; border-radius: 8px; border-left: 3px solid #28a745;">
-                    <div style="font-size: 0.75rem; color: #999; letter-spacing: 1px; text-transform: uppercase;">ENTRADAS</div>
-                    <div style="font-size: 1.4rem; font-weight: bold; color: #1a1a2e; margin-top: 0.25rem;">{{ reserva.cantidad_entradas }}</div>
+                <div class="ticket-detalle-box-verde">
+                    <div class="ticket-detalle-label">ENTRADAS</div>
+                    <div class="ticket-detalle-valor-grande">{{ reserva.cantidad_entradas }}</div>
                 </div>
             </div>
 
             <!-- Asientos si aplica -->
             {% if reserva.asientos_seleccionados %}
-            <div style="background: #e7f3ff; padding: 1rem; border-radius: 8px; margin-bottom: 1.5rem; border: 1px solid #b8d8f8;">
-                <div style="font-size: 0.75rem; color: #004085; letter-spacing: 1px; text-transform: uppercase; margin-bottom: 0.5rem;">ASIENTOS</div>
-                <div style="display: flex; gap: 0.5rem; flex-wrap: wrap;">
+            <div class="ticket-asientos-box">
+                <div class="ticket-asientos-label">ASIENTOS</div>
+                <div class="ticket-asientos-lista">
                     {% for asiento in reserva.lista_asientos %}
-                        <span style="display: inline-block; padding: 0.4rem 0.9rem; background-color: #007bff; color: white; border-radius: 6px; font-weight: bold; font-size: 1rem;">
+                        <span class="ticket-asiento-badge">
                             {{ asiento }}
                         </span>
                     {% endfor %}
@@ -65,67 +70,67 @@
             </div>
             {% endif %}
 
-            <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 1rem; margin-bottom: 1.5rem; font-size: 0.85rem;">
+            <div class="ticket-info-grid-3">
                 <div>
-                    <div style="font-size: 0.72rem; color: #999; text-transform: uppercase;">TITULAR</div>
-                    <div style="font-weight: bold; color: #333;">{{ reserva.usuario.get_full_name|default:reserva.usuario.username }}</div>
+                    <div class="ticket-info-label">TITULAR</div>
+                    <div class="ticket-info-valor">{{ reserva.usuario.get_full_name|default:reserva.usuario.username }}</div>
                 </div>
                 <div>
-                    <div style="font-size: 0.72rem; color: #999; text-transform: uppercase;">EMAIL</div>
-                    <div style="font-weight: bold; color: #333;">{{ reserva.usuario.email|default:"—" }}</div>
+                    <div class="ticket-info-label">EMAIL</div>
+                    <div class="ticket-info-valor">{{ reserva.usuario.email|default:"—" }}</div>
                 </div>
                 <div>
-                    <div style="font-size: 0.72rem; color: #999; text-transform: uppercase;">FECHA DE RESERVA</div>
-                    <div style="font-weight: bold; color: #333;">{{ reserva.fecha_reserva|date:"d/m/Y H:i" }}</div>
+                    <div class="ticket-info-label">FECHA DE RESERVA</div>
+                    <div class="ticket-info-valor">{{ reserva.fecha_reserva|date:"d/m/Y H:i" }}</div>
                 </div>
             </div>
 
             <!-- Código de reserva -->
-            <div style="background: linear-gradient(135deg, #d4edda, #c3e6cb); padding: 1rem; border-radius: 8px; text-align: center; margin-bottom: 1.5rem; border: 1px solid #b1dfbb;">
-                <div style="font-size: 0.75rem; color: #155724; letter-spacing: 2px; text-transform: uppercase;">CÓDIGO DE RESERVA</div>
-                <div style="font-size: 1.75rem; font-weight: bold; color: #155724; font-family: 'Courier New', monospace; letter-spacing: 3px; margin-top: 0.25rem;">
+            <div class="ticket-codigo-box">
+                <div class="ticket-codigo-label">CÓDIGO DE RESERVA</div>
+                <div class="ticket-codigo-valor">
                     {{ reserva.codigo_reserva }}
                 </div>
             </div>
 
             <!-- Desglose de precios -->
-            <div style="margin-bottom: 1.5rem;">
-                <h3 style="color: #333; border-bottom: 2px solid #28a745; padding-bottom: 0.5rem; margin-bottom: 1rem;">Detalles</h3>
-                <div style="display: flex; flex-direction: column; gap: 0.5rem;">
+            <div class="ticket-precios-seccion">
+                <h3 class="ticket-precios-titulo">Detalles</h3>
+                <div class="ticket-precios-lista">
                     {% if reserva.tiene_precios_mixtos %}
                         {% for item in reserva.desglose_precios_asientos %}
-                        <div style="display: flex; justify-content: space-between; color: #555; font-size: 0.9rem;">
+                        <div class="ticket-precio-fila">
                             <span>Asiento {{ item.codigo }}</span>
                             <span>${{ item.precio }}</span>
                         </div>
                         {% endfor %}
-                        <div style="display: flex; justify-content: space-between; color: #555; font-weight:600; border-top:1px dashed #ccc; padding-top:0.4rem;">
+                        <div class="ticket-precio-fila-subtotal">
                             <span>Subtotal ({{ reserva.cantidad_entradas }} entradas)</span>
                             <span>${{ pago.monto_original }}</span>
                         </div>
                     {% else %}
-                        <div style="display: flex; justify-content: space-between; color: #555;">
+                        <div class="ticket-precio-fila">
                             <span>Subtotal entradas ({{ reserva.cantidad_entradas }} × ${{ reserva.funcion.precio_final }})</span>
                             <span>${{ pago.monto_original }}</span>
                         </div>
                     {% endif %}
 
                     {% if pago.promo_dia %}
-                    <div style="display: flex; justify-content: space-between; color: #e91e8c; font-weight: 500;">
+                    <div class="ticket-precio-fila-descuento-promo">
                         <span>🎉 {{ pago.promo_dia.nombre }}</span>
                         <span>-${{ pago.descuento_promo_dia }}</span>
                     </div>
                     {% endif %}
 
                     {% if pago.cupon_usado %}
-                    <div style="display: flex; justify-content: space-between; color: #28a745; font-weight: 500;">
+                    <div class="ticket-precio-fila-descuento-cupon">
                         <span>🏷️ Cupón {{ pago.cupon_usado.codigo }}</span>
                         <span>-${{ pago.descuento_cupon }}</span>
                     </div>
                     {% endif %}
 
                     {% comment %} {% if pago.combo %}
-                    <div style="display: flex; justify-content: space-between; color: #ff8c00; font-weight: 500;">
+                    <div class="ticket-precio-fila-combo">
                         <span>🍿 {% if pago.cantidad_combo > 1 %}{{ pago.cantidad_combo }}x {% endif %}{{ pago.combo.nombre }}</span>
                         <span>+${{ pago.precio_combo }}</span>
                     </div>
@@ -133,25 +138,25 @@
                     {# modificado (combos múltiples): se itera pago.items (el detalle real, uno por cada ítem elegido). Si el pago es viejo y no tiene ItemPago cargados, se cae al campo legacy pago.combo/cantidad_combo/precio_combo de toda la vida #}
                     {% if pago.items.all %}
                         {% for item in pago.items.all %}
-                        <div style="display: flex; justify-content: space-between; color: #ff8c00; font-weight: 500;">
+                        <div class="ticket-precio-fila-combo">
                             <span>🍿 {% if item.cantidad > 1 %}{{ item.cantidad }}x {% endif %}{{ item.combo.nombre|default:"Ítem eliminado" }}</span>
                             <span>+${{ item.subtotal }}</span>
                         </div>
                         {% endfor %}
                     {% elif pago.combo %}
-                    <div style="display: flex; justify-content: space-between; color: #ff8c00; font-weight: 500;">
+                    <div class="ticket-precio-fila-combo">
                         <span>🍿 {% if pago.cantidad_combo > 1 %}{{ pago.cantidad_combo }}x {% endif %}{{ pago.combo.nombre }}</span>
                         <span>+${{ pago.precio_combo }}</span>
                     </div>
                     {% endif %}
 
-                    <div style="display: flex; justify-content: space-between; align-items: center; border-top: 2px solid #333; padding-top: 0.5rem; margin-top: 0.25rem;">
-                        <span style="font-size: 1.1rem; font-weight: bold; color: #333;">Total pagado</span>
-                        <span style="font-size: 1.75rem; font-weight: bold; color: #28a745;">${{ pago.monto }}</span>
+                    <div class="ticket-precio-total">
+                        <span class="ticket-precio-total-label">Total pagado</span>
+                        <span class="ticket-precio-total-valor">${{ pago.monto }}</span>
                     </div>
 
                     {% if pago.tuvo_descuento %}
-                    <div style="background: #d4edda; padding: 0.5rem 1rem; border-radius: 4px; text-align: center; color: #155724; font-size: 0.9rem;">
+                    <div class="ticket-ahorro-box">
                         💸 Ahorraste ${{ pago.descuento_total }}
                     </div>
                     {% endif %}
@@ -159,10 +164,10 @@
             </div>
 
             <!-- Info del pago -->
-            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 1rem;">
+            <div class="ticket-pago-info-grid">
                 <div>
-                    <div style="font-size: 0.75rem; color: #999; text-transform: uppercase;">MÉTODO DE PAGO</div>
-                    <div style="font-weight: bold; color: #333;">
+                    <div class="ticket-info-label">MÉTODO DE PAGO</div>
+                    <div class="ticket-info-valor">
                         {{ pago.get_metodo_pago_display }}
                         {% if pago.ultimos_4_digitos %}
                             (*{{ pago.ultimos_4_digitos }})
@@ -170,50 +175,50 @@
                     </div>
                 </div>
                 <div>
-                    <div style="font-size: 0.75rem; color: #999; text-transform: uppercase;">TRANSACCIÓN</div>
-                    <div style="font-weight: bold; color: #333; font-family: monospace; font-size: 0.9rem;">{{ pago.numero_transaccion }}</div>
+                    <div class="ticket-info-label">TRANSACCIÓN</div>
+                    <div class="ticket-info-valor-transaccion">{{ pago.numero_transaccion }}</div>
                 </div>
                 <div>
-                    <div style="font-size: 0.75rem; color: #999; text-transform: uppercase;">FECHA DE PAGO</div>
-                    <div style="font-weight: bold; color: #333;">{{ pago.fecha_pago|date:"d/m/Y H:i" }}</div>
+                    <div class="ticket-info-label">FECHA DE PAGO</div>
+                    <div class="ticket-info-valor">{{ pago.fecha_pago|date:"d/m/Y H:i" }}</div>
                 </div>
                 <div>
-                    <div style="font-size: 0.75rem; color: #999; text-transform: uppercase;">TOTAL ABONADO</div>
-                    <div style="font-size: 1.4rem; font-weight: bold; color: #28a745;">${{ pago.monto }}</div>
+                    <div class="ticket-info-label">TOTAL ABONADO</div>
+                    <div class="ticket-info-valor-grande">${{ pago.monto }}</div>
                 </div>
             </div>
         </div>
 
         <!-- Línea punteada inferior (efecto perforado) -->
-        <div style="border-top: 3px dashed #dee2e6; background: repeating-linear-gradient(90deg, #f8f9fa 0px, #f8f9fa 8px, white 8px, white 16px); height: 16px;"></div>
+        <div class="ticket-perforado"></div>
 
         <!-- Sección QR -->
         {% if qr_imagen %}
-        <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); padding: 2rem; text-align: center; color: white;">
-            <div style="font-size: 1.1rem; font-weight: bold; margin-bottom: 1rem; letter-spacing: 1px;">PRESENTÁ EL QR AL PERSONAL</div>
-            <div style="background: white; padding: 1.25rem; border-radius: 10px; display: inline-block; margin-bottom: 1rem; box-shadow: 0 4px 12px rgba(0,0,0,0.3);">
-                <img src="{{ qr_imagen }}" alt="Código QR" style="display: block; width: 220px; height: 220px;">
+        <div class="ticket-qr-seccion">
+            <div class="ticket-qr-titulo">PRESENTÁ EL QR AL PERSONAL</div>
+            <div class="ticket-qr-box">
+                <img src="{{ qr_imagen }}" alt="Código QR" class="ticket-qr-img">
             </div>
-            <div style="font-family: monospace; font-size: 1rem; letter-spacing: 2px; background: rgba(255,255,255,0.15); display: inline-block; padding: 0.5rem 1.5rem; border-radius: 6px;">
+            <div class="ticket-qr-codigo">
                 {{ pago.codigo_qr }}
             </div>
         </div>
         {% endif %}
 
         <!-- Footer del ticket -->
-        <div style="background: #1a1a2e; padding: 1rem 2rem; text-align: center; color: rgba(255,255,255,0.6); font-size: 0.8rem;">
-            <div style="margin-bottom: 0.25rem;">Llegá al menos <strong style="color: white;">30 minutos antes</strong> de la función</div>
+        <div class="ticket-footer">
+            <div class="ticket-footer-linea">Llegá al menos <strong class="ticket-footer-destacado">30 minutos antes</strong> de la función</div>
             <div>Las entradas no son reembolsables · Conservá este comprobante</div>
-            
+
             {% comment %} {% if pago.combo %}
-            <div style="margin-top: 0.25rem;">🍿 Retirá tu <strong style="color: white;">{{ pago.combo.nombre }}</strong> en el mostrador de combos</div>
+            <div class="ticket-footer-combo">🍿 Retirá tu <strong class="ticket-footer-destacado">{{ pago.combo.nombre }}</strong> en el mostrador de combos</div>
             {% endif %} {% endcomment %}
 
             {# modificado (combos múltiples): mismo criterio — items reales primero, fallback a pago.combo legacy #}
             {% if pago.items.all %}
-            <div style="margin-top: 0.25rem;">🍿 Retirá tu pedido en el mostrador de combos</div>
+            <div class="ticket-footer-combo">🍿 Retirá tu pedido en el mostrador de combos</div>
             {% elif pago.combo %}
-            <div style="margin-top: 0.25rem;">🍿 Retirá tu <strong style="color: white;">{{ pago.combo.nombre }}</strong> en el mostrador de combos</div>
+            <div class="ticket-footer-combo">🍿 Retirá tu <strong class="ticket-footer-destacado">{{ pago.combo.nombre }}</strong> en el mostrador de combos</div>
             {% endif %}
         </div>
     </div>
@@ -223,24 +228,23 @@
     <!-- ====================================================== -->
 
     <!-- Botones de acción -->
-    <div class="no-print" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 1rem; margin-bottom: 2rem;">
-        <button onclick="window.print()" style="padding: 1rem; background-color: #1a1a2e; color: white; border: none; border-radius: 8px; font-weight: bold; cursor: pointer; font-size: 1rem;">
+    <div class="no-print comprobante-acciones">
+        <button onclick="window.print()" class="comprobante-btn-imprimir">
             🖨️ Imprimir
         </button>
-        <a href="{% url 'reservas:mis_reservas' %}" style="padding: 1rem; background-color: #007bff; color: white; border-radius: 8px; font-weight: bold; text-decoration: none; text-align: center; font-size: 1rem;">
+        <a href="{% url 'reservas:mis_reservas' %}" class="comprobante-btn-reservas">
             🎫 Reservas
         </a>
-        <a href="{% url 'peliculas:lista_peliculas' %}" style="padding: 1rem; background-color: #6c757d; color: white; border-radius: 8px; font-weight: bold; text-decoration: none; text-align: center; font-size: 1rem;">
+        <a href="{% url 'peliculas:lista_peliculas' %}" class="comprobante-btn-peliculas">
             🎬 Películas
         </a>
     </div>
 
     <!-- Agradecimiento -->
-    <div class="no-print" style="background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%); padding: 1.5rem 2rem; border-radius: 12px; text-align: center; color: white;">
-        <div style="font-size: 1.5rem; font-weight: bold;">¡Gracias por tu compra!</div>
-        <div style="opacity: 0.9; margin-top: 0.25rem;">¡Disfrutá la película! 🍿🎬</div>
+    <div class="no-print comprobante-agradecimiento">
+        <div class="comprobante-agradecimiento-titulo">¡Gracias por tu compra!</div>
+        <div class="comprobante-agradecimiento-subtitulo">¡Disfrutá la película! 🍿🎬</div>
     </div>
 
 </div>
-<link rel="stylesheet" href="{% static 'css/pagos/comprobante_pago.css' %}">
 {% endblock %}

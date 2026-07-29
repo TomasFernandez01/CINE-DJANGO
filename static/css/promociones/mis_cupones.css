@@ -1,15 +1,16 @@
-.promociones-estilo-1 { max-width: 800px; margin: 0 auto; }
-.promociones-estilo-2 { color: #333; margin-bottom: 0.5rem; }
-.promociones-estilo-3 { color: #666; margin-bottom: 1.5rem; }
-.promociones-estilo-4 { display: flex; flex-direction: column; gap: 1rem; }
-.promociones-estilo-5 { background: white; padding: 1.25rem 1.5rem; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.08); border-left: 4px solid #28a745; }
-.promociones-estilo-6 { display: flex; justify-content: space-between; align-items: start; flex-wrap: wrap; gap: 0.75rem; }
-.promociones-estilo-7 { display: flex; align-items: center; gap: 0.75rem; margin-bottom: 0.5rem; }
-.promociones-estilo-8 { background: #d4edda; color: #155724; padding: 0.25rem 0.75rem; border-radius: 4px; font-weight: bold; font-family: monospace; font-size: 1rem; }
-.promociones-estilo-9 { color: #28a745; font-weight: bold; }
-.promociones-estilo-10 { margin: 0; color: #555; font-size: 0.9rem; }
-.promociones-estilo-11 { margin: 0.3rem 0 0 0; color: #888; font-size: 0.85rem; }
-.promociones-estilo-12 { text-align: right; color: #888; font-size: 0.85rem; white-space: nowrap; }
-.promociones-estilo-13 { background: white; padding: 3rem; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.08); text-align: center; }
-.promociones-estilo-14 { font-size: 1.25rem; color: #666; margin: 0 0 1rem 0; }
-.promociones-estilo-15 { display: inline-block; padding: 0.75rem 1.5rem; background: #007bff; color: white; border-radius: 6px; font-weight: bold; text-decoration: none; }
+/* modificado: etiquetado descriptivo (Tanda A promociones) - clases promociones-estilo-N -> cupones-* */
+.cupones-page { max-width: 800px; margin: 0 auto; }
+.cupones-titulo { color: #333; margin-bottom: 0.5rem; }
+.cupones-subtitulo { color: #666; margin-bottom: 1.5rem; }
+.cupones-lista { display: flex; flex-direction: column; gap: 1rem; }
+.cupones-card { background: white; padding: 1.25rem 1.5rem; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.08); border-left: 4px solid #28a745; }
+.cupones-card-header { display: flex; justify-content: space-between; align-items: start; flex-wrap: wrap; gap: 0.75rem; }
+.cupones-card-codigo-linea { display: flex; align-items: center; gap: 0.75rem; margin-bottom: 0.5rem; }
+.cupones-card-codigo { background: #d4edda; color: #155724; padding: 0.25rem 0.75rem; border-radius: 4px; font-weight: bold; font-family: monospace; font-size: 1rem; }
+.cupones-card-descuento { color: #28a745; font-weight: bold; }
+.cupones-card-descripcion { margin: 0; color: #555; font-size: 0.9rem; }
+.cupones-card-reserva-info { margin: 0.3rem 0 0 0; color: #888; font-size: 0.85rem; }
+.cupones-card-fecha { text-align: right; color: #888; font-size: 0.85rem; white-space: nowrap; }
+.cupones-vacio { background: white; padding: 3rem; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.08); text-align: center; }
+.cupones-vacio-texto { font-size: 1.25rem; color: #666; margin: 0 0 1rem 0; }
+.cupones-vacio-btn { display: inline-block; padding: 0.75rem 1.5rem; background: #007bff; color: white; border-radius: 6px; font-weight: bold; text-decoration: none; }

@@ -3,11 +3,14 @@
 {% load static %}
 {% block titulo %}Elegí tu combo{% endblock %}
 
+<!-- modificado (Tanda B pagos): <link> y <script> movidos a extra_css/extra_js para prolijidad de bloques (ya estaban en archivos externos, esto no cambia comportamiento) -->
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/pagos/elegir_combo.css' %}">
+{% endblock %}
+
 {% block contenido %}
 
-<link rel="stylesheet" href="{% static 'css/pagos/elegir_combo.css' %}">
-
-<!-- modificado: contenedor de datos para el JS externo -->
+{% comment %} <link rel="stylesheet" href="{% static 'css/pagos/elegir_combo.css' %}"> {% endcomment %}
 <div id="elegirComboData" data-total-entradas="{{ total_entradas }}"></div>
 {{ items_json|json_script:"items-data" }}
 
@@ -102,5 +105,9 @@
     </form>
 </div>
 
+{% comment %} <script src="{% static 'js/pagos/elegir_combo.js' %}"></script> {% endcomment %}
+{% endblock %}
+
+{% block extra_js %}
 <script src="{% static 'js/pagos/elegir_combo.js' %}"></script>
 {% endblock %}

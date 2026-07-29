@@ -26,7 +26,38 @@
     flex-wrap: wrap;
 }
 
-.perfil-encabezado-titulo { margin: 0; color: #f5f5f5; }
+.perfil-encabezado-titulo {
+    margin: 0;
+    color: #f5f5f5;
+    /* modificado: antes este border-bottom/padding-bottom/margin-bottom estaba repetido
+       inline, idéntico, en los 3 <h2> que usan esta clase (Información Personal, Editar
+       Perfil, Seguridad) */
+    border-bottom: 2px solid #e50914;
+    padding-bottom: 0.5rem;
+    margin-bottom: 1.5rem;
+}
+
+/* modificado: title principal "Mi Perfil", antes con estilo inline */
+.perfil-titulo {
+    color: #f5f5f5;
+    margin-bottom: 0.5rem;
+}
+
+/* modificado: "Estadísticas de Actividad", antes con estilo inline */
+.perfil-subtitulo-stats {
+    color: #f5f5f5;
+    border-top: 1px solid #2a2a2a;
+    margin-top: 2rem;
+    padding-top: 1.5rem;
+    margin-bottom: 1rem;
+}
+
+/* modificado: "Club Cine" dentro de la tarjeta de membresía, antes con estilo inline */
+.perfil-tier-title {
+    font-weight: bold;
+    color: #fff;
+    font-size: 0.9rem;
+}
 
 .perfil-encabezado-acciones { display: flex; gap: 0.75rem; flex-wrap: wrap; }
 
@@ -178,6 +209,9 @@
     display: flex;
     align-items: center;
     gap: 0.75rem;
+    /* modificado: estaba inline solo en el link "Ir al Panel Staff" (es un <a>, los demás
+       son <button> donde esto no aplica pero tampoco molesta) */
+    text-decoration: none;
 }
 
 .perfil-tab-btn:hover {
@@ -351,3 +385,55 @@
     height: 100%;
 }
 /* FIN MODIFICACION DE GEMINI */
+/* nuevo: pestaña Historial de películas vistas */
+.perfil-historial-lista {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+}
+
+.perfil-historial-item {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    background-color: #262626;
+    border: 1px solid #2a2a2a;
+    border-radius: 8px;
+    padding: 0.75rem 1rem;
+    text-decoration: none;
+    transition: background-color 0.2s;
+}
+
+.perfil-historial-item:hover {
+    background-color: #2f2f2f;
+}
+
+.perfil-historial-poster {
+    width: 45px;
+    height: 65px;
+    object-fit: cover;
+    border-radius: 4px;
+    flex-shrink: 0;
+}
+
+.perfil-historial-info {
+    display: flex;
+    flex-direction: column;
+    gap: 0.2rem;
+}
+
+.perfil-historial-titulo {
+    color: #f5f5f5;
+    font-weight: 600;
+    font-size: 0.95rem;
+}
+
+.perfil-historial-fecha {
+    color: #999;
+    font-size: 0.8rem;
+}
+
+.perfil-historial-vacio {
+    color: #999;
+    font-style: italic;
+}
