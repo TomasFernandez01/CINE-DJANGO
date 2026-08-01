@@ -106,7 +106,7 @@
 {% if hay_filtros_activos %}
     <!-- con filtros activos se muestra un listado plano (no tiene sentido separar en cartelera/proximos estrenos) -->
     <p class="pelis-resultado-info">
-        📊 <strong>{{ total_resultados }}</strong> resultado(s) encontrado(s)
+        <strong>{{ total_resultados }}</strong> resultado(s) encontrado(s)
         {% if busqueda %}para "<strong>{{ busqueda }}</strong>"{% endif %}
         {% if fecha_seleccionada %}con función el <strong>{{ fecha_seleccionada }}</strong>{% endif %}
     </p>

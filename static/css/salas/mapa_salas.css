@@ -1,8 +1,11 @@
 /* nuevo: mapa de asientos de solo lectura para el cliente en lista_salas.html.
-   Se pensó en oscuro (a diferencia del resto de esta página, que todavía está en tema claro
-   y queda pendiente para el punto 4) porque reutiliza el mismo lenguaje visual que ya usa el
-   mapa real de reservas (static/css/reservas/seleccionar_asientos.css), para no inventar un
-   tercer estilo de asiento en el sitio. No es clickeable: es solo para mostrar la distribución. */
+   Se pensó en oscuro (usando el mismo lenguaje visual del mapa real de reservas,
+   static/css/reservas/seleccionar_asientos.css, para no inventar un tercer estilo
+   de asiento) desde el principio. No es clickeable: es solo para mostrar la
+   distribución. */
+/* modificado (Tanda C - punto 4): el botón .salas-mapa-toggle-btn estaba calibrado
+   para la tarjeta clara que tenía lista_salas.css antes (texto #495057 gris oscuro,
+   poco contraste contra fondo oscuro #1f1f1f) - se ajustó a texto claro. */
 
 .salas-mapa-toggle-btn {
     margin-top: 1rem;
@@ -10,7 +13,7 @@
     padding: 0.6rem;
     background-color: transparent;
     border: 1px solid #6c757d;
-    color: #495057;
+    color: #cccccc;
     border-radius: 6px;
     font-weight: bold;
     cursor: pointer;

@@ -1,21 +1,23 @@
-/* modificado: clases salas-estilo-1..14 renombradas a nombres descriptivos.
-   OJO: este archivo sigue en tema claro (fondo blanco, texto oscuro), a diferencia de
-   lista_funciones.css que ya se pasó a oscuro. Queda pendiente para el punto 4 (diseño uniforme). */
+/* modificado (Tanda C - punto 4): pasado de tema claro a tema oscuro, siguiendo
+   la misma paleta que ya usa lista_funciones.css (tarjeta #1f1f1f, texto #ccc/#fff,
+   fondo global #141414 heredado de base.html). Los badges de tipo de sala y el
+   "Disponible" en verde se dejan igual: son acentos de color que funcionan bien
+   sobre fondo oscuro sin cambios. */
 .salas-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 1.5rem; margin-top: 1.5rem; }
 .salas-tarjeta-header { display: flex; justify-content: space-between; align-items: start; margin-bottom: 1rem; }
-.salas-tarjeta-nombre { color: #333; margin: 0; }
+.salas-tarjeta-nombre { color: #ffffff; margin: 0; }
 .salas-badge-2d { background-color: #6c757d; color: white; padding: 0.25rem 0.75rem; border-radius: 20px; font-size: 0.8rem; font-weight: bold; white-space: nowrap; }
 .salas-badge-3d { background-color: #007bff; color: white; padding: 0.25rem 0.75rem; border-radius: 20px; font-size: 0.8rem; font-weight: bold; white-space: nowrap; }
 .salas-badge-2d-premium { background-color: #fd7e14; color: white; padding: 0.25rem 0.75rem; border-radius: 20px; font-size: 0.8rem; font-weight: bold; white-space: nowrap; }
 .salas-badge-3d-premium { background-color: #6f42c1; color: white; padding: 0.25rem 0.75rem; border-radius: 20px; font-size: 0.8rem; font-weight: bold; white-space: nowrap; }
-.salas-tarjeta-dato { color: #666; margin: 0.5rem 0; }
-.salas-aviso-premium { margin-top: 1rem; padding: 0.75rem; background-color: #fff8f0; border-radius: 6px; border-left: 3px solid #fd7e14; }
-.salas-aviso-premium-texto { margin: 0; color: #856404; font-size: 0.875rem; }
-.salas-aviso-3d { margin-top: 0.5rem; padding: 0.75rem; background-color: #e7f3ff; border-radius: 6px; border-left: 3px solid #007bff; }
-.salas-aviso-3d-texto { margin: 0; color: #004085; font-size: 0.875rem; }
+.salas-tarjeta-dato { color: #cccccc; margin: 0.5rem 0; }
+.salas-aviso-premium { margin-top: 1rem; padding: 0.75rem; background-color: #2a2015; border-radius: 6px; border-left: 3px solid #fd7e14; }
+.salas-aviso-premium-texto { margin: 0; color: #e0b975; font-size: 0.875rem; }
+.salas-aviso-3d { margin-top: 0.5rem; padding: 0.75rem; background-color: #10202e; border-radius: 6px; border-left: 3px solid #007bff; }
+.salas-aviso-3d-texto { margin: 0; color: #7ec1ff; font-size: 0.875rem; }
 .salas-tarjeta-disponible { color: #28a745; font-size: 0.9rem; margin-top: 1rem; margin-bottom: 0; }
 .salas-vacio { background-color: #fff3cd; padding: 1rem; border-radius: 4px; border-left: 4px solid #ffc107; }
-.salas-tarjeta { background-color:#fff; padding:1.5rem; border-radius:8px; box-shadow:0 2px 4px rgba(0,0,0,.1); border-top:4px solid #6c757d; }
+.salas-tarjeta { background-color:#1f1f1f; padding:1.5rem; border-radius:8px; box-shadow:0 2px 4px rgba(0,0,0,.4); border-top:4px solid #6c757d; }
 .salas-tarjeta--3d { border-top-color:#007bff; }
 .salas-tarjeta--2d_premium { border-top-color:#fd7e14; }
 .salas-tarjeta--3d_premium { border-top-color:#6f42c1; }

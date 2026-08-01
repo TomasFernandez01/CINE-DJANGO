@@ -1,9 +1,14 @@
-/* modificado: etiquetado descriptivo (Tanda A promociones) - clases promociones-estilo-N -> combos-* */
+/* modificado (Tanda A): etiquetado descriptivo - clases promociones-estilo-N -> combos-* */
+/* modificado (Tanda C - punto 4): pasado de tema claro a oscuro. Los gradientes de la
+   promo del día (rosa/rojo) y del placeholder sin imagen (amarillo/naranja) se dejan
+   igual - son acentos de color intencionales que ya se ven bien en oscuro. El botón
+   "Reservar" pasa de azul a rojo de marca (#e50914) para consistencia con el resto
+   del sitio. */
 .combos-page { max-width: 900px; margin: 0 auto; }
-.combos-titulo { color: #333; margin-bottom: 0.5rem; }
-.combos-subtitulo { color: #666; margin-bottom: 2rem; }
+.combos-titulo { color: #ffffff; margin-bottom: 0.5rem; }
+.combos-subtitulo { color: #cccccc; margin-bottom: 2rem; }
 .combos-promodia-seccion { margin-bottom: 2rem; }
-.combos-seccion-subtitulo { color: #333; margin-bottom: 1rem; }
+.combos-seccion-subtitulo { color: #ffffff; margin-bottom: 1rem; }
 .combos-promodia-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 1rem; }
 .combos-promodia-card { background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%); padding: 1.5rem; border-radius: 12px; color: white; }
 .combos-promodia-nombre { margin: 0 0 0.5rem 0; }
@@ -11,16 +16,15 @@
 .combos-promodia-descripcion { margin: 0; opacity: 0.85; font-size: 0.9rem; }
 .combos-promodia-badge { margin-top: 0.75rem; background: rgba(255,255,255,0.2); padding: 0.4rem 0.75rem; border-radius: 4px; display: inline-block; font-size: 0.85rem; }
 .combos-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 1.25rem; }
-.combos-card { background: white; border-radius: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); overflow: hidden; transition: transform 0.2s, box-shadow 0.2s; }
+.combos-card { background: #1f1f1f; border-radius: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.4); overflow: hidden; transition: transform 0.2s, box-shadow 0.2s; }
 .combos-card-imagen { width: 100%; height: 180px; object-fit: cover; }
 .combos-card-imagen-placeholder { width: 100%; height: 140px; background: linear-gradient(135deg, #f6d365 0%, #fda085 100%); display: flex; align-items: center; justify-content: center; font-size: 4rem; }
 .combos-card-info { padding: 1.25rem; }
-.combos-card-nombre { margin: 0 0 0.5rem 0; color: #333; }
-.combos-card-descripcion { margin: 0 0 1rem 0; color: #666; font-size: 0.9rem; line-height: 1.5; }
+.combos-card-nombre { margin: 0 0 0.5rem 0; color: #ffffff; }
+.combos-card-descripcion { margin: 0 0 1rem 0; color: #cccccc; font-size: 0.9rem; line-height: 1.5; }
 .combos-card-footer { display: flex; justify-content: space-between; align-items: center; }
 .combos-card-precio { font-size: 1.5rem; font-weight: bold; color: #ff8c00; }
-.combos-card-btn { padding: 0.5rem 1rem; background: #007bff; color: white; border-radius: 6px; text-decoration: none; font-weight: bold; font-size: 0.9rem; }
-.combos-vacio { background: white; padding: 3rem; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.08); text-align: center; }
-.combos-vacio-texto { font-size: 1.2rem; color: #666; margin: 0; }
-.combos-promodia-badge-hover:hover { transform: translateY(-4px); box-shadow: 0 8px 16px rgba(0,0,0,.15); }
-
+.combos-card-btn { padding: 0.5rem 1rem; background: #e50914; color: white; border-radius: 6px; text-decoration: none; font-weight: bold; font-size: 0.9rem; }
+.combos-vacio { background: #1f1f1f; padding: 3rem; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.3); text-align: center; }
+.combos-vacio-texto { font-size: 1.2rem; color: #cccccc; margin: 0; }
+.combos-promodia-badge-hover:hover { transform: translateY(-4px); box-shadow: 0 8px 16px rgba(0,0,0,.4); }
