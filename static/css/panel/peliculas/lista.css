@@ -1,0 +1,41 @@
+/* modificado (Hilo 1): separación CSS completa de panel/peliculas/lista.html
+   (29 estilos inline -> 0). Colores y layout respetados tal cual estaban -
+   Panel mantiene su tema propio en blanco, el punto 4 para Panel es coordinado
+   y al final. El hover de la tarjeta estaba con onmouseover/onmouseout inline
+   en JS, se pasó a :hover puro en CSS. */
+
+.panelpelis-header { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem; margin-bottom: 1.5rem; }
+.panelpelis-titulo { font-size: 1.4rem; color: #1a1a2e; margin: 0; }
+.panelpelis-header-acciones { display: flex; gap: 0.5rem; }
+
+.panelpelis-filtros-card { margin-bottom: 1.25rem; }
+.panelpelis-filtros-body { padding: 1rem 1.25rem; }
+.panelpelis-filtros-form { display: flex; gap: 0.75rem; flex-wrap: wrap; align-items: center; }
+.panelpelis-filtro-input { flex: 1; min-width: 200px; }
+
+.panelpelis-resultado-contador { font-size: 0.85rem; color: #666; margin-bottom: 0.75rem; }
+
+.panelpelis-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 1rem; }
+.panelpelis-card { overflow: hidden; transition: transform 0.2s, box-shadow 0.2s; }
+.panelpelis-card:hover { transform: translateY(-4px); box-shadow: 0 8px 20px rgba(0,0,0,0.15); }
+
+.panelpelis-card-poster { position: relative; aspect-ratio: 2/3; overflow: hidden; background: #1a1a2e; }
+.panelpelis-card-poster-img { width: 100%; height: 100%; object-fit: cover; }
+.panelpelis-card-poster-placeholder { width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; color: rgba(255,255,255,0.3); font-size: 3rem; }
+.panelpelis-card-checkbox-label { position: absolute; top: 8px; left: 8px; background: rgba(0,0,0,0.5); border-radius: 4px; padding: 0.25rem 0.35rem; cursor: pointer; display: flex; }
+.panelpelis-card-badge { position: absolute; top: 8px; right: 8px; padding: 0.2rem 0.6rem; border-radius: 4px; font-size: 0.7rem; font-weight: 700; color: white; }
+.panelpelis-card-badge--activa { background: #27ae60; }
+.panelpelis-card-badge--inactiva { background: #6c757d; }
+
+.panelpelis-card-info { padding: 0.85rem; }
+.panelpelis-card-nombre { font-weight: 700; color: #1a1a2e; margin-bottom: 0.35rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.panelpelis-card-dato { font-size: 0.75rem; color: #999; margin-bottom: 0.75rem; }
+.panelpelis-card-acciones { display: flex; gap: 0.5rem; }
+.panelpelis-card-btn-ver { flex: 1; text-align: center; font-size: 0.8rem; }
+.panelpelis-card-btn-editar { font-size: 0.8rem; }
+
+.panelpelis-vacio { text-align: center; padding: 3rem; color: #999; }
+
+.panelpelis-paginacion { display: flex; justify-content: center; align-items: center; gap: 0.5rem; margin-top: 2rem; margin-bottom: 1.5rem; }
+.panelpelis-paginacion-btn { padding: 0.4rem 0.8rem; font-size: 0.8rem; font-weight: 600; }
+.panelpelis-paginacion-info { font-size: 0.85rem; color: #444; font-weight: 600; padding: 0.4rem 0.8rem; background: #e9ecef; border-radius: 6px; }

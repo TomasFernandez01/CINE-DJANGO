@@ -1,0 +1,13 @@
+/* modificado (Hilo 1): separación CSS completa de panel/peliculas/confirmar_eliminar.html
+   (14 estilos inline -> 0). Colores respetados tal cual estaban. */
+
+.panelpelisconf-wrapper { max-width: 720px; }
+.panelpelisconf-titulo { font-size: 1.4rem; color: #e74c3c; margin-bottom: 0.5rem; }
+.panelpelisconf-desc { color: #666; margin-bottom: 1.5rem; }
+.panelpelisconf-card { margin-bottom: 1.5rem; }
+.panelpelisconf-tabla-wrap { overflow-x: auto; }
+.panelpelisconf-titulo-pelicula { font-weight: 600; }
+.panelpelisconf-cantidad { color: #e74c3c; font-weight: 600; }
+.panelpelisconf-cero { color: #999; }
+.panelpelisconf-botones { display: flex; gap: 1rem; }
+.panelpelisconf-btn-eliminar { font-size: 1rem; padding: 0.75rem 2rem; }

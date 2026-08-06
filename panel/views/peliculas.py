@@ -3,6 +3,7 @@
 
 from django.contrib import messages
 from django.core.files.base import ContentFile
+from django.core.paginator import Paginator
 from django.db.models import Q
 from django.shortcuts import render, redirect, get_object_or_404
 from django.utils import timezone
@@ -215,9 +216,8 @@ def peliculas_lista(request):
         peliculas = peliculas.filter(en_cartelera=False)
 
     peliculas = peliculas.order_by('-en_cartelera', 'titulo')
-    
+
     # MODIFICACION GEMINI: Paginacion en la lista de peliculas del panel (8 por pagina)
-    from django.core.paginator import Paginator
     paginator = Paginator(peliculas, 8)
     page_number = request.GET.get('page')
     page_obj = paginator.get_page(page_number)
@@ -225,14 +225,6 @@ def peliculas_lista(request):
     contexto = {
         'peliculas': page_obj,
         'page_obj': page_obj,
-        'busqueda': busqueda,
-        'en_cartelera': en_cartelera,
-        'total': peliculas.count(),
-        'seccion_activa': 'peliculas',
-    }
-    return render(request, 'panel/peliculas/lista.html', contexto)
-    contexto = {
-        'peliculas': peliculas,
         'busqueda': busqueda,
         'en_cartelera': en_cartelera,
         'total': peliculas.count(),

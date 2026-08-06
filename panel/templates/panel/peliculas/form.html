@@ -14,20 +14,24 @@
 <span class="current">{% if accion == 'crear' %}Agregar{% else %}Editar{% endif %}</span>
 {% endblock %}
 
+<!-- modificado (Hilo 1): separación CSS completa (22 estilos inline -> 0), movidos a
+     static/css/panel/peliculas/form.css. -->
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/panel/peliculas/form.css' %}">
+{% endblock %}
+
 {% block contenido %}
 {% include 'panel/_form_styles.html' %}
 
-<div style="max-width:900px;">
+<div class="panelpelisform-wrapper">
 
-    <div style="display:flex; justify-content:space-between; align-items:center;
-                flex-wrap:wrap; gap:1rem; margin-bottom:1.5rem;">
+    <div class="panelpelisform-header">
         <div>
-            <h1 style="font-size:1.4rem; color:#1a1a2e; margin:0;">{{ titulo_pagina }}</h1>
+            <h1 class="panelpelisform-titulo">{{ titulo_pagina }}</h1>
             {% if accion == 'crear' %}
-            <p style="margin:0.25rem 0 0; color:#666; font-size:0.875rem;">
+            <p class="panelpelisform-subtitulo">
                 También podés
-                <a href="{% url 'panel:peliculas_buscar_tmdb' %}"
-                   style="color:#3498db; font-weight:600;">buscar en TMDB</a>
+                <a href="{% url 'panel:peliculas_buscar_tmdb' %}" class="panelpelisform-link-tmdb">buscar en TMDB</a>
                 para importar datos automáticamente.
             </p>
             {% endif %}
@@ -52,15 +56,15 @@
         <input type="hidden" name="poster_url_tmdb" value="{{ poster_url_tmdb }}">
         {% endif %}
 
-        <div style="display:grid; grid-template-columns:1fr 280px; gap:1.5rem; align-items:start;">
+        <div class="panelpelisform-grid">
 
             <!-- Columna principal -->
-            <div style="display:flex; flex-direction:column; gap:1rem;">
+            <div class="panelpelisform-col-principal">
 
                 <!-- Info básica -->
                 <div class="card">
                     <div class="card-header"><h3>Información Básica</h3></div>
-                    <div class="card-body" style="display:flex; flex-direction:column; gap:1rem;">
+                    <div class="card-body panelpelisform-info-body">
 
                         <!-- Título -->
                         <div>
@@ -83,7 +87,7 @@
                         </div>
 
                         <!-- Fila: género + clasificación + duración -->
-                        <div style="display:grid; grid-template-columns:1fr 1fr 1fr; gap:1rem;">
+                        <div class="panelpelisform-fila-3">
                             <div>
                                 <label class="form-label">Género</label>
                                 {{ form.genero }}
@@ -102,7 +106,7 @@
                         </div>
 
                         <!-- Fila: director + año -->
-                        <div style="display:grid; grid-template-columns:2fr 1fr; gap:1rem;">
+                        <div class="panelpelisform-fila-2-1">
                             <div>
                                 <label class="form-label">Director</label>
                                 {{ form.director }}
@@ -121,7 +125,7 @@
                         </div>
 
                         <!-- Fila: fecha estreno + en cartelera -->
-                        <div style="display:grid; grid-template-columns:1fr 1fr; gap:1rem; align-items:end;">
+                        <div class="panelpelisform-fila-cartelera">
                             <div>
                                 <label class="form-label">Fecha de estreno</label>
                                 {{ form.fecha_estreno }}
@@ -147,26 +151,26 @@
 
                         <!-- Preview del poster actual -->
                         {% if objeto and objeto.poster %}
-                        <div style="margin-bottom:1rem; text-align:center;">
-                            <img src="{{ objeto.poster.url }}" alt="poster" id="posterPreview" style="max-width:100%; border-radius:8px; box-shadow:0 2px 8px rgba(0,0,0,0.15);">
+                        <div class="panelpelisform-poster-preview-wrap">
+                            <img src="{{ objeto.poster.url }}" alt="poster" id="posterPreview" class="panelpelisform-poster-img">
                         </div>
-                        
+
                         {% elif poster_url_tmdb %}
-                        <div style="margin-bottom:0.5rem; text-align:center;">
-                            <img src="{{ poster_url_tmdb }}" alt="poster TMDB" id="posterPreview" style="max-width:100%; border-radius:8px; box-shadow:0 2px 8px rgba(0,0,0,0.15);">
+                        <div class="panelpelisform-poster-preview-wrap panelpelisform-poster-preview-wrap--tmdb">
+                            <img src="{{ poster_url_tmdb }}" alt="poster TMDB" id="posterPreview" class="panelpelisform-poster-img">
                         </div>
-                        <div class="form-help" style="margin-bottom:1rem;">📥 Poster de TMDB. Descarga al guardar, salvo que subas otro acá abajo.</div>
-                        
+                        <div class="form-help panelpelisform-poster-help-tmdb">📥 Poster de TMDB. Descarga al guardar, salvo que subas otro acá abajo.</div>
+
                         {% else %}
-                        <div id="posterPlaceholder" style="aspect-ratio:2/3; background:#f0f0f0; border-radius:8px; display:flex; align-items:center; justify-content:center; color:#ccc; font-size:3rem; margin-bottom:1rem;"> 🎬 </div>
-                        <img id="posterPreview"  style="max-width:100%; border-radius:8px; display:none; margin-bottom:1rem; box-shadow:0 2px 8px rgba(0,0,0,0.15);">
+                        <div id="posterPlaceholder" class="panelpelisform-poster-placeholder">🎬</div>
+                        <img id="posterPreview" class="panelpelisform-poster-img panelpelisform-poster-img--oculta">
                         {% endif %}
 
                         {{ form.poster }}
                         {% if form.poster.errors %}
                         <div class="field-error">{{ form.poster.errors.0 }}</div>
                         {% endif %}
-                        <div class="form-help" style="margin-top:0.5rem;">Formatos: JPG, PNG. Recomendado: proporción 2:3</div>
+                        <div class="form-help panelpelisform-poster-help">Formatos: JPG, PNG. Recomendado: proporción 2:3</div>
                     </div>
                 </div>
             </div>
@@ -174,17 +178,17 @@
 
         <!-- Errores generales -->
         {% if form.non_field_errors %}
-        <div style="background:#f8d7da; border-left:4px solid #e74c3c; padding:1rem; border-radius:6px; margin-top:1rem; color:#721c24;">
-            {% for error in form.non_field_errors %}<p style="margin:0;">{{ error }}</p>{% endfor %}
+        <div class="panelpelisform-errores-generales">
+            {% for error in form.non_field_errors %}<p class="panelpelisform-error-linea">{{ error }}</p>{% endfor %}
         </div>
         {% endif %}
         <!-- Botones -->
-        <div style="display:flex; gap:1rem; margin-top:1.5rem; flex-wrap:wrap;">
+        <div class="panelpelisform-botones">
             <button type="submit" class="btn btn-primary">
                 {% if accion == 'crear' %}CREAR{% else %}MODIFICAR{% endif %}
             </button>
             <button type="submit" name="guardar_y_agregar_otro" value="1" class="btn btn-primary">CARGAR</button>
-            
+
             {% if objeto %}
             <a href="{% url 'panel:peliculas_detalle' objeto.id %}" class="btn btn-primary">Cancelar</a>
                 {% if accion == 'editar' %}
@@ -206,6 +210,8 @@
 
 </div>
 
-<script src="{% static 'js/panel/peliculas/form.js' %}"></script>
+{% endblock %}
 
+{% block extra_js %}
+<script src="{% static 'js/panel/peliculas/form.js' %}"></script>
 {% endblock %}

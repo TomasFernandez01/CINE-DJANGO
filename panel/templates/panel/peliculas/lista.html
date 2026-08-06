@@ -8,24 +8,32 @@
 <span class="current">Películas</span>
 {% endblock %}
 
+<!-- modificado (Hilo 1): separación CSS completa (29 estilos inline -> 0), movidos a
+     static/css/panel/peliculas/lista.css. Se borró un <form> comentado (código muerto,
+     leftover de un reordenamiento viejo del formulario de borrado - el form real ya
+     está más abajo en el archivo). -->
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/panel/peliculas/lista.css' %}">
+{% endblock %}
+
 {% block contenido %}
 
-<div style="display:flex; justify-content:space-between; align-items:center;flex-wrap:wrap; gap:1rem; margin-bottom:1.5rem;">
-    <h1 style="font-size:1.4rem; color:#1a1a2e; margin:0;">Películas</h1>
-    <div style="display:flex; gap:0.5rem;">
-        <button type="submit" form="formPeliculas" id="btnEliminarSeleccionadas" class="btn btn-danger" disabled style="opacity:0.5; cursor:not-allowed;">Eliminar</button>
+<div class="panelpelis-header">
+    <h1 class="panelpelis-titulo">Películas</h1>
+    <div class="panelpelis-header-acciones">
+        <button type="submit" form="formPeliculas" id="btnEliminarSeleccionadas" class="btn btn-danger" disabled>Eliminar</button>
         <a href="{% url 'panel:inicio' %}" class="btn btn-primary">INICIO</a>
         <a href="{% url 'panel:peliculas_crear' %}" class="btn btn-primary">NUEVA</a>
         <a href="{% url 'panel:peliculas_buscar_tmdb' %}" class="btn btn-primary">TMDB</a>
     </div>
 </div>
-{% comment %} <form method="post" action="{% url 'panel:peliculas_eliminar' %}" id="formPeliculas"> {% csrf_token %} {% endcomment %}
+
 <!-- Filtros (form GET propio, fuera del form de borrado para no anidarlos) -->
-<div class="card" style="margin-bottom:1.25rem;">
-    <div class="card-body" style="padding:1rem 1.25rem;">
-        <form method="get" style="display:flex; gap:0.75rem; flex-wrap:wrap; align-items:center;">
-            <input type="text" name="q" value="{{ busqueda }}" class="input"
-                   placeholder="Título..." style="flex:1; min-width:200px;">
+<div class="card panelpelis-filtros-card">
+    <div class="card-body panelpelis-filtros-body">
+        <form method="get" class="panelpelis-filtros-form">
+            <input type="text" name="q" value="{{ busqueda }}" class="input panelpelis-filtro-input"
+                   placeholder="Título...">
             <select name="cartelera" class="select">
                 <option value="">Todas</option>
                 <option value="si" {% if en_cartelera == 'si' %}selected{% endif %}>En cartelera</option>
@@ -38,51 +46,46 @@
 </div>
 
 <!-- Resultado -->
-<div style="font-size:0.85rem; color:#666; margin-bottom:0.75rem;">
+<div class="panelpelis-resultado-contador">
     {{ total }} película(s) encontrada(s)
 </div>
-{% comment %} Movemos aca el form para que no rompa los filtros {% endcomment %}
+
 <form method="post" action="{% url 'panel:peliculas_eliminar' %}" id="formPeliculas">
     {% csrf_token %}
 <!-- Grid de películas -->
 {% if peliculas %}
-<div style="display:grid; grid-template-columns:repeat(auto-fill, minmax(220px,1fr)); gap:1rem;">
+<div class="panelpelis-grid">
     {% for p in peliculas %}
-    <div class="card" style="overflow:hidden; transition:transform 0.2s, box-shadow 0.2s;"
-         onmouseover="this.style.transform='translateY(-4px)';this.style.boxShadow='0 8px 20px rgba(0,0,0,0.15)'"
-         onmouseout="this.style.transform='';this.style.boxShadow=''">
+    <div class="card panelpelis-card">
 
         <!-- Poster -->
-        <div style="position:relative; aspect-ratio:2/3; overflow:hidden; background:#1a1a2e;">
+        <div class="panelpelis-card-poster">
             {% if p.poster %}
-                <img src="{{ p.poster.url }}" alt="{{ p.titulo }}" style="width:100%; height:100%; object-fit:cover;">
+                <img src="{{ p.poster.url }}" alt="{{ p.titulo }}" class="panelpelis-card-poster-img">
             {% else %}
-                <div style="width:100%; height:100%; display:flex; align-items:center; justify-content:center; color:rgba(255,255,255,0.3); font-size:3rem;">🎬</div>
+                <div class="panelpelis-card-poster-placeholder">🎬</div>
             {% endif %}
             <!-- Checkbox de seleccion -->
-            <label style="position:absolute; top:8px; left:8px; background:rgba(0,0,0,0.5); border-radius:4px; padding:0.25rem 0.35rem; cursor:pointer; display:flex;">
+            <label class="panelpelis-card-checkbox-label">
                 <input type="checkbox" name="seleccionadas" value="{{ p.id }}" class="chk-pelicula panel-checkbox">
             </label>
             <!-- Cartelera badge -->
-            <span style="position:absolute; top:8px; right:8px; padding:0.2rem 0.6rem;
-                         border-radius:4px; font-size:0.7rem; font-weight:700;
-                         {% if p.en_cartelera %}background:#27ae60; color:white;
-                         {% else %}background:#6c757d; color:white;{% endif %}">
+            <span class="panelpelis-card-badge {% if p.en_cartelera %}panelpelis-card-badge--activa{% else %}panelpelis-card-badge--inactiva{% endif %}">
                 {% if p.en_cartelera %}En cartelera{% else %}Inactiva{% endif %}
             </span>
         </div>
 
         <!-- Info -->
-        <div style="padding:0.85rem;">
-            <div style="font-weight:700; color:#1a1a2e; margin-bottom:0.35rem;white-space:nowrap; overflow:hidden; text-overflow:ellipsis;" title="{{ p.titulo }}">{{ p.titulo }}</div>
-            <div style="font-size:0.75rem; color:#999; margin-bottom:0.75rem;">
+        <div class="panelpelis-card-info">
+            <div class="panelpelis-card-nombre" title="{{ p.titulo }}">{{ p.titulo }}</div>
+            <div class="panelpelis-card-dato">
                 {% if p.genero %}{{ p.get_genero_display }}{% endif %}
                 {% if p.año %} · {{ p.año }}{% endif %}
                 {% if p.duracion %} · {{ p.duracion_formato }}{% endif %}
             </div>
-            <div style="display:flex; gap:0.5rem;">
-                <a href="{% url 'panel:peliculas_detalle' p.id %}" class="btn btn-dark" style="flex:1; text-align:center; font-size:0.8rem;">VER</a>
-                <a href="{% url 'panel:peliculas_editar' p.id %}" class="btn btn-ghost" style="font-size:0.8rem;" title="Editar en admin">EDITAR</a>
+            <div class="panelpelis-card-acciones">
+                <a href="{% url 'panel:peliculas_detalle' p.id %}" class="btn btn-dark panelpelis-card-btn-ver">VER</a>
+                <a href="{% url 'panel:peliculas_editar' p.id %}" class="btn btn-ghost panelpelis-card-btn-editar" title="Editar en admin">EDITAR</a>
             </div>
         </div>
     </div>
@@ -90,31 +93,33 @@
 </div>
 {% else %}
 <div class="card">
-    <div class="card-body" style="text-align:center; padding:3rem; color:#999;">
+    <div class="card-body panelpelis-vacio">
         No se encontraron películas con esos filtros.
     </div>
 </div>
 {% endif %}
 </form>
 
-<!-- MODIFICACION GEMINI: Controles de Paginación en Panel Admin -->
 {% if page_obj.has_other_pages %}
-<div style="display:flex; justify-content:center; align-items:center; gap:0.5rem; margin-top:2rem; margin-bottom:1.5rem;">
+<div class="panelpelis-paginacion">
     {% if page_obj.has_previous %}
-        <a href="?page=1{% if busqueda %}&q={{ busqueda }}{% endif %}{% if en_cartelera %}&cartelera={{ en_cartelera }}{% endif %}" class="btn btn-ghost" style="padding: 0.4rem 0.8rem; font-size: 0.8rem; font-weight: 600;">« Primero</a>
-        <a href="?page={{ page_obj.previous_page_number }}{% if busqueda %}&q={{ busqueda }}{% endif %}{% if en_cartelera %}&cartelera={{ en_cartelera }}{% endif %}" class="btn btn-ghost" style="padding: 0.4rem 0.8rem; font-size: 0.8rem; font-weight: 600;">‹ Anterior</a>
+        <a href="?page=1{% if busqueda %}&q={{ busqueda }}{% endif %}{% if en_cartelera %}&cartelera={{ en_cartelera }}{% endif %}" class="btn btn-ghost panelpelis-paginacion-btn">« Primero</a>
+        <a href="?page={{ page_obj.previous_page_number }}{% if busqueda %}&q={{ busqueda }}{% endif %}{% if en_cartelera %}&cartelera={{ en_cartelera }}{% endif %}" class="btn btn-ghost panelpelis-paginacion-btn">‹ Anterior</a>
     {% endif %}
 
-    <span style="font-size:0.85rem; color:#444; font-weight:600; padding: 0.4rem 0.8rem; background: #e9ecef; border-radius: 6px;">
+    <span class="panelpelis-paginacion-info">
         Página {{ page_obj.number }} de {{ page_obj.paginator.num_pages }}
     </span>
 
     {% if page_obj.has_next %}
-        <a href="?page={{ page_obj.next_page_number }}{% if busqueda %}&q={{ busqueda }}{% endif %}{% if en_cartelera %}&cartelera={{ en_cartelera }}{% endif %}" class="btn btn-ghost" style="padding: 0.4rem 0.8rem; font-size: 0.8rem; font-weight: 600;">Siguiente ›</a>
-        <a href="?page={{ page_obj.paginator.num_pages }}{% if busqueda %}&q={{ busqueda }}{% endif %}{% if en_cartelera %}&cartelera={{ en_cartelera }}{% endif %}" class="btn btn-ghost" style="padding: 0.4rem 0.8rem; font-size: 0.8rem; font-weight: 600;">Último »</a>
+        <a href="?page={{ page_obj.next_page_number }}{% if busqueda %}&q={{ busqueda }}{% endif %}{% if en_cartelera %}&cartelera={{ en_cartelera }}{% endif %}" class="btn btn-ghost panelpelis-paginacion-btn">Siguiente ›</a>
+        <a href="?page={{ page_obj.paginator.num_pages }}{% if busqueda %}&q={{ busqueda }}{% endif %}{% if en_cartelera %}&cartelera={{ en_cartelera }}{% endif %}" class="btn btn-ghost panelpelis-paginacion-btn">Último »</a>
     {% endif %}
 </div>
 {% endif %}
 
+{% endblock %}
+
+{% block extra_js %}
 <script src="{% static 'js/panel/peliculas/lista.js' %}"></script>
 {% endblock %}

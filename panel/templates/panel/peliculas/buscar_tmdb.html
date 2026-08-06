@@ -1,4 +1,5 @@
 {% extends 'panel/base_panel.html' %}
+{% load static %}
 
 {% block titulo %}Buscar en TMDB — Panel{% endblock %}
 
@@ -9,43 +10,46 @@
 <span class="current">Buscar en TMDB</span>
 {% endblock %}
 
+<!-- modificado (Hilo 1): separación CSS completa (26 estilos inline -> 0), movidos a
+     static/css/panel/peliculas/buscar_tmdb.css. El focus/blur del input (onfocus/onblur
+     inline) se pasó a :focus puro en CSS, y el hover de la tarjeta (onmouseover/onmouseout)
+     a :hover puro también. -->
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/panel/peliculas/buscar_tmdb.css' %}">
+{% endblock %}
+
 {% block contenido %}
 
-<div style="max-width:1100px;">
+<div class="panelpelistmdb-wrapper">
 
-    <div style="display:flex; justify-content:space-between; align-items:center;
-                flex-wrap:wrap; gap:1rem; margin-bottom:1.5rem;">
+    <div class="panelpelistmdb-header">
         <div>
-            <h1 style="font-size:1.4rem; color:#1a1a2e; margin:0;">🎬 Buscar en TMDB</h1>
-            <p style="margin:0.25rem 0 0; color:#666; font-size:0.875rem;">
+            <h1 class="panelpelistmdb-titulo">🎬 Buscar en TMDB</h1>
+            <p class="panelpelistmdb-subtitulo">
                 Buscá películas en The Movie Database e importalas con un clic.
             </p>
         </div>
-        <div style="display:flex; gap:0.5rem;">
+        <div class="panelpelistmdb-header-acciones">
             <a href="{% url 'panel:peliculas_crear' %}" class="btn btn-ghost">Crear manualmente</a>
             <a href="{% url 'panel:peliculas_lista' %}" class="btn btn-ghost">Volver</a>
         </div>
     </div>
 
     {% if not tmdb_disponible %}
-    <div style="background:#fff3cd; border-left:4px solid #f39c12; padding:1rem 1.25rem;
-                border-radius:8px; color:#856404; margin-bottom:1.5rem;">
+    <div class="panelpelistmdb-aviso-no-disponible">
         <strong>⚠️ TMDB no está configurado.</strong>Verificá que <code>TMDB_API_KEY</code> esté en settings.py y que<code>utils/tmdb_api.py</code> esté disponible.
     </div>
     {% endif %}
 
     <!-- Buscador -->
-    <div class="card" style="margin-bottom:1.5rem;">
-        <div class="card-body" style="padding:1.25rem;">
-            <form method="get" style="display:flex; gap:0.75rem;">
+    <div class="card panelpelistmdb-buscador-card">
+        <div class="card-body panelpelistmdb-buscador-body">
+            <form method="get" class="panelpelistmdb-buscador-form">
                 <input type="text" name="q" value="{{ query }}"
                        placeholder="Título de la película (podés buscar en español o inglés)..."
-                       style="flex:1; padding:0.75rem 1rem; border:1.5px solid #e0e0e0;
-                              border-radius:8px; font-size:1rem; transition:border-color 0.2s;"
-                       onfocus="this.style.borderColor='#1a1a2e'"
-                       onblur="this.style.borderColor='#e0e0e0'"
+                       class="panelpelistmdb-buscador-input"
                        autofocus>
-                <button type="submit" class="btn btn-dark" style="padding:0.75rem 1.5rem; font-size:1rem;">
+                <button type="submit" class="btn btn-dark panelpelistmdb-buscador-btn">
                     Buscar
                 </button>
             </form>
@@ -54,52 +58,44 @@
 
     <!-- Resultados -->
     {% if resultados %}
-    <div style="font-size:0.85rem; color:#666; margin-bottom:1rem;">
+    <div class="panelpelistmdb-resultado-contador">
         {{ resultados|length }} resultado(s) para "<strong>{{ query }}</strong>"
     </div>
 
-    <div style="display:grid; grid-template-columns:repeat(auto-fill, minmax(200px,1fr)); gap:1rem;">
+    <div class="panelpelistmdb-grid">
         {% for p in resultados %}
-        <div class="card" style="overflow:hidden; transition:transform 0.2s, box-shadow 0.2s;"
-             onmouseover="this.style.transform='translateY(-4px)';this.style.boxShadow='0 8px 20px rgba(0,0,0,0.15)'"
-             onmouseout="this.style.transform='';this.style.boxShadow=''">
+        <div class="card panelpelistmdb-card">
 
             <!-- Poster -->
-            <div style="aspect-ratio:2/3; overflow:hidden; background:#1a1a2e;">
+            <div class="panelpelistmdb-card-poster">
                 {% if p.poster_path %}
                 <img src="https://image.tmdb.org/t/p/w300{{ p.poster_path }}"
                      alt="{{ p.title }}"
-                     style="width:100%; height:100%; object-fit:cover;">
+                     class="panelpelistmdb-card-poster-img">
                 {% else %}
-                <div style="width:100%; height:100%; display:flex; align-items:center;
-                            justify-content:center; color:rgba(255,255,255,0.2); font-size:3rem;">
+                <div class="panelpelistmdb-card-poster-placeholder">
                     🎬
                 </div>
                 {% endif %}
             </div>
 
             <!-- Info -->
-            <div style="padding:0.85rem;">
-                <div style="font-weight:700; color:#1a1a2e; font-size:0.9rem; margin-bottom:0.3rem;
-                            white-space:nowrap; overflow:hidden; text-overflow:ellipsis;"
-                     title="{{ p.title }}">
+            <div class="panelpelistmdb-card-info">
+                <div class="panelpelistmdb-card-nombre" title="{{ p.title }}">
                     {{ p.title }}
                 </div>
                 {% if p.release_date %}
-                <div style="font-size:0.75rem; color:#999; margin-bottom:0.5rem;">
+                <div class="panelpelistmdb-card-fecha">
                     📅 {{ p.release_date|slice:":4" }}
                 </div>
                 {% endif %}
                 {% if p.overview %}
-                <p style="font-size:0.75rem; color:#777; margin:0 0 0.75rem;
-                           line-height:1.4; overflow:hidden; display:-webkit-box;
-                           -webkit-line-clamp:3; -webkit-box-orient:vertical;">
+                <p class="panelpelistmdb-card-overview">
                     {{ p.overview }}
                 </p>
                 {% endif %}
                 <a href="{% url 'panel:peliculas_importar_tmdb' p.id %}"
-                   class="btn btn-primary"
-                   style="width:100%; text-align:center; font-size:0.8rem;"
+                   class="btn btn-primary panelpelistmdb-card-btn-importar"
                    onclick="return confirm('¿Importar: {{ p.title }}?')">
                     Importar
                 </a>
@@ -110,10 +106,10 @@
 
     {% elif query %}
     <div class="card">
-        <div class="card-body" style="text-align:center; padding:3rem; color:#999;">
-            <div style="font-size:2.5rem; margin-bottom:0.75rem;">🔍</div>
-            <div style="font-size:1.1rem;">Sin resultados para "<strong>{{ query }}</strong>"</div>
-            <div style="font-size:0.875rem; margin-top:0.5rem;">
+        <div class="card-body panelpelistmdb-sin-resultados">
+            <div class="panelpelistmdb-sin-resultados-icono">🔍</div>
+            <div class="panelpelistmdb-sin-resultados-titulo">Sin resultados para "<strong>{{ query }}</strong>"</div>
+            <div class="panelpelistmdb-sin-resultados-sub">
                 Probá buscar en inglés o con el título original
             </div>
         </div>
