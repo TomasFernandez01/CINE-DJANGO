@@ -350,7 +350,7 @@ def cupones_usados_lista(request):
     return render(request, 'panel/promociones/cupones_usados/lista.html', contexto)
 
 # ============================================================
-#   STAFFV2 stadisticas de cupones
+# ESTADÍSTICAS DE CUPONES
 # ============================================================
 
 @staff_required

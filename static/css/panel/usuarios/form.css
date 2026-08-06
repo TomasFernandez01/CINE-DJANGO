@@ -1,0 +1,100 @@
+/* modificado (Panel > Usuarios, Hilo 2): CSS extraído de panel/usuarios/form.html,
+   antes todo con style="" inline. Mismos valores, sin cambios de diseño. */
+
+.paneluserform-wrap {
+    max-width: 680px;
+}
+
+.paneluserform-encabezado {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1.5rem;
+}
+
+.paneluserform-titulo {
+    font-size: 1.4rem;
+    color: #1a1a2e;
+    margin: 0;
+}
+
+.paneluserform-solo-admin {
+    font-size: 0.8rem;
+    color: #f39c12;
+    margin-top: 0.2rem;
+}
+
+.paneluserform-stack {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+
+.paneluserform-card-body-stack {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+
+.paneluserform-2col {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1rem;
+}
+
+.paneluserform-permisos-stack {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+}
+
+.paneluserform-checkbox-row {
+    padding: 0.75rem;
+    background: #f8f9fa;
+    border-radius: 8px;
+}
+
+.paneluserform-checkbox-row--super {
+    padding: 0.75rem;
+    background: #fff8e1;
+    border-radius: 8px;
+    border: 1px solid #ffe082;
+}
+
+.paneluserform-checkbox-label {
+    font-weight: 600;
+}
+
+.paneluserform-checkbox-label--super {
+    font-weight: 600;
+    color: #b45309;
+}
+
+.paneluserform-checkbox-help {
+    font-size: 0.8rem;
+    color: #666;
+}
+
+.paneluserform-error-box {
+    background: #f8d7da;
+    border-left: 4px solid #e74c3c;
+    padding: 1rem;
+    border-radius: 6px;
+    margin-top: 1rem;
+    color: #721c24;
+}
+
+.paneluserform-error-box p {
+    margin: 0;
+}
+
+.paneluserform-botones {
+    display: flex;
+    gap: 1rem;
+    margin-top: 1.5rem;
+}
+
+.paneluserform-btn-guardar {
+    font-size: 1rem;
+    padding: 0.75rem 2rem;
+}

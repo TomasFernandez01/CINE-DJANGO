@@ -1,0 +1,221 @@
+/* modificado (Panel > Usuarios, Hilo 2): CSS extraído de panel/usuarios/detalle.html,
+   antes todo con style="" inline. Mismos valores, sin cambios de diseño.
+   Al final hay clases nuevas (paneluserdet-hist-*) para el bloque de Historial de
+   películas vistas que se agregó (no existía). */
+
+.paneluserdet-encabezado {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 1rem;
+    margin-bottom: 1.5rem;
+}
+
+.paneluserdet-titulo {
+    font-size: 1.4rem;
+    color: #1a1a2e;
+    margin: 0;
+}
+
+.paneluserdet-username {
+    font-size: 0.85rem;
+    color: #666;
+    margin-top: 0.2rem;
+}
+
+.paneluserdet-grid {
+    display: grid;
+    grid-template-columns: 280px 1fr;
+    gap: 1.5rem;
+    align-items: start;
+}
+
+.paneluserdet-columna {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+
+.paneluserdet-avatar-body {
+    text-align: center;
+    padding: 1.5rem;
+}
+
+.paneluserdet-avatar-circle {
+    width: 80px;
+    height: 80px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #1a1a2e, #0f3460);
+    margin: 0 auto 1rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 2rem;
+    color: white;
+}
+
+.paneluserdet-avatar-nombre {
+    font-weight: 700;
+    font-size: 1.1rem;
+    margin-bottom: 0.25rem;
+}
+
+.paneluserdet-avatar-email {
+    color: #666;
+    font-size: 0.85rem;
+    margin-bottom: 0.75rem;
+}
+
+.paneluserdet-rol-badge {
+    padding: 0.3rem 0.9rem;
+    border-radius: 20px;
+    font-size: 0.8rem;
+    font-weight: 700;
+}
+
+.paneluserdet-rol-badge--super {
+    background: rgba(226, 185, 111, 0.2);
+    color: #c9973a;
+}
+
+.paneluserdet-rol-badge--staff {
+    background: #d4edda;
+    color: #155724;
+}
+
+.paneluserdet-rol-badge--normal {
+    background: #f0f0f0;
+    color: #666;
+    font-weight: 400;
+}
+
+.paneluserdet-perfil-stack {
+    display: flex;
+    flex-direction: column;
+    gap: 0.65rem;
+    font-size: 0.875rem;
+}
+
+.paneluserdet-perfil-label {
+    font-size: 0.7rem;
+    color: #999;
+    text-transform: uppercase;
+}
+
+.paneluserdet-stats-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 0.75rem;
+    text-align: center;
+}
+
+.paneluserdet-stat-box {
+    background: #f8f9fa;
+    padding: 0.75rem;
+    border-radius: 8px;
+}
+
+.paneluserdet-stat-valor {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: #1a1a2e;
+}
+
+.paneluserdet-stat-valor--verde {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: #27ae60;
+}
+
+.paneluserdet-stat-label {
+    font-size: 0.7rem;
+    color: #999;
+    text-transform: uppercase;
+}
+
+.paneluserdet-link-chico {
+    font-size: 0.75rem;
+}
+
+.paneluserdet-codigo {
+    font-family: monospace;
+    font-weight: 700;
+    color: #1a1a2e;
+    text-decoration: none;
+    font-size: 0.85rem;
+}
+
+.paneluserdet-pelicula {
+    font-weight: 600;
+    font-size: 0.875rem;
+}
+
+.paneluserdet-funcion {
+    color: #666;
+    font-size: 0.8rem;
+    white-space: nowrap;
+}
+
+.paneluserdet-asientos {
+    font-size: 0.8rem;
+    color: #555;
+}
+
+.paneluserdet-total {
+    font-weight: 700;
+    color: #27ae60;
+}
+
+.paneluserdet-vacio {
+    text-align: center;
+    padding: 3rem;
+    color: #999;
+}
+
+/* ---- nuevo: Historial de películas vistas ---- */
+
+.paneluserdet-hist-item {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    padding: 0.6rem 1.25rem;
+    border-bottom: 1px solid #f0f0f0;
+    text-decoration: none;
+}
+
+.paneluserdet-hist-item:hover {
+    background: #f8f9fa;
+}
+
+.paneluserdet-hist-poster {
+    width: 32px;
+    height: 46px;
+    object-fit: cover;
+    border-radius: 4px;
+    flex-shrink: 0;
+}
+
+.paneluserdet-hist-info {
+    display: flex;
+    flex-direction: column;
+    gap: 0.15rem;
+}
+
+.paneluserdet-hist-titulo {
+    font-weight: 600;
+    font-size: 0.85rem;
+    color: #1a1a2e;
+}
+
+.paneluserdet-hist-fecha {
+    font-size: 0.75rem;
+    color: #999;
+}
+
+.paneluserdet-hist-vacio {
+    padding: 2rem;
+    text-align: center;
+    color: #999;
+    font-size: 0.85rem;
+}

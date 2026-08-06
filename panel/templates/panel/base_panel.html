@@ -6,6 +6,10 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{% block titulo %}Panel — Cine Online{% endblock %}</title>
     <link rel="stylesheet" href="{% static 'css/panel/base_panel.css' %}">
+    <!-- nuevo: bloque extra_css, hacía falta para que cada vista de Panel pueda cargar su propio
+         CSS separado (hasta ahora todo estaba con style="" inline en los templates). Cambio
+         mínimo y compatible, no afecta nada de lo existente. -->
+    {% block extra_css %}{% endblock %}
 </head>
 <body>
 

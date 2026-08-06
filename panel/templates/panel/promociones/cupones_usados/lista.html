@@ -1,5 +1,7 @@
 {% extends 'panel/base_panel.html' %}
 
+{% load static %}
+
 {% block titulo %}Cupones Usados — Panel{% endblock %}
 
 {% block breadcrumb %}
@@ -7,21 +9,26 @@
 <span class="current">Cupones Usados</span>
 {% endblock %}
 
+{% block extra_css %}
+<!-- modificado: CSS separado a static/css/panel/promociones/cupones_usados/lista.css (antes todo con style="" inline) -->
+<link rel="stylesheet" href="{% static 'css/panel/promociones/cupones_usados/lista.css' %}">
+{% endblock %}
+
 {% block contenido %}
 
-<div style="display:flex; justify-content:space-between; align-items:center;flex-wrap:wrap; gap:1rem; margin-bottom:1.5rem;">
-    <h1 style="font-size:1.4rem; color:#1a1a2e; margin:0;">📋 Cupones Usados</h1>
-    <div style="display:flex; gap:0.5rem;">
+<div class="panelcuponused-encabezado">
+    <h1 class="panelcuponused-titulo">📋 Cupones Usados</h1>
+    <div class="panelcuponused-acciones">
         <a href="{% url 'panel:cupones_lista' %}" class="btn btn-primary">🎟️ Ver cupones</a>
         <a href="{% url 'panel:inicio' %}" class="btn btn-primary">INICIO</a>
     </div>
 </div>
 
-<div class="card" style="margin-bottom:1.25rem;">
-    <div class="card-body" style="padding:1rem 1.25rem;">
-        <form method="get" style="display:flex; gap:0.75rem; flex-wrap:wrap;">
-            <input type="text" name="q" value="{{ busqueda }}" class="input"
-                   placeholder="Código de cupón o usuario..." style="flex:1; min-width:220px;">
+<div class="card panelcuponused-filtros-card">
+    <div class="card-body panelcuponused-filtros-body">
+        <form method="get" class="panelcuponused-filtros-form">
+            <input type="text" name="q" value="{{ busqueda }}" class="input panelcuponused-filtro-busqueda"
+                   placeholder="Código de cupón o usuario...">
             <button type="submit" class="btn btn-dark">Filtrar</button>
             <a href="{% url 'panel:cupones_usados_lista' %}" class="btn btn-ghost">Limpiar</a>
         </form>
@@ -43,22 +50,21 @@
         <tbody>
             {% for h in historial %}
             <tr>
-                <td style="font-family:monospace; font-weight:700; color:#1a1a2e;">{{ h.cupon.codigo }}</td>
-                <td style="font-size:0.875rem; color:#555;">
+                <td class="panelcuponused-codigo">{{ h.cupon.codigo }}</td>
+                <td class="panelcuponused-usuario">
                     {{ h.usuario.get_full_name|default:h.usuario.username }}
                 </td>
-                <td style="font-size:0.875rem;">
+                <td class="panelcuponused-reserva-col">
                     {% if h.reserva %}
-                    <a href="{% url 'panel:reservas_detalle' h.reserva.id %}"
-                       style="color:#1a1a2e; text-decoration:none; font-weight:600;">
+                    <a href="{% url 'panel:reservas_detalle' h.reserva.id %}" class="panelcuponused-reserva-link">
                         {{ h.reserva.funcion.pelicula.titulo }}
                     </a>
                     {% else %}
-                    <span style="color:#999;">Reserva eliminada</span>
+                    <span class="panelcuponused-reserva-eliminada">Reserva eliminada</span>
                     {% endif %}
                 </td>
-                <td style="font-weight:700; color:#27ae60;">${{ h.descuento_aplicado|floatformat:0 }}</td>
-                <td style="color:#999; font-size:0.8rem; white-space:nowrap;">
+                <td class="panelcuponused-descuento">${{ h.descuento_aplicado|floatformat:0 }}</td>
+                <td class="panelcuponused-fecha">
                     {{ h.fecha_uso|date:"d/m/Y H:i" }}
                 </td>
             </tr>
@@ -66,7 +72,7 @@
         </tbody>
     </table>
     {% else %}
-    <div class="card-body" style="text-align:center; padding:3rem; color:#999;">
+    <div class="card-body panelcuponused-vacio">
         No hay cupones usados todavía.
     </div>
     {% endif %}

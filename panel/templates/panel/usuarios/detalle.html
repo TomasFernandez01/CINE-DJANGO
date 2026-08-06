@@ -1,5 +1,7 @@
 {% extends 'panel/base_panel.html' %}
 
+{% load static %}
+
 {% block titulo %}{{ usuario_detalle.username }} — Panel{% endblock %}
 
 {% block breadcrumb %}
@@ -9,55 +11,53 @@
 <span class="current">{{ usuario_detalle.username }}</span>
 {% endblock %}
 
+{% block extra_css %}
+<!-- modificado: CSS separado a static/css/panel/usuarios/detalle.css (antes todo con style="" inline) -->
+<link rel="stylesheet" href="{% static 'css/panel/usuarios/detalle.css' %}">
+{% endblock %}
+
 {% block contenido %}
 
-<div style="display:flex; justify-content:space-between; align-items:center;
-            flex-wrap:wrap; gap:1rem; margin-bottom:1.5rem;">
+<div class="paneluserdet-encabezado">
     <div>
-        <h1 style="font-size:1.4rem; color:#1a1a2e; margin:0;">
+        <h1 class="paneluserdet-titulo">
             {{ usuario_detalle.get_full_name|default:usuario_detalle.username }}
         </h1>
-        <div style="font-size:0.85rem; color:#666; margin-top:0.2rem;">
+        <div class="paneluserdet-username">
             @{{ usuario_detalle.username }}
         </div>
     </div>
-    {% comment %} <a href="{% url 'admin:auth_user_change' usuario_detalle.id %}" class="btn btn-primary">✏️ Editar en admin</a> {% endcomment %}
+    <!-- modificado: se saca el link comentado al admin de Django (código muerto), ya se usa panel:usuarios_editar -->
     <a href="{% url 'panel:usuarios_editar' usuario_detalle.id %}" class="btn btn-primary">Editar User</a>
 </div>
 
-<div style="display:grid; grid-template-columns:280px 1fr; gap:1.5rem; align-items:start;">
+<div class="paneluserdet-grid">
 
     <!-- Panel izquierdo -->
-    <div style="display:flex; flex-direction:column; gap:1rem;">
+    <div class="paneluserdet-columna">
 
         <!-- Avatar + rol -->
         <div class="card">
-            <div class="card-body" style="text-align:center; padding:1.5rem;">
-                <div style="width:80px; height:80px; border-radius:50%;
-                            background:linear-gradient(135deg,#1a1a2e,#0f3460);
-                            margin:0 auto 1rem; display:flex; align-items:center;
-                            justify-content:center; font-size:2rem; color:white;">
+            <div class="card-body paneluserdet-avatar-body">
+                <div class="paneluserdet-avatar-circle">
                     {{ usuario_detalle.username|slice:":1"|upper }}
                 </div>
-                <div style="font-weight:700; font-size:1.1rem; margin-bottom:0.25rem;">
+                <div class="paneluserdet-avatar-nombre">
                     {{ usuario_detalle.get_full_name|default:usuario_detalle.username }}
                 </div>
-                <div style="color:#666; font-size:0.85rem; margin-bottom:0.75rem;">
+                <div class="paneluserdet-avatar-email">
                     {{ usuario_detalle.email|default:"Sin email" }}
                 </div>
                 {% if usuario_detalle.is_superuser %}
-                <span style="background:rgba(226,185,111,0.2); color:#c9973a;
-                             padding:0.3rem 0.9rem; border-radius:20px; font-size:0.8rem; font-weight:700;">
+                <span class="paneluserdet-rol-badge paneluserdet-rol-badge--super">
                     Superusuario
                 </span>
                 {% elif usuario_detalle.is_staff %}
-                <span style="background:#d4edda; color:#155724;
-                             padding:0.3rem 0.9rem; border-radius:20px; font-size:0.8rem; font-weight:700;">
+                <span class="paneluserdet-rol-badge paneluserdet-rol-badge--staff">
                     Staff
                 </span>
                 {% else %}
-                <span style="background:#f0f0f0; color:#666;
-                             padding:0.3rem 0.9rem; border-radius:20px; font-size:0.8rem;">
+                <span class="paneluserdet-rol-badge paneluserdet-rol-badge--normal">
                     Usuario
                 </span>
                 {% endif %}
@@ -68,27 +68,27 @@
         <div class="card">
             <div class="card-header"><h3>Perfil</h3></div>
             <div class="card-body">
-                <div style="display:flex; flex-direction:column; gap:0.65rem; font-size:0.875rem;">
+                <div class="paneluserdet-perfil-stack">
                     {% if usuario_detalle.perfil.telefono %}
                     <div>
-                        <div style="font-size:0.7rem; color:#999; text-transform:uppercase;">Teléfono</div>
+                        <div class="paneluserdet-perfil-label">Teléfono</div>
                         <div>{{ usuario_detalle.perfil.telefono }}</div>
                     </div>
                     {% endif %}
                     {% if usuario_detalle.perfil.fecha_nacimiento %}
                     <div>
-                        <div style="font-size:0.7rem; color:#999; text-transform:uppercase;">Nacimiento</div>
+                        <div class="paneluserdet-perfil-label">Nacimiento</div>
                         <div>{{ usuario_detalle.perfil.fecha_nacimiento|date:"d/m/Y" }}</div>
                     </div>
                     {% endif %}
                     {% if usuario_detalle.perfil.direccion %}
                     <div>
-                        <div style="font-size:0.7rem; color:#999; text-transform:uppercase;">Dirección</div>
+                        <div class="paneluserdet-perfil-label">Dirección</div>
                         <div>{{ usuario_detalle.perfil.direccion }}</div>
                     </div>
                     {% endif %}
                     <div>
-                        <div style="font-size:0.7rem; color:#999; text-transform:uppercase;">Miembro desde</div>
+                        <div class="paneluserdet-perfil-label">Miembro desde</div>
                         <div>{{ usuario_detalle.date_joined|date:"d/m/Y" }}</div>
                     </div>
                 </div>
@@ -99,18 +99,18 @@
         <div class="card">
             <div class="card-header"><h3>Resumen</h3></div>
             <div class="card-body">
-                <div style="display:grid; grid-template-columns:1fr 1fr; gap:0.75rem; text-align:center;">
-                    <div style="background:#f8f9fa; padding:0.75rem; border-radius:8px;">
-                        <div style="font-size:1.5rem; font-weight:700; color:#1a1a2e;">
+                <div class="paneluserdet-stats-grid">
+                    <div class="paneluserdet-stat-box">
+                        <div class="paneluserdet-stat-valor">
                             {{ total_reservas }}
                         </div>
-                        <div style="font-size:0.7rem; color:#999; text-transform:uppercase;">Reservas</div>
+                        <div class="paneluserdet-stat-label">Reservas</div>
                     </div>
-                    <div style="background:#f8f9fa; padding:0.75rem; border-radius:8px;">
-                        <div style="font-size:1.5rem; font-weight:700; color:#27ae60;">
+                    <div class="paneluserdet-stat-box">
+                        <div class="paneluserdet-stat-valor--verde">
                             ${{ total_gastado|floatformat:0 }}
                         </div>
-                        <div style="font-size:0.7rem; color:#999; text-transform:uppercase;">Gastado</div>
+                        <div class="paneluserdet-stat-label">Gastado</div>
                     </div>
                 </div>
             </div>
@@ -118,67 +118,96 @@
 
     </div>
 
-    <!-- Últimas reservas -->
-    <div class="card">
-        <div class="card-header">
-            <h3>🎫 Últimas Reservas</h3>
-            <a href="{% url 'panel:reservas_lista' %}?q={{ usuario_detalle.username }}"
-               class="btn btn-ghost" style="font-size:0.75rem;">
-                Ver todas
-            </a>
+    <!-- Columna derecha: reservas + historial -->
+    <div class="paneluserdet-columna">
+
+        <!-- Últimas reservas -->
+        <div class="card">
+            <div class="card-header">
+                <h3>🎫 Últimas Reservas</h3>
+                <a href="{% url 'panel:reservas_lista' %}?q={{ usuario_detalle.username }}"
+                   class="btn btn-ghost paneluserdet-link-chico">
+                    Ver todas
+                </a>
+            </div>
+            {% if reservas %}
+            <table class="tabla">
+                <thead>
+                    <tr>
+                        <th>Código</th>
+                        <th>Película</th>
+                        <th>Función</th>
+                        <th>Asientos</th>
+                        <th>Total</th>
+                        <th>Estado</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for r in reservas %}
+                    <tr>
+                        <td>
+                            <a href="{% url 'panel:reservas_detalle' r.id %}" class="paneluserdet-codigo">
+                                {{ r.codigo_reserva }}
+                            </a>
+                        </td>
+                        <td class="paneluserdet-pelicula">
+                            {{ r.funcion.pelicula.titulo }}
+                        </td>
+                        <td class="paneluserdet-funcion">
+                            {{ r.funcion.fecha_hora|date:"d/m/Y H:i" }}
+                        </td>
+                        <td class="paneluserdet-asientos">
+                            {% if r.asientos_seleccionados %}
+                                {{ r.asientos_formateados }}
+                            {% else %}
+                                {{ r.cantidad_entradas }} entrada(s)
+                            {% endif %}
+                        </td>
+                        <td class="paneluserdet-total">
+                            ${{ r.total|floatformat:0 }}
+                        </td>
+                        <td>
+                            <span class="badge badge-{{ r.estado }}">
+                                {{ r.get_estado_display }}
+                            </span>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+            {% else %}
+            <div class="card-body paneluserdet-vacio">
+                Este usuario no tiene reservas registradas.
+            </div>
+            {% endif %}
         </div>
-        {% if reservas %}
-        <table class="tabla">
-            <thead>
-                <tr>
-                    <th>Código</th>
-                    <th>Película</th>
-                    <th>Función</th>
-                    <th>Asientos</th>
-                    <th>Total</th>
-                    <th>Estado</th>
-                </tr>
-            </thead>
-            <tbody>
-                {% for r in reservas %}
-                <tr>
-                    <td>
-                        <a href="{% url 'panel:reservas_detalle' r.id %}"
-                           style="font-family:monospace; font-weight:700; color:#1a1a2e;
-                                  text-decoration:none; font-size:0.85rem;">
-                            {{ r.codigo_reserva }}
-                        </a>
-                    </td>
-                    <td style="font-weight:600; font-size:0.875rem;">
-                        {{ r.funcion.pelicula.titulo }}
-                    </td>
-                    <td style="color:#666; font-size:0.8rem; white-space:nowrap;">
-                        {{ r.funcion.fecha_hora|date:"d/m/Y H:i" }}
-                    </td>
-                    <td style="font-size:0.8rem; color:#555;">
-                        {% if r.asientos_seleccionados %}
-                            {{ r.asientos_formateados }}
-                        {% else %}
-                            {{ r.cantidad_entradas }} entrada(s)
-                        {% endif %}
-                    </td>
-                    <td style="font-weight:700; color:#27ae60;">
-                        ${{ r.total|floatformat:0 }}
-                    </td>
-                    <td>
-                        <span class="badge badge-{{ r.estado }}">
-                            {{ r.get_estado_display }}
-                        </span>
-                    </td>
-                </tr>
+
+        <!-- nuevo: Historial de películas vistas (modelo HistorialVisto, mismo bloque que ya
+             existe del lado del cliente en usuarios/perfil.html — acá faltaba) -->
+        <div class="card">
+            <div class="card-header">
+                <h3>🎬 Historial de Películas Vistas</h3>
+            </div>
+            {% if historial %}
+                {% for entrada in historial %}
+                <a href="{% url 'panel:peliculas_detalle' entrada.pelicula.id %}" class="paneluserdet-hist-item">
+                    {% if entrada.pelicula.poster %}
+                    <img src="{{ entrada.pelicula.poster.url }}" alt="{{ entrada.pelicula.titulo }}"
+                         class="paneluserdet-hist-poster">
+                    {% endif %}
+                    <div class="paneluserdet-hist-info">
+                        <span class="paneluserdet-hist-titulo">{{ entrada.pelicula.titulo }}</span>
+                        <span class="paneluserdet-hist-fecha">Vista el {{ entrada.fecha_visto|date:"d/m/Y" }}</span>
+                    </div>
+                </a>
                 {% endfor %}
-            </tbody>
-        </table>
-        {% else %}
-        <div class="card-body" style="text-align:center; padding:3rem; color:#999;">
-            Este usuario no tiene reservas registradas.
+            {% else %}
+                <div class="paneluserdet-hist-vacio">
+                    Este usuario todavía no vio ninguna película.
+                </div>
+            {% endif %}
         </div>
-        {% endif %}
+
     </div>
 
 </div>

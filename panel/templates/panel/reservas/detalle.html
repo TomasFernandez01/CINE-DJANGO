@@ -1,5 +1,7 @@
 {% extends 'panel/base_panel.html' %}
 
+{% load static %}
+
 {% block titulo %}Reserva {{ reserva.codigo_reserva }} — Panel{% endblock %}
 
 {% block breadcrumb %}
@@ -9,16 +11,20 @@
 <span class="current">{{ reserva.codigo_reserva }}</span>
 {% endblock %}
 
+{% block extra_css %}
+<!-- modificado: CSS separado a static/css/panel/reservas/detalle.css (antes todo con style="" inline) -->
+<link rel="stylesheet" href="{% static 'css/panel/reservas/detalle.css' %}">
+{% endblock %}
+
 {% block contenido %}
 
-<div style="display:flex; justify-content:space-between; align-items:center;
-            flex-wrap:wrap; gap:1rem; margin-bottom:1.5rem;">
+<div class="paneldet-encabezado">
     <div>
-        <h1 style="font-size:1.4rem; color:#1a1a2e; margin:0; font-family:monospace;">
+        <h1 class="paneldet-encabezado-titulo">
             {{ reserva.codigo_reserva }}
         </h1>
-        <div style="margin-top:0.35rem;">
-            <span class="badge badge-{{ reserva.estado }}" style="font-size:0.85rem;">
+        <div class="paneldet-encabezado-badge-wrap">
+            <span class="badge badge-{{ reserva.estado }} paneldet-badge-lg">
                 {{ reserva.get_estado_display }}
             </span>
         </div>
@@ -27,78 +33,76 @@
        class="btn btn-primary">✏️ Editar reserva</a>
 </div>
 
-<div style="display:grid; grid-template-columns:1fr 1fr; gap:1.5rem;">
+<div class="paneldet-grid-2col">
 
     <!-- Datos de la reserva -->
-    <div style="display:flex; flex-direction:column; gap:1rem;">
+    <div class="paneldet-columna">
 
         <div class="card">
             <div class="card-header"><h3>🎫 Datos de la Reserva</h3></div>
             <div class="card-body">
-                <div style="display:flex; flex-direction:column; gap:0.85rem;">
-                    <div style="display:grid; grid-template-columns:140px 1fr; gap:0.5rem; align-items:start;">
-                        <span style="font-size:0.75rem; color:#999; text-transform:uppercase; padding-top:2px;">
+                <div class="paneldet-stack">
+                    <div class="paneldet-fila paneldet-fila--top">
+                        <span class="paneldet-fila-label paneldet-fila-label--pad2">
                             Usuario
                         </span>
                         <div>
-                            <div style="font-weight:600;">
+                            <div class="paneldet-valor-bold">
                                 {{ reserva.usuario.get_full_name|default:reserva.usuario.username }}
                             </div>
-                            <div style="font-size:0.8rem; color:#999;">{{ reserva.usuario.email }}</div>
+                            <div class="paneldet-valor-sub">{{ reserva.usuario.email }}</div>
                         </div>
                     </div>
-                    <div style="display:grid; grid-template-columns:140px 1fr; gap:0.5rem;">
-                        <span style="font-size:0.75rem; color:#999; text-transform:uppercase;">Película</span>
-                        <span style="font-weight:600;">{{ reserva.funcion.pelicula.titulo }}</span>
+                    <div class="paneldet-fila">
+                        <span class="paneldet-fila-label">Película</span>
+                        <span class="paneldet-valor-bold">{{ reserva.funcion.pelicula.titulo }}</span>
                     </div>
-                    <div style="display:grid; grid-template-columns:140px 1fr; gap:0.5rem;">
-                        <span style="font-size:0.75rem; color:#999; text-transform:uppercase;">Sala</span>
+                    <div class="paneldet-fila">
+                        <span class="paneldet-fila-label">Sala</span>
                         <span>{{ reserva.funcion.sala.nombre }}</span>
                     </div>
-                    <div style="display:grid; grid-template-columns:140px 1fr; gap:0.5rem;">
-                        <span style="font-size:0.75rem; color:#999; text-transform:uppercase;">Función</span>
-                        <span style="font-weight:600;">
+                    <div class="paneldet-fila">
+                        <span class="paneldet-fila-label">Función</span>
+                        <span class="paneldet-valor-bold">
                             {{ reserva.funcion.fecha_hora|date:"d/m/Y H:i" }} hs
                         </span>
                     </div>
-                    <div style="display:grid; grid-template-columns:140px 1fr; gap:0.5rem;">
-                        <span style="font-size:0.75rem; color:#999; text-transform:uppercase;">Entradas</span>
-                        <span style="font-weight:600;">{{ reserva.cantidad_entradas }}</span>
+                    <div class="paneldet-fila">
+                        <span class="paneldet-fila-label">Entradas</span>
+                        <span class="paneldet-valor-bold">{{ reserva.cantidad_entradas }}</span>
                     </div>
                     {% if reserva.asientos_seleccionados %}
-                    <div style="display:grid; grid-template-columns:140px 1fr; gap:0.5rem; align-items:start;">
-                        <span style="font-size:0.75rem; color:#999; text-transform:uppercase; padding-top:4px;">
+                    <div class="paneldet-fila paneldet-fila--top">
+                        <span class="paneldet-fila-label paneldet-fila-label--pad4">
                             Asientos
                         </span>
-                        <div style="display:flex; gap:0.4rem; flex-wrap:wrap;">
+                        <div class="paneldet-asientos-wrap">
                             {% for asiento in reserva.lista_asientos %}
-                            <span style="background:#1a1a2e; color:white; padding:0.2rem 0.55rem;
-                                         border-radius:4px; font-size:0.8rem; font-weight:700;">
+                            <span class="paneldet-asiento-chip">
                                 {{ asiento }}
                             </span>
                             {% endfor %}
                         </div>
                     </div>
                     {% endif %}
-                    <div style="border-top:1px solid #f0f0f0; padding-top:0.85rem;
-                                display:grid; grid-template-columns:140px 1fr; gap:0.5rem;">
-                        <span style="font-size:0.75rem; color:#999; text-transform:uppercase;">Total</span>
-                        <span style="font-size:1.4rem; font-weight:700; color:#27ae60;">
+                    <div class="paneldet-fila-total">
+                        <span class="paneldet-fila-label">Total</span>
+                        <span class="paneldet-total-valor">
                             ${{ reserva.total|floatformat:0 }}
                         </span>
                     </div>
-                    <div style="display:grid; grid-template-columns:140px 1fr; gap:0.5rem;">
-                        <span style="font-size:0.75rem; color:#999; text-transform:uppercase;">
+                    <div class="paneldet-fila">
+                        <span class="paneldet-fila-label">
                             Fecha reserva
                         </span>
-                        <span style="color:#666;">{{ reserva.fecha_reserva|date:"d/m/Y H:i" }}</span>
+                        <span class="paneldet-valor-gris">{{ reserva.fecha_reserva|date:"d/m/Y H:i" }}</span>
                     </div>
                     {% if reserva.fecha_limite_pago %}
-                    <div style="display:grid; grid-template-columns:140px 1fr; gap:0.5rem;">
-                        <span style="font-size:0.75rem; color:#999; text-transform:uppercase;">
+                    <div class="paneldet-fila">
+                        <span class="paneldet-fila-label">
                             Límite de pago
                         </span>
-                        <span style="color:#666;">{{ reserva.fecha_limite_pago|date:"d/m/Y H:i" }}</span>
+                        <span class="paneldet-valor-gris">{{ reserva.fecha_limite_pago|date:"d/m/Y H:i" }}</span>
                     </div>
                     {% endif %}
                 </div>
@@ -106,14 +110,14 @@
         </div>
 
         <!-- Links rápidos -->
-        <div style="display:flex; gap:0.75rem; flex-wrap:wrap;">
+        <div class="paneldet-links-rapidos">
             <a href="{% url 'panel:funciones_detalle' reserva.funcion.id %}"
-               class="btn btn-ghost" style="font-size:0.85rem;">
+               class="btn btn-ghost paneldet-link-chico">
                 📅 Ver función
             </a>
             {% if reserva.usuario %}
             <a href="{% url 'panel:usuarios_detalle' reserva.usuario.id %}"
-               class="btn btn-ghost" style="font-size:0.85rem;">
+               class="btn btn-ghost paneldet-link-chico">
                 👤 Ver usuario
             </a>
             {% endif %}
@@ -125,81 +129,77 @@
         <div class="card-header"><h3>💳 Información de Pago</h3></div>
         <div class="card-body">
             {% if pago %}
-            <div style="display:flex; flex-direction:column; gap:0.85rem;">
-                <div style="background:#d4edda; padding:0.85rem; border-radius:8px; text-align:center;">
-                    <div style="font-size:0.75rem; color:#155724; text-transform:uppercase; letter-spacing:1px;">
+            <div class="paneldet-stack">
+                <div class="paneldet-transaccion-box">
+                    <div class="paneldet-transaccion-label">
                         Transacción
                     </div>
-                    <div style="font-size:1.2rem; font-weight:700; color:#155724; font-family:monospace;">
+                    <div class="paneldet-transaccion-valor">
                         {{ pago.numero_transaccion }}
                     </div>
                 </div>
-                <div style="display:grid; grid-template-columns:1fr 1fr; gap:0.75rem;">
+                <div class="paneldet-pago-grid">
                     <div>
-                        <div style="font-size:0.75rem; color:#999; margin-bottom:0.2rem;">ESTADO</div>
+                        <div class="paneldet-pago-label">ESTADO</div>
                         <span class="badge badge-{{ pago.estado }}">{{ pago.get_estado_display }}</span>
                     </div>
                     <div>
-                        <div style="font-size:0.75rem; color:#999; margin-bottom:0.2rem;">MONTO</div>
-                        <div style="font-size:1.3rem; font-weight:700; color:#27ae60;">
+                        <div class="paneldet-pago-label">MONTO</div>
+                        <div class="paneldet-pago-monto">
                             ${{ pago.monto|floatformat:0 }}
                         </div>
                     </div>
                     <div>
-                        <div style="font-size:0.75rem; color:#999; margin-bottom:0.2rem;">MÉTODO</div>
-                        <div style="font-weight:600;">{{ pago.get_metodo_pago_display }}</div>
+                        <div class="paneldet-pago-label">MÉTODO</div>
+                        <div class="paneldet-valor-bold">{{ pago.get_metodo_pago_display }}</div>
                     </div>
                     <div>
-                        <div style="font-size:0.75rem; color:#999; margin-bottom:0.2rem;">FECHA</div>
+                        <div class="paneldet-pago-label">FECHA</div>
                         <div>{{ pago.fecha_pago|date:"d/m/Y H:i" }}</div>
                     </div>
                     {% if pago.ultimos_4_digitos %}
                     <div>
-                        <div style="font-size:0.75rem; color:#999; margin-bottom:0.2rem;">TARJETA</div>
+                        <div class="paneldet-pago-label">TARJETA</div>
                         <div>**** {{ pago.ultimos_4_digitos }}</div>
                     </div>
                     {% endif %}
                 </div>
 
                 <!-- QR -->
-                <div style="border-top:1px solid #f0f0f0; padding-top:0.85rem;">
-                    <div style="font-size:0.75rem; color:#999; text-transform:uppercase;
-                                margin-bottom:0.5rem;">
+                <div class="paneldet-qr-seccion">
+                    <div class="paneldet-qr-seccion-titulo">
                         Código QR
                     </div>
                     {% if pago.codigo_qr %}
-                    <div style="font-family:monospace; font-size:0.85rem; background:#f8f9fa;
-                                padding:0.5rem 0.75rem; border-radius:6px; margin-bottom:0.5rem;">
+                    <div class="paneldet-qr-codigo">
                         {{ pago.codigo_qr }}
                     </div>
-                    <div style="display:flex; align-items:center; gap:0.5rem;">
+                    <div class="paneldet-qr-estado-wrap">
                         {% if pago.qr_escaneado %}
-                        <span style="background:#d4edda; color:#155724; padding:0.3rem 0.75rem;
-                                     border-radius:20px; font-size:0.8rem; font-weight:600;">
+                        <span class="paneldet-qr-badge paneldet-qr-badge--ok">
                             ✅ Escaneado
                         </span>
-                        <span style="color:#999; font-size:0.8rem;">
+                        <span class="paneldet-qr-fecha">
                             {{ pago.fecha_escaneo|date:"d/m H:i" }}
                             {% if pago.escaneado_por %} por {{ pago.escaneado_por }}{% endif %}
                         </span>
                         {% else %}
-                        <span style="background:#fff3cd; color:#856404; padding:0.3rem 0.75rem;
-                                     border-radius:20px; font-size:0.8rem; font-weight:600;">
+                        <span class="paneldet-qr-badge paneldet-qr-badge--pendiente">
                             ⏳ Pendiente de escaneo
                         </span>
                         {% endif %}
                     </div>
                     {% else %}
-                    <span style="color:#999; font-size:0.85rem;">QR no generado</span>
+                    <span class="paneldet-qr-no-generado">QR no generado</span>
                     {% endif %}
                 </div>
             </div>
             {% else %}
-            <div style="text-align:center; padding:2rem; color:#999;">
-                <div style="font-size:2rem; margin-bottom:0.5rem;">💳</div>
+            <div class="paneldet-pago-vacio">
+                <div class="paneldet-pago-vacio-icon">💳</div>
                 Esta reserva no tiene pago registrado aún.
                 {% if reserva.estado == 'pendiente' %}
-                <div style="margin-top:0.5rem; font-size:0.85rem; color:#f39c12;">
+                <div class="paneldet-pago-vacio-nota">
                     Esperando que el usuario complete el pago.
                 </div>
                 {% endif %}

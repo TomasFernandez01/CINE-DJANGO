@@ -1,5 +1,7 @@
 {% extends 'panel/base_panel.html' %}
 
+{% load static %}
+
 {% block titulo %}Pagos — Panel{% endblock %}
 
 {% block breadcrumb %}
@@ -7,23 +9,26 @@
 <span class="current">Pagos</span>
 {% endblock %}
 
+{% block extra_css %}
+<!-- modificado: CSS separado a static/css/panel/pagos/lista.css (antes todo con style="" inline) -->
+<link rel="stylesheet" href="{% static 'css/panel/pagos/lista.css' %}">
+{% endblock %}
+
 {% block contenido %}
 
-<div style="display:flex; justify-content:space-between; align-items:center;
-            flex-wrap:wrap; gap:1rem; margin-bottom:1.5rem;">
-    <h1 style="font-size:1.4rem; color:#1a1a2e; margin:0;">💳 Pagos</h1>
+<div class="panelpag-lista-encabezado">
+    <h1 class="panelpag-lista-titulo">💳 Pagos</h1>
     <a href="{% url 'panel:pagos_estadisticas' %}" class="btn btn-success">
         📊 Ver estadísticas
     </a>
 </div>
 
 <!-- Filtros -->
-<div class="card" style="margin-bottom:1.25rem;">
-    <div class="card-body" style="padding:1rem 1.25rem;">
-        <form method="get" style="display:flex; gap:0.75rem; flex-wrap:wrap; align-items:center;">
-            <input type="text" name="q" value="{{ busqueda }}" class="input"
-                   placeholder="Transacción, usuario o código reserva..."
-                   style="flex:1; min-width:220px;">
+<div class="card panelpag-lista-filtros-card">
+    <div class="card-body panelpag-lista-filtros-body">
+        <form method="get" class="panelpag-lista-filtros-form">
+            <input type="text" name="q" value="{{ busqueda }}" class="input panelpag-lista-filtro-busqueda"
+                   placeholder="Transacción, usuario o código reserva...">
             <select name="estado" class="select">
                 <option value="">Todos los estados</option>
                 <option value="aprobado"   {% if estado == 'aprobado'   %}selected{% endif %}>Aprobado</option>
@@ -38,16 +43,14 @@
 
 <!-- Resumen del filtro -->
 {% if total > 0 %}
-<div style="background:white; border-radius:8px; padding:0.85rem 1.25rem;
-            margin-bottom:1rem; box-shadow:0 1px 4px rgba(0,0,0,0.08);
-            display:flex; gap:2rem; flex-wrap:wrap; font-size:0.875rem;">
+<div class="panelpag-lista-resumen">
     <div>
-        <span style="color:#999;">Resultados:</span>
-        <strong style="margin-left:0.4rem;">{{ total }}</strong>
+        <span class="panelpag-lista-resumen-label">Resultados:</span>
+        <strong class="panelpag-lista-resumen-valor">{{ total }}</strong>
     </div>
     <div>
-        <span style="color:#999;">Subtotal:</span>
-        <strong style="margin-left:0.4rem; color:#27ae60;">
+        <span class="panelpag-lista-resumen-label">Subtotal:</span>
+        <strong class="panelpag-lista-resumen-valor--verde">
             ${{ total_filtrado|floatformat:0 }}
         </strong>
     </div>
@@ -74,38 +77,36 @@
             {% for pago in pagos %}
             <tr>
                 <td>
-                    <a href="{% url 'panel:reservas_detalle' pago.reserva.id %}"
-                       style="font-family:monospace; font-size:0.8rem; color:#1a1a2e;
-                              text-decoration:none; font-weight:600;">
+                    <a href="{% url 'panel:reservas_detalle' pago.reserva.id %}" class="panelpag-lista-transaccion">
                         {{ pago.numero_transaccion }}
                     </a>
                 </td>
-                <td style="font-size:0.875rem; color:#555;">
+                <td class="panelpag-lista-usuario">
                     {{ pago.reserva.usuario.get_full_name|default:pago.reserva.usuario.username }}
                 </td>
-                <td style="font-size:0.875rem; font-weight:600;">
+                <td class="panelpag-lista-pelicula">
                     {{ pago.reserva.funcion.pelicula.titulo }}
                 </td>
-                <td style="color:#666; font-size:0.875rem;">
+                <td class="panelpag-lista-metodo">
                     {{ pago.get_metodo_pago_display }}
                     {% if pago.ultimos_4_digitos %}
-                    <span style="color:#999; font-size:0.75rem;">(*{{ pago.ultimos_4_digitos }})</span>
+                    <span class="panelpag-lista-metodo-digitos">(*{{ pago.ultimos_4_digitos }})</span>
                     {% endif %}
                 </td>
-                <td style="font-weight:700; color:#27ae60;">
+                <td class="panelpag-lista-monto">
                     ${{ pago.monto|floatformat:0 }}
                 </td>
                 <td>
                     <span class="badge badge-{{ pago.estado }}">{{ pago.get_estado_display }}</span>
                 </td>
-                <td style="text-align:center;">
+                <td class="panelpag-lista-qr-col">
                     {% if pago.qr_escaneado %}
-                        <span style="color:#27ae60;" title="Escaneado {{ pago.fecha_escaneo|date:'H:i' }}">✅</span>
+                        <span class="panelpag-lista-qr-ok" title="Escaneado {{ pago.fecha_escaneo|date:'H:i' }}">✅</span>
                     {% elif pago.codigo_qr %}
-                        <span style="color:#999;" title="Sin escanear">⏳</span>
+                        <span class="panelpag-lista-qr-pendiente" title="Sin escanear">⏳</span>
                     {% else %}—{% endif %}
                 </td>
-                <td style="color:#999; font-size:0.8rem; white-space:nowrap;">
+                <td class="panelpag-lista-fecha">
                     {{ pago.fecha_pago|date:"d/m H:i" }}
                 </td>
             </tr>
@@ -113,7 +114,7 @@
         </tbody>
     </table>
     {% else %}
-    <div class="card-body" style="text-align:center; padding:3rem; color:#999;">
+    <div class="card-body panelpag-lista-vacio">
         No se encontraron pagos con esos filtros.
     </div>
     {% endif %}

@@ -1,5 +1,7 @@
 {% extends 'panel/base_panel.html' %}
 
+{% load static %}
+
 {% block titulo %}{{ titulo_pagina }} — Panel{% endblock %}
 
 {% block breadcrumb %}
@@ -9,13 +11,18 @@
 <span class="current">{% if accion == 'crear' %}Agregar{% else %}Editar{% endif %}</span>
 {% endblock %}
 
+{% block extra_css %}
+<!-- modificado: CSS compartido entre los 3 form.html (combos/cupones/promodia) -->
+<link rel="stylesheet" href="{% static 'css/panel/promociones/form.css' %}">
+{% endblock %}
+
 {% block contenido %}
 {% include 'panel/_form_styles.html' %}
 
-<div style="max-width:680px;">
+<div class="panelpromoform-wrap panelpromoform-wrap--ancho">
 
-    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1.5rem;">
-        <h1 style="font-size:1.4rem; color:#1a1a2e; margin:0;">{{ titulo_pagina }}</h1>
+    <div class="panelpromoform-encabezado">
+        <h1 class="panelpromoform-titulo">{{ titulo_pagina }}</h1>
         <a href="{% url 'panel:cupones_lista' %}" class="btn btn-ghost">ATRAS</a>
     </div>
 
@@ -23,9 +30,9 @@
         {% csrf_token %}
         <div class="card">
             <div class="card-header"><h3>🎟️ Datos del Cupón</h3></div>
-            <div class="card-body" style="display:flex; flex-direction:column; gap:1.1rem;">
+            <div class="card-body panelpromoform-card-body-stack">
 
-                <div style="display:grid; grid-template-columns:1fr 1fr; gap:1rem;">
+                <div class="panelpromoform-2col">
                     <div>
                         <label class="form-label">Código <span class="required">*</span></label>
                         {{ form.codigo }}
@@ -44,7 +51,7 @@
                     {% if form.descripcion.errors %}<div class="field-error">{{ form.descripcion.errors.0 }}</div>{% endif %}
                 </div>
 
-                <div style="display:grid; grid-template-columns:1fr 1fr; gap:1rem;">
+                <div class="panelpromoform-2col">
                     <div>
                         <label class="form-label">Valor <span class="required">*</span></label>
                         {{ form.valor }}
@@ -58,7 +65,7 @@
                     </div>
                 </div>
 
-                <div style="display:grid; grid-template-columns:1fr 1fr; gap:1rem;">
+                <div class="panelpromoform-2col">
                     <div>
                         <label class="form-label">Fecha de inicio <span class="required">*</span></label>
                         {{ form.fecha_inicio }}
@@ -90,7 +97,7 @@
             </div>
         </div>
 
-        <div style="display:flex; gap:1rem; margin-top:1.5rem; flex-wrap:wrap;">
+        <div class="panelpromoform-botones">
             <button type="submit" class="btn btn-primary">{% if accion == 'crear' %}GUARDAR{% else %}MODIFICAR{% endif %}</button>
             <button type="submit" name="guardar_y_agregar_otro" value="1" class="btn btn-primary">CARGAR</button>
             <a href="{% url 'panel:cupones_lista' %}" class="btn btn-primary">Cancelar</a>

@@ -1,0 +1,91 @@
+/* modificado (Panel > Promociones > Cupones, Hilo 2): CSS extraído de cupones/lista.html,
+   antes todo con style="" inline. Mismos valores, sin cambios de diseño. */
+
+.panelcupon-lista-encabezado {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1.5rem;
+    flex-wrap: wrap;
+    gap: 1rem;
+}
+
+.panelcupon-lista-titulo {
+    margin: 0;
+    color: #333;
+}
+
+.panelcupon-lista-subtitulo {
+    margin: 0.25rem 0 0 0;
+    color: #666;
+}
+
+.panelcupon-lista-acciones {
+    display: flex;
+    gap: 0.75rem;
+    flex-wrap: wrap;
+}
+
+.panelcupon-lista-btn-eliminar[disabled] {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+.panelcupon-lista-filtros-card {
+    margin-bottom: 1.25rem;
+}
+
+.panelcupon-lista-filtros-body {
+    padding: 1rem 1.25rem;
+}
+
+.panelcupon-lista-filtros-form {
+    display: flex;
+    gap: 0.75rem;
+    flex-wrap: wrap;
+    align-items: center;
+}
+
+.panelcupon-lista-filtro-busqueda {
+    flex: 1;
+    min-width: 220px;
+}
+
+.panelcupon-lista-check-col {
+    width: 2rem;
+}
+
+.panelcupon-lista-codigo {
+    font-family: monospace;
+    font-weight: 700;
+    color: #1a1a2e;
+}
+
+.panelcupon-lista-descripcion {
+    font-size: 0.875rem;
+    color: #555;
+}
+
+.panelcupon-lista-descuento {
+    font-weight: 600;
+}
+
+.panelcupon-lista-vigencia {
+    font-size: 0.8rem;
+    color: #666;
+}
+
+.panelcupon-lista-usos {
+    font-size: 0.8rem;
+    color: #666;
+}
+
+.panelcupon-lista-btn-editar {
+    font-size: 0.75rem;
+}
+
+.panelcupon-lista-vacio {
+    text-align: center;
+    padding: 3rem;
+    color: #999;
+}

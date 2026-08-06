@@ -1,0 +1,84 @@
+/* modificado (Panel > Promociones > Cupones Usados, Hilo 2): CSS extraído de
+   cupones_usados/lista.html, antes todo con style="" inline. Mismos valores, sin cambios
+   de diseño. */
+
+.panelcuponused-encabezado {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 1rem;
+    margin-bottom: 1.5rem;
+}
+
+.panelcuponused-titulo {
+    font-size: 1.4rem;
+    color: #1a1a2e;
+    margin: 0;
+}
+
+.panelcuponused-acciones {
+    display: flex;
+    gap: 0.5rem;
+}
+
+.panelcuponused-filtros-card {
+    margin-bottom: 1.25rem;
+}
+
+.panelcuponused-filtros-body {
+    padding: 1rem 1.25rem;
+}
+
+.panelcuponused-filtros-form {
+    display: flex;
+    gap: 0.75rem;
+    flex-wrap: wrap;
+}
+
+.panelcuponused-filtro-busqueda {
+    flex: 1;
+    min-width: 220px;
+}
+
+.panelcuponused-codigo {
+    font-family: monospace;
+    font-weight: 700;
+    color: #1a1a2e;
+}
+
+.panelcuponused-usuario {
+    font-size: 0.875rem;
+    color: #555;
+}
+
+.panelcuponused-reserva-col {
+    font-size: 0.875rem;
+}
+
+.panelcuponused-reserva-link {
+    color: #1a1a2e;
+    text-decoration: none;
+    font-weight: 600;
+}
+
+.panelcuponused-reserva-eliminada {
+    color: #999;
+}
+
+.panelcuponused-descuento {
+    font-weight: 700;
+    color: #27ae60;
+}
+
+.panelcuponused-fecha {
+    color: #999;
+    font-size: 0.8rem;
+    white-space: nowrap;
+}
+
+.panelcuponused-vacio {
+    text-align: center;
+    padding: 3rem;
+    color: #999;
+}

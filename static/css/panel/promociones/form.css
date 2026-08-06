@@ -1,0 +1,50 @@
+/* modificado (Panel > Promociones, Hilo 2): CSS extraído de los 3 templates form.html
+   (combos, cupones, promodia) — comparten la misma estructura, así que comparten este
+   único archivo en vez de 3 CSS casi duplicados. */
+
+.panelpromoform-wrap {
+    max-width: 640px;
+}
+
+.panelpromoform-wrap--ancho {
+    max-width: 680px;
+}
+
+.panelpromoform-encabezado {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1.5rem;
+}
+
+.panelpromoform-titulo {
+    font-size: 1.4rem;
+    color: #1a1a2e;
+    margin: 0;
+}
+
+.panelpromoform-card-body-stack {
+    display: flex;
+    flex-direction: column;
+    gap: 1.1rem;
+}
+
+.panelpromoform-2col {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1rem;
+}
+
+.panelpromoform-imagen-preview {
+    max-width: 150px;
+    border-radius: 8px;
+    margin-bottom: 0.5rem;
+    display: block;
+}
+
+.panelpromoform-botones {
+    display: flex;
+    gap: 1rem;
+    margin-top: 1.5rem;
+    flex-wrap: wrap;
+}

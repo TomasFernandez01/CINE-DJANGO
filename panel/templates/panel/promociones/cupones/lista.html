@@ -5,14 +5,20 @@
 <span class="sep">›</span>
 <span class="current">Cupones</span>
 {% endblock %}
+
+{% block extra_css %}
+<!-- modificado: CSS separado a static/css/panel/promociones/cupones/lista.css (antes todo con style="" inline) -->
+<link rel="stylesheet" href="{% static 'css/panel/promociones/cupones/lista.css' %}">
+{% endblock %}
+
 {% block contenido %}
 
-<div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem; flex-wrap: wrap; gap: 1rem;">
+<div class="panelcupon-lista-encabezado">
         <div>
-            <h1 style="margin: 0; color: #333;">🏷️ Gestión de Cupones 🎟️</h1><p style="margin: 0.25rem 0 0 0; color: #666;">Activá, desactivá y consultá el historial de cada cupón</p>
+            <h1 class="panelcupon-lista-titulo">🏷️ Gestión de Cupones 🎟️</h1><p class="panelcupon-lista-subtitulo">Activá, desactivá y consultá el historial de cada cupón</p>
         </div>
-        <div style="display: flex; gap: 0.75rem; flex-wrap: wrap;">
-            <button type="submit" form="formCupones" id="btnEliminarSeleccionadas" class="btn btn-danger" disabled style="opacity:0.5; cursor:not-allowed;">Eliminar</button>
+        <div class="panelcupon-lista-acciones">
+            <button type="submit" form="formCupones" id="btnEliminarSeleccionadas" class="btn btn-danger panelcupon-lista-btn-eliminar" disabled>Eliminar</button>
             <a href="{% url 'panel:inicio' %}" class="btn btn-primary">INICIO</a>
             <a href="{% url 'panel:cupones_crear' %}" class="btn btn-primary">NUEVO</a>
             <a href="{% url 'panel:cupones_estadisticas' %}"class="btn btn-primary">USOS</a>
@@ -20,11 +26,11 @@
     </div>
 
 
-<div class="card" style="margin-bottom:1.25rem;">
-    <div class="card-body" style="padding:1rem 1.25rem;">
-        <form method="get" style="display:flex; gap:0.75rem; flex-wrap:wrap; align-items:center;">
-            <input type="text" name="q" value="{{ busqueda }}" class="input"
-                   placeholder="Código o descripción..." style="flex:1; min-width:220px;">
+<div class="card panelcupon-lista-filtros-card">
+    <div class="card-body panelcupon-lista-filtros-body">
+        <form method="get" class="panelcupon-lista-filtros-form">
+            <input type="text" name="q" value="{{ busqueda }}" class="input panelcupon-lista-filtro-busqueda"
+                   placeholder="Código o descripción...">
             <select name="estado" class="select">
                 <option value="">Todos</option>
                 <option value="activo"   {% if estado == 'activo' %}selected{% endif %}>Activos</option>
@@ -42,7 +48,7 @@
     <table class="tabla">
         <thead>
             <tr>
-                <th style="width:2rem;"><input type="checkbox" id="chkTodosCupones" class="panel-checkbox"></th>
+                <th class="panelcupon-lista-check-col"><input type="checkbox" id="chkTodosCupones" class="panel-checkbox"></th>
                 <th>Código</th>
                 <th>Descripción</th>
                 <th>Descuento</th>
@@ -57,20 +63,20 @@
             <tr>
                 <td><input type="checkbox" name="seleccionadas" value="{{ c.id }}" class="chk-cupon panel-checkbox"></td>
 
-                <td style="font-family:monospace; font-weight:700; color:#1a1a2e;">{{ c.codigo }}</td>
-                <td style="font-size:0.875rem; color:#555;">{{ c.descripcion }}</td>
-                <td style="font-weight:600;">{% if c.tipo == 'porcentaje' %}{{ c.valor }}%{% else %}${{ c.valor|floatformat:0 }}{% endif %}</td>
-                <td style="font-size:0.8rem; color:#666;">{{ c.fecha_inicio|date:"d/m/Y" }} — {{ c.fecha_fin|date:"d/m/Y" }}</td>
-                <td style="font-size:0.8rem; color:#666;">{{ c.usos_actuales }}{% if c.usos_maximos %}/{{ c.usos_maximos }}{% else %}/∞{% endif %}</td>
+                <td class="panelcupon-lista-codigo">{{ c.codigo }}</td>
+                <td class="panelcupon-lista-descripcion">{{ c.descripcion }}</td>
+                <td class="panelcupon-lista-descuento">{% if c.tipo == 'porcentaje' %}{{ c.valor }}%{% else %}${{ c.valor|floatformat:0 }}{% endif %}</td>
+                <td class="panelcupon-lista-vigencia">{{ c.fecha_inicio|date:"d/m/Y" }} — {{ c.fecha_fin|date:"d/m/Y" }}</td>
+                <td class="panelcupon-lista-usos">{{ c.usos_actuales }}{% if c.usos_maximos %}/{{ c.usos_maximos }}{% else %}/∞{% endif %}</td>
                 <td>{% if c.activo %}<span class="badge badge-aprobado">Activo</span>{% else %}<span class="badge badge-cancelada">Inactivo</span>{% endif %}</td>
                 
-                <td><a href="{% url 'panel:cupones_editar' c.id %}" class="btn btn-ghost" style="font-size:0.75rem;">EDITAR</a></td>
+                <td><a href="{% url 'panel:cupones_editar' c.id %}" class="btn btn-ghost panelcupon-lista-btn-editar">EDITAR</a></td>
             </tr>
             {% endfor %}
         </tbody>
     </table>
     {% else %}
-    <div class="card-body" style="text-align:center; padding:3rem; color:#999;">
+    <div class="card-body panelcupon-lista-vacio">
         No se encontraron cupones.
     </div>
     {% endif %}

@@ -1,5 +1,7 @@
 {% extends 'panel/base_panel.html' %}
 
+{% load static %}
+
 {% block titulo %}Reservas — Panel{% endblock %}
 
 {% block breadcrumb %}
@@ -7,22 +9,26 @@
 <span class="current">Reservas</span>
 {% endblock %}
 
+{% block extra_css %}
+<!-- modificado: CSS separado a static/css/panel/reservas/lista.css (antes todo con style="" inline) -->
+<link rel="stylesheet" href="{% static 'css/panel/reservas/lista.css' %}">
+{% endblock %}
+
 {% block contenido %}
 
-<div style="display:flex; justify-content:space-between; align-items:center;
-            flex-wrap:wrap; gap:1rem; margin-bottom:1.5rem;">
-    <h1 style="font-size:1.4rem; color:#1a1a2e; margin:0;">🎫 Reservas</h1>
-    <div style="font-size:0.85rem; color:#666;">
+<div class="panelres-lista-encabezado">
+    <h1 class="panelres-lista-titulo">🎫 Reservas</h1>
+    <div class="panelres-lista-contador">
         Mostrando {{ reservas|length }} de {{ total }}
     </div>
 </div>
 
 <!-- Filtros -->
-<div class="card" style="margin-bottom:1.25rem;">
-    <div class="card-body" style="padding:1rem 1.25rem;">
-        <form method="get" style="display:flex; gap:0.75rem; flex-wrap:wrap; align-items:center;">
-            <input type="text" name="q" value="{{ busqueda }}" class="input"
-                   placeholder="Código, usuario o película..." style="flex:1; min-width:200px;">
+<div class="card panelres-lista-filtros-card">
+    <div class="card-body panelres-lista-filtros-body">
+        <form method="get" class="panelres-lista-filtros-form">
+            <input type="text" name="q" value="{{ busqueda }}" class="input panelres-lista-filtro-busqueda"
+                   placeholder="Código, usuario o película...">
             <select name="estado" class="select">
                 <option value="">Todos los estados</option>
                 {% for val, label in estados %}
@@ -58,29 +64,27 @@
             {% for r in reservas %}
             <tr>
                 <td>
-                    <a href="{% url 'panel:reservas_detalle' r.id %}"
-                       style="font-family:monospace; font-weight:700; color:#1a1a2e;
-                              text-decoration:none; font-size:0.85rem;">
+                    <a href="{% url 'panel:reservas_detalle' r.id %}" class="panelres-lista-codigo">
                         {{ r.codigo_reserva }}
                     </a>
                 </td>
-                <td style="color:#555; font-size:0.875rem;">
+                <td class="panelres-lista-usuario">
                     {{ r.usuario.get_full_name|default:r.usuario.username }}
                 </td>
-                <td style="font-weight:600; font-size:0.875rem;">
+                <td class="panelres-lista-pelicula">
                     {{ r.funcion.pelicula.titulo }}
                 </td>
-                <td style="color:#666; font-size:0.8rem; white-space:nowrap;">
+                <td class="panelres-lista-funcion">
                     {{ r.funcion.fecha_hora|date:"d/m/Y H:i" }}
                 </td>
-                <td style="font-size:0.8rem; color:#555;">
+                <td class="panelres-lista-asientos">
                     {% if r.asientos_seleccionados %}
                         {{ r.asientos_formateados }}
                     {% else %}
                         {{ r.cantidad_entradas }} entrada(s)
                     {% endif %}
                 </td>
-                <td style="font-weight:700; color:#27ae60;">
+                <td class="panelres-lista-total">
                     ${{ r.total|floatformat:0 }}
                 </td>
                 <td>
@@ -88,12 +92,12 @@
                         {{ r.get_estado_display }}
                     </span>
                 </td>
-                <td style="color:#999; font-size:0.8rem; white-space:nowrap;">
+                <td class="panelres-lista-fecha">
                     {{ r.fecha_reserva|date:"d/m H:i" }}
                 </td>
                 <td>
                     <a href="{% url 'panel:reservas_detalle' r.id %}"
-                       class="btn btn-ghost" style="font-size:0.75rem; padding:0.3rem 0.7rem;">
+                       class="btn btn-ghost panelres-lista-btn-ver">
                         Ver
                     </a>
                 </td>
@@ -102,7 +106,7 @@
         </tbody>
     </table>
     {% else %}
-    <div class="card-body" style="text-align:center; padding:3rem; color:#999;">
+    <div class="card-body panelres-lista-vacio">
         No se encontraron reservas con esos filtros.
     </div>
     {% endif %}

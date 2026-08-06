@@ -1,0 +1,94 @@
+/* modificado (Panel > Reservas, Hilo 2): CSS extraído de panel/reservas/lista.html,
+   antes todo con style="" inline. Mismos valores, sin cambios de diseño (Panel mantiene
+   su estilo propio en blanco, el punto 4 para Panel es aparte). */
+
+.panelres-lista-encabezado {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 1rem;
+    margin-bottom: 1.5rem;
+}
+
+.panelres-lista-titulo {
+    font-size: 1.4rem;
+    color: #1a1a2e;
+    margin: 0;
+}
+
+.panelres-lista-contador {
+    font-size: 0.85rem;
+    color: #666;
+}
+
+.panelres-lista-filtros-card {
+    margin-bottom: 1.25rem;
+}
+
+.panelres-lista-filtros-body {
+    padding: 1rem 1.25rem;
+}
+
+.panelres-lista-filtros-form {
+    display: flex;
+    gap: 0.75rem;
+    flex-wrap: wrap;
+    align-items: center;
+}
+
+.panelres-lista-filtro-busqueda {
+    flex: 1;
+    min-width: 200px;
+}
+
+.panelres-lista-codigo {
+    font-family: monospace;
+    font-weight: 700;
+    color: #1a1a2e;
+    text-decoration: none;
+    font-size: 0.85rem;
+}
+
+.panelres-lista-usuario {
+    color: #555;
+    font-size: 0.875rem;
+}
+
+.panelres-lista-pelicula {
+    font-weight: 600;
+    font-size: 0.875rem;
+}
+
+.panelres-lista-funcion {
+    color: #666;
+    font-size: 0.8rem;
+    white-space: nowrap;
+}
+
+.panelres-lista-asientos {
+    font-size: 0.8rem;
+    color: #555;
+}
+
+.panelres-lista-total {
+    font-weight: 700;
+    color: #27ae60;
+}
+
+.panelres-lista-fecha {
+    color: #999;
+    font-size: 0.8rem;
+    white-space: nowrap;
+}
+
+.panelres-lista-btn-ver {
+    font-size: 0.75rem;
+    padding: 0.3rem 0.7rem;
+}
+
+.panelres-lista-vacio {
+    text-align: center;
+    padding: 3rem;
+    color: #999;
+}

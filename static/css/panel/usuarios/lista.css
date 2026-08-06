@@ -1,0 +1,113 @@
+/* modificado (Panel > Usuarios, Hilo 2): CSS extraído de panel/usuarios/lista.html,
+   antes todo con style="" inline. Mismos valores, sin cambios de diseño. */
+
+.paneluser-lista-encabezado {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 1rem;
+    margin-bottom: 1.5rem;
+}
+
+.paneluser-lista-titulo {
+    font-size: 1.4rem;
+    color: #1a1a2e;
+    margin: 0;
+}
+
+.paneluser-lista-solo-admin {
+    font-size: 0.8rem;
+    color: #f39c12;
+    margin-top: 0.2rem;
+}
+
+.paneluser-lista-filtros-card {
+    margin-bottom: 1.25rem;
+}
+
+.paneluser-lista-filtros-body {
+    padding: 1rem 1.25rem;
+}
+
+.paneluser-lista-filtros-form {
+    display: flex;
+    gap: 0.75rem;
+    flex-wrap: wrap;
+    align-items: center;
+}
+
+.paneluser-lista-filtro-busqueda {
+    flex: 1;
+    min-width: 200px;
+}
+
+.paneluser-lista-contador {
+    font-size: 0.85rem;
+    color: #666;
+    margin-bottom: 0.75rem;
+}
+
+.paneluser-lista-username {
+    font-weight: 700;
+    color: #1a1a2e;
+    text-decoration: none;
+}
+
+.paneluser-lista-nombre {
+    color: #555;
+}
+
+.paneluser-lista-email {
+    color: #666;
+    font-size: 0.85rem;
+}
+
+.paneluser-lista-rol {
+    padding: 0.2rem 0.6rem;
+    border-radius: 20px;
+    font-size: 0.75rem;
+    font-weight: 700;
+}
+
+.paneluser-lista-rol--super {
+    background: rgba(226, 185, 111, 0.2);
+    color: #c9973a;
+}
+
+.paneluser-lista-rol--staff {
+    background: #d4edda;
+    color: #155724;
+}
+
+.paneluser-lista-rol--normal {
+    background: #f0f0f0;
+    color: #666;
+    font-weight: 400;
+}
+
+.paneluser-lista-reservas {
+    font-weight: 600;
+    text-align: center;
+}
+
+.paneluser-lista-fecha {
+    color: #999;
+    font-size: 0.8rem;
+}
+
+.paneluser-lista-acciones {
+    display: flex;
+    gap: 0.4rem;
+}
+
+.paneluser-lista-btn-chico {
+    font-size: 0.75rem;
+    padding: 0.3rem 0.7rem;
+}
+
+.paneluser-lista-vacio {
+    text-align: center;
+    padding: 3rem;
+    color: #999;
+}

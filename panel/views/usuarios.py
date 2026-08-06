@@ -56,7 +56,8 @@ def usuarios_editar(request, usuario_id):
         'accion': 'editar',
         'seccion_activa': 'usuarios',
     })
-                                                                # V2
+
+
 # ============================================================
 # USUARIOS (solo superuser)
 # ============================================================
@@ -104,11 +105,16 @@ def usuarios_detalle(request, usuario_id):
         estado='aprobado'
     ).aggregate(t=Sum('monto'))['t'] or 0
 
+    # nuevo: historial de películas vistas (modelo HistorialVisto, mismo que se agregó del
+    # lado del cliente en usuarios/perfil.html — acá faltaba, quedó anotado en instruccion_1.md)
+    historial = usuario.historial_vistas.select_related('pelicula').all()[:20]
+
     contexto = {
         'usuario_detalle': usuario,
         'reservas': reservas,
         'total_gastado': total_gastado,
         'total_reservas': usuario.reservas.count(),
+        'historial': historial,
         'seccion_activa': 'usuarios',
     }
     return render(request, 'panel/usuarios/detalle.html', contexto)

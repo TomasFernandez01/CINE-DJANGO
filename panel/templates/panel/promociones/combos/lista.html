@@ -8,16 +8,21 @@
 <span class="current">Combos</span>
 {% endblock %}
 
+{% block extra_css %}
+<!-- modificado: CSS separado a static/css/panel/promociones/combos/lista.css (antes todo con style="" inline) -->
+<link rel="stylesheet" href="{% static 'css/panel/promociones/combos/lista.css' %}">
+{% endblock %}
+
 {% block contenido %}
 
-<div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem; flex-wrap: wrap; gap: 1rem;">
+<div class="panelcombo-lista-encabezado">
         <div>
-            <h1 style="margin: 0; color: #333;">🍿 Gestión de Combos</h1>
-            <p style="margin: 0.25rem 0 0 0; color: #666;">Activá o desactivá combos disponibles para la venta</p>
+            <h1 class="panelcombo-lista-titulo">🍿 Gestión de Combos</h1>
+            <p class="panelcombo-lista-subtitulo">Activá o desactivá combos disponibles para la venta</p>
         </div>
 
-        <div style="display: flex; gap: 0.75rem;">
-            <button type="submit" form="formCombos" id="btnEliminarSeleccionadas" class="btn btn-danger" disabled style="opacity:0.5; cursor:not-allowed;">Eliminar</button>
+        <div class="panelcombo-lista-acciones">
+            <button type="submit" form="formCombos" id="btnEliminarSeleccionadas" class="btn btn-danger panelcombo-lista-btn-eliminar" disabled>Eliminar</button>
             <a href="{% url 'panel:inicio' %}" class="btn btn-primary">INICIO</a>
             <a href="{% url 'panel:combos_crear' %}" class="btn btn-primary">NUEVO</a>
         </div>
@@ -25,35 +30,35 @@
 
 <form method="post" action="{% url 'panel:combos_eliminar' %}" id="formCombos">
     {% csrf_token %}
-<div style="display:grid; grid-template-columns:repeat(auto-fill, minmax(240px,1fr)); gap:1rem;">
+<div class="panelcombo-lista-grid">
     {% for c in combos %}
     <!-- Tarjeta de Presentacion -->
     <div class="card">
         {% if c.imagen %}
-        <img src="{{ c.imagen.url }}" alt="{{ c.nombre }}" style="width:100%; height:140px; object-fit:cover;">
+        <img src="{{ c.imagen.url }}" alt="{{ c.nombre }}" class="panelcombo-lista-imagen">
         {% else %}
-        <div style="width:100%; height:140px; background:#f0f2f5; display:flex; align-items:center; justify-content:center; font-size:2.5rem;">🍿</div>
+        <div class="panelcombo-lista-imagen-placeholder">🍿</div>
         {% endif %}
         
         <div class="card-header">
-            <label style="display:flex; align-items:center; gap:0.5rem; cursor:pointer; margin:0;">
+            <label class="panelcombo-lista-check-label">
                 <input type="checkbox" name="seleccionadas" value="{{ c.id }}" class="chk-combo panel-checkbox">
-                <h3 style="margin:0;">{{ c.nombre }}</h3>
+                <h3 class="panelcombo-lista-nombre">{{ c.nombre }}</h3>
             </label>
-            <span style="font-size:0.75rem; padding:0.2rem 0.6rem; border-radius:20px; font-weight:600; {% if c.activo %}background:#d4edda; color:#155724; {% else %}background:#f8d7da; color:#721c24;{% endif %}">{% if c.activo %}Activo{% else %}Inactivo{% endif %}</span>
+            <span class="panelcombo-lista-badge {% if c.activo %}panelcombo-lista-badge--activo{% else %}panelcombo-lista-badge--inactivo{% endif %}">{% if c.activo %}Activo{% else %}Inactivo{% endif %}</span>
         </div>
 
         <div class="card-body">
-            <p style="color:#666; font-size:0.85rem; margin:0 0 1rem;">{{ c.descripcion }}</p>
-            <div style="display:flex; justify-content:space-between; align-items:center;">
-                <span style="font-size:1.4rem; font-weight:700; color:#27ae60;">${{ c.precio|floatformat:0 }}</span>
-                <a href="{% url 'panel:combos_editar' c.id %}" class="btn btn-ghost" style="font-size:0.8rem;">EDITAR</a>
+            <p class="panelcombo-lista-descripcion">{{ c.descripcion }}</p>
+            <div class="panelcombo-lista-precio-row">
+                <span class="panelcombo-lista-precio">${{ c.precio|floatformat:0 }}</span>
+                <a href="{% url 'panel:combos_editar' c.id %}" class="btn btn-ghost panelcombo-lista-btn-editar">EDITAR</a>
             </div>
         </div>
     </div>
     {% empty %}
-    <div class="card" style="grid-column:1/-1;">
-        <div class="card-body" style="text-align:center; padding:3rem; color:#999;">No hay combos registrados.</div>
+    <div class="card panelcombo-lista-vacio-card">
+        <div class="card-body panelcombo-lista-vacio">No hay combos registrados.</div>
     </div>
     {% endfor %}
 </div>

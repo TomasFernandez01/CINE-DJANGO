@@ -1,0 +1,262 @@
+/* modificado (Panel > Pagos/Verificador QR, Hilo 2): CSS extraído de panel/verificador_qr.html.
+   Incluye tanto los estilos estáticos del template como los que estaban armados como
+   style="" dentro de los template literals del JS (ahora ese JS usa class="" en vez de
+   armar los estilos a mano, ver static/js/panel/verificador_qr.js). */
+
+.panelqr-wrap {
+    max-width: 640px;
+    margin: 0 auto;
+}
+
+.panelqr-encabezado {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 1rem;
+    margin-bottom: 1.5rem;
+}
+
+.panelqr-titulo {
+    font-size: 1.4rem;
+    color: #1a1a2e;
+    margin: 0;
+}
+
+.panelqr-status-indicator {
+    background: #6c757d;
+    padding: 1rem 1.5rem;
+    border-radius: 10px;
+    margin-bottom: 1.5rem;
+    text-align: center;
+    color: white;
+    font-weight: 700;
+    font-size: 1.05rem;
+    transition: background 0.3s;
+}
+
+.panelqr-manual-card {
+    margin-bottom: 1.25rem;
+}
+
+.panelqr-manual-row {
+    display: flex;
+    gap: 0.75rem;
+}
+
+.panelqr-manual-input {
+    flex: 1;
+    font-family: monospace;
+    font-size: 1rem;
+    letter-spacing: 1px;
+}
+
+.panelqr-manual-btn {
+    white-space: nowrap;
+}
+
+.panelqr-camara-card {
+    margin-bottom: 1.25rem;
+}
+
+.panelqr-camara-body {
+    text-align: center;
+}
+
+.panelqr-btn-escanear {
+    font-size: 1rem;
+    padding: 0.75rem 2rem;
+}
+
+.panelqr-video-container {
+    display: none;
+    margin-top: 1rem;
+}
+
+.panelqr-video {
+    width: 100%;
+    max-width: 400px;
+    border-radius: 8px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+}
+
+.panelqr-video-detener-wrap {
+    margin-top: 0.75rem;
+}
+
+.panelqr-resultado-wrap {
+    display: none;
+    margin-bottom: 1.25rem;
+}
+
+.panelqr-historial-limpiar-btn {
+    font-size: 0.75rem;
+}
+
+.panelqr-historial-vacio-inicial {
+    padding: 2rem;
+    text-align: center;
+    color: #999;
+    font-size: 0.9rem;
+}
+
+/* ---- generado por JS (verificador_qr.js) ---- */
+
+.panelqr-resultado-ok {
+    background: #d4edda;
+    padding: 1.5rem;
+    border-radius: 10px;
+    border-left: 4px solid #27ae60;
+}
+
+.panelqr-resultado-ok-titulo {
+    margin: 0 0 1rem;
+    color: #155724;
+    font-size: 1.3rem;
+}
+
+.panelqr-resultado-datos-box {
+    background: white;
+    padding: 1.25rem;
+    border-radius: 8px;
+    margin-bottom: 1rem;
+}
+
+.panelqr-resultado-datos-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 0.75rem;
+    font-size: 0.9rem;
+}
+
+.panelqr-dato-label {
+    font-size: 0.7rem;
+    color: #999;
+    text-transform: uppercase;
+}
+
+.panelqr-dato-valor-grande {
+    font-weight: 700;
+    font-size: 1.1rem;
+}
+
+.panelqr-dato-valor {
+    font-weight: 600;
+}
+
+.panelqr-dato-full {
+    grid-column: 1 / -1;
+}
+
+.panelqr-dato-mono {
+    font-family: monospace;
+}
+
+.panelqr-btn-confirmar {
+    width: 100%;
+    padding: 0.9rem;
+    background: #27ae60;
+    color: white;
+    border: none;
+    border-radius: 8px;
+    font-weight: 700;
+    font-size: 1.05rem;
+    cursor: pointer;
+}
+
+.panelqr-resultado-error {
+    background: #f8d7da;
+    padding: 1.5rem;
+    border-radius: 10px;
+    border-left: 4px solid #e74c3c;
+    text-align: center;
+}
+
+.panelqr-resultado-error-titulo {
+    margin: 0 0 0.75rem;
+    color: #721c24;
+}
+
+.panelqr-resultado-error-msg {
+    color: #721c24;
+    font-size: 1.05rem;
+    font-weight: 600;
+    margin: 0;
+}
+
+.panelqr-resultado-error-fecha {
+    color: #999;
+    font-size: 0.85rem;
+    margin: 0.75rem 0 0;
+}
+
+.panelqr-registrado-box {
+    background: #d4edda;
+    padding: 1.5rem;
+    border-radius: 10px;
+    text-align: center;
+    border-left: 4px solid #27ae60;
+}
+
+.panelqr-registrado-titulo {
+    margin: 0 0 0.5rem;
+    color: #155724;
+    font-size: 1.3rem;
+}
+
+.panelqr-registrado-texto {
+    margin: 0;
+    color: #155724;
+}
+
+.panelqr-hist-item {
+    padding: 0.75rem 1.25rem;
+    border-bottom: 1px solid #f0f0f0;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.panelqr-hist-item--valido {
+    background: rgba(39, 174, 96, 0.05);
+}
+
+.panelqr-hist-item--invalido {
+    background: rgba(231, 76, 60, 0.05);
+}
+
+.panelqr-hist-estado {
+    font-weight: 700;
+    font-size: 0.9rem;
+}
+
+.panelqr-hist-estado--valido {
+    color: #27ae60;
+}
+
+.panelqr-hist-estado--invalido {
+    color: #e74c3c;
+}
+
+.panelqr-hist-codigo {
+    font-family: monospace;
+    font-size: 0.8rem;
+    color: #666;
+}
+
+.panelqr-hist-detalle {
+    font-size: 0.8rem;
+    color: #555;
+    margin-top: 0.2rem;
+}
+
+.panelqr-hist-error {
+    font-size: 0.8rem;
+    color: #e74c3c;
+}
+
+.panelqr-hist-hora {
+    font-size: 0.75rem;
+    color: #999;
+    text-align: right;
+}

@@ -1,5 +1,7 @@
 {% extends 'panel/base_panel.html' %}
 
+{% load static %}
+
 {% block titulo %}Usuarios — Panel{% endblock %}
 
 {% block breadcrumb %}
@@ -7,27 +9,30 @@
 <span class="current">Usuarios</span>
 {% endblock %}
 
+{% block extra_css %}
+<!-- modificado: CSS separado a static/css/panel/usuarios/lista.css (antes todo con style="" inline) -->
+<link rel="stylesheet" href="{% static 'css/panel/usuarios/lista.css' %}">
+{% endblock %}
+
 {% block contenido %}
 
-<div style="display:flex; justify-content:space-between; align-items:center;
-            flex-wrap:wrap; gap:1rem; margin-bottom:1.5rem;">
+<div class="paneluser-lista-encabezado">
     <div>
-        <h1 style="font-size:1.4rem; color:#1a1a2e; margin:0;">👥 Usuarios</h1>
-        <div style="font-size:0.8rem; color:#f39c12; margin-top:0.2rem;">
+        <h1 class="paneluser-lista-titulo">👥 Usuarios</h1>
+        <div class="paneluser-lista-solo-admin">
             🔒 Solo visible para administradores
         </div>
     </div>
-    {% comment %} <a href="{% url 'admin:auth_user_add' %}" class="btn btn-success">+ Agregar usuario</a> {% endcomment %}
+    <!-- modificado: se saca el link comentado al admin de Django (código muerto), ya se usa panel:usuarios_crear -->
     <a href="{% url 'panel:usuarios_crear' %}" class="btn btn-success">+ Agregar usuario</a>
 </div>
 
 <!-- Filtros -->
-<div class="card" style="margin-bottom:1.25rem;">
-    <div class="card-body" style="padding:1rem 1.25rem;">
-        <form method="get" style="display:flex; gap:0.75rem; flex-wrap:wrap; align-items:center;">
-            <input type="text" name="q" value="{{ busqueda }}" class="input"
-                   placeholder="Username, nombre o email..."
-                   style="flex:1; min-width:200px;">
+<div class="card paneluser-lista-filtros-card">
+    <div class="card-body paneluser-lista-filtros-body">
+        <form method="get" class="paneluser-lista-filtros-form">
+            <input type="text" name="q" value="{{ busqueda }}" class="input paneluser-lista-filtro-busqueda"
+                   placeholder="Username, nombre o email...">
             <select name="tipo" class="select">
                 <option value="">Todos</option>
                 <option value="normales"  {% if tipo == 'normales'  %}selected{% endif %}>Usuarios normales</option>
@@ -40,7 +45,7 @@
     </div>
 </div>
 
-<div style="font-size:0.85rem; color:#666; margin-bottom:0.75rem;">
+<div class="paneluser-lista-contador">
     {{ total }} usuario(s)
 </div>
 
@@ -62,52 +67,45 @@
             {% for u in usuarios %}
             <tr>
                 <td>
-                    <a href="{% url 'panel:usuarios_detalle' u.id %}"
-                       style="font-weight:700; color:#1a1a2e; text-decoration:none;">
+                    <a href="{% url 'panel:usuarios_detalle' u.id %}" class="paneluser-lista-username">
                         {{ u.username }}
                     </a>
                 </td>
-                <td style="color:#555;">
+                <td class="paneluser-lista-nombre">
                     {{ u.get_full_name|default:"—" }}
                 </td>
-                <td style="color:#666; font-size:0.85rem;">
+                <td class="paneluser-lista-email">
                     {{ u.email|default:"—" }}
                 </td>
                 <td>
                     {% if u.is_superuser %}
-                    <span style="background:rgba(226,185,111,0.2); color:#c9973a;
-                                 padding:0.2rem 0.6rem; border-radius:20px;
-                                 font-size:0.75rem; font-weight:700;">
+                    <span class="paneluser-lista-rol paneluser-lista-rol--super">
                         Superusuario
                     </span>
                     {% elif u.is_staff %}
-                    <span style="background:#d4edda; color:#155724;
-                                 padding:0.2rem 0.6rem; border-radius:20px;
-                                 font-size:0.75rem; font-weight:700;">
+                    <span class="paneluser-lista-rol paneluser-lista-rol--staff">
                         Staff
                     </span>
                     {% else %}
-                    <span style="background:#f0f0f0; color:#666;
-                                 padding:0.2rem 0.6rem; border-radius:20px;
-                                 font-size:0.75rem;">
+                    <span class="paneluser-lista-rol paneluser-lista-rol--normal">
                         Usuario
                     </span>
                     {% endif %}
                 </td>
-                <td style="font-weight:600; text-align:center;">
+                <td class="paneluser-lista-reservas">
                     {{ u.reservas.count }}
                 </td>
-                <td style="color:#999; font-size:0.8rem;">
+                <td class="paneluser-lista-fecha">
                     {{ u.date_joined|date:"d/m/Y" }}
                 </td>
                 <td>
-                    <div style="display:flex; gap:0.4rem;">
+                    <div class="paneluser-lista-acciones">
                         <a href="{% url 'panel:usuarios_detalle' u.id %}"
-                           class="btn btn-ghost" style="font-size:0.75rem; padding:0.3rem 0.7rem;">
+                           class="btn btn-ghost paneluser-lista-btn-chico">
                             Ver
                         </a>
-                        {% comment %} <a href="{% url 'admin:auth_user_change' u.id %}" class="btn btn-ghost" style="font-size:0.75rem; padding:0.3rem 0.7rem;" title="Editar en admin">✏️</a> {% endcomment %}
-                        <a href="{% url 'panel:usuarios_editar' u.id %}" class="btn btn-ghost" style="font-size:0.75rem; padding:0.3rem 0.7rem;" title="Editar en admin">✏️</a>
+                        <!-- modificado: se saca el link comentado al admin de Django (código muerto), ya se usa panel:usuarios_editar -->
+                        <a href="{% url 'panel:usuarios_editar' u.id %}" class="btn btn-ghost paneluser-lista-btn-chico" title="Editar">✏️</a>
                     </div>
                 </td>
             </tr>
@@ -115,7 +113,7 @@
         </tbody>
     </table>
     {% else %}
-    <div class="card-body" style="text-align:center; padding:3rem; color:#999;">
+    <div class="card-body paneluser-lista-vacio">
         No se encontraron usuarios.
     </div>
     {% endif %}

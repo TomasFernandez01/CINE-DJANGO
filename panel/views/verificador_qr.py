@@ -15,5 +15,3 @@ def verificador_qr(request):
         'seccion_activa': 'verificador',
     }
     return render(request, 'panel/verificador_qr.html', contexto)
-
-                                                                # V1
