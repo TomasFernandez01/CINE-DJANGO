@@ -20,13 +20,38 @@ except ImportError:
     TMDB_DISPONIBLE = False
 
 # ============================================ VISTAS EXISTENTES
+# MEJORAS/REDISEÑO GEMINI: inicio view y ayuda_view
 def inicio(request):
-    peliculas_cartelera = Pelicula.objects.filter(en_cartelera=True).order_by('-fecha_estreno')[:8]
-    posters_hero = [p for p in peliculas_cartelera if p.poster]
-    return render(request, 'inicio.html', {
+    hoy = timezone.now().date()
+    peliculas_cartelera_list = Pelicula.objects.filter(en_cartelera=True).order_by('-fecha_estreno')
+    peliculas_proximos_estrenos_list = Pelicula.objects.filter(en_cartelera=False, fecha_estreno__gt=hoy).order_by('fecha_estreno')
+    posters_hero = [p for p in peliculas_cartelera_list[:8] if p.poster]
+    
+    from django.core.paginator import Paginator
+    
+    # Paginación cartelera (6 por página)
+    paginator_cartelera = Paginator(peliculas_cartelera_list, 6)
+    page_cartelera = request.GET.get('page_c')
+    peliculas_cartelera = paginator_cartelera.get_page(page_cartelera)
+    
+    # Paginación próximos estrenos (6 por página)
+    paginator_estrenos = Paginator(peliculas_proximos_estrenos_list, 6)
+    page_estrenos = request.GET.get('page_e')
+    peliculas_proximos_estrenos = paginator_estrenos.get_page(page_estrenos)
+    
+    salas = Sala.objects.filter(activa=True)
+    
+    contexto = {
         'peliculas_cartelera': peliculas_cartelera,
+        'peliculas_proximos_estrenos': peliculas_proximos_estrenos,
         'posters_hero': posters_hero,
-    })
+        'salas': salas,
+    }
+    return render(request, 'inicio.html', contexto)
+
+def ayuda_view(request):
+    return render(request, 'ayuda.html')
+# FIN MEJORAS/REDISEÑO GEMINI
 
 def lista_peliculas(request):
     peliculas = Pelicula.objects.filter(en_cartelera=True)
@@ -129,6 +154,10 @@ def lista_peliculas(request):
         # MODIFICACION GEMINI: Pasar objeto de pagina para controles del template
         'page_obj': page_obj,
     }
+    # MEJORAS/REDISEÑO GEMINI: Retornar solo el partial si es una petición AJAX/Fetch
+    if request.headers.get('x-requested-with') == 'XMLHttpRequest' or request.GET.get('ajax') == 'true':
+        return render(request, 'peliculas/partials/_lista_pelis_grid.html', contexto)
+        
     return render(request, 'peliculas/lista_pelis.html', contexto)
 
 

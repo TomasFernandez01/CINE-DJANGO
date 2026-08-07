@@ -12,9 +12,9 @@
 
 {% block contenido %}
 
-<!-- Hero Section -->
+<!-- MEJORAS/REDISEÑO GEMINI: Hero Section rediseñado -->
 <div class="hero">
-    <!-- nuevo: capas de fondo rotativas, una por poster de la cartelera. Si posters_hero esta vacio no se genera ninguna y el hero queda con el fondo rojo de siempre -->
+    <!-- capas de fondo rotativas -->
     {% for pelicula in posters_hero %}
         <div class="hero-slide{% if forloop.first %} activa{% endif %}" style="background-image: url('{{ pelicula.poster.url }}');"></div>
     {% endfor %}
@@ -22,23 +22,44 @@
 
     <div class="hero-contenido">
         {% if not posters_hero %}
-            <!-- nuevo: aviso para el admin, se oculta solo apenas se cargue al menos un poster -->
             <div class="hero-aviso-admin">📸 Subí posters a tus películas desde el panel para que roten automáticamente acá</div>
         {% endif %}
         <h1>🎬 Bienvenido a tu Cine Online</h1>
-        <p>Descubrí las mejores películas en cartelera y reservá tus entradas de forma fácil y rápida</p>
-        <div class="hero-botones">
-            <a href="{% url 'peliculas:lista_peliculas' %}" class="hero-btn hero-btn-primario">
-                🎥 Ver Cartelera
-            </a>
-            <a href="{% url 'salas:lista_funciones' %}" class="hero-btn hero-btn-secundario">
-                🎟️ Ver Funciones
-            </a>
-        </div>
+        <p style="margin-bottom: 2rem;">Descubrí las mejores películas en cartelera y reservá tus entradas de forma fácil y rápida</p>
+        
+        <!-- Saludo e invitaciones de registro dentro del Hero -->
+        {% if not user.is_authenticated %}
+            <div class="hero-cta-box" style="background: rgba(0,0,0,0.6); padding: 1.5rem; border-radius: 8px; max-width: 500px; margin: 0 auto 1.5rem;">
+                <p style="color: #ffffff; margin-bottom: 1rem; font-size: 1rem;">¿Primera vez aquí? Creá tu cuenta gratis y empezá a disfrutar del cine.</p>
+                <div class="hero-botones">
+                    <a href="{% url 'peliculas:lista_peliculas' %}" class="hero-btn hero-btn-primario">
+                        🎥 Ver Cartelera
+                    </a>
+                    <a href="{% url 'usuarios:registro' %}" class="hero-btn hero-btn-secundario">
+                        🔑 Registrarse
+                    </a>
+                </div>
+            </div>
+        {% else %}
+            <div class="hero-cta-box" style="background: rgba(0,0,0,0.6); padding: 1.5rem; border-radius: 8px; max-width: 500px; margin: 0 auto 1.5rem;">
+                <p style="color: #ffffff; margin-bottom: 1rem; font-size: 1.1rem;">¡Hola, <strong>{{ user.first_name|default:user.username }}</strong>!</p>
+                <div class="hero-botones">
+                    <a href="{% url 'peliculas:lista_peliculas' %}" class="hero-btn hero-btn-primario">
+                        🎥 Ver Cartelera
+                    </a>
+                    <a href="{% url 'reservas:mis_reservas' %}" class="hero-btn hero-btn-secundario">
+                        🎫 Mis Reservas
+                    </a>
+                    <a href="{% url 'usuarios:perfil' %}" class="hero-btn hero-btn-outline" style="border: 2px solid #ffffff; padding: 0.8rem 1.5rem; border-radius: 6px; color: #ffffff; text-decoration: none; font-weight: bold;">
+                        👤 Perfil
+                    </a>
+                </div>
+            </div>
+        {% endif %}
     </div>
 </div>
 
-<!-- nuevo: cartelera real del home (antes inicio.html no mostraba ninguna pelicula) -->
+<!-- MEJORAS/REDISEÑO GEMINI: Cartelera real en Inicio con paginación independiente -->
 <h3 class="cartelera-titulo">En cartelera</h3>
 {% if peliculas_cartelera %}
     <div class="cartelera-grid">
@@ -60,79 +81,94 @@
             </a>
         {% endfor %}
     </div>
+
+    <!-- Paginación de cartelera -->
+    {% if peliculas_cartelera.has_other_pages %}
+    <div class="paginacion-wrap" style="margin-top: 1.5rem; margin-bottom: 3rem; display: flex; justify-content: center; align-items: center; gap: 1rem;">
+        {% if peliculas_cartelera.has_previous %}
+            <a href="?page_c={{ peliculas_cartelera.previous_page_number }}{% if peliculas_proximos_estrenos.number %}&page_e={{ peliculas_proximos_estrenos.number }}{% endif %}" class="paginacion-link" style="padding: 0.5rem 1rem; background-color: #1f1f1f; color: #ffffff; border-radius: 4px; text-decoration: none;">‹ Anterior</a>
+        {% endif %}
+        <span class="paginacion-actual" style="color: #aaaaaa;">Página {{ peliculas_cartelera.number }} de {{ peliculas_cartelera.paginator.num_pages }}</span>
+        {% if peliculas_cartelera.has_next %}
+            <a href="?page_c={{ peliculas_cartelera.next_page_number }}{% if peliculas_proximos_estrenos.number %}&page_e={{ peliculas_proximos_estrenos.number }}{% endif %}" class="paginacion-link" style="padding: 0.5rem 1rem; background-color: #1f1f1f; color: #ffffff; border-radius: 4px; text-decoration: none;">Siguiente ›</a>
+        {% endif %}
+    </div>
+    {% endif %}
 {% else %}
-    <div class="cartelera-vacio">Todavía no hay películas cargadas en cartelera.</div>
+    <div class="cartelera-vacio" style="padding: 2rem; background-color: #1f1f1f; text-align: center; color: #888; border-radius: 8px; margin-bottom: 3rem;">Todavía no hay películas cargadas en cartelera.</div>
 {% endif %}
 
-<!-- Features -->
-<div class="features-grid">
-    <div class="feature-card">
-        <div class="feature-card-icono">🎫</div>
-        <h3>Reservá Online</h3>
-        <p>Comprá tus entradas desde la comodidad de tu casa</p>
+<!-- MEJORAS/REDISEÑO GEMINI: Próximos Estrenos en Inicio con paginación independiente -->
+<h3 class="cartelera-titulo">Próximos estrenos</h3>
+{% if peliculas_proximos_estrenos %}
+    <div class="cartelera-grid">
+        {% for pelicula in peliculas_proximos_estrenos %}
+            <a href="{% url 'peliculas:detalle_pelicula' pelicula.id %}" class="cartelera-card">
+                {% if pelicula.poster %}
+                    <img class="cartelera-card-poster" src="{{ pelicula.poster.url }}" alt="{{ pelicula.titulo }}">
+                {% else %}
+                    <div class="cartelera-card-poster-placeholder">🎬</div>
+                {% endif %}
+                <div class="cartelera-card-info">
+                    <h4>{{ pelicula.titulo }}</h4>
+                    <div class="cartelera-card-meta">
+                        {% if pelicula.genero %}<span class="cartelera-badge">{{ pelicula.get_genero_display }}</span>{% endif %}
+                        <span class="cartelera-badge">{{ pelicula.clasificacion }}</span>
+                        {% if pelicula.duracion %}<span class="cartelera-badge">{{ pelicula.duracion_formato }}</span>{% endif %}
+                    </div>
+                </div>
+            </a>
+        {% endfor %}
     </div>
 
-    <div class="feature-card">
-        <div class="feature-card-icono">💳</div>
-        <h3>Pagos Seguros</h3>
-        <p>Múltiples métodos de pago disponibles</p>
+    <!-- Paginación de próximos estrenos -->
+    {% if peliculas_proximos_estrenos.has_other_pages %}
+    <div class="paginacion-wrap" style="margin-top: 1.5rem; margin-bottom: 3rem; display: flex; justify-content: center; align-items: center; gap: 1rem;">
+        {% if peliculas_proximos_estrenos.has_previous %}
+            <a href="?page_e={{ peliculas_proximos_estrenos.previous_page_number }}{% if peliculas_cartelera.number %}&page_c={{ peliculas_cartelera.number }}{% endif %}" class="paginacion-link" style="padding: 0.5rem 1rem; background-color: #1f1f1f; color: #ffffff; border-radius: 4px; text-decoration: none;">‹ Anterior</a>
+        {% endif %}
+        <span class="paginacion-actual" style="color: #aaaaaa;">Página {{ peliculas_proximos_estrenos.number }} de {{ peliculas_proximos_estrenos.paginator.num_pages }}</span>
+        {% if peliculas_proximos_estrenos.has_next %}
+            <a href="?page_e={{ peliculas_proximos_estrenos.next_page_number }}{% if peliculas_cartelera.number %}&page_c={{ peliculas_cartelera.number }}{% endif %}" class="paginacion-link" style="padding: 0.5rem 1rem; background-color: #1f1f1f; color: #ffffff; border-radius: 4px; text-decoration: none;">Siguiente ›</a>
+        {% endif %}
     </div>
-
-    <div class="feature-card">
-        <div class="feature-card-icono">⚡</div>
-        <h3>Rápido y Fácil</h3>
-        <p>Proceso de reserva simple en pocos pasos</p>
-    </div>
-</div>
-
-<!-- Call to Action -->
-{% if not user.is_authenticated %}
-    <div class="cta-box cta-box-invitado">
-        <h2>¿Primera vez aquí?</h2>
-        <p>Creá tu cuenta gratis y empezá a disfrutar del cine</p>
-        <a href="{% url 'usuarios:registro' %}" class="cta-btn cta-btn-blanco">Registrarse Gratis</a>
-    </div>
+    {% endif %}
 {% else %}
-    <div class="cta-box cta-box-usuario">
-        <h2>¡Hola, {{ user.first_name|default:user.username }}!</h2>
-        <div class="hero-botones">
-            <a href="{% url 'reservas:mis_reservas' %}" class="cta-btn cta-btn-blanco">Ver Mis Reservas</a>
-            <a href="{% url 'usuarios:perfil' %}" class="cta-btn cta-btn-outline">Mi Perfil</a>
-        </div>
-    </div>
+    <div class="cartelera-vacio" style="padding: 2rem; background-color: #1f1f1f; text-align: center; color: #888; border-radius: 8px; margin-bottom: 3rem;">No hay próximos estrenos programados.</div>
 {% endif %}
 
-<!-- Info adicional -->
-<div class="como-funciona">
-    <h3>¿Cómo funciona?</h3>
-    <div class="como-funciona-grid">
-        <div class="como-funciona-paso">
-            <div class="como-funciona-numero">1</div>
-            <h4>Elegí tu película</h4>
-            <p>Explorá la cartelera</p>
+<!-- MEJORAS/REDISEÑO GEMINI: Nuestras Salas -->
+<h3 class="cartelera-titulo" style="margin-top: 2rem;">Nuestras Salas</h3>
+<div class="salas-inicio-grid" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 1.5rem; margin-bottom: 4rem;">
+    {% for sala in salas %}
+        <div class="sala-inicio-card" style="background-color: #1f1f1f; padding: 1.5rem; border-radius: 10px; box-shadow: 0 4px 10px rgba(0,0,0,0.3); transition: transform 0.2s;">
+            <div style="font-size: 2.5rem; margin-bottom: 1rem; text-align: center;">
+                {% if sala.tipo == '2d_premium' or sala.tipo == '3d_premium' %}⭐{% else %}🎬{% endif %}
+            </div>
+            <h4 style="color: #ffffff; text-align: center; margin: 0 0 0.5rem 0; font-size: 1.2rem;">{{ sala.nombre }}</h4>
+            <p style="color: #aaaaaa; font-size: 0.9rem; text-align: center; margin: 0 0 1rem 0;">Capacidad: {{ sala.capacidad }} butacas</p>
+            <div style="display: flex; justify-content: center; gap: 0.5rem; flex-wrap: wrap;">
+                <span class="cartelera-badge" style="background-color: #e50914; color: #ffffff; padding: 0.25rem 0.5rem; border-radius: 4px; font-size: 0.8rem; font-weight: bold;">{{ sala.get_tipo_display }}</span>
+                {% if sala.es_premium %}
+                    <span class="cartelera-badge" style="background-color: #ff8c00; color: #ffffff; padding: 0.25rem 0.5rem; border-radius: 4px; font-size: 0.8rem; font-weight: bold;">Premium</span>
+                {% endif %}
+            </div>
         </div>
-        <div class="como-funciona-paso">
-            <div class="como-funciona-numero">2</div>
-            <h4>Seleccioná función</h4>
-            <p>Elegí día y horario</p>
-        </div>
-        <div class="como-funciona-paso">
-            <div class="como-funciona-numero">3</div>
-            <h4>Reservá</h4>
-            <p>Indicá cantidad de entradas</p>
-        </div>
-        <div class="como-funciona-paso">
-            <div class="como-funciona-numero">4</div>
-            <h4>Pagá</h4>
-            <p>Completá el pago</p>
-        </div>
-        <div class="como-funciona-paso">
-            <div class="como-funciona-numero">5</div>
-            <h4>¡Disfrutá!</h4>
-            <p>Presentá tu código</p>
-        </div>
-    </div>
+    {% endfor %}
 </div>
+
+<!-- MEJORAS/REDISEÑO GEMINI: Footer simple y elegante -->
+<footer class="home-footer" style="border-top: 1px solid #333; padding: 2rem 0; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1.5rem; margin-top: 4rem;">
+    <div style="color: #888; font-size: 0.9rem;">
+        &copy; 2026 Cine Online. Todos los derechos reservados.
+    </div>
+    <div style="display: flex; gap: 1.5rem;">
+        <a href="{% url 'peliculas:ayuda' %}" style="color: #ffffff; text-decoration: none; font-weight: bold; font-size: 0.95rem; transition: color 0.2s;">💡 Centro de Ayuda</a>
+        <a href="#" style="color: #888; text-decoration: none; font-size: 0.95rem;">Twitter</a>
+        <a href="#" style="color: #888; text-decoration: none; font-size: 0.95rem;">Instagram</a>
+        <a href="#" style="color: #888; text-decoration: none; font-size: 0.95rem;">Facebook</a>
+    </div>
+</footer>
 
 {% endblock %}
 

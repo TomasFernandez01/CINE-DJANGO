@@ -1,0 +1,57 @@
+<!-- MEJORAS/REDISEÑO GEMINI: Partial para la grilla de funciones agrupada por película -->
+{% if tarjetas_peliculas %}
+    <p class="funciones-resultado-info">{{ total_resultados }} función(es) encontrada(s)</p>
+
+    <div class="funciones-lista">
+        {% for tarjeta in tarjetas_peliculas %}
+            <div class="funcion-pelicula-card">
+                <a href="{% url 'peliculas:detalle_pelicula' tarjeta.pelicula.id %}" class="funcion-pelicula-poster">
+                    {% if tarjeta.pelicula.poster %}
+                        <img src="{{ tarjeta.pelicula.poster.url }}" alt="{{ tarjeta.pelicula.titulo }}">
+                    {% else %}
+                        <div class="funcion-pelicula-poster-placeholder">🎬</div>
+                    {% endif %}
+                </a>
+
+                <div class="funcion-pelicula-info">
+                    <div class="funcion-pelicula-encabezado" style="border-bottom: 1px solid #333; padding-bottom: 0.5rem; margin-bottom: 0.75rem;">
+                        <h3 style="font-size: 1.4rem;">
+                            <a href="{% url 'peliculas:detalle_pelicula' tarjeta.pelicula.id %}" style="text-decoration: none; color: #ffffff;">
+                                {{ tarjeta.pelicula.titulo }}
+                            </a>
+                        </h3>
+                        <!-- MEJORAS/REDISEÑO GEMINI: Precio verde removido y rediseñado a un formato más discreto al lado del título -->
+                        <span style="font-size: 0.9rem; color: #aaaaaa;">Entradas desde <strong>${{ tarjeta.precio_desde }}</strong></span>
+                    </div>
+
+                    <div class="detalle-badges" style="margin-bottom: 0.75rem;">
+                        {% if tarjeta.pelicula.clasificacion %}
+                            <span class="detalle-badge detalle-badge-clasificacion">{{ tarjeta.pelicula.get_clasificacion_display }}</span>
+                        {% endif %}
+                        {% if tarjeta.pelicula.duracion %}
+                            <span class="detalle-badge detalle-badge-gris">⏱ {{ tarjeta.pelicula.duracion_formato }}</span>
+                        {% endif %}
+                    </div>
+
+                    <!-- MEJORAS/REDISEÑO GEMINI: Agregar sinopsis truncada de la película para mejor información del cliente -->
+                    {% if tarjeta.pelicula.sinopsis %}
+                        <p class="funcion-pelicula-sinopsis" style="color: #cccccc; font-size: 0.9rem; line-height: 1.5; margin: 0 0 1.25rem 0;">
+                            {{ tarjeta.pelicula.sinopsis|truncatechars:220 }}
+                        </p>
+                    {% endif %}
+
+                    <!-- horarios agrupados por tipo de sala -->
+                    {% with grupos_funciones=tarjeta.grupos_funciones %}
+                        {% include 'partials/_grupos_funciones.html' %}
+                    {% endwith %}
+                </div>
+            </div>
+        {% endfor %}
+    </div>
+{% else %}
+    <div class="pelis-vacio">
+        <p class="pelis-vacio-icono">😕</p>
+        <p class="pelis-vacio-texto-principal">No se encontraron funciones</p>
+        <p class="pelis-vacio-texto-secundario">Intentá con otros filtros o buscando otra película.</p>
+    </div>
+{% endif %}

@@ -338,8 +338,13 @@ def verificar_asientos_disponibles(request, funcion_id):
 
 @login_required
 def mis_reservas(request):
-    mostrar_canceladas = request.GET.get('mostrar_canceladas', 'si')
-    mostrar_expiradas = request.GET.get('mostrar_expiradas', 'si')
+    # MEJORAS/REDISEÑO GEMINI: Corregir bug de checkboxes de filtros (si request.GET no está vacío y el checkbox no viene, es porque está desmarcado -> 'no')
+    if request.GET:
+        mostrar_canceladas = request.GET.get('mostrar_canceladas', 'no')
+        mostrar_expiradas = request.GET.get('mostrar_expiradas', 'no')
+    else:
+        mostrar_canceladas = 'si'
+        mostrar_expiradas = 'si'
     
     reservas = Reserva.objects.filter(usuario=request.user).select_related('funcion__pelicula', 'funcion__sala')
     

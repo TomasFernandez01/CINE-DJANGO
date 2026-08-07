@@ -1,22 +1,89 @@
 {% extends 'base.html' %}
 {% load static %}
 
-{% block titulo %}Elegí película{% endblock %}
+{% block titulo %}Elegí película - Cine Online{% endblock %}
 
 {% block extra_css %}
-<!-- bloque modificado: fechas.css ahora es compartido (css/shared/), se suman flechas + tema oscuro -->
+<!-- MEJORAS/REDISEÑO GEMINI: Estilos y componentes compartidos de cartelera y filtros -->
 <link rel="stylesheet" href="{% static 'css/shared/fechas_carrusel.css' %}">
 <link rel="stylesheet" href="{% static 'css/peliculas/filtros.css' %}">
 <link rel="stylesheet" href="{% static 'css/peliculas/buscador.css' %}">
 <link rel="stylesheet" href="{% static 'css/peliculas/cartelera.css' %}">
+<style>
+    /* Estilo de alineación para la cabecera unificada */
+    .filtro-buscador-contenedor {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        flex-wrap: wrap;
+        gap: 1.5rem;
+        margin-bottom: 2rem;
+        background-color: #1c1c1c;
+        padding: 1.25rem 1.5rem;
+        border-radius: 8px;
+        box-shadow: 0 4px 10px rgba(0,0,0,0.3);
+    }
+    .buscador-caja {
+        flex: 1;
+        min-width: 280px;
+    }
+    .filtros-caja {
+        margin-bottom: 0;
+        background: none;
+        padding: 0;
+        box-shadow: none;
+    }
+    .filtros-grid {
+        display: flex;
+        gap: 1rem;
+        align-items: center;
+        flex-wrap: wrap;
+    }
+    .filtros-campo {
+        margin: 0;
+    }
+    /* Estilo premium del mensaje de vacío */
+    .pelis-vacio {
+        background-color: #1f1f1f;
+        padding: 4rem 2rem;
+        border-radius: 12px;
+        text-align: center;
+        box-shadow: 0 4px 15px rgba(0,0,0,0.4);
+        border: 1px solid #333;
+        margin: 2rem 0;
+    }
+    .pelis-vacio-icono {
+        font-size: 4rem;
+        margin-bottom: 1rem;
+    }
+    .pelis-vacio-texto-principal {
+        color: #ffffff;
+        font-size: 1.4rem;
+        font-weight: bold;
+        margin-bottom: 0.5rem;
+    }
+    .pelis-vacio-texto-secundario {
+        color: #aaaaaa;
+        font-size: 1rem;
+    }
+    .pelis-vacio-link {
+        color: #e50914;
+        text-decoration: none;
+        font-weight: bold;
+        border-bottom: 2px solid transparent;
+        transition: border-color 0.2s;
+    }
+    .pelis-vacio-link:hover {
+        border-color: #e50914;
+    }
+</style>
 {% endblock %}
 
 {% block contenido %}
 
-<!-- bloque modificado: se saca el h1 "Catálogo de Películas" y el buscador pasa a ser lo primero,
-     con "Elegí película" como título de esta sección (orden pedido: buscador -> fechas -> genero/clasificación) -->
-<div class="buscador-destacado">
-    <div class="buscar-wrapper">
+<!-- MEJORAS/REDISEÑO GEMINI: Buscador y barra de filtros unificados en una sola línea -->
+<div class="filtro-buscador-contenedor">
+    <div class="buscador-caja">
         <input
             type="text"
             id="buscar"
@@ -24,142 +91,83 @@
             value="{{ busqueda }}"
             placeholder="Buscá por título, director o actor..."
             class="filtros-input"
+            style="width: 100%;"
             autocomplete="off"
-            data-url-buscar-vivo="{% url 'peliculas:buscar_vivo' %}"
-            form="form-filtros"
+            data-url-buscar-vivo="{% url 'peliculas:lista_peliculas' %}"
         >
-        <div id="buscar-sugerencias" class="buscar-sugerencias"></div>
+    </div>
+    
+    <div class="filtros-caja">
+        <form method="get" action="{% url 'peliculas:lista_peliculas' %}" id="form-filtros">
+            <!-- Campos ocultos para mantener los valores en submit -->
+            <input type="hidden" name="buscar" id="hidden-buscar" value="{{ busqueda }}">
+            <input type="hidden" name="fecha" id="hidden-fecha" value="{{ fecha_seleccionada }}">
+
+            <div class="filtros-grid">
+                <!-- Filtro Género -->
+                <div class="filtros-campo">
+                    <select id="genero" name="genero" class="filtros-select">
+                        <option value="">Todos los géneros</option>
+                        {% for valor, nombre in generos_disponibles %}
+                            <option value="{{ valor }}" {% if genero_seleccionado == valor %}selected{% endif %}>
+                                {{ nombre }}
+                            </option>
+                        {% endfor %}
+                    </select>
+                </div>
+
+                <!-- Filtro Clasificación -->
+                <div class="filtros-campo">
+                    <select id="clasificacion" name="clasificacion" class="filtros-select">
+                        <option value="">Todas las clasificaciones</option>
+                        {% for valor, nombre in clasificaciones_disponibles %}
+                            <option value="{{ valor }}" {% if clasificacion_seleccionada == valor %}selected{% endif %}>
+                                {{ valor }}
+                            </option>
+                        {% endfor %}
+                    </select>
+                </div>
+                
+                <div class="filtros-botones">
+                    <a href="{% url 'peliculas:lista_peliculas' %}" class="filtros-btn-limpiar">Limpiar Filtros</a>
+                </div>
+            </div>
+        </form>
     </div>
 </div>
 
-<!-- bloque modificado (tanda 1): el carrusel ya no redirige a Funciones. Filtra localmente que
-     peliculas tienen funcion ese dia, preserva el resto de los filtros activos, resalta el dia
-     seleccionado y muestra la papelera para quitar el filtro (mismo patron que en Funciones). -->
+<!-- MEJORAS/REDISEÑO GEMINI: Carrusel de fechas con deselección por toggle tocando el item activo -->
 <div class="fechas-carrusel-wrap">
     <button type="button" class="fecha-flecha fecha-flecha-prev" aria-label="Días anteriores">‹</button>
     <div class="fechas-carrusel">
         {% for f in proximas_fechas %}
-            <a href="?buscar={{ busqueda }}&genero={{ genero_seleccionado }}&clasificacion={{ clasificacion_seleccionada }}&orden={{ orden_seleccionado }}&fecha={{ f.valor }}"
-               class="fecha-item{% if forloop.first and not fecha_seleccionada %} fecha-hoy{% endif %}{% if fecha_seleccionada == f.valor %} fecha-activa{% endif %}">
-                <span class="fecha-item-diasemana">{{ f.dia_semana }}</span>
-                <span class="fecha-item-diames">{{ f.dia_mes }}</span>
-            </a>
+            {% if fecha_seleccionada == f.valor %}
+                <a href="?buscar={{ busqueda }}&genero={{ genero_seleccionado }}&clasificacion={{ clasificacion_seleccionada }}"
+                   class="fecha-item fecha-activa">
+                    <span class="fecha-item-diasemana">{{ f.dia_semana }}</span>
+                    <span class="fecha-item-diames">{{ f.dia_mes }}</span>
+                </a>
+            {% else %}
+                <a href="?buscar={{ busqueda }}&genero={{ genero_seleccionado }}&clasificacion={{ clasificacion_seleccionada }}&fecha={{ f.valor }}"
+                   class="fecha-item{% if forloop.first and not fecha_seleccionada %} fecha-hoy{% endif %}">
+                    <span class="fecha-item-diasemana">{{ f.dia_semana }}</span>
+                    <span class="fecha-item-diames">{{ f.dia_mes }}</span>
+                </a>
+            {% endif %}
         {% endfor %}
     </div>
     <button type="button" class="fecha-flecha fecha-flecha-next" aria-label="Días siguientes">›</button>
-    {% if fecha_seleccionada %}
-        <a href="?buscar={{ busqueda }}&genero={{ genero_seleccionado }}&clasificacion={{ clasificacion_seleccionada }}&orden={{ orden_seleccionado }}"
-           class="fecha-quitar" title="Quitar filtro de día">🗑</a>
-    {% endif %}
 </div>
 
-<!-- Barra de Filtros (género / clasificación / orden). El input de búsqueda vive arriba, pero el submit sigue siendo de este form -->
-<div class="filtros-caja">
-    <form method="get" action="{% url 'peliculas:lista_peliculas' %}" id="form-filtros">
-
-        <div class="filtros-grid">
-            <!-- Filtro Género -->
-            <div class="filtros-campo">
-                <label for="genero">🎭 Género:</label>
-                <select id="genero" name="genero" class="filtros-select">
-                    <option value="">Todos los géneros</option>
-                    {% for valor, nombre in generos_disponibles %}
-                        <option value="{{ valor }}" {% if genero_seleccionado == valor %}selected{% endif %}>
-                            {{ nombre }}
-                        </option>
-                    {% endfor %}
-                </select>
-            </div>
-
-            <!-- Filtro Clasificación -->
-            <div class="filtros-campo">
-                <label for="clasificacion">🎫 Clasificación:</label>
-                <select id="clasificacion" name="clasificacion" class="filtros-select">
-                    <option value="">Todas</option>
-                    {% for valor, nombre in clasificaciones_disponibles %}
-                        <option value="{{ valor }}" {% if clasificacion_seleccionada == valor %}selected{% endif %}>
-                            {{ valor }}
-                        </option>
-                    {% endfor %}
-                </select>
-            </div>
-
-            <!-- Orden -->
-            <div class="filtros-campo">
-                <label for="orden">📊 Ordenar por:</label>
-                <select id="orden" name="orden" class="filtros-select">
-                    <option value="titulo" {% if orden_seleccionado == 'titulo' %}selected{% endif %}>Título (A-Z)</option>
-                    <option value="año" {% if orden_seleccionado == 'año' %}selected{% endif %}>Año (Nuevas primero)</option>
-                    <option value="genero" {% if orden_seleccionado == 'genero' %}selected{% endif %}>Género</option>
-                </select>
-            </div>
-        </div>
-
-        <!-- Botones -->
-        <div class="filtros-botones">
-            <button type="submit" class="filtros-btn-aplicar">Aplicar Filtros</button>
-            <a href="{% url 'peliculas:lista_peliculas' %}" class="filtros-btn-limpiar">Limpiar</a>
-        </div>
-    </form>
+<!-- MEJORAS/REDISEÑO GEMINI: Contenedor para AJAX de la grilla de películas -->
+<div id="peliculas-grid-container">
+    {% include 'peliculas/partials/_lista_pelis_grid.html' %}
 </div>
 
-{% if hay_filtros_activos %}
-    <!-- con filtros activos se muestra un listado plano (no tiene sentido separar en cartelera/proximos estrenos) -->
-    <p class="pelis-resultado-info">
-        <strong>{{ total_resultados }}</strong> resultado(s) encontrado(s)
-        {% if busqueda %}para "<strong>{{ busqueda }}</strong>"{% endif %}
-        {% if fecha_seleccionada %}con función el <strong>{{ fecha_seleccionada }}</strong>{% endif %}
-    </p>
-
-    {% if peliculas %}
-        <div class="pelis-grid">
-            {% for pelicula in peliculas %}
-                {% include 'peliculas/_card_pelicula.html' %}
-            {% endfor %}
-        </div>
-        
-        <!-- modificado: MODIFICACION GEMINI (Paginacion en listado filtrado) ahora usa el partial _paginacion.html en vez de bloque inline duplicado -->
-        {% include 'peliculas/_paginacion.html' %}
-    {% else %}
-        <div class="pelis-vacio">
-            <p>😕 No se encontraron películas</p>
-            <p>
-                Intentá con otros filtros o
-                <a href="{% url 'peliculas:lista_peliculas' %}">ver todas las películas</a>
-            </p>
-        </div>
-    {% endif %}
-{% else %}
-    <!-- separación real en "En cartelera" / "Próximos estrenos" usando Pelicula.fecha_estreno -->
-    <h3 class="cartelera-seccion-titulo">En cartelera</h3>
-    {% if peliculas_en_cartelera %}
-        <div class="pelis-grid">
-            {% for pelicula in peliculas_en_cartelera %}
-                {% include 'peliculas/_card_pelicula.html' %}
-            {% endfor %}
-        </div>
-        
-        <!-- modificado: MODIFICACION GEMINI (Paginacion en listado general de cartelera) ahora usa el partial _paginacion.html en vez de bloque inline duplicado -->
-        {% include 'peliculas/_paginacion.html' %}
-    {% else %}
-        <div class="pelis-vacio">
-            <p>No hay películas en cartelera en este momento.</p>
-        </div>
-    {% endif %}
-
-    {% if peliculas_proximos_estrenos %}
-        <h3 class="cartelera-seccion-titulo">Próximos estrenos</h3>
-        <div class="pelis-grid">
-            {% for pelicula in peliculas_proximos_estrenos %}
-                {% include 'peliculas/_card_pelicula.html' with proximamente=True %}
-            {% endfor %}
-        </div>
-    {% endif %}
-{% endif %}
 {% endblock %}
 
 {% block extra_js %}
-<!-- nuevo: buscador en vivo + flechas del carrusel de fechas (compartido) -->
+<!-- nuevo: buscador en vivo Netflix + flechas del carrusel de fechas -->
 <script src="{% static 'js/peliculas/buscador_vivo.js' %}"></script>
 <script src="{% static 'js/shared/fechas_carrusel.js' %}"></script>
 {% endblock %}

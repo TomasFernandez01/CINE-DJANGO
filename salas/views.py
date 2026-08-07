@@ -1,4 +1,5 @@
 from django.shortcuts import render
+from django.db.models import Q
 from django.utils import timezone
 from datetime import datetime, timedelta
 from .models import Sala, Funcion
@@ -32,6 +33,15 @@ def lista_funciones(request):
     pelicula_id = request.GET.get('pelicula', '')
     if pelicula_id:
         funciones = funciones.filter(pelicula_id=pelicula_id)
+        
+    # MEJORAS/REDISEÑO GEMINI: Filtro de búsqueda en vivo por película
+    buscar_peli = request.GET.get('buscar', '').strip()
+    if buscar_peli:
+        funciones = funciones.filter(
+            Q(pelicula__titulo__icontains=buscar_peli) |
+            Q(pelicula__director__icontains=buscar_peli) |
+            Q(pelicula__actores__icontains=buscar_peli)
+        )
     
     # FILTRO por fecha
     fecha_filtro = request.GET.get('fecha', '')
@@ -113,6 +123,12 @@ def lista_funciones(request):
         'orden_seleccionado': orden,
         'total_resultados': funciones.count(),
         'proximas_fechas': generar_proximos_dias(20),  # nuevo: carrusel de fechas de esta pagina
+        # MEJORAS/REDISEÑO GEMINI: Pasar el texto de búsqueda al contexto
+        'busqueda': buscar_peli,
     }
+    # MEJORAS/REDISEÑO GEMINI: Retornar solo el partial si es AJAX
+    if request.headers.get('x-requested-with') == 'XMLHttpRequest' or request.GET.get('ajax') == 'true':
+        return render(request, 'salas/partials/_lista_funciones_grid.html', contexto)
+        
     return render(request, 'salas/lista_funciones.html', contexto)
     

@@ -1,142 +1,158 @@
 {% extends 'base.html' %}
 {% load static %}
 
-{% block titulo %}Funciones Disponibles{% endblock %}
+{% block titulo %}Funciones Disponibles - Cine Online{% endblock %}
 
 {% block extra_css %}
+<!-- MEJORAS/REDISEÑO GEMINI: Hojas de estilo unificadas y compartidas -->
 <link rel="stylesheet" href="{% static 'css/shared/fechas_carrusel.css' %}">
 <link rel="stylesheet" href="{% static 'css/shared/horarios.css' %}">
 <link rel="stylesheet" href="{% static 'css/shared/badges.css' %}">
 <link rel="stylesheet" href="{% static 'css/salas/lista.css' %}">
 <link rel="stylesheet" href="{% static 'css/salas/lista_funciones.css' %}">
+<style>
+    /* Estilo de la cabecera unificada en Funciones */
+    .funciones-cabecera-contenedor {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        flex-wrap: wrap;
+        gap: 1.5rem;
+        margin-bottom: 2rem;
+        background-color: #1c1c1c;
+        padding: 1.25rem 1.5rem;
+        border-radius: 8px;
+        box-shadow: 0 4px 10px rgba(0,0,0,0.3);
+    }
+    .buscador-caja-funciones {
+        flex: 1;
+        min-width: 280px;
+    }
+    .funciones-filtros-caja-inline {
+        margin: 0;
+    }
+    .funciones-filtros-grid-inline {
+        display: flex;
+        gap: 1rem;
+        align-items: center;
+        flex-wrap: wrap;
+    }
+    /* Estilos premium de vacío en funciones */
+    .pelis-vacio {
+        background-color: #1f1f1f;
+        padding: 4rem 2rem;
+        border-radius: 12px;
+        text-align: center;
+        box-shadow: 0 4px 15px rgba(0,0,0,0.4);
+        border: 1px solid #333;
+        margin: 2rem 0;
+    }
+    .pelis-vacio-icono {
+        font-size: 4rem;
+        margin-bottom: 1rem;
+    }
+    .pelis-vacio-texto-principal {
+        color: #ffffff;
+        font-size: 1.4rem;
+        font-weight: bold;
+        margin-bottom: 0.5rem;
+    }
+    .pelis-vacio-texto-secundario {
+        color: #aaaaaa;
+        font-size: 1rem;
+    }
+</style>
 {% endblock %}
 
 {% block contenido %}
 <h1>Funciones Disponibles</h1>
 
+<!-- MEJORAS/REDISEÑO GEMINI: Buscador vivo y filtros rápidos en una cabecera unificada -->
+<div class="funciones-cabecera-contenedor">
+    <div class="buscador-caja-funciones">
+        <input
+            type="text"
+            id="buscar-funciones"
+            name="buscar"
+            value="{{ busqueda }}"
+            placeholder="Buscá funciones por película, director..."
+            class="filtros-input"
+            style="width: 100%;"
+            autocomplete="off"
+        >
+    </div>
+    
+    <div class="funciones-filtros-caja-inline">
+        <form method="get" id="form-filtros-funciones">
+            <!-- Campos ocultos para mantener el estado -->
+            <input type="hidden" name="buscar" id="hidden-buscar-funciones" value="{{ busqueda }}">
+            <input type="hidden" name="fecha" id="hidden-fecha-funciones" value="{{ fecha_seleccionada }}">
+
+            <div class="funciones-filtros-grid-inline">
+                <!-- Filtro rápido de fecha (opcional además de la barra superior) -->
+                <div class="funciones-filtro-campo">
+                    <select id="filtro-fecha-rapida" name="fecha_rapida" class="funciones-filtro-select">
+                        <option value="">Cualquier fecha</option>
+                        <option value="hoy" {% if fecha_seleccionada == 'hoy' %}selected{% endif %}>Hoy</option>
+                        <option value="mañana" {% if fecha_seleccionada == 'mañana' %}selected{% endif %}>Mañana</option>
+                        <option value="semana" {% if fecha_seleccionada == 'semana' %}selected{% endif %}>Esta semana</option>
+                    </select>
+                </div>
+
+                <!-- Filtro Sala -->
+                <div class="funciones-filtro-campo">
+                    <select id="filtro-sala" name="sala" class="funciones-filtro-select">
+                        <option value="">Todas las salas</option>
+                        {% for s in salas_disponibles %}
+                            <option value="{{ s.id }}" {% if sala_seleccionada == s.id|stringformat:"s" %}selected{% endif %}>
+                                {{ s.nombre }}
+                            </option>
+                        {% endfor %}
+                    </select>
+                </div>
+
+                <div class="funciones-filtros-acciones" style="margin: 0;">
+                    <a href="{% url 'salas:lista_funciones' %}" class="funciones-filtro-btn-limpiar" style="padding: 0.5rem 1rem; font-size: 0.9rem;">
+                        Limpiar Filtros
+                    </a>
+                </div>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- MEJORAS/REDISEÑO GEMINI: Carrusel de fechas con deselección al tocar de nuevo la fecha activa -->
 <div class="fechas-carrusel-wrap">
     <button type="button" class="fecha-flecha fecha-flecha-prev" aria-label="Días anteriores">‹</button>
     <div class="fechas-carrusel">
         {% for f in proximas_fechas %}
-            <a href="?pelicula={{ pelicula_seleccionada }}&sala={{ sala_seleccionada }}&orden={{ orden_seleccionado }}&fecha={{ f.valor }}"
-               class="fecha-item{% if forloop.first and not fecha_seleccionada %} fecha-hoy{% endif %}{% if fecha_seleccionada == f.valor %} fecha-activa{% endif %}">
-                <span class="fecha-item-diasemana">{{ f.dia_semana }}</span>
-                <span class="fecha-item-diames">{{ f.dia_mes }}</span>
-            </a>
+            {% if fecha_seleccionada == f.valor %}
+                <a href="?buscar={{ busqueda }}&sala={{ sala_seleccionada }}"
+                   class="fecha-item fecha-activa">
+                    <span class="fecha-item-diasemana">{{ f.dia_semana }}</span>
+                    <span class="fecha-item-diames">{{ f.dia_mes }}</span>
+                </a>
+            {% else %}
+                <a href="?buscar={{ busqueda }}&sala={{ sala_seleccionada }}&fecha={{ f.valor }}"
+                   class="fecha-item{% if forloop.first and not fecha_seleccionada %} fecha-hoy{% endif %}">
+                    <span class="fecha-item-diasemana">{{ f.dia_semana }}</span>
+                    <span class="fecha-item-diames">{{ f.dia_mes }}</span>
+                </a>
+            {% endif %}
         {% endfor %}
     </div>
     <button type="button" class="fecha-flecha fecha-flecha-next" aria-label="Días siguientes">›</button>
-    {% if fecha_seleccionada %}
-        <a href="?pelicula={{ pelicula_seleccionada }}&sala={{ sala_seleccionada }}&orden={{ orden_seleccionado }}"
-           class="fecha-quitar" title="Quitar filtro de día">🗑</a>
-    {% endif %}
 </div>
 
-{# ===== FILTROS ===== #}
-<!-- bloque modificado: tema oscuro (antes caja blanca fija por inline style) -->
-<!-- modificado: clases salas-estilo-1..9 renombradas a nombres descriptivos (funciones-filtros-box, funciones-filtro-label, etc.) -->
-<div class="funciones-filtros-box">
-    <form method="get">
-        <div class="funciones-filtros-grid">
-
-            <div>
-                <label class="funciones-filtro-label">🎬 Película</label>
-                <select name="pelicula" class="funciones-filtro-select">
-                    <option value="">Todas</option>
-                    {% for p in peliculas_disponibles %}
-                        <option value="{{ p.id }}" {% if pelicula_seleccionada == p.id|stringformat:"s" %}selected{% endif %}>{{ p.titulo }}</option>
-                    {% endfor %}
-                </select>
-            </div>
-
-            <div>
-                <label class="funciones-filtro-label">📅 Fecha</label>
-                <select name="fecha" class="funciones-filtro-select">
-                    <option value="">Todas</option>
-                    <option value="hoy" {% if fecha_seleccionada == 'hoy' %}selected{% endif %}>Hoy</option>
-                    <option value="mañana" {% if fecha_seleccionada == 'mañana' %}selected{% endif %}>Mañana</option>
-                    <option value="semana" {% if fecha_seleccionada == 'semana' %}selected{% endif %}>Esta semana</option>
-                </select>
-            </div>
-
-            <div>
-                <label class="funciones-filtro-label">🏢 Sala</label>
-                <select name="sala" class="funciones-filtro-select">
-                    <option value="">Todas</option>
-                    {% for s in salas_disponibles %}
-                        <option value="{{ s.id }}" {% if sala_seleccionada == s.id|stringformat:"s" %}selected{% endif %}>{{ s.nombre }}</option>
-                    {% endfor %}
-                </select>
-            </div>
-
-            <div>
-                <label class="funciones-filtro-label">📊 Ordenar</label>
-                <select name="orden" class="funciones-filtro-select">
-                    <option value="fecha" {% if orden_seleccionado == 'fecha' %}selected{% endif %}>Por fecha</option>
-                    <option value="precio" {% if orden_seleccionado == 'precio' %}selected{% endif %}>Por precio</option>
-                    <option value="pelicula" {% if orden_seleccionado == 'pelicula' %}selected{% endif %}>Por película</option>
-                </select>
-            </div>
-        </div>
-
-        <div class="funciones-filtros-acciones">
-            <button type="submit" class="funciones-filtro-btn-aplicar">
-                Aplicar Filtros
-            </button>
-            <a href="{% url 'salas:lista_funciones' %}" class="funciones-filtro-btn-limpiar">
-                Limpiar
-            </a>
-        </div>
-    </form>
+<!-- MEJORAS/REDISEÑO GEMINI: Contenedor AJAX para las funciones -->
+<div id="funciones-grid-container">
+    {% include 'salas/partials/_lista_funciones_grid.html' %}
 </div>
 
-{% if tarjetas_peliculas %}
-    <p class="funciones-resultado-info">{{ total_resultados }} función(es) encontrada(s)</p>
-
-    <div class="funciones-lista">
-        {% for tarjeta in tarjetas_peliculas %}
-            <div class="funcion-pelicula-card">
-                <a href="{% url 'peliculas:detalle_pelicula' tarjeta.pelicula.id %}" class="funcion-pelicula-poster">
-                    {% if tarjeta.pelicula.poster %}
-                        <img src="{{ tarjeta.pelicula.poster.url }}" alt="{{ tarjeta.pelicula.titulo }}">
-                    {% else %}
-                        <div class="funcion-pelicula-poster-placeholder">🎬</div>
-                    {% endif %}
-                </a>
-
-                <div class="funcion-pelicula-info">
-                    <div class="funcion-pelicula-encabezado">
-                        <h3>
-                            <a href="{% url 'peliculas:detalle_pelicula' tarjeta.pelicula.id %}">{{ tarjeta.pelicula.titulo }}</a>
-                        </h3>
-                        <span class="funcion-pelicula-desde">Desde ${{ tarjeta.precio_desde }}</span>
-                    </div>
-
-                    <div class="detalle-badges">
-                        {% if tarjeta.pelicula.clasificacion %}
-                            <span class="detalle-badge detalle-badge-clasificacion">{{ tarjeta.pelicula.get_clasificacion_display }}</span>
-                        {% endif %}
-                        {% if tarjeta.pelicula.duracion %}
-                            <span class="detalle-badge detalle-badge-gris">⏱ {{ tarjeta.pelicula.duracion_formato }}</span>
-                        {% endif %}
-                    </div>
-
-                    <!-- nuevo: horarios agrupados por tipo de sala, mismo partial que usa detalle_pelicula -->
-                    {% with grupos_funciones=tarjeta.grupos_funciones %}
-                        {% include 'partials/_grupos_funciones.html' %}
-                    {% endwith %}
-                </div>
-            </div>
-        {% endfor %}
-    </div>
-{% else %}
-    <p class="funciones-vacio">
-        No hay funciones disponibles en este momento.
-    </p>
-{% endif %}
 {% endblock %}
 
 {% block extra_js %}
-<!-- nuevo: flechas del carrusel de fechas -->
+<!-- nuevo: buscador vivo AJAX para funciones + flechas del carrusel -->
+<script src="{% static 'js/salas/buscador_funciones_vivo.js' %}"></script>
 <script src="{% static 'js/shared/fechas_carrusel.js' %}"></script>
 {% endblock %}

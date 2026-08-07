@@ -5,111 +5,199 @@
 
 {% block extra_css %}
 <link rel="stylesheet" href="{% static 'css/salas/lista_salas.css' %}">
-<!-- nuevo: mapa de asientos de solo lectura -->
 <link rel="stylesheet" href="{% static 'css/salas/mapa_salas.css' %}">
+<style>
+    /* MEJORAS/REDISEÑO GEMINI: Estilos para el layout de dos columnas en Salas */
+    .salas-dos-columnas-layout {
+        display: grid;
+        grid-template-columns: 360px 1fr;
+        gap: 2rem;
+        align-items: start;
+        margin-top: 1.5rem;
+    }
+    
+    .salas-col-izquierda {
+        display: flex;
+        flex-direction: column;
+        gap: 1.25rem;
+    }
+    
+    .salas-col-derecha {
+        position: sticky;
+        top: 2rem;
+        background-color: #1c1c1c;
+        border-radius: 12px;
+        padding: 2rem;
+        box-shadow: 0 4px 15px rgba(0,0,0,0.4);
+        border: 1px solid #333;
+        min-height: 450px;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+    }
+    
+    .salas-mapa-placeholder {
+        text-align: center;
+        color: #888;
+        padding: 2rem;
+    }
+    
+    .salas-mapa-placeholder-icono {
+        font-size: 3.5rem;
+        margin-bottom: 1rem;
+        display: block;
+    }
+    
+    /* El mapa por defecto en el panel lateral estará oculto */
+    .salas-mapa-panel-lateral {
+        display: none;
+    }
+    
+    .salas-mapa-panel-lateral.activo {
+        display: block;
+        animation: fadeIn 0.3s ease-in-out;
+    }
+    
+    /* Resaltar la tarjeta seleccionada */
+    .salas-tarjeta.seleccionada {
+        border: 2px solid #e50914;
+        background-color: #252525;
+        box-shadow: 0 0 15px rgba(229, 9, 20, 0.2);
+    }
+    
+    @keyframes fadeIn {
+        from { opacity: 0; transform: translateY(10px); }
+        to { opacity: 1; transform: translateY(0); }
+    }
+    
+    @media (max-width: 800px) {
+        .salas-dos-columnas-layout {
+            grid-template-columns: 1fr;
+        }
+        .salas-col-derecha {
+            position: relative;
+            top: 0;
+            min-height: auto;
+        }
+    }
+</style>
 {% endblock %}
 
 {% block contenido %}
 <h1>Nuestras Salas</h1>
 
-<!-- modificado: clases salas-estilo-1..14 renombradas a nombres descriptivos (salas-grid, salas-tarjeta-nombre, salas-badge-2d, etc.) -->
 {% if salas %}
-    <div class="salas-grid">
-        {% for sala in salas %}
-            <div class="salas-tarjeta salas-tarjeta--{{ sala.tipo }}">
-                <div class="salas-tarjeta-header">
-                    <h3 class="salas-tarjeta-nombre">{{ sala.nombre }}</h3>
-                    
-                    {# Badge tipo sala #}
-                    {% if sala.tipo == '2d' %}
-                        <span class="salas-badge-2d">
-                            🎬 2D
-                        </span>
-                    {% elif sala.tipo == '3d' %}
-                        <span class="salas-badge-3d">
-                            🥽 3D
-                        </span>
-                    {% elif sala.tipo == '2d_premium' %}
-                        <span class="salas-badge-2d-premium">
-                            ⭐ 2D Premium
-                        </span>
-                    {% elif sala.tipo == '3d_premium' %}
-                        <span class="salas-badge-3d-premium">
-                            💎 3D Premium
-                        </span>
+    <div class="salas-dos-columnas-layout">
+        
+        <!-- Columna Izquierda: Tarjetas de Salas -->
+        <div class="salas-col-izquierda">
+            {% for sala in salas %}
+                <div class="salas-tarjeta salas-tarjeta--{{ sala.tipo }} salas-tarjeta-clickable" data-sala-id="{{ sala.id }}" style="cursor: pointer; transition: all 0.2s;">
+                    <div class="salas-tarjeta-header">
+                        <h3 class="salas-tarjeta-nombre">{{ sala.nombre }}</h3>
+                        
+                        {# Badge tipo sala #}
+                        {% if sala.tipo == '2d' %}
+                            <span class="salas-badge-2d">🎬 2D</span>
+                        {% elif sala.tipo == '3d' %}
+                            <span class="salas-badge-3d">🥽 3D</span>
+                        {% elif sala.tipo == '2d_premium' %}
+                            <span class="salas-badge-2d-premium">⭐ 2D Premium</span>
+                        {% elif sala.tipo == '3d_premium' %}
+                            <span class="salas-badge-3d-premium">💎 3D Premium</span>
+                        {% endif %}
+                    </div>
+
+                    <p class="salas-tarjeta-dato">
+                        <strong>Capacidad:</strong> {{ sala.capacidad }} personas
+                    </p>
+                    <p class="salas-tarjeta-dato">
+                        <strong>Distribución:</strong> {{ sala.filas }} filas × {{ sala.columnas }} columnas
+                    </p>
+
+                    {% if sala.es_premium %}
+                        <div class="salas-aviso-premium">
+                            <p class="salas-aviso-premium-texto">
+                                ✨ Sala Premium — butacas reclinables, audio Dolby Atmos
+                            </p>
+                        </div>
                     {% endif %}
+
+                    {% if sala.es_3d %}
+                        <div class="salas-aviso-3d">
+                            <p class="salas-aviso-3d-texto">
+                                🥽 Tecnología 3D — lentes incluidos
+                            </p>
+                        </div>
+                    {% endif %}
+
+                    <button type="button" class="salas-mapa-toggle-btn" data-sala-id="{{ sala.id }}" style="width: 100%; margin-top: 1rem; padding: 0.5rem; background-color: #333; border: none; border-radius: 4px; color: #fff; font-weight: bold; cursor: pointer;">
+                        Ver mapa de asientos
+                    </button>
                 </div>
-
-                <p class="salas-tarjeta-dato">
-                    <strong>Capacidad:</strong> {{ sala.capacidad }} personas
-                </p>
-                <p class="salas-tarjeta-dato">
-                    <strong>Distribución:</strong> {{ sala.filas }} filas × {{ sala.columnas }} columnas
-                </p>
-
-                {% if sala.es_premium %}
-                    <div class="salas-aviso-premium">
-                        <p class="salas-aviso-premium-texto">
-                            ✨ Sala Premium — butacas reclinables, audio Dolby Atmos
-                        </p>
-                    </div>
-                {% endif %}
-
-                {% if sala.es_3d %}
-                    <div class="salas-aviso-3d">
-                        <p class="salas-aviso-3d-texto">
-                            🥽 Tecnología 3D — lentes incluidos en el precio
-                        </p>
-                    </div>
-                {% endif %}
-
-                <p class="salas-tarjeta-disponible">
-                    ✓ Disponible
-                </p>
-
-                <!-- nuevo: mapa de asientos de solo lectura, para que el cliente vea la distribución sin reservar -->
-                <button type="button" class="salas-mapa-toggle-btn" data-sala-id="{{ sala.id }}">
-                    Ver mapa de asientos
-                </button>
-                <div id="salas-mapa-panel-{{ sala.id }}" class="salas-mapa-panel">
-                    <div class="salas-mapa-leyenda">
+            {% endfor %}
+        </div>
+        
+        <!-- Columna Derecha: Panel Fijo para Mapas de Asientos -->
+        <div class="salas-col-derecha">
+            <!-- Placeholder Inicial -->
+            <div id="placeholder-mapa" class="salas-mapa-placeholder">
+                <span class="salas-mapa-placeholder-icono">💺</span>
+                <h3>Mapa de Asientos</h3>
+                <p>Seleccioná una sala de la lista de la izquierda para ver la distribución y estado de sus butacas.</p>
+            </div>
+            
+            <!-- Mapas Renderizados Ocultos -->
+            {% for sala in salas %}
+                <div id="salas-mapa-panel-{{ sala.id }}" class="salas-mapa-panel-lateral">
+                    <h3 style="color: #ffffff; margin-bottom: 1.5rem; border-bottom: 1px solid #333; padding-bottom: 0.5rem; font-size: 1.3rem;">
+                        Distribución de {{ sala.nombre }}
+                    </h3>
+                    
+                    <div class="salas-mapa-leyenda" style="margin-bottom: 1.5rem; display: flex; gap: 1rem; flex-wrap: wrap;">
                         <div class="salas-mapa-leyenda-item">
                             <span class="salas-mapa-leyenda-swatch salas-mapa-leyenda-swatch--disponible"></span>
-                            <span>Asiento</span>
+                            <span>Asiento Común</span>
                         </div>
-                        {% if sala.mapa_categoria %}
+                        {% if sala.categorias_asientos.all %}
                         <div class="salas-mapa-leyenda-item">
-                            <span class="salas-mapa-leyenda-swatch salas-mapa-leyenda-swatch--categoria"></span>
-                            <span>Categoría especial</span>
+                            <span class="salas-mapa-leyenda-swatch salas-mapa-leyenda-swatch--categoria" style="background-color: #f39c12;"></span>
+                            <span>Categoría Especial</span>
                         </div>
                         {% endif %}
-                        {% if sala.mapa_bloqueados %}
+                        {% if sala.bloqueos_asientos.all %}
                         <div class="salas-mapa-leyenda-item">
                             <span class="salas-mapa-leyenda-swatch salas-mapa-leyenda-swatch--bloqueado"></span>
-                            <span>No disponible</span>
+                            <span>No Disponible</span>
                         </div>
                         {% endif %}
                     </div>
-                    <div class="salas-mapa-pantalla-curva"></div>
-                    <div class="salas-mapa-inner">
-                        {% for fila in sala.mapa_layout %}
-                            <div class="salas-mapa-fila">
-                                <span class="salas-mapa-fila-letra">{{ fila.letra }}</span>
-                                {% for asiento in fila.celdas %}
-                                    {% if asiento %}
-                                        <span class="salas-mapa-asiento {% if asiento in sala.mapa_bloqueados %}salas-mapa-asiento--bloqueado{% elif asiento in sala.mapa_categoria %}salas-mapa-asiento--categoria{% else %}salas-mapa-asiento--disponible{% endif %}"
-                                              title="{{ asiento }}"></span>
-                                    {% else %}
-                                        <span class="salas-mapa-pasillo"></span>
-                                    {% endif %}
-                                {% endfor %}
-                                <span class="salas-mapa-fila-letra">{{ fila.letra }}</span>
-                            </div>
-                        {% endfor %}
+                    
+                    <div class="salas-mapa-pantalla-curva" style="margin-bottom: 2rem;">PANTALLA</div>
+                    
+                    <!-- Contenedor scrollable interno para el mapa si la sala es muy grande -->
+                    <div style="overflow-x: auto; padding-bottom: 1rem;">
+                        <div class="salas-mapa-inner" style="min-width: max-content; margin: 0 auto;">
+                            {% for fila in sala.mapa_layout %}
+                                <div class="salas-mapa-fila">
+                                    <span class="salas-mapa-fila-letra">{{ fila.letra }}</span>
+                                    {% for asiento in fila.celdas %}
+                                        {% if asiento %}
+                                            <span class="salas-mapa-asiento {% if asiento in sala.mapa_bloqueados %}salas-mapa-asiento--bloqueado{% elif asiento in sala.mapa_categoria %}salas-mapa-asiento--categoria{% else %}salas-mapa-asiento--disponible{% endif %}"
+                                                  title="{{ asiento }}"></span>
+                                        {% else %}
+                                            <span class="salas-mapa-pasillo"></span>
+                                        {% endif %}
+                                    {% endfor %}
+                                    <span class="salas-mapa-fila-letra">{{ fila.letra }}</span>
+                                </div>
+                            {% endfor %}
+                        </div>
                     </div>
                 </div>
-            </div>
-        {% endfor %}
+            {% endfor %}
+        </div>
+        
     </div>
 {% else %}
     <p class="salas-vacio">
@@ -119,6 +207,6 @@
 {% endblock %}
 
 {% block extra_js %}
-<!-- nuevo: toggle del mapa de asientos de solo lectura -->
+<!-- nuevo: controlador del panel lateral de mapas -->
 <script src="{% static 'js/salas/mapa_asientos.js' %}"></script>
 {% endblock %}

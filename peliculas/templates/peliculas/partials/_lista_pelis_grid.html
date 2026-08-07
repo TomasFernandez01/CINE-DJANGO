@@ -1,0 +1,48 @@
+<!-- MEJORAS/REDISEÑO GEMINI: Partial para la grilla de películas filtrada -->
+{% if hay_filtros_activos %}
+    <p class="pelis-resultado-info">
+        <strong>{{ total_resultados }}</strong> resultado(s) encontrado(s)
+        {% if busqueda %}para "<strong>{{ busqueda }}</strong>"{% endif %}
+        {% if fecha_seleccionada %}con función el <strong>{{ fecha_seleccionada }}</strong>{% endif %}
+    </p>
+
+    {% if peliculas %}
+        <div class="pelis-grid">
+            {% for pelicula in peliculas %}
+                {% include 'peliculas/_card_pelicula.html' %}
+            {% endfor %}
+        </div>
+        
+        {% include 'peliculas/_paginacion.html' %}
+    {% else %}
+        <div class="pelis-vacio">
+            <p class="pelis-vacio-icono">😕</p>
+            <p class="pelis-vacio-texto-principal">No se encontraron películas</p>
+            <p class="pelis-vacio-texto-secundario">Intentá con otros filtros o <a href="{% url 'peliculas:lista_peliculas' %}" class="pelis-vacio-link">ver todas las películas</a></p>
+        </div>
+    {% endif %}
+{% else %}
+    <h3 class="cartelera-seccion-titulo">En cartelera</h3>
+    {% if peliculas_en_cartelera %}
+        <div class="pelis-grid">
+            {% for pelicula in peliculas_en_cartelera %}
+                {% include 'peliculas/_card_pelicula.html' %}
+            {% endfor %}
+        </div>
+        
+        {% include 'peliculas/_paginacion.html' %}
+    {% else %}
+        <div class="pelis-vacio">
+            <p class="pelis-vacio-texto-principal">No hay películas en cartelera en este momento.</p>
+        </div>
+    {% endif %}
+
+    {% if peliculas_proximos_estrenos %}
+        <h3 class="cartelera-seccion-titulo">Próximos estrenos</h3>
+        <div class="pelis-grid">
+            {% for pelicula in peliculas_proximos_estrenos %}
+                {% include 'peliculas/_card_pelicula.html' with proximamente=True %}
+            {% endfor %}
+        </div>
+    {% endif %}
+{% endif %}

@@ -1,0 +1,116 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block titulo %}Ayuda y FAQ - Cine Online{% endblock %}
+
+{% block extra_css %}
+<!-- MEJORAS/REDISEÑO GEMINI: Hojas de estilo para la sección de ayuda -->
+<link rel="stylesheet" href="{% static 'css/inicio/secciones.css' %}">
+<link rel="stylesheet" href="{% static 'css/ayuda.css' %}">
+{% endblock %}
+
+{% block contenido %}
+<div class="ayuda-container">
+    <h1 class="ayuda-titulo">💡 Centro de Ayuda</h1>
+    <p class="ayuda-subtitulo">Todo lo que necesitás saber para comprar tus entradas de forma segura</p>
+
+    <!-- Features -->
+    <div class="features-grid">
+        <div class="feature-card">
+            <div class="feature-card-icono">🎫</div>
+            <h3>Reservá Online</h3>
+            <p>Comprá tus entradas desde la comodidad de tu casa</p>
+        </div>
+
+        <div class="feature-card">
+            <div class="feature-card-icono">💳</div>
+            <h3>Pagos Seguros</h3>
+            <p>Múltiples métodos de pago disponibles</p>
+        </div>
+
+        <div class="feature-card">
+            <div class="feature-card-icono">⚡</div>
+            <h3>Rápido y Fácil</h3>
+            <p>Proceso de reserva simple en pocos pasos</p>
+        </div>
+    </div>
+
+    <!-- Info adicional -->
+    <div class="como-funciona" style="margin-bottom: 4rem;">
+        <h3>¿Cómo funciona el proceso de compra?</h3>
+        <div class="como-funciona-grid">
+            <div class="como-funciona-paso">
+                <div class="como-funciona-numero">1</div>
+                <h4>Elegí tu película</h4>
+                <p>Explorá la cartelera y hacé clic en tu favorita</p>
+            </div>
+            <div class="como-funciona-paso">
+                <div class="como-funciona-numero">2</div>
+                <h4>Seleccioná función</h4>
+                <p>Elegí el día, horario y sala disponible</p>
+            </div>
+            <div class="como-funciona-paso">
+                <div class="como-funciona-numero">3</div>
+                <h4>Reservá</h4>
+                <p>Indicá cuántas entradas querés y elegí tus butacas</p>
+            </div>
+            <div class="como-funciona-paso">
+                <div class="como-funciona-numero">4</div>
+                <h4>Pagá</h4>
+                <p>Completá el pago simulado de forma segura</p>
+            </div>
+            <div class="como-funciona-paso">
+                <div class="como-funciona-numero">5</div>
+                <h4>¡Disfrutá!</h4>
+                <p>Presentá el código QR desde tu celular al ingresar</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- FAQ Acordeón -->
+    <div class="faq-seccion">
+        <h2 class="faq-titulo">Preguntas Frecuentes</h2>
+        <div class="faq-lista">
+            <div class="faq-item">
+                <button class="faq-pregunta">¿Cuánto tiempo tengo para pagar mi reserva?</button>
+                <div class="faq-respuesta">
+                    <p>Una vez que seleccionás tus asientos, tenés un tiempo límite de 15 minutos para concretar el pago. Si no lo completás en ese lapso, la reserva expirará y las butacas volverán a liberarse para otros usuarios.</p>
+                </div>
+            </div>
+
+            <div class="faq-item">
+                <button class="faq-pregunta">¿Cómo accedo a mis entradas compradas?</button>
+                <div class="faq-respuesta">
+                    <p>Todas tus compras confirmadas se guardan en la sección <strong>Mi Perfil > Historial</strong> y también en <strong>Mis Reservas</strong>. Desde allí podés visualizar el comprobante y el código QR que deberás presentar al ingresar a la sala.</p>
+                </div>
+            </div>
+
+            <div class="faq-item">
+                <button class="faq-pregunta">¿Puedo cancelar una reserva?</button>
+                <div class="faq-respuesta">
+                    <p>Sí, las reservas en estado pendiente pueden cancelarse en cualquier momento. Si la reserva ya fue abonada, podés cancelarla hasta 2 horas antes del inicio de la función desde la sección <strong>Mis Reservas</strong>.</p>
+                </div>
+            </div>
+
+            <div class="faq-item">
+                <button class="faq-pregunta">¿Qué es el Club Cine y cómo subo de nivel?</button>
+                <div class="faq-respuesta">
+                    <p>El Club Cine es nuestro programa de beneficios gratuito. Cada reserva que realices suma puntos para subir de rango (Bronce, Plata, Oro). Al subir de nivel, recibirás cupones de descuento exclusivos en tu perfil.</p>
+                </div>
+            </div>
+
+            <div class="faq-item">
+                <button class="faq-pregunta">¿Los pagos son reales?</button>
+                <div class="faq-respuesta">
+                    <p>No, este sitio funciona en entorno de demostración. Los pagos son completamente simulados, por lo que podés usar cualquier número de tarjeta ficticio para completar el proceso de compra.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<!-- MEJORAS/REDISEÑO GEMINI: Lógica interactiva del acordeón -->
+<script src="{% static 'js/ayuda.js' %}"></script>
+{% endblock %}
