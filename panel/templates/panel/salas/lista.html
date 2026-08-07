@@ -8,90 +8,76 @@
 <span class="current">Salas</span>
 {% endblock %}
 
+<!-- modificado (Hilo 1): separación CSS completa (51 estilos inline -> 0), movidos a
+     static/css/panel/salas/lista.css. Se borró un bloque comment de ~85 líneas
+     al final del archivo: era una versión vieja y duplicada de esta misma grilla,
+     código muerto. -->
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/panel/salas/lista.css' %}">
+{% endblock %}
+
 {% block contenido %}
 
-<div style="display:flex; justify-content:space-between; align-items:center;
-            flex-wrap:wrap; gap:1rem; margin-bottom:1.5rem;">
-    <h1 style="font-size:1.4rem; color:#1a1a2e; margin:0;">🏢 Salas</h1>
-    <div style="display:flex; gap:0.5rem;">
-        <button type="submit" form="formSalas" id="btnEliminarSeleccionadas" class="btn btn-danger" disabled style="opacity:0.5; cursor:not-allowed;">Eliminar</button>
+<div class="panelsalas-header">
+    <h1 class="panelsalas-titulo">🏢 Salas</h1>
+    <div class="panelsalas-header-acciones">
+        <button type="submit" form="formSalas" id="btnEliminarSeleccionadas" class="btn btn-danger" disabled>Eliminar</button>
         <a href="{% url 'panel:inicio' %}" class="btn btn-primary">INICIO</a>
         <a href="{% url 'panel:salas_crear' %}" class="btn btn-primary">NUEVA</a>
     </div>
 </div>
 <form method="post" action="{% url 'panel:salas_eliminar' %}" id="formSalas">
     {% csrf_token %}
-    <div style="display:grid; grid-template-columns:repeat(auto-fill, minmax(280px,1fr)); gap:1rem;">
+    <div class="panelsalas-grid">
         {% for item in salas_con_info %}
         {% with s=item.sala %}
         <div class="card">
-            <div class="card-header">
-                <label style="display:flex; align-items:center; gap:0.5rem; cursor:pointer; margin:0;">
+            <div class="card-header panelsalas-card-header">
+                <label class="panelsalas-card-checkbox-label">
                     <input type="checkbox" name="seleccionadas" value="{{ s.id }}"
                            class="chk-sala panel-checkbox">
-                    <h3 style="margin:0;">{{ s.nombre }}</h3>
+                    <h3 class="panelsalas-card-nombre">{{ s.nombre }}</h3>
                 </label>
-                <span style="font-size:0.75rem; padding:0.2rem 0.6rem; border-radius:20px; font-weight:600;
-                             {% if s.activa %}background:#d4edda; color:#155724;
-                             {% else %}background:#f8d7da; color:#721c24;{% endif %}">
+                <span class="panelsalas-card-badge {% if s.activa %}panelsalas-card-badge--activa{% else %}panelsalas-card-badge--inactiva{% endif %}">
                     {% if s.activa %}Activa{% else %}Inactiva{% endif %}
                 </span>
             </div>
             <div class="card-body">
 
                 <!-- Layout visual de la sala -->
-                <div style="background:#1a1a2e; border-radius:8px; padding:1rem;
-                            margin-bottom:1rem; text-align:center;">
-                    <div style="background:linear-gradient(to bottom,#444,#666);
-                                color:white; padding:0.4rem 2rem; border-radius:4px 4px 0 0;
-                                font-size:0.75rem; letter-spacing:2px; margin-bottom:0.75rem;
-                                display:inline-block;">PANTALLA</div>
-                    <div style="display:flex; flex-direction:column; gap:3px; align-items:center;">
+                <div class="panelsalas-layout-visual">
+                    <div class="panelsalas-layout-pantalla">PANTALLA</div>
+                    <div class="panelsalas-layout-asientos">
                         {% for i in "12345" %}
-                        <div style="display:flex; gap:3px;">
+                        <div class="panelsalas-layout-fila">
                             {% for j in "123456789012" %}
-                            <div style="width:10px; height:8px; border-radius:2px;
-                                        background:rgba(226,185,111,0.4);"></div>
+                            <div class="panelsalas-layout-asiento"></div>
                             {% endfor %}
                         </div>
                         {% endfor %}
                     </div>
-                    <div style="font-size:0.65rem; color:rgba(255,255,255,0.4);
-                                margin-top:0.5rem; letter-spacing:1px;">
+                    <div class="panelsalas-layout-dato">
                         {{ s.filas }} filas * {{ s.columnas }} columnas
                     </div>
                 </div>
 
-                <div style="display:grid; grid-template-columns:1fr 1fr 1fr; gap:0.5rem;
-                            text-align:center; margin-bottom:1rem;">
-                    <div style="background:#f8f9fa; padding:0.6rem; border-radius:6px;">
-                        <div style="font-size:1.3rem; font-weight:700; color:#1a1a2e;">
-                            {{ s.capacidad }}
-                        </div>
-                        <div style="font-size:0.65rem; color:#999; text-transform:uppercase;">
-                            Asientos
-                        </div>
+                <div class="panelsalas-stats-grid">
+                    <div class="panelsalas-stat-box">
+                        <div class="panelsalas-stat-valor">{{ s.capacidad }}</div>
+                        <div class="panelsalas-stat-label">Asientos</div>
                     </div>
-                    <div style="background:#f8f9fa; padding:0.6rem; border-radius:6px;">
-                        <div style="font-size:1.3rem; font-weight:700; color:#1a1a2e;">
-                            {{ s.filas }}
-                        </div>
-                        <div style="font-size:0.65rem; color:#999; text-transform:uppercase;">
-                            Filas
-                        </div>
+                    <div class="panelsalas-stat-box">
+                        <div class="panelsalas-stat-valor">{{ s.filas }}</div>
+                        <div class="panelsalas-stat-label">Filas</div>
                     </div>
-                    <div style="background:#f8f9fa; padding:0.6rem; border-radius:6px;">
-                        <div style="font-size:1.3rem; font-weight:700; color:#1a1a2e;">
-                            {{ item.funciones_hoy }}
-                        </div>
-                        <div style="font-size:0.65rem; color:#999; text-transform:uppercase;">
-                            Hoy
-                        </div>
+                    <div class="panelsalas-stat-box">
+                        <div class="panelsalas-stat-valor">{{ item.funciones_hoy }}</div>
+                        <div class="panelsalas-stat-label">Hoy</div>
                     </div>
                 </div>
 
-                <div style="display:flex; gap:0.5rem;">
-                    <a href="{% url 'panel:funciones_lista' %}?sala={{ s.id }}" class="btn btn-primary">FUNCIONES</a> 
+                <div class="panelsalas-card-acciones">
+                    <a href="{% url 'panel:funciones_lista' %}?sala={{ s.id }}" class="btn btn-primary">FUNCIONES</a>
                     <a href="{% url 'panel:salas_editar' s.id %}" class="btn btn-primary" title="Editar">EDITAR</a>
                     <a href="{% url 'panel:salas_asientos' s.id %}" class="btn btn-primary" title="Bloquear asientos">GESTONAR</a>
                 </div>
@@ -99,8 +85,8 @@
         </div>
         {% endwith %}
         {% empty %}
-        <div class="card" style="grid-column:1/-1;">
-            <div class="card-body" style="text-align:center; padding:3rem; color:#999;">
+        <div class="card panelsalas-vacio-card">
+            <div class="card-body panelsalas-vacio">
                 No hay salas registradas.
             </div>
         </div>
@@ -108,92 +94,8 @@
     </div>
 </form>
 
-<script src="{% static 'js/panel/salas/lista.js' %}"></script>
-
 {% endblock %}
-{% comment %} 
-<div style="display:grid; grid-template-columns:repeat(auto-fill, minmax(280px,1fr)); gap:1rem;">
-    {% for item in salas_con_info %}
-    {% with s=item.sala %}
-    <div class="card">
-        <div class="card-header">
-            <h3>{{ s.nombre }}</h3>
-            <span style="font-size:0.75rem; padding:0.2rem 0.6rem; border-radius:20px; font-weight:600;
-                         {% if s.activa %}background:#d4edda; color:#155724;
-                         {% else %}background:#f8d7da; color:#721c24;{% endif %}">
-                {% if s.activa %}Activa{% else %}Inactiva{% endif %}
-            </span>
-        </div>
-        <div class="card-body">
 
-            <!-- Layout visual de la sala -->
-            <div style="background:#1a1a2e; border-radius:8px; padding:1rem;
-                        margin-bottom:1rem; text-align:center;">
-                <div style="background:linear-gradient(to bottom,#444,#666);
-                            color:white; padding:0.4rem 2rem; border-radius:4px 4px 0 0;
-                            font-size:0.75rem; letter-spacing:2px; margin-bottom:0.75rem;
-                            display:inline-block;">PANTALLA</div>
-                <div style="display:flex; flex-direction:column; gap:3px; align-items:center;">
-                    {% for i in "12345" %}
-                    <div style="display:flex; gap:3px;">
-                        {% for j in "123456789012" %}
-                        <div style="width:10px; height:8px; border-radius:2px;
-                                    background:rgba(226,185,111,0.4);"></div>
-                        {% endfor %}
-                    </div>
-                    {% endfor %}
-                </div>
-                <div style="font-size:0.65rem; color:rgba(255,255,255,0.4);
-                            margin-top:0.5rem; letter-spacing:1px;">
-                    {{ s.filas }} filas × {{ s.columnas }} columnas
-                </div>
-            </div>
-
-            <div style="display:grid; grid-template-columns:1fr 1fr 1fr; gap:0.5rem;
-                        text-align:center; margin-bottom:1rem;">
-                <div style="background:#f8f9fa; padding:0.6rem; border-radius:6px;">
-                    <div style="font-size:1.3rem; font-weight:700; color:#1a1a2e;">
-                        {{ s.capacidad }}
-                    </div>
-                    <div style="font-size:0.65rem; color:#999; text-transform:uppercase;">
-                        Asientos
-                    </div>
-                </div>
-                <div style="background:#f8f9fa; padding:0.6rem; border-radius:6px;">
-                    <div style="font-size:1.3rem; font-weight:700; color:#1a1a2e;">
-                        {{ s.filas }}
-                    </div>
-                    <div style="font-size:0.65rem; color:#999; text-transform:uppercase;">
-                        Filas
-                    </div>
-                </div>
-                <div style="background:#f8f9fa; padding:0.6rem; border-radius:6px;">
-                    <div style="font-size:1.3rem; font-weight:700; color:#1a1a2e;">
-                        {{ item.funciones_hoy }}
-                    </div>
-                    <div style="font-size:0.65rem; color:#999; text-transform:uppercase;">
-                        Hoy
-                    </div>
-                </div>
-            </div>
-
-            <div style="display:flex; gap:0.5rem;">
-                <a href="{% url 'panel:funciones_lista' %}?sala={{ s.id }}"
-                   class="btn btn-primary" style="flex:1; text-align:center; font-size:0.8rem;">
-                    Ver funciones
-                </a>
-                <a href="{% url 'panel:salas_editar' s.id %}" class="btn btn-ghost" style="font-size:0.8rem;" title="Editar">✏️</a>
-                <a href="{% url 'panel:salas_asientos' s.id %}" class="btn btn-primary" style="font-size:0.8rem;" title="Bloquear asientos">🪑</a>
-            </div>
-        </div>
-    </div>
-    {% endwith %}
-    {% empty %}
-    <div class="card" style="grid-column:1/-1;">
-        <div class="card-body" style="text-align:center; padding:3rem; color:#999;">
-            No hay salas registradas.
-        </div>
-    </div>
-    {% endfor %}
-</div>
-{% endblock %} {% endcomment %}
+{% block extra_js %}
+<script src="{% static 'js/panel/salas/lista.js' %}"></script>
+{% endblock %}

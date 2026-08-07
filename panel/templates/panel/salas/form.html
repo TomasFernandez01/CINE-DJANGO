@@ -10,25 +10,34 @@
 <span class="current">{% if accion == 'crear' %}Agregar{% else %}Editar{% endif %}</span>
 {% endblock %}
 
+<!-- modificado (Hilo 1): separación CSS completa (29 estilos inline -> 0), movidos a
+     static/css/panel/salas/form.css. Se borraron: un bloque {% comment %} de ~18 líneas
+     con una versión vieja duplicada de "Capacidad Calculada", dos marcadores
+     {% comment %} {% endcomment %} vacíos sin contenido, y un <script> comentado
+     duplicado al final - todo código muerto. -->
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/panel/salas/form.css' %}">
+{% endblock %}
+
 {% block contenido %}
 {% include 'panel/_form_styles.html' %}
 
-<div style="max-width:680px;">
+<div class="panelsalasform-wrapper">
 
-    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1.5rem;">
-        <h1 style="font-size:1.4rem; color:#1a1a2e; margin:0;">{{ titulo_pagina }}</h1>
+    <div class="panelsalasform-header">
+        <h1 class="panelsalasform-titulo">{{ titulo_pagina }}</h1>
         <a href="{% url 'panel:salas_lista' %}" class="btn btn-danger">ATRAS</a>
     </div>
 
     <form method="post" id="formSala">
         {% csrf_token %}
 
-        <div style="display:grid; grid-template-columns:1fr 1fr; gap:1.5rem; align-items:start;">
+        <div class="panelsalasform-grid">
 
             <!-- Formulario -->
-            <div class="card" style="grid-column:1/-1;">
+            <div class="card panelsalasform-full">
                 <div class="card-header"><h3>Datos de la Sala</h3></div>
-                <div class="card-body" style="display:flex; flex-direction:column; gap:1.1rem;">
+                <div class="card-body panelsalasform-info-body">
 
                     <div>
                         <label class="form-label">
@@ -40,7 +49,7 @@
                         {% endif %}
                     </div>
 
-                    <div style="display:grid; grid-template-columns:1fr 1fr; gap:1rem;">
+                    <div class="panelsalasform-fila-2">
                         <div>
                             <label class="form-label">
                                 Tipo de sala <span class="required">*</span>
@@ -63,7 +72,7 @@
                         </div>
                     </div>
 
-                    <div style="display:grid; grid-template-columns:1fr 1fr; gap:1rem;">
+                    <div class="panelsalasform-fila-2">
                         <div>
                             <label class="form-label">
                                 Filas <span class="required">*</span>
@@ -95,17 +104,17 @@
 
                 </div>
             </div>
-            {% comment %}  {% endcomment %}
+
             <!-- Secciones de la sala -->
-            <div class="card" style="grid-column:1/-1;">
-                <div class="card-header">
+            <div class="card panelsalasform-full">
+                <div class="card-header panelsalasform-secciones-header">
                     <h3>Secciones de la Sala</h3>
-                    <button type="button" id="btnAgregarSeccion" class="btn btn-ghost" style="font-size:0.8rem;">
+                    <button type="button" id="btnAgregarSeccion" class="btn btn-ghost panelsalasform-btn-agregar">
                         Nueva sección
                     </button>
                 </div>
                 <div class="card-body">
-                    <p style="font-size:0.8rem; color:#666; margin-top:0; margin-bottom:1rem;">
+                    <p class="panelsalasform-secciones-ayuda">
                         Cada sección es un rectángulo dentro del lienzo total (Filas × Columnas de arriba).
                         Las celdas que ninguna sección cubra quedan como pasillo. Si no cargás ninguna
                         sección, la sala funciona como una grilla uniforme completa (comportamiento anterior).
@@ -113,15 +122,14 @@
 
                     {{ formset.management_form }}
                     {% if formset.non_form_errors %}
-                    <div style="background:#f8d7da; border-left:4px solid #e74c3c;
-                                padding:0.75rem 1rem; border-radius:6px; margin-bottom:1rem; color:#721c24;">
+                    <div class="panelsalasform-errores-generales">
                         {% for error in formset.non_form_errors %}
-                        <p style="margin:0;">{{ error }}</p>
+                        <p class="panelsalasform-error-linea">{{ error }}</p>
                         {% endfor %}
                     </div>
                     {% endif %}
 
-                    <div style="overflow-x:auto;">
+                    <div class="panelsalasform-tabla-wrap">
                         <table class="tabla" id="tablaSecciones">
                             <thead>
                                 <tr>
@@ -141,9 +149,9 @@
                                     <td>{{ seccion_form.fila_fin }}</td>
                                     <td>{{ seccion_form.columna_inicio }}</td>
                                     <td>{{ seccion_form.columna_fin }}</td>
-                                    <td style="text-align:center;">
+                                    <td class="panelsalasform-celda-centro">
                                         {% if seccion_form.DELETE %}
-                                        <label style="cursor:pointer; font-size:0.75rem; display:flex; flex-direction:column; align-items:center; gap:2px;">
+                                        <label class="panelsalasform-delete-label">
                                             {{ seccion_form.DELETE }}
                                             Eliminar
                                         </label>
@@ -152,7 +160,7 @@
                                 </tr>
                                 {% if seccion_form.errors %}
                                 <tr>
-                                    <td colspan="6" style="color:#e74c3c; font-size:0.78rem; padding-top:0;">
+                                    <td colspan="6" class="panelsalasform-fila-error">
                                         {% for field, errores in seccion_form.errors.items %}
                                             {% for error in errores %}{{ error }} {% endfor %}
                                         {% endfor %}
@@ -165,7 +173,7 @@
                     </div>
 
                     <!-- Fila plantilla, oculta, usada por JS para clonar al agregar sección -->
-                    <table style="display:none;">
+                    <table class="panelsalasform-tabla-oculta">
                         <tbody>
                             <tr id="filaSeccionPlantilla">
                                 <td>{{ formset.empty_form.nombre }}</td>
@@ -178,34 +186,15 @@
                     </table>
                 </div>
             </div>
-            {% comment %}  {% endcomment %}
+
             <!-- Preview calculado -->
-            {% comment %} volver a este si falla el otro
-            <div class="card" style="grid-column:1/-1;">
-                <div class="card-header"><h3>📐 Capacidad Calculada</h3></div>
-                <div class="card-body" style="text-align:center;">
-                    <div style="font-size:3rem; font-weight:800; color:#1a1a2e;" id="capacidadCalc">
-                        {% if objeto %}{{ objeto.capacidad }}{% else %}—{% endif %}
-                    </div>
-                    <div style="color:#666; font-size:0.9rem; margin-top:0.25rem;">
-                        asientos totales (<span id="filasVal">
-                            {% if objeto %}{{ objeto.filas }}{% else %}?{% endif %}
-                        </span> filas ×
-                        <span id="colsVal">
-                            {% if objeto %}{{ objeto.columnas }}{% else %}?{% endif %}
-                        </span> columnas)
-                    </div>
-                </div>
-            </div>
-            {% endcomment %}
-            <!-- Preview calculado -->
-            <div class="card" style="grid-column:1/-1;">
+            <div class="card panelsalasform-full">
                 <div class="card-header"><h3>Capacidad Calculada</h3></div>
-                <div class="card-body" style="text-align:center;">
-                    <div style="font-size:3rem; font-weight:800; color:#1a1a2e;" id="capacidadCalc">
+                <div class="card-body panelsalasform-capacidad-body">
+                    <div class="panelsalasform-capacidad-valor" id="capacidadCalc">
                         {% if objeto %}{{ objeto.capacidad }}{% else %}—{% endif %}
                     </div>
-                    <div style="color:#666; font-size:0.9rem; margin-top:0.25rem;" id="capacidadDetalle">
+                    <div class="panelsalasform-capacidad-detalle" id="capacidadDetalle">
                         <span id="filasVal">{% if objeto %}{{ objeto.filas }}{% else %}?{% endif %}</span> filas *
                         <span id="colsVal">{% if objeto %}{{ objeto.columnas }}{% else %}?{% endif %}</span> columnas de lienzo total
                     </div>
@@ -215,14 +204,13 @@
         </div>
 
         {% if form.non_field_errors %}
-        <div style="background:#f8d7da; border-left:4px solid #e74c3c;
-                    padding:1rem; border-radius:6px; margin-top:1rem; color:#721c24;">
+        <div class="panelsalasform-errores-generales panelsalasform-errores-generales--top">
             {% for error in form.non_field_errors %}
-            <p style="margin:0;">{{ error }}</p>
+            <p class="panelsalasform-error-linea">{{ error }}</p>
             {% endfor %}
         </div>
         {% endif %}
-        <div style="display:flex; gap:1rem; margin-top:1.5rem; flex-wrap:wrap;">    
+        <div class="panelsalasform-botones">
             <button type="submit" class="btn btn-primary"> {% if accion == 'crear' %}CREAR{% else %}ACTUALIZAR{% endif %}</button>
             <button type="submit" name="guardar_y_agregar_otro" value="1" class="btn btn-primary">CARGAR</button>
             <a href="{% url 'panel:salas_lista' %}" class="btn btn-primary">Cancelar</a>
@@ -239,8 +227,9 @@
     </form>
     {% endif %}
 </div>
-<script src="{% static 'js/panel/salas/form.js' %}"></script>
-{% comment %} lo mismo si falla el script volver a este
-<script src="{% static 'js/panel/salas/form.js' %}"></script> {% endcomment %}
 
+{% endblock %}
+
+{% block extra_js %}
+<script src="{% static 'js/panel/salas/form.js' %}"></script>
 {% endblock %}

@@ -8,46 +8,44 @@
 <span class="current">Funciones</span>
 {% endblock %}
 
+<!-- modificado (Hilo 1): separación CSS completa (26 estilos inline -> 0), movidos a
+     static/css/panel/funciones/lista.css. Se sacó el buscador reactivo estilo Netflix
+     (pedido explícito de instruccion_1.md: "en funciones no lo necesitamos") - tanto
+     el input como el bloque de JS que lo alimentaba en lista.js. También se borró un
+     <a>INICIO</a> que estaba comentado (código muerto). -->
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/panel/funciones/lista.css' %}">
+{% endblock %}
+
 {% block contenido %}
 
-<div style="display:flex; justify-content:space-between; align-items:center;flex-wrap:wrap; gap:1rem; margin-bottom:1.5rem;">
-        <h1 style="font-size:1.4rem; color:#1a1a2e; margin:0;">FUNCIONES</h1>
-        <div style="display:flex; gap:0.5rem;">
-        
-            <button type="submit" form="formFunciones" id="btnEliminarSeleccionadas" class="btn btn-danger" disabled style="opacity:0.5; cursor:not-allowed;">Eliminar</button>
-            <a href="{% url 'panel:salas_lista' %}" class="btn btn-primary">Salas</a>
-            {% comment %} <a href="{% url 'panel:inicio' %}" class="btn btn-primary">INICIO</a> {% endcomment %}
-            <a href="{% url 'panel:funciones_crear' %}" class="btn btn-primary">Nueva</a>
+<div class="panelfunc-header">
+    <h1 class="panelfunc-titulo">FUNCIONES</h1>
+    <div class="panelfunc-header-acciones">
+        <button type="submit" form="formFunciones" id="btnEliminarSeleccionadas" class="btn btn-danger" disabled>Eliminar</button>
+        <a href="{% url 'panel:salas_lista' %}" class="btn btn-primary">Salas</a>
+        <a href="{% url 'panel:funciones_crear' %}" class="btn btn-primary">Nueva</a>
     </div>
 </div>
 
 <form method="post" action="{% url 'panel:funciones_eliminar' %}" id="formFunciones">
     {% csrf_token %}
 <!-- Filtros por tipo -->
-<div style="display:flex; gap:0.5rem; margin-bottom:1.25rem; flex-wrap:wrap;">
+<div class="panelfunc-filtros">
     {% for valor, label in filtros_tabs %}
-    <a href="?filtro={{ valor }}"
-       style="padding:0.5rem 1rem; border-radius:20px; text-decoration:none; font-size:0.85rem; font-weight:600; transition:all 0.2s; {% if filtro == valor %} background:#1a1a2e; color:white; {% else %} background:white; color:#666; box-shadow:0 1px 4px rgba(0,0,0,0.1); {% endif %}">{{ label }}</a>
+    <a href="?filtro={{ valor }}" class="panelfunc-filtro-tab {% if filtro == valor %}panelfunc-filtro-tab--activo{% endif %}">{{ label }}</a>
     {% endfor %}
 </div>
 
-<!-- MODIFICACION GEMINI: Buscador estilo Netflix interactivo -->
-<div class="card" style="margin-bottom: 1.25rem;">
-    <div class="card-body" style="padding: 0.85rem 1.25rem; display: flex; align-items: center; gap: 0.75rem;">
-        <span style="font-size: 1.2rem;">🔍</span>
-        <input type="text" id="buscadorFunciones" class="panel-input" placeholder="Buscar funciones por película, sala, fecha (ej: Inception, Sala 2D)..." style="border: none; padding: 0.2rem; font-size: 0.95rem; flex: 1; outline: none;">
-    </div>
-</div>
-
 <!-- Contador -->
-<div style="font-size:0.85rem; color:#666; margin-bottom:0.75rem;"><span id="contadorFunciones">{{ total }}</span> función(es)</div>
+<div class="panelfunc-contador"><span id="contadorFunciones">{{ total }}</span> función(es)</div>
 <!-- Tabla -->
 <div class="card">
     {% if funciones %}
     <table class="tabla">
         <thead>
             <tr>
-                <th style="width:2rem;"><input type="checkbox" id="chkTodasFunciones" class="panel-checkbox"></th>
+                <th class="panelfunc-th-checkbox"><input type="checkbox" id="chkTodasFunciones" class="panel-checkbox"></th>
                 <th>Película</th>
                 <th>Sala</th>
                 <th>Fecha y Hora</th>
@@ -69,21 +67,21 @@
                     <input type="checkbox" name="seleccionadas" value="{{ f.id }}" class="chk-funcion panel-checkbox">
                 </td>
                 <td>
-                    <div style="font-weight:600; color:#1a1a2e;">{{ f.pelicula.titulo }}</div>
+                    <div class="panelfunc-pelicula-nombre">{{ f.pelicula.titulo }}</div>
                 </td>
-                <td style="color:#666;">{{ f.sala.nombre }}</td>
-                <td style="font-weight:600;">
-                    {{ f.fecha_hora|date:"d/m/Y" }}<span style="color:#999; font-size:0.8rem;">{{ f.fecha_hora|date:"H:i" }} hs</span>
+                <td class="panelfunc-sala">{{ f.sala.nombre }}</td>
+                <td class="panelfunc-fecha">
+                    {{ f.fecha_hora|date:"d/m/Y" }}<span class="panelfunc-hora">{{ f.fecha_hora|date:"H:i" }} hs</span>
                 </td>
-                <td style="color:#27ae60; font-weight:600;">
+                <td class="panelfunc-precio">
                     ${{ f.precio_final }}
-                    {% if f.precio is None %}<span style="color:#999; font-weight:400; font-size:0.75rem;">(auto)</span>{% endif %}
+                    {% if f.precio is None %}<span class="panelfunc-precio-auto">(auto)</span>{% endif %}
                 </td>
-                <td style="min-width:120px;">
+                <td class="panelfunc-ocupacion-td">
                     {% with vendidos=cap|add:"-"|add:disp|add:"0" %}
-                    <div style="font-size:0.8rem; margin-bottom:3px;">
-                        <span style="font-weight:600;">{{ disp }}</span>
-                        <span style="color:#999;">/ {{ cap }} libres</span>
+                    <div class="panelfunc-ocupacion-texto">
+                        <span class="panelfunc-ocupacion-disp">{{ disp }}</span>
+                        <span class="panelfunc-ocupacion-cap">/ {{ cap }} libres</span>
                     </div>
                     {% endwith %}
                     <div class="ocupacion-bar">
@@ -94,12 +92,12 @@
                     </div>
                 </td>
                 <td>
-                    <span style="font-size:0.75rem; padding:0.2rem 0.6rem; border-radius:20px; font-weight:600;{% if f.disponible %}background:#d4edda; color:#155724;{% else %}background:#e2e3e5; color:#383d41;{% endif %}">
+                    <span class="panelfunc-estado-badge {% if f.disponible %}panelfunc-estado-badge--disponible{% else %}panelfunc-estado-badge--no-disponible{% endif %}">
                         {% if f.disponible %}Disponible{% else %}No disponible{% endif %}
                     </span>
                 </td>
                 <td>
-                    <a href="{% url 'panel:funciones_detalle' f.id %}" class="btn btn-ghost" style="font-size:0.75rem; padding:0.3rem 0.7rem;">Ver detalle</a>
+                    <a href="{% url 'panel:funciones_detalle' f.id %}" class="btn btn-ghost panelfunc-btn-ver">Ver detalle</a>
                 </td>
             </tr>
             {% endwith %}
@@ -107,12 +105,15 @@
         </tbody>
     </table>
     {% else %}
-    <div class="card-body" style="text-align:center; padding:3rem; color:#999;">
+    <div class="card-body panelfunc-vacio">
         No hay funciones en esta categoría.
     </div>
     {% endif %}
 </div>
 </form>
-<script src="{% static 'js/panel/funciones/lista.js' %}"></script>
 
+{% endblock %}
+
+{% block extra_js %}
+<script src="{% static 'js/panel/funciones/lista.js' %}"></script>
 {% endblock %}

@@ -358,19 +358,55 @@ class PromocionDiaForm(forms.ModelForm):
         }
 
 # ============================================================
-# CONFIGURACIÓN GENERAL (precio base de la entrada)
+# CONFIGURACIÓN GENERAL
 # ============================================================
+# modificado (Hilo 1 - Tanda D): se agregaron los campos que antes eran
+# constantes hardcodeadas en configuracion/settings.py.
 class ConfiguracionGeneralForm(forms.ModelForm):
     class Meta:
         model = ConfiguracionGeneral
-        fields = ['precio_entrada_base']
+        fields = [
+            'precio_entrada_base',
+            'tiempo_limite_pago_minutos', 'max_asientos_por_reserva', 'qr_minutos_antes_funcion',
+            'tmdb_api_key',
+            'email_backend', 'email_host', 'email_port', 'email_use_tls',
+            'email_host_user', 'email_host_password', 'email_from',
+        ]
         widgets = {
             'precio_entrada_base': forms.NumberInput(attrs={**INPUT_ATTRS, 'step': '0.01', 'min': '0'}),
+            'tiempo_limite_pago_minutos': forms.NumberInput(attrs={**INPUT_ATTRS, 'min': '1'}),
+            'max_asientos_por_reserva': forms.NumberInput(attrs={**INPUT_ATTRS, 'min': '1'}),
+            'qr_minutos_antes_funcion': forms.NumberInput(attrs={**INPUT_ATTRS, 'min': '0'}),
+            'tmdb_api_key': forms.TextInput(attrs={**INPUT_ATTRS, 'placeholder': 'Dejar vacío para usar la de settings.py'}),
+            'email_backend': forms.Select(attrs=SELECT_ATTRS),
+            'email_host': forms.TextInput(attrs={**INPUT_ATTRS, 'placeholder': 'smtp.gmail.com'}),
+            'email_port': forms.NumberInput(attrs={**INPUT_ATTRS, 'min': '1', 'placeholder': '587'}),
+            'email_host_user': forms.TextInput(attrs=INPUT_ATTRS),
+            'email_host_password': forms.PasswordInput(attrs=INPUT_ATTRS, render_value=True),
+            'email_from': forms.TextInput(attrs={**INPUT_ATTRS, 'placeholder': 'Cine Online <noreply@cineonline.com>'}),
         }
         labels = {
             'precio_entrada_base': 'Precio base de la entrada ($)',
+            'tiempo_limite_pago_minutos': 'Tiempo límite de pago (minutos)',
+            'max_asientos_por_reserva': 'Máximo de asientos por reserva',
+            'qr_minutos_antes_funcion': 'Habilitar QR desde (minutos antes de la función)',
+            'tmdb_api_key': 'API key de TMDB',
+            'email_backend': 'Modo de envío de emails',
+            'email_host': 'Servidor SMTP (host)',
+            'email_port': 'Puerto SMTP',
+            'email_use_tls': 'Usar TLS',
+            'email_host_user': 'Usuario SMTP',
+            'email_host_password': 'Contraseña SMTP',
+            'email_from': 'Remitente ("De:")',
         }
         help_texts = {
             'precio_entrada_base': 'Se usa para las funciones que no tengan un precio manual cargado '
                                      '(se multiplica por el multiplicador de la sala).',
+            'tiempo_limite_pago_minutos': 'Se cuenta desde que el usuario entra a seleccionar asientos.',
+            'max_asientos_por_reserva': 'Por operación de reserva, no por usuario en total.',
+            'qr_minutos_antes_funcion': 'Ejemplo: 120 = se puede escanear desde 2 horas antes de la función.',
+            'tmdb_api_key': 'Se usa en Panel > Películas > Buscar en TMDB.',
+            'email_host_password': 'Se guarda en texto plano en la base — mismo nivel de seguridad que '
+                                     'tenía hardcodeado en settings.py.',
         }
+

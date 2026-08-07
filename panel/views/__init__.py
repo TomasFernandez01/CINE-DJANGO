@@ -64,4 +64,4 @@ from .promociones import (
     promodia_eliminar,
     promodia_lista,
 )
-from .configuracion import configuracion_general
+from .config_general import configuracion_general

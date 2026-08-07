@@ -1,4 +1,5 @@
 {% extends 'panel/base_panel.html' %}
+{% load static %}
 
 {% block titulo %}Confirmar eliminación — Panel{% endblock %}
 
@@ -9,19 +10,25 @@
 <span class="current">Confirmar eliminación</span>
 {% endblock %}
 
+<!-- modificado (Hilo 1): separación CSS completa (13 estilos inline -> 0), movidos a
+     static/css/panel/funciones/confirmar_eliminar.css. -->
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/panel/funciones/confirmar_eliminar.css' %}">
+{% endblock %}
+
 {% block contenido %}
 
-<div style="max-width:720px;">
+<div class="panelfuncconf-wrapper">
 
-    <h1 style="font-size:1.4rem; color:#e74c3c; margin-bottom:0.5rem;">⚠️ Confirmar eliminación</h1>
-    <p style="color:#666; margin-bottom:1.5rem;">
+    <h1 class="panelfuncconf-titulo">⚠️ Confirmar eliminación</h1>
+    <p class="panelfuncconf-desc">
         Esta acción no se puede deshacer. Al borrar una función, también se borran
         <strong>en cascada</strong> todas sus reservas y los pagos asociados a esas reservas.
     </p>
 
-    <div class="card" style="margin-bottom:1.5rem;">
+    <div class="card panelfuncconf-card">
         <div class="card-header"><h3>Se eliminará lo siguiente</h3></div>
-        <div style="overflow-x:auto;">
+        <div class="panelfuncconf-tabla-wrap">
             <table class="tabla">
                 <thead>
                     <tr>
@@ -33,24 +40,24 @@
                 <tbody>
                     {% for item in resumen %}
                     <tr>
-                        <td style="font-weight:600;">
+                        <td class="panelfuncconf-funcion-nombre">
                             {{ item.funcion.pelicula.titulo }}
-                            <div style="font-size:0.8rem; color:#666; font-weight:400;">
+                            <div class="panelfuncconf-funcion-detalle">
                                 {{ item.funcion.sala.nombre }} — {{ item.funcion.fecha_hora|date:"d/m/Y H:i" }} hs
                             </div>
                         </td>
                         <td>
                             {% if item.total_reservas %}
-                            <span style="color:#e74c3c; font-weight:600;">{{ item.total_reservas }}</span>
+                            <span class="panelfuncconf-cantidad">{{ item.total_reservas }}</span>
                             {% else %}
-                            <span style="color:#999;">0</span>
+                            <span class="panelfuncconf-cero">0</span>
                             {% endif %}
                         </td>
                         <td>
                             {% if item.total_pagos %}
-                            <span style="color:#e74c3c; font-weight:600;">{{ item.total_pagos }}</span>
+                            <span class="panelfuncconf-cantidad">{{ item.total_pagos }}</span>
                             {% else %}
-                            <span style="color:#999;">0</span>
+                            <span class="panelfuncconf-cero">0</span>
                             {% endif %}
                         </td>
                     </tr>
@@ -67,8 +74,8 @@
         {% endfor %}
         <input type="hidden" name="confirmado" value="1">
 
-        <div style="display:flex; gap:1rem;">
-            <button type="submit" class="btn btn-danger" style="font-size:1rem; padding:0.75rem 2rem;">
+        <div class="panelfuncconf-botones">
+            <button type="submit" class="btn btn-danger panelfuncconf-btn-eliminar">
                 🗑️ Sí, eliminar definitivamente
             </button>
             <a href="{% url 'panel:funciones_lista' %}" class="btn btn-ghost">Cancelar</a>

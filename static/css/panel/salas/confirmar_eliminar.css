@@ -1,0 +1,13 @@
+/* modificado (Hilo 1): separación CSS completa de panel/salas/confirmar_eliminar.html
+   (12 estilos inline -> 0). Colores respetados tal cual estaban. */
+
+.panelsalasconf-wrapper { max-width: 680px; }
+.panelsalasconf-titulo { font-size: 1.4rem; color: #e74c3c; margin-bottom: 0.5rem; }
+.panelsalasconf-desc { color: #666; margin-bottom: 1.5rem; }
+.panelsalasconf-card { margin-bottom: 1.5rem; }
+.panelsalasconf-tabla-wrap { overflow-x: auto; }
+.panelsalasconf-nombre-sala { font-weight: 600; }
+.panelsalasconf-cantidad { color: #e74c3c; font-weight: 600; }
+.panelsalasconf-cero { color: #999; }
+.panelsalasconf-botones { display: flex; gap: 1rem; }
+.panelsalasconf-btn-eliminar { font-size: 1rem; padding: 0.75rem 2rem; }

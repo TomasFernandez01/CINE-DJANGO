@@ -48,6 +48,15 @@ class TMDBClient:
     }
     
     def __init__(self, api_key=None):
+        # modificado (Hilo 1 - Tanda D): prioridad ahora es: 1) api_key pasada
+        # explícitamente al constructor, 2) la cargada en Panel > Configuración
+        # General, 3) TMDB_API_KEY de settings.py (como estaba antes).
+        if api_key is None:
+            try:
+                from panel.models import ConfiguracionGeneral
+                api_key = ConfiguracionGeneral.obtener().tmdb_api_key or None
+            except Exception:
+                api_key = None
         self.api_key = api_key or getattr(settings, 'TMDB_API_KEY', None)
         if not self.api_key:
             raise ValueError("TMDB_API_KEY no está configurada en settings.py")

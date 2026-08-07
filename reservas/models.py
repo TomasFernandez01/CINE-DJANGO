@@ -7,7 +7,15 @@ from salas.models import Funcion
 from django.conf import settings
 
 def get_tiempo_limite():
-    return getattr(settings, 'TIEMPO_LIMITE_PAGO_MINUTOS', 15)
+    # modificado (Hilo 1 - Tanda D): antes leía solo de settings.py. Ahora se
+    # prioriza el valor cargado en Panel > Configuración General (editable sin
+    # migraciones); si esa fila todavía no existe (ej. antes de correr la
+    # migración 0002), cae al valor de settings.py como antes.
+    try:
+        from panel.models import ConfiguracionGeneral
+        return ConfiguracionGeneral.obtener().tiempo_limite_pago_minutos
+    except Exception:
+        return getattr(settings, 'TIEMPO_LIMITE_PAGO_MINUTOS', 15)
 
 class Reserva(models.Model):
     ESTADO_CHOICES = [

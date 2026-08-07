@@ -32,7 +32,7 @@ def configuracion_general(request):
     else:
         form = ConfiguracionGeneralForm(instance=config)
 
-    return render(request, 'panel/configuracion/general.html', {
+    return render(request, 'panel/config_general/general.html', {
         'form': form,
         'config': config,
         'seccion_activa': 'configuracion',

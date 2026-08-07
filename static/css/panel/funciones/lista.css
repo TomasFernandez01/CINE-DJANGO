@@ -1,0 +1,37 @@
+/* modificado (Hilo 1): separación CSS completa de panel/funciones/lista.html
+   (26 estilos inline -> 0). Colores respetados tal cual estaban. */
+
+.panelfunc-header { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem; margin-bottom: 1.5rem; }
+.panelfunc-titulo { font-size: 1.4rem; color: #1a1a2e; margin: 0; }
+.panelfunc-header-acciones { display: flex; gap: 0.5rem; }
+
+.panelfunc-filtros { display: flex; gap: 0.5rem; margin-bottom: 1.25rem; flex-wrap: wrap; }
+.panelfunc-filtro-tab {
+    padding: 0.5rem 1rem; border-radius: 20px; text-decoration: none; font-size: 0.85rem;
+    font-weight: 600; transition: all 0.2s; background: white; color: #666;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.1);
+}
+.panelfunc-filtro-tab--activo { background: #1a1a2e; color: white; box-shadow: none; }
+
+.panelfunc-contador { font-size: 0.85rem; color: #666; margin-bottom: 0.75rem; }
+
+.panelfunc-th-checkbox { width: 2rem; }
+.panelfunc-pelicula-nombre { font-weight: 600; color: #1a1a2e; }
+.panelfunc-sala { color: #666; }
+.panelfunc-fecha { font-weight: 600; }
+.panelfunc-hora { color: #999; font-size: 0.8rem; }
+.panelfunc-precio { color: #27ae60; font-weight: 600; }
+.panelfunc-precio-auto { color: #999; font-weight: 400; font-size: 0.75rem; }
+
+.panelfunc-ocupacion-td { min-width: 120px; }
+.panelfunc-ocupacion-texto { font-size: 0.8rem; margin-bottom: 3px; }
+.panelfunc-ocupacion-disp { font-weight: 600; }
+.panelfunc-ocupacion-cap { color: #999; }
+
+.panelfunc-estado-badge { font-size: 0.75rem; padding: 0.2rem 0.6rem; border-radius: 20px; font-weight: 600; }
+.panelfunc-estado-badge--disponible { background: #d4edda; color: #155724; }
+.panelfunc-estado-badge--no-disponible { background: #e2e3e5; color: #383d41; }
+
+.panelfunc-btn-ver { font-size: 0.75rem; padding: 0.3rem 0.7rem; }
+
+.panelfunc-vacio { text-align: center; padding: 3rem; color: #999; }

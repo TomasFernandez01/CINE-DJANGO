@@ -1,0 +1,38 @@
+/* modificado (Hilo 1): separación CSS completa de panel/funciones/form.html
+   (23 estilos inline -> 0). Colores respetados tal cual estaban. */
+
+.panelfuncform-wrapper { max-width: 720px; }
+.panelfuncform-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem; }
+.panelfuncform-titulo { font-size: 1.4rem; color: #1a1a2e; margin: 0; }
+
+.panelfuncform-aviso {
+    background: #e7f3ff; border-left: 4px solid #3498db; padding: 0.85rem 1rem;
+    border-radius: 6px; margin-bottom: 1.25rem; font-size: 0.875rem; color: #1a5276;
+}
+
+.panelfuncform-info-body { display: flex; flex-direction: column; gap: 1.1rem; }
+.panelfuncform-fila-2 { display: grid; grid-template-columns: 2fr 1fr; gap: 1rem; }
+.panelfuncform-precio-opcional { color: #999; font-weight: 400; font-size: 0.75rem; }
+
+.panelfuncform-oculto { display: none; }
+.panelfuncform-cronograma-card { margin-top: 1rem; }
+.panelfuncform-cronograma-ayuda { font-size: 0.8rem; color: #666; margin-top: 0; margin-bottom: 0.75rem; }
+.panelfuncform-cronograma-lista { font-size: 0.875rem; display: flex; flex-direction: column; gap: 0.5rem; }
+.panelfuncform-cronograma-item {
+    padding: 0.5rem; background: #f8f9fa; border-left: 4px solid #f39c12; border-radius: 4px;
+    display: flex; justify-content: space-between; align-items: center;
+}
+.panelfuncform-cronograma-horario { font-weight: 600; color: #555; }
+.panelfuncform-cronograma-duracion { font-size: 0.75rem; font-weight: normal; color: #999; }
+.panelfuncform-cronograma-libre { padding: 0.5rem; color: #27ae60; font-weight: 600; }
+
+.panelfuncform-preview-card { margin-top: 1rem; }
+.panelfuncform-preview-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 1rem; font-size: 0.875rem; }
+.panelfuncform-preview-label { font-size: 0.7rem; color: #999; text-transform: uppercase; }
+.panelfuncform-preview-valor { font-weight: 600; }
+.panelfuncform-preview-valor--precio { color: #27ae60; }
+
+.panelfuncform-errores-generales { background: #f8d7da; border-left: 4px solid #e74c3c; padding: 1rem; border-radius: 6px; margin-top: 1rem; color: #721c24; }
+.panelfuncform-error-linea { margin: 0; margin-bottom: 0.25rem; }
+
+.panelfuncform-botones { display: flex; gap: 1rem; margin-top: 1.5rem; }

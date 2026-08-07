@@ -19,10 +19,29 @@ try:
 except ImportError:
     QR_DISPONIBLE = False
 
+# def get_max_asientos():
+#     return getattr(settings, 'MAX_ASIENTOS_POR_RESERVA', 6) 
+# def get_tiempo_limite():
+#     return getattr(settings, 'TIEMPO_LIMITE_PAGO_MINUTOS', 15)
+
 def get_max_asientos():
-    return getattr(settings, 'MAX_ASIENTOS_POR_RESERVA', 6) 
+    # modificado (Hilo 1 - Tanda D): ver mismo comentario en get_tiempo_limite() de abajo.
+    try:
+        from panel.models import ConfiguracionGeneral
+        return ConfiguracionGeneral.obtener().max_asientos_por_reserva
+    except Exception:
+        return getattr(settings, 'MAX_ASIENTOS_POR_RESERVA', 6)
+
+
 def get_tiempo_limite():
-    return getattr(settings, 'TIEMPO_LIMITE_PAGO_MINUTOS', 15)
+    # modificado (Hilo 1 - Tanda D): antes leía solo de settings.py. Ahora se
+    # prioriza el valor cargado en Panel > Configuración General (editable sin
+    # migraciones); si esa fila todavía no existe, cae al valor de settings.py.
+    try:
+        from panel.models import ConfiguracionGeneral
+        return ConfiguracionGeneral.obtener().tiempo_limite_pago_minutos
+    except Exception:
+        return getattr(settings, 'TIEMPO_LIMITE_PAGO_MINUTOS', 15)
 
 CLAVE_SESION_RESERVA_EN_PROGRESO = 'reserva_en_progreso'  
 

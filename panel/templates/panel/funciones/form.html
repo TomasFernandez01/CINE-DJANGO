@@ -14,13 +14,19 @@
 <span class="current">{% if accion == 'crear' %}Agregar{% else %}Editar{% endif %}</span>
 {% endblock %}
 
+<!-- modificado (Hilo 1): separación CSS completa (23 estilos inline -> 0), movidos a
+     static/css/panel/funciones/form.css. Se borró un {% comment %} inline suelto
+     junto al label de precio (código muerto). -->
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/panel/funciones/form.css' %}">
+{% endblock %}
+
 {% block contenido %}
 {% include 'panel/_form_styles.html' %}
 
-<div style="max-width:720px;">
-    <div style="display:flex; justify-content:space-between; align-items:center;
-                margin-bottom:1.5rem;">
-        <h1 style="font-size:1.4rem; color:#1a1a2e; margin:0;">{{ titulo_pagina }}</h1>
+<div class="panelfuncform-wrapper">
+    <div class="panelfuncform-header">
+        <h1 class="panelfuncform-titulo">{{ titulo_pagina }}</h1>
         {% if objeto %}
             <a href="{% url 'panel:funciones_detalle' objeto.id %}" class="btn btn-ghost">DETALLE</a>
         {% else %}
@@ -28,8 +34,7 @@
         {% endif %}
     </div>
     <!-- Aviso de validación de solapamiento -->
-    <div style="background:#e7f3ff; border-left:4px solid #3498db; padding:0.85rem 1rem;
-                border-radius:6px; margin-bottom:1.25rem; font-size:0.875rem; color:#1a5276;">
+    <div class="panelfuncform-aviso">
         <strong>ℹ Validación automática:</strong> El sistema verificará que la función no se
         solape con otras en la misma sala (considera duración de la película + 30 min de margen).
     </div>
@@ -39,7 +44,7 @@
 
         <div class="card">
             <div class="card-header"><h3>Datos de la Función</h3></div>
-            <div class="card-body" style="display:flex; flex-direction:column; gap:1.1rem;">
+            <div class="card-body panelfuncform-info-body">
 
                 <!-- Película -->
                 <div>
@@ -65,7 +70,7 @@
                 </div>
 
                 <!-- Fecha y hora + precio -->
-                <div style="display:grid; grid-template-columns:2fr 1fr; gap:1rem;">
+                <div class="panelfuncform-fila-2">
                     <div>
                         <label class="form-label">
                             Fecha y Hora <span class="required">*</span>
@@ -77,7 +82,7 @@
                     </div>
                     <div>
                         <label class="form-label">
-                            {% comment %} Precio ($) <span class="required">*</span> {% endcomment %}Precio ($) <span style="color:#999; font-weight:400; font-size:0.75rem;">(opcional)</span>
+                            Precio ($) <span class="panelfuncform-precio-opcional">(opcional)</span>
                         </label>
 
                         {{ form.precio }}
@@ -100,56 +105,54 @@
         </div>
 
         <!-- MODIFICACION GEMINI: Margen de tiempo entre funciones -->
-        <div class="card" style="margin-top:1rem; display:none;" id="cronogramaCard">
+        <div class="card panelfuncform-cronograma-card panelfuncform-oculto" id="cronogramaCard">
             <div class="card-header">
                 <h3>📅 Cronograma de la Sala (Mismo día)</h3>
             </div>
             <div class="card-body">
-                <p style="font-size:0.8rem; color:#666; margin-top:0; margin-bottom:0.75rem;">
+                <p class="panelfuncform-cronograma-ayuda">
                     A continuación se listan las funciones programadas para el mismo día en esta sala (incluye un margen de 30 min de limpieza al final de cada una):
                 </p>
-                <div id="cronograma-lista" style="font-size:0.875rem; display:flex; flex-direction:column; gap:0.5rem;">
+                <div id="cronograma-lista" class="panelfuncform-cronograma-lista">
                     <!-- Se rellena dinámicamente con JS -->
                 </div>
             </div>
         </div>
 
         <!-- Preview de la función -->
-        <div class="card" style="margin-top:1rem;" id="previewCard">
+        <div class="card panelfuncform-preview-card" id="previewCard">
             <div class="card-header"><h3>Vista previa</h3></div>
             <div class="card-body">
-                <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(150px,1fr));
-                            gap:1rem; font-size:0.875rem;">
+                <div class="panelfuncform-preview-grid">
                     <div>
-                        <div style="font-size:0.7rem; color:#999; text-transform:uppercase;">Película</div>
-                        <div style="font-weight:600;" id="prev-pelicula">—</div>
+                        <div class="panelfuncform-preview-label">Película</div>
+                        <div class="panelfuncform-preview-valor" id="prev-pelicula">—</div>
                     </div>
                     <div>
-                        <div style="font-size:0.7rem; color:#999; text-transform:uppercase;">Sala</div>
-                        <div style="font-weight:600;" id="prev-sala">—</div>
+                        <div class="panelfuncform-preview-label">Sala</div>
+                        <div class="panelfuncform-preview-valor" id="prev-sala">—</div>
                     </div>
                     <div>
-                        <div style="font-size:0.7rem; color:#999; text-transform:uppercase;">Fecha</div>
-                        <div style="font-weight:600;" id="prev-fecha">—</div>
+                        <div class="panelfuncform-preview-label">Fecha</div>
+                        <div class="panelfuncform-preview-valor" id="prev-fecha">—</div>
                     </div>
                     <div>
-                        <div style="font-size:0.7rem; color:#999; text-transform:uppercase;">Precio</div>
-                        <div style="font-weight:600; color:#27ae60;" id="prev-precio">—</div>
+                        <div class="panelfuncform-preview-label">Precio</div>
+                        <div class="panelfuncform-preview-valor panelfuncform-preview-valor--precio" id="prev-precio">—</div>
                     </div>
                 </div>
             </div>
         </div>
 
         {% if form.non_field_errors %}
-        <div style="background:#f8d7da; border-left:4px solid #e74c3c;
-                    padding:1rem; border-radius:6px; margin-top:1rem; color:#721c24;">
+        <div class="panelfuncform-errores-generales">
             {% for error in form.non_field_errors %}
-            <p style="margin:0; margin-bottom:0.25rem;">⚠️ {{ error }}</p>
+            <p class="panelfuncform-error-linea">⚠️ {{ error }}</p>
             {% endfor %}
         </div>
         {% endif %}
 
-        <div style="display:flex; gap:1rem; margin-top:1.5rem;">
+        <div class="panelfuncform-botones">
             <button type="submit" class="btn btn-primary">
                 {% if accion == 'crear' %}GUARDAR{% else %}MODIFICAR{% endif %}
             </button>
@@ -172,6 +175,8 @@
     {% endif %}
 </div>
 
-<script src="{% static 'js/panel/funciones/form.js' %}"></script>
+{% endblock %}
 
+{% block extra_js %}
+<script src="{% static 'js/panel/funciones/form.js' %}"></script>
 {% endblock %}

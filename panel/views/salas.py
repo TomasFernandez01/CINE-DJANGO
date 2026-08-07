@@ -184,46 +184,6 @@ def salas_asientos(request, sala_id):
     return render(request, 'panel/salas/asientos.html', contexto)
 
 
-# @staff_required
-# @require_POST
-# def salas_asientos_bloquear(request, sala_id):
-#     """Endpoint AJAX: crea un bloqueo para un asiento."""
-#     sala = get_object_or_404(Sala, id=sala_id)
-
-#     asiento_codigo = request.POST.get('asiento_codigo', '').strip()
-#     motivo = request.POST.get('motivo', 'admin')
-#     nota = request.POST.get('nota', '').strip()
-#     funcion_id = request.POST.get('funcion_id') or None
-
-#     funcion = None
-#     if funcion_id:
-#         funcion = get_object_or_404(Funcion, id=funcion_id, sala=sala)
-
-#     bloqueo = AsientoBloqueado(
-#         sala=sala,
-#         asiento_codigo=asiento_codigo,
-#         motivo=motivo,
-#         nota=nota,
-#         funcion=funcion,
-#     )
-#     try:
-#         bloqueo.full_clean()
-#     except ValidationError as e:
-#         errores = e.message_dict if hasattr(e, 'message_dict') else {'__all__': e.messages}
-#         return JsonResponse({'success': False, 'errors': errores}, status=400)
-
-#     bloqueo.save(skip_validation=True)  # ya se validó arriba con full_clean()
-
-#     return JsonResponse({
-#         'success': True,
-#         'bloqueo_id': bloqueo.id,
-#         'asiento_codigo': bloqueo.asiento_codigo,
-#         'motivo': bloqueo.motivo,
-#         'motivo_display': bloqueo.get_motivo_display(),
-#         'nota': bloqueo.nota,
-#         'permanente': bloqueo.funcion_id is None,
-#     })
-
 # MODIFICACION GEMINI: Endpoint AJAX adaptado para bloqueo masivo (admite codigos separados por comas)
 @staff_required
 @require_POST
@@ -294,47 +254,6 @@ def salas_asientos_desbloquear(request, sala_id):
 
     return JsonResponse({'success': True, 'asiento_codigo': asiento_codigo})
 
-# @staff_required
-# @require_POST
-# def salas_categoria_asignar(request, sala_id):
-#     """
-#     Endpoint AJAX: crea o actualiza la categoría especial (ej: "Mejorado")
-#     de un asiento puntual. A diferencia de los bloqueos, esto es SIEMPRE
-#     permanente por sala (no depende de la función seleccionada).
-#     """
-#     sala = get_object_or_404(Sala, id=sala_id)
-
-#     asiento_codigo = request.POST.get('asiento_codigo', '').strip()
-#     nombre = request.POST.get('nombre', 'Mejorado').strip() or 'Mejorado'
-#     multiplicador = request.POST.get('multiplicador', '1.25').strip()
-#     color = request.POST.get('color', '#f1c40f').strip()
-
-#     # Si ya existe una categoría para ese asiento, la actualizamos en vez de
-#     # crear un duplicado (el modelo tiene unique_together sala+asiento_codigo).
-#     categoria = CategoriaAsiento.objects.filter(sala=sala, asiento_codigo=asiento_codigo).first()
-#     if categoria is None:
-#         categoria = CategoriaAsiento(sala=sala, asiento_codigo=asiento_codigo)
-
-#     categoria.nombre = nombre
-#     categoria.multiplicador = multiplicador or '1.25'
-#     categoria.color = color or '#f1c40f'
-
-#     try:
-#         categoria.full_clean()
-#     except ValidationError as e:
-#         errores = e.message_dict if hasattr(e, 'message_dict') else {'__all__': e.messages}
-#         return JsonResponse({'success': False, 'errors': errores}, status=400)
-
-#     categoria.save(skip_validation=True)  # ya se validó arriba con full_clean()
-
-#     return JsonResponse({
-#         'success': True,
-#         'categoria_id': categoria.id,
-#         'asiento_codigo': categoria.asiento_codigo,
-#         'nombre': categoria.nombre,
-#         'multiplicador': str(categoria.multiplicador),
-#         'color': categoria.color,
-#     })
 # MODIFICACION GEMINI: Endpoint AJAX adaptado para categorizacion masiva (admite codigos separados por comas)
 
 @staff_required

@@ -1,0 +1,27 @@
+/* modificado (Hilo 1 - Tanda D): separación CSS completa de
+   panel/configuracion/general.html (12 estilos inline -> 0), más las secciones
+   nuevas (reservas y pagos, integraciones, email). */
+
+.panelconfig-wrapper { max-width: 620px; }
+.panelconfig-titulo { font-size: 1.4rem; color: #1a1a2e; margin-bottom: 0.25rem; }
+.panelconfig-desc { color: #666; margin-bottom: 1.5rem; }
+
+.panelconfig-card { margin-bottom: 1.25rem; }
+.panelconfig-card-body { display: flex; flex-direction: column; gap: 1.1rem; }
+
+.panelconfig-fila-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 1rem; }
+.panelconfig-fila-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
+
+.panelconfig-nota-pendiente {
+    background: #fff3cd; border-left: 4px solid #f39c12; padding: 0.75rem 1rem;
+    border-radius: 6px; font-size: 0.82rem; color: #856404; line-height: 1.5;
+}
+
+.panelconfig-smtp-campos { display: flex; flex-direction: column; gap: 1.1rem; margin-top: 0.25rem; }
+.panelconfig-smtp-campos.panelconfig-oculto { display: none; }
+.panelconfig-checkbox-tls { margin-top: -0.25rem; }
+
+.panelconfig-actualizado { font-size: 0.8rem; color: #999; margin-top: 0.5rem; }
+
+.panelconfig-botones { display: flex; gap: 1rem; margin-top: 1.5rem; }
+.panelconfig-btn-guardar { font-size: 1rem; padding: 0.75rem 2rem; }

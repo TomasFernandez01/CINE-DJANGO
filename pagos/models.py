@@ -5,7 +5,14 @@ from django.conf import settings
 import uuid
 
 def get_qr_minutos():
-    return getattr(settings, 'QR_MINUTOS_ANTES_FUNCION', 120)
+    # modificado (Hilo 1 - Tanda D): antes leía solo de settings.py. Ahora se
+    # prioriza el valor cargado en Panel > Configuración General (editable sin
+    # migraciones); si esa fila todavía no existe, cae al valor de settings.py.
+    try:
+        from panel.models import ConfiguracionGeneral
+        return ConfiguracionGeneral.obtener().qr_minutos_antes_funcion
+    except Exception:
+        return getattr(settings, 'QR_MINUTOS_ANTES_FUNCION', 120)
 
 class Pago(models.Model):
     METODO_PAGO_CHOICES = [

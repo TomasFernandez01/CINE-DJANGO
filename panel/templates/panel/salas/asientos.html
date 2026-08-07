@@ -10,13 +10,22 @@
 <span class="current">{{ sala.nombre }} · Asientos</span>
 {% endblock %}
 
+<!-- modificado (Hilo 1): separación CSS/JS completa (73 estilos inline -> 0). El <style>
+     que estaba embebido acá (selección múltiple) se movió a asientos.css. La lógica JS
+     (que antes vivía toda inline mezclada con tags de Django) se movió a
+     static/js/panel/salas/asientos.js: la función initMapaAsientos(config) recibe los
+     datos que sí necesitan Django (bloqueos, categorías, ocupados, motivos) armados acá
+     abajo en un bloque chico, y el resto de la lógica vive en el archivo externo. -->
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/panel/salas/asientos.css' %}">
+{% endblock %}
+
 {% block contenido %}
 
-<div style="display:flex; justify-content:space-between; align-items:center;
-            flex-wrap:wrap; gap:1rem; margin-bottom:1.5rem;">
+<div class="panelasientos-header">
     <div>
-        <h1 style="font-size:1.4rem; color:#1a1a2e; margin:0;">Asientos — {{ sala.nombre }}</h1>
-        <div style="color:#666; font-size:0.9rem; margin-top:0.25rem;">
+        <h1 class="panelasientos-titulo">Asientos — {{ sala.nombre }}</h1>
+        <div class="panelasientos-header-desc">
             Hacé clic en un asiento para bloquearlo, desbloquearlo o asignarle una categoría especial.
         </div>
     </div>
@@ -24,10 +33,10 @@
 </div>
 
 <!-- Selector de modo -->
-<div class="card" style="margin-bottom:1.25rem;">
-    <div class="card-body" style="display:flex; align-items:center; gap:1rem; flex-wrap:wrap;">
-        <label class="form-label" style="margin:0;">Modo de bloqueo:</label>
-        <select id="selectorModo" class="select" style="min-width:280px;">
+<div class="card panelasientos-modo-card">
+    <div class="card-body panelasientos-modo-body">
+        <label class="form-label panelasientos-modo-label">Modo de bloqueo:</label>
+        <select id="selectorModo" class="select panelasientos-modo-select">
             <option value="" {% if not funcion_seleccionada %}selected{% endif %}>
                 Permanente (toda la sala, todas las funciones)
             </option>
@@ -38,146 +47,81 @@
             {% endfor %}
         </select>
         {% if funcion_seleccionada %}
-        <span style="font-size:0.8rem; color:#999;">
+        <span class="panelasientos-modo-nota">
             Los bloqueos permanentes también se aplican acá automáticamente.
         </span>
         {% endif %}
     </div>
 </div>
 
-<div style="display:grid; grid-template-columns:2fr 1fr; gap:1.5rem; align-items:start;">
+<div class="panelasientos-grid">
 
     <!-- Mapa de asientos -->
     {# modificado (Fase 3): esta card pasa a fondo oscuro para que combine con el mapa del cliente. El resto del panel admin (otras cards, tablas) queda igual, solo se re-viste esta. No se tocó nada del JS. #}
-    <!-- MODIFICACION GEMINI: Estilos para seleccion masiva de asientos -->
-    <style>
-        .asiento-btn.seleccionado {
-            box-shadow: 0 0 0 3px #e2b96f !important;
-            transform: scale(1.12);
-            z-index: 5;
-        }
-        .btn-modo-seleccion {
-            background: #2a2a2a;
-            color: #ccc;
-            border: 1px solid #444;
-            font-size: 0.8rem;
-            padding: 0.4rem 0.8rem;
-            border-radius: 6px;
-            cursor: pointer;
-            display: flex;
-            align-items: center;
-            gap: 6px;
-            transition: all 0.2s;
-        }
-        .btn-modo-seleccion:hover {
-            background: #3a3a3a;
-            color: #fff;
-        }
-        .btn-modo-seleccion.activo {
-            background: #e2b96f;
-            color: #0f0f1a;
-            border-color: #e2b96f;
-            font-weight: 600;
-        }
-    </style>
-    <div class="card" style="background-color:#0f0f0f; border-color:#2a2a2a;">
-        <div class="card-header" style="background-color:#0f0f0f; border-color:#2a2a2a; color:#fff; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 0.5rem;">
-            <h3 style="color:#fff; margin:0;">Mapa de Asientos</h3>
+    <div class="card panelasientos-mapa-card">
+        <div class="card-header panelasientos-mapa-header">
+            <h3 class="panelasientos-mapa-header-titulo">Mapa de Asientos</h3>
             <button type="button" id="btnModoSeleccion" class="btn-modo-seleccion">
                 <span>🖱️</span> Modo Selección Múltiple
             </button>
         </div>
-        <div class="card-header" style="background-color:#0f0f0f; border-color:#2a2a2a; color:#fff; padding-top: 0.5rem;">
-            <div style="display:flex; gap:0.6rem; font-size:0.72rem; flex-wrap:wrap; align-items:center; color:#ccc;">
-                <span style="display:flex; align-items:center; gap:4px;">
-                    <span style="width:12px; height:12px; background:#ffffff; border-radius:2px; display:inline-block; border:1px solid #cccccc;"></span> Libre
+        <div class="card-header panelasientos-mapa-header panelasientos-mapa-header--leyenda">
+            <div class="panelasientos-leyenda">
+                <span class="panelasientos-leyenda-item">
+                    <span class="panelasientos-leyenda-swatch panelasientos-leyenda-swatch--libre"></span> Libre
                 </span>
                 {% for valor, etiqueta in motivo_choices %}
-                <span style="display:flex; align-items:center; gap:4px;">
-                    <span class="leyenda-color" data-motivo="{{ valor }}"
-                          style="width:12px; height:12px; border-radius:2px; display:inline-block;"></span> {{ etiqueta }}
+                <span class="panelasientos-leyenda-item">
+                    <span class="leyenda-color panelasientos-leyenda-swatch" data-motivo="{{ valor }}"></span> {{ etiqueta }}
                 </span>
                 {% endfor %}
-                <span style="display:flex; align-items:center; gap:4px;">
-                    <span style="width:12px; height:12px; border-radius:2px; display:inline-block;
-                                 background:linear-gradient(135deg, #f1c40f, #e67e22);"></span>
+                <span class="panelasientos-leyenda-item">
+                    <span class="panelasientos-leyenda-swatch panelasientos-leyenda-swatch--categoria"></span>
                     Categoría especial (color propio, no bloquea)
                 </span>
                 {% if funcion_seleccionada %}
-                <span style="display:flex; align-items:center; gap:4px;">
-                    <span style="width:12px; height:12px; background:#495057; border-radius:2px; display:inline-block;"></span> Vendido
+                <span class="panelasientos-leyenda-item">
+                    <span class="panelasientos-leyenda-swatch panelasientos-leyenda-swatch--vendido"></span> Vendido
                 </span>
                 {% endif %}
             </div>
         </div>
-        <div class="card-body" style="overflow-x:auto; background-color:#0f0f0f;">
+        <div class="card-body panelasientos-mapa-body">
             {# modificado (Fase 3): pantalla curva estilo Cinemark, igual que en el cliente (antes era una barra rectangular) #}
-            <div style="text-align:center; margin-bottom:1.5rem;">
-                <div style="width: 60%; max-width: 420px; height: 16px; margin: 0 auto;
-                            border-radius: 50%;
-                            background: radial-gradient(ellipse at center, #6b6b6b 0%, #2a2a2a 75%, transparent 100%);"></div>
-                <div style="color: #9a9a9a; letter-spacing: 0.3em; font-size: 0.65rem; font-weight: bold; margin-top: 0.5rem;">
-                    PANTALLA
-                </div>
+            <div class="panelasientos-pantalla-wrap">
+                <div class="panelasientos-pantalla-curva"></div>
+                <div class="panelasientos-pantalla-label">PANTALLA</div>
             </div>
-            <div id="mapaAsientos" style="display:flex; flex-direction:column; gap:5px; align-items:center;">
+            <div id="mapaAsientos" class="panelasientos-mapa">
                 {% for fila in layout %}
-                <div style="display:flex; gap:5px; align-items:center;">
-                    <span style="width:20px; font-size:0.7rem; color:#d9a441; text-align:center; font-weight:600;">
-                        {{ fila.letra }}
-                    </span>
+                <div class="panelasientos-fila">
+                    <span class="panelasientos-fila-letra">{{ fila.letra }}</span>
                     {% for asiento in fila.celdas %}
                         {% if asiento %}
-                        <button
-                            type="button"
-                            class="asiento-btn"
-                            data-asiento="{{ asiento }}"
-                            style="width:28px; height:24px; border-radius:6px; font-size:8px;
-                                   border:1px solid rgba(255,255,255,0.15); font-weight:700; color:white;
-                                   cursor:pointer; transition:transform 0.12s;">
+                        <button type="button" class="asiento-btn" data-asiento="{{ asiento }}">
                             {{ asiento }}
                         </button>
                         {% else %}
-                        <div style="width:28px; height:24px;"></div>
+                        <div class="panelasientos-celda-vacia"></div>
                         {% endif %}
                     {% endfor %}
                 </div>
                 {% endfor %}
-                {% comment %}  
-                {% for fila in layout %}
-                <div style="display:flex; gap:5px; align-items:center;">
-                    <span style="width:20px; font-size:0.7rem; color:#999; text-align:center; font-weight:600;">
-                        {{ fila.0|slice:":1" }}
-                    </span>
-                    {% for asiento in fila %}
-                    <button
-                            type="button"
-                            class="asiento-btn"
-                            data-asiento="{{ asiento }}"
-                            style="width:28px; height:24px; border-radius:4px; font-size:8px;
-                            border:1px solid rgba(0,0,0,0.15); font-weight:700; color:white;
-                            cursor:pointer; transition:transform 0.12s;">
-                            {{ asiento }}
-                        </button>
-                    {% endfor %}
-                </div>
-                {% endfor %}
-                {% endcomment %}
             </div>
         </div>
     </div>
 
     <!-- Panel lateral de edición + listado de bloqueos -->
-    <div style="display:flex; flex-direction:column; gap:1.25rem;">
+    <div class="panelasientos-lateral">
 
         <!-- Panel de acción (aparece al hacer clic) -->
-        <div class="card" id="panelAccion" style="display:none;">
+        <div class="card panelasientos-oculto" id="panelAccion">
             <div class="card-header"><h3 id="panelAccionTitulo">Asiento</h3></div>
             <div class="card-body" id="panelAccionBody"></div>
         </div>
 
         <div class="card" id="panelVacio">
-            <div class="card-body" style="text-align:center; color:#999; font-size:0.875rem;">
+            <div class="card-body panelasientos-vacio-chico">
                 Elegí un asiento en el mapa para bloquearlo o desbloquearlo.
             </div>
         </div>
@@ -185,7 +129,7 @@
         <!-- Listado de todos los bloqueos de la sala -->
         <div class="card">
             <div class="card-header"><h3>📋 Bloqueos de esta sala</h3></div>
-            <div style="max-height:360px; overflow-y:auto;">
+            <div class="panelasientos-lista-scroll">
                 {% if todos_los_bloqueos %}
                 <table class="tabla" id="tablaBloqueos">
                     <thead>
@@ -199,9 +143,9 @@
                     <tbody>
                         {% for b in todos_los_bloqueos %}
                         <tr data-bloqueo-id="{{ b.id }}" data-asiento="{{ b.asiento_codigo }}">
-                            <td style="font-weight:600;">{{ b.asiento_codigo }}</td>
-                            <td style="font-size:0.8rem;">{{ b.get_motivo_display }}</td>
-                            <td style="font-size:0.75rem; color:#666;">
+                            <td class="panelasientos-td-fuerte">{{ b.asiento_codigo }}</td>
+                            <td class="panelasientos-td-chica">{{ b.get_motivo_display }}</td>
+                            <td class="panelasientos-td-alcance">
                                 {% if b.funcion %}
                                     {{ b.funcion.pelicula.titulo }}<br>{{ b.funcion.fecha_hora|date:"d/m H:i" }}
                                 {% else %}
@@ -209,9 +153,8 @@
                                 {% endif %}
                             </td>
                             <td>
-                                <button type="button" class="btn btn-danger btn-desbloquear-fila"
-                                        data-bloqueo-id="{{ b.id }}"
-                                        style="font-size:0.7rem; padding:0.25rem 0.5rem;">
+                                <button type="button" class="btn btn-danger btn-desbloquear-fila panelasientos-btn-quitar"
+                                        data-bloqueo-id="{{ b.id }}">
                                     Quitar
                                 </button>
                             </td>
@@ -220,7 +163,7 @@
                     </tbody>
                 </table>
                 {% else %}
-                <div class="card-body" style="text-align:center; color:#999; font-size:0.875rem;">
+                <div class="card-body panelasientos-vacio-chico">
                     No hay asientos bloqueados en esta sala.
                 </div>
                 {% endif %}
@@ -230,7 +173,7 @@
         <!-- Listado de categorías especiales de esta sala -->
         <div class="card">
             <div class="card-header"><h3>⭐ Categorías especiales</h3></div>
-            <div style="max-height:360px; overflow-y:auto;">
+            <div class="panelasientos-lista-scroll">
                 {% if todas_las_categorias %}
                 <table class="tabla" id="tablaCategorias">
                     <thead>
@@ -244,17 +187,15 @@
                     <tbody>
                         {% for c in todas_las_categorias %}
                         <tr data-categoria-id="{{ c.id }}" data-asiento="{{ c.asiento_codigo }}">
-                            <td style="font-weight:600;">{{ c.asiento_codigo }}</td>
-                            <td style="font-size:0.8rem;">
-                                <span style="width:10px; height:10px; border-radius:2px; display:inline-block;
-                                             background:{{ c.color }}; margin-right:4px;"></span>
+                            <td class="panelasientos-td-fuerte">{{ c.asiento_codigo }}</td>
+                            <td class="panelasientos-td-chica">
+                                <span class="panelasientos-color-swatch-chico" style="background:{{ c.color }};"></span>
                                 {{ c.nombre }}
                             </td>
-                            <td style="font-size:0.8rem;">x{{ c.multiplicador }}</td>
+                            <td class="panelasientos-td-chica">x{{ c.multiplicador }}</td>
                             <td>
-                                <button type="button" class="btn btn-danger btn-quitar-categoria-fila"
-                                        data-categoria-id="{{ c.id }}"
-                                        style="font-size:0.7rem; padding:0.25rem 0.5rem;">
+                                <button type="button" class="btn btn-danger btn-quitar-categoria-fila panelasientos-btn-quitar"
+                                        data-categoria-id="{{ c.id }}">
                                     Quitar
                                 </button>
                             </td>
@@ -263,7 +204,7 @@
                     </tbody>
                 </table>
                 {% else %}
-                <div class="card-body" style="text-align:center; color:#999; font-size:0.875rem;">
+                <div class="card-body panelasientos-vacio-chico">
                     No hay categorías especiales asignadas en esta sala.
                 </div>
                 {% endif %}
@@ -273,453 +214,45 @@
 
 </div>
 
-<link rel="stylesheet" href="{% static 'css/panel/salas/asientos.css' %}">
+{% endblock %}
 
+{% block extra_js %}
+<script src="{% static 'js/panel/salas/asientos.js' %}"></script>
 <script>
-(function () {
-    const SALA_ID = {{ sala.id }};
-    const FUNCION_ID = {{ funcion_seleccionada.id|default:"null" }};
-    const CSRF_TOKEN = '{{ csrf_token }}';
-
-    // Datos iniciales inyectados desde Django (bloqueos y ocupados actuales)
-    const bloqueosPorAsiento = {}; // codigo -> {bloqueo_id, motivo, motivo_display, nota, permanente}
-    {% for codigo, b in bloqueos_por_codigo.items %}
-        bloqueosPorAsiento["{{ codigo }}"] = {
-            bloqueo_id: {{ b.id }},
-            motivo: "{{ b.motivo }}",
-            motivo_display: "{{ b.get_motivo_display|escapejs }}",
-            nota: "{{ b.nota|escapejs }}",
-            permanente: {% if b.funcion_id %}false{% else %}true{% endif %}
-        };
-    {% endfor %}
-
-    const categoriasPorAsiento = {}; // codigo -> {categoria_id, nombre, multiplicador, color}
-    {% for codigo, c in categorias_por_codigo.items %}
-        categoriasPorAsiento["{{ codigo }}"] = {
-            categoria_id: {{ c.id }},
-            nombre: "{{ c.nombre|escapejs }}",
-            multiplicador: "{{ c.multiplicador }}",
-            color: "{{ c.color }}"
-        };
-    {% endfor %}
-
-    const ocupadosPorReserva = new Set([
-        {% for a in asientos_ocupados_reserva %}"{{ a }}",{% endfor %}
-    ]);
-
-    const motivoLabels = {
-        {% for valor, etiqueta in motivo_choices %}"{{ valor }}": "{{ etiqueta|escapejs }}",{% endfor %}
-    };
-
-    const botones = document.querySelectorAll('.asiento-btn');
-    const panelAccion = document.getElementById('panelAccion');
-    const panelAccionTitulo = document.getElementById('panelAccionTitulo');
-    const panelAccionBody = document.getElementById('panelAccionBody');
-    const panelVacio = document.getElementById('panelVacio');
-
-    function pintarBoton(btn) {
-        const codigo = btn.dataset.asiento;
-        btn.classList.remove('libre', 'mantenimiento', 'reservado', 'vendido');
-        btn.style.background = ''; // reset (las categorías usan color inline, no clase)
-        if (ocupadosPorReserva.has(codigo)) {
-            btn.classList.add('vendido');
-            btn.title = codigo + ' — vendido/reservado';
-            return;
-        }
-        const b = bloqueosPorAsiento[codigo];
-        if (b) {
-            btn.classList.add(b.motivo);
-            btn.title = codigo + ' — ' + b.motivo_display + (b.nota ? ' (' + b.nota + ')' : '');
-            return;
-        }
-        const c = categoriasPorAsiento[codigo];
-        if (c) {
-            btn.style.background = c.color;
-            btn.title = codigo + ' — ' + c.nombre + ' (x' + c.multiplicador + ')';
-            return;
-        }
-        btn.classList.add('libre');
-        btn.title = codigo + ' — libre';
-    }
-
-    botones.forEach(pintarBoton);
-
-    function cerrarPanel() {
-        panelAccion.style.display = 'none';
-        panelVacio.style.display = 'block';
-    }
-
-    function mostrarPanelLibre(codigo) {
-        panelVacio.style.display = 'none';
-        panelAccion.style.display = 'block';
-        panelAccionTitulo.textContent = 'Asiento ' + codigo;
-
-        let opciones = '';
-        for (const [valor, etiqueta] of Object.entries(motivoLabels)) {
-            opciones += `<option value="${valor}">${etiqueta}</option>`;
-        }
-
-        panelAccionBody.innerHTML = `
-            <div style="display:flex; flex-direction:column; gap:0.8rem;">
-                <div>
-                    <label class="form-label">¿Qué querés hacer con este asiento?</label>
-                    <select id="inputTipoAsignacion" class="panel-select">
-                        <option value="bloqueo">🔒 Bloquear (mantenimiento/reservado)</option>
-                        <option value="categoria">⭐ Asignar categoría especial (cambia el precio)</option>
-                    </select>
-                </div>
-
-                <div id="subformBloqueo">
-                    <label class="form-label">Motivo</label>
-                    <select id="inputMotivo" class="panel-select">${opciones}</select>
-                    <label class="form-label" style="margin-top:0.6rem;">Nota (opcional)</label>
-                    <input type="text" id="inputNota" class="panel-input" maxlength="200"
-                           placeholder="Ej: butaca rota">
-                    <div style="font-size:0.75rem; color:#999; margin-top:0.5rem;">
-                        ${FUNCION_ID ? 'Se bloqueará solo para la función seleccionada.' : 'Se bloqueará de forma permanente en toda la sala.'}
-                    </div>
-                </div>
-
-                <div id="subformCategoria" style="display:none;">
-                    <label class="form-label">Nombre de la categoría</label>
-                    <input type="text" id="inputCategoriaNombre" class="panel-input" maxlength="50" value="Mejorado">
-                    <label class="form-label" style="margin-top:0.6rem;">Multiplicador de precio</label>
-                    <input type="number" id="inputCategoriaMultiplicador" class="panel-input"
-                           step="0.01" min="1.00" value="1.25">
-                    <label class="form-label" style="margin-top:0.6rem;">Color en el mapa</label>
-                    <input type="color" id="inputCategoriaColor" value="#f1c40f" style="width:100%; height:38px; padding:2px;">
-                    <div style="font-size:0.75rem; color:#999; margin-top:0.5rem;">
-                        Este asiento sigue siendo comprable, solo cambia el precio y el color.
-                        Es siempre permanente (no depende de la función elegida arriba).
-                    </div>
-                </div>
-
-                <div style="display:flex; gap:0.5rem;">
-                    <button type="button" id="btnConfirmarAsignacion" class="btn btn-success" style="flex:1;">
-                        Confirmar
-                    </button>
-                    <button type="button" id="btnCancelarBloqueo" class="btn btn-ghost">Cancelar</button>
-                </div>
-                <div id="errorBloqueo" style="color:#e74c3c; font-size:0.8rem; display:none;"></div>
-            </div>
-        `;
-
-        document.getElementById('inputTipoAsignacion').addEventListener('change', function () {
-            const esCategoria = this.value === 'categoria';
-            document.getElementById('subformBloqueo').style.display   = esCategoria ? 'none' : 'block';
-            document.getElementById('subformCategoria').style.display = esCategoria ? 'block' : 'none';
-        });
-
-        document.getElementById('btnCancelarBloqueo').onclick = cerrarPanel;
-        document.getElementById('btnConfirmarAsignacion').onclick = function () {
-            const tipo = document.getElementById('inputTipoAsignacion').value;
-            if (tipo === 'bloqueo') {
-                const motivo = document.getElementById('inputMotivo').value;
-                const nota = document.getElementById('inputNota').value;
-                bloquearAsiento(codigo, motivo, nota);
-            } else {
-                const nombre = document.getElementById('inputCategoriaNombre').value;
-                const multiplicador = document.getElementById('inputCategoriaMultiplicador').value;
-                const color = document.getElementById('inputCategoriaColor').value;
-                asignarCategoria(codigo, nombre, multiplicador, color);
-            }
-        };
-    }
-
-    function mostrarPanelBloqueado(codigo) {
-        const b = bloqueosPorAsiento[codigo];
-        panelVacio.style.display = 'none';
-        panelAccion.style.display = 'block';
-        panelAccionTitulo.textContent = 'Asiento ' + codigo;
-
-        panelAccionBody.innerHTML = `
-            <div style="display:flex; flex-direction:column; gap:0.6rem; font-size:0.875rem;">
-                <div><strong>Motivo:</strong> ${b.motivo_display}</div>
-                <div><strong>Alcance:</strong> ${b.permanente ? 'Permanente (toda la sala)' : 'Solo esta función'}</div>
-                ${b.nota ? `<div><strong>Nota:</strong> ${b.nota}</div>` : ''}
-                <div style="display:flex; gap:0.5rem; margin-top:0.5rem;">
-                    <button type="button" id="btnConfirmarDesbloqueo" class="btn btn-danger" style="flex:1;">
-                        🔓 Desbloquear
-                    </button>
-                    <button type="button" id="btnCancelarDesbloqueo" class="btn btn-ghost">Cerrar</button>
-                </div>
-            </div>
-        `;
-
-        document.getElementById('btnCancelarDesbloqueo').onclick = cerrarPanel;
-        document.getElementById('btnConfirmarDesbloqueo').onclick = function () {
-            desbloquearAsiento(codigo, b.bloqueo_id);
-        };
-    }
-
-    function mostrarPanelCategoria(codigo) {
-        const c = categoriasPorAsiento[codigo];
-        panelVacio.style.display = 'none';
-        panelAccion.style.display = 'block';
-        panelAccionTitulo.textContent = 'Asiento ' + codigo;
-
-        panelAccionBody.innerHTML = `
-            <div style="display:flex; flex-direction:column; gap:0.6rem; font-size:0.875rem;">
-                <div><strong>Categoría:</strong> ${c.nombre}</div>
-                <div><strong>Multiplicador:</strong> x${c.multiplicador}</div>
-                <div><strong>Color:</strong>
-                    <span style="width:14px; height:14px; border-radius:3px; display:inline-block;
-                                 background:${c.color}; vertical-align:middle; margin-left:4px;"></span>
-                </div>
-                <div style="font-size:0.75rem; color:#999;">
-                    Este asiento sigue siendo comprable, solo cambia el precio y el color.
-                </div>
-                <div style="display:flex; gap:0.5rem; margin-top:0.5rem;">
-                    <button type="button" id="btnConfirmarQuitarCategoria" class="btn btn-danger" style="flex:1;">
-                        ⭐ Quitar categoría
-                    </button>
-                    <button type="button" id="btnCancelarCategoria" class="btn btn-ghost">Cerrar</button>
-                </div>
-            </div>
-        `;
-
-        document.getElementById('btnCancelarCategoria').onclick = cerrarPanel;
-        document.getElementById('btnConfirmarQuitarCategoria').onclick = function () {
-            quitarCategoria(codigo, c.categoria_id);
-        };
-    }
-
-    // MODIFICACION GEMINI: Seleccion multiple de asientos (por Ctrl/Cmd o boton)
-    const asientosSeleccionados = new Set();
-    let modoSeleccionMultiple = false;
-    const btnModoSeleccion = document.getElementById('btnModoSeleccion');
-
-    if (btnModoSeleccion) {
-        btnModoSeleccion.addEventListener('click', function () {
-            modoSeleccionMultiple = !modoSeleccionMultiple;
-            this.classList.toggle('activo', modoSeleccionMultiple);
-            if (!modoSeleccionMultiple) {
-                // Limpiar seleccion si se desactiva
-                limpiarSeleccionMultiple();
-            }
-        });
-    }
-
-    function limpiarSeleccionMultiple() {
-        asientosSeleccionados.clear();
-        botones.forEach(btn => btn.classList.remove('seleccionado'));
-        cerrarPanel();
-    }
-
-    botones.forEach(function (btn) {
-        btn.addEventListener('click', function (e) {
-            const codigo = this.dataset.asiento;
-            if (ocupadosPorReserva.has(codigo)) return; // vendido, no clicable
-
-            // Activar seleccion multiple si el boton esta activo o se presiona Ctrl/Cmd
-            const usarSeleccionMultiple = modoSeleccionMultiple || e.ctrlKey || e.metaKey;
-
-            if (usarSeleccionMultiple) {
-                // Solo permitimos seleccion masiva de asientos que no esten ya reservados/vendidos
-                if (asientosSeleccionados.has(codigo)) {
-                    asientosSeleccionados.delete(codigo);
-                    this.classList.remove('seleccionado');
-                } else {
-                    asientosSeleccionados.add(codigo);
-                    this.classList.add('seleccionado');
-                }
-
-                if (asientosSeleccionados.size === 0) {
-                    cerrarPanel();
-                } else {
-                    // Mostrar panel de accion para multiples asientos
-                    const codigosArray = Array.from(asientosSeleccionados);
-                    const codigosStr = codigosArray.join(',');
-                    
-                    // Decidir si los asientos son mayormente libres o bloqueados para sugerir accion
-                    const algunoBloqueado = codigosArray.some(c => bloqueosPorAsiento[c]);
-                    
-                    if (algunoBloqueado && codigosArray.every(c => bloqueosPorAsiento[c])) {
-                        // Si todos estan bloqueados, permitir desbloqueo masivo
-                        mostrarPanelBloqueadoMasivo(codigosArray);
-                    } else {
-                        // En cualquier otro caso, asumimos que quieren bloquear o categorizar en lote
-                        mostrarPanelLibre(codigosStr);
-                    }
-                }
-            } else {
-                // Clic simple normal: limpiar seleccion masiva previa primero
-                limpiarSeleccionMultiple();
-                
-                if (bloqueosPorAsiento[codigo]) {
-                    mostrarPanelBloqueado(codigo);
-                } else if (categoriasPorAsiento[codigo]) {
-                    mostrarPanelCategoria(codigo);
-                } else {
-                    mostrarPanelLibre(codigo);
-                }
-            }
-        });
+    // Únicamente arma el objeto de datos que Django necesita renderizar server-side
+    // (bloqueos, categorías, ocupados, motivos) y se lo pasa a initMapaAsientos(),
+    // que vive en asientos.js. El resto de la lógica no toca tags de Django.
+    initMapaAsientos({
+        SALA_ID: {{ sala.id }},
+        FUNCION_ID: {{ funcion_seleccionada.id|default:"null" }},
+        CSRF_TOKEN: '{{ csrf_token }}',
+        bloqueosPorAsiento: {
+            {% for codigo, b in bloqueos_por_codigo.items %}
+            "{{ codigo }}": {
+                bloqueo_id: {{ b.id }},
+                motivo: "{{ b.motivo }}",
+                motivo_display: "{{ b.get_motivo_display|escapejs }}",
+                nota: "{{ b.nota|escapejs }}",
+                permanente: {% if b.funcion_id %}false{% else %}true{% endif %}
+            },
+            {% endfor %}
+        },
+        categoriasPorAsiento: {
+            {% for codigo, c in categorias_por_codigo.items %}
+            "{{ codigo }}": {
+                categoria_id: {{ c.id }},
+                nombre: "{{ c.nombre|escapejs }}",
+                multiplicador: "{{ c.multiplicador }}",
+                color: "{{ c.color }}"
+            },
+            {% endfor %}
+        },
+        ocupadosPorReserva: new Set([
+            {% for a in asientos_ocupados_reserva %}"{{ a }}",{% endfor %}
+        ]),
+        motivoLabels: {
+            {% for valor, etiqueta in motivo_choices %}"{{ valor }}": "{{ etiqueta|escapejs }}",{% endfor %}
+        },
     });
-
-    // Panel especial para desbloquear multiples asientos en lote
-    function mostrarPanelBloqueadoMasivo(codigosArray) {
-        panelVacio.style.display = 'none';
-        panelAccion.style.display = 'block';
-        panelAccionTitulo.textContent = 'Asientos Seleccionados';
-
-        panelAccionBody.innerHTML = `
-            <div style="display:flex; flex-direction:column; gap:0.6rem; font-size:0.875rem;">
-                <div><strong>Asientos:</strong> ${codigosArray.join(', ')}</div>
-                <div style="color: #e74c3c; font-weight: 600;">Todos los asientos seleccionados estan bloqueados.</div>
-                <div style="display:flex; gap:0.5rem; margin-top:0.5rem;">
-                    <button type="button" id="btnConfirmarDesbloqueoMasivo" class="btn btn-danger" style="flex:1;">
-                        🔓 Desbloquear todos
-                    </button>
-                    <button type="button" id="btnCancelarDesbloqueoMasivo" class="btn btn-ghost">Cerrar</button>
-                </div>
-            </div>
-        `;
-
-        document.getElementById('btnCancelarDesbloqueoMasivo').onclick = cerrarPanel;
-        document.getElementById('btnConfirmarDesbloqueoMasivo').onclick = function () {
-            if (!confirm('¿Desbloquear los asientos seleccionados?')) return;
-            
-            // Desbloquear uno por uno
-            let promesas = [];
-            codigosArray.forEach(codigo => {
-                const b = bloqueosPorAsiento[codigo];
-                if (b) {
-                    const fd = new FormData();
-                    fd.append('bloqueo_id', b.bloqueo_id);
-                    fd.append('csrfmiddlewaretoken', CSRF_TOKEN);
-                    promesas.push(
-                        fetch(`/panel/salas/${SALA_ID}/asientos/desbloquear/`, { method: 'POST', body: fd })
-                    );
-                }
-            });
-
-            Promise.all(promesas)
-                .then(() => {
-                    location.reload();
-                })
-                .catch(() => alert('Error al procesar el desbloqueo masivo.'));
-        };
-    }
-
-    function bloquearAsiento(codigo, motivo, nota) {
-        const fd = new FormData();
-        fd.append('asiento_codigo', codigo);
-        fd.append('motivo', motivo);
-        fd.append('nota', nota);
-        if (FUNCION_ID) fd.append('funcion_id', FUNCION_ID);
-        fd.append('csrfmiddlewaretoken', CSRF_TOKEN);
-
-        fetch(`/panel/salas/${SALA_ID}/asientos/bloquear/`, { method: 'POST', body: fd })
-            .then(r => r.json())
-            .then(data => {
-                if (!data.success) {
-                    const errBox = document.getElementById('errorBloqueo');
-                    if (errBox) {
-                        errBox.style.display = 'block';
-                        errBox.textContent = Object.values(data.errors).flat().join(' ');
-                    }
-                    return;
-                }
-                cerrarPanel();
-                location.reload(); // refresca también la tabla de bloqueos de abajo
-            })
-            .catch(() => alert('Error de conexión al bloquear los asientos.'));
-    }
-
-    function desbloquearAsiento(codigo, bloqueoId) {
-        if (!confirm('¿Desbloquear el asiento ' + codigo + '?')) return;
-
-        const fd = new FormData();
-        fd.append('bloqueo_id', bloqueoId);
-        fd.append('csrfmiddlewaretoken', CSRF_TOKEN);
-
-        fetch(`/panel/salas/${SALA_ID}/asientos/desbloquear/`, { method: 'POST', body: fd })
-            .then(r => r.json())
-            .then(data => {
-                if (!data.success) { alert('No se pudo desbloquear.'); return; }
-                delete bloqueosPorAsiento[codigo];
-                const btn = document.querySelector(`.asiento-btn[data-asiento="${codigo}"]`);
-                if (btn) pintarBoton(btn);
-                cerrarPanel();
-                location.reload();
-            })
-            .catch(() => alert('Error de conexión al desbloquear el asiento.'));
-    }
-
-    function asignarCategoria(codigo, nombre, multiplicador, color) {
-        const fd = new FormData();
-        fd.append('asiento_codigo', codigo);
-        fd.append('nombre', nombre);
-        fd.append('multiplicador', multiplicador);
-        fd.append('color', color);
-        fd.append('csrfmiddlewaretoken', CSRF_TOKEN);
-
-        fetch(`/panel/salas/${SALA_ID}/asientos/categoria/asignar/`, { method: 'POST', body: fd })
-            .then(r => r.json())
-            .then(data => {
-                if (!data.success) {
-                    const errBox = document.getElementById('errorBloqueo');
-                    if (errBox) {
-                        errBox.style.display = 'block';
-                        errBox.textContent = Object.values(data.errors).flat().join(' ');
-                    }
-                    return;
-                }
-                cerrarPanel();
-                location.reload(); // refresca también la tabla de categorías de abajo
-            })
-            .catch(() => alert('Error de conexión al asignar la categoría.'));
-    }
-
-    function quitarCategoria(codigo, categoriaId) {
-        if (!confirm('¿Quitar la categoría especial del asiento ' + codigo + '?')) return;
-
-        const fd = new FormData();
-        fd.append('categoria_id', categoriaId);
-        fd.append('csrfmiddlewaretoken', CSRF_TOKEN);
-
-        fetch(`/panel/salas/${SALA_ID}/asientos/categoria/quitar/`, { method: 'POST', body: fd })
-            .then(r => r.json())
-            .then(data => {
-                if (!data.success) { alert('No se pudo quitar la categoría.'); return; }
-                delete categoriasPorAsiento[codigo];
-                const btn = document.querySelector(`.asiento-btn[data-asiento="${codigo}"]`);
-                if (btn) pintarBoton(btn);
-                cerrarPanel();
-                location.reload();
-            })
-            .catch(() => alert('Error de conexión al quitar la categoría.'));
-    }
-
-    // Botones "Quitar" en la tabla inferior
-    document.querySelectorAll('.btn-desbloquear-fila').forEach(function (btn) {
-        btn.addEventListener('click', function () {
-            const fila = this.closest('tr');
-            desbloquearAsiento(fila.dataset.asiento, this.dataset.bloqueoId);
-        });
-    });
-
-    // Botones "Quitar" en la tabla de categorías
-    document.querySelectorAll('.btn-quitar-categoria-fila').forEach(function (btn) {
-        btn.addEventListener('click', function () {
-            const fila = this.closest('tr');
-            quitarCategoria(fila.dataset.asiento, this.dataset.categoriaId);
-        });
-    });
-
-    // Cambio de modo (permanente <-> función)
-    document.getElementById('selectorModo').addEventListener('change', function () {
-        const valor = this.value;
-        const url = new URL(window.location.href);
-        if (valor) {
-            url.searchParams.set('funcion', valor);
-        } else {
-            url.searchParams.delete('funcion');
-        }
-        window.location.href = url.toString();
-    });
-})();
 </script>
-
 {% endblock %}

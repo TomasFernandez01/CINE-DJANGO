@@ -1,0 +1,166 @@
+{% extends 'panel/base_panel.html' %}
+{% load static %}
+
+{% block titulo %}Configuración General — Panel{% endblock %}
+
+{% block breadcrumb %}
+<span class="sep">›</span>
+<span class="current">Configuración General</span>
+{% endblock %}
+
+<!-- modificado (Hilo 1 - Tanda D): rediseño completo con las secciones nuevas
+     (reservas y pagos, integraciones, email) que antes vivían hardcodeadas en
+     configuracion/settings.py. Separación CSS completa (12 estilos inline -> 0),
+     movidos a static/css/panel/config_general/general.css. -->
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/panel/config_general/general.css' %}">
+{% endblock %}
+
+{% block contenido %}
+
+<div class="panelconfig-wrapper">
+
+    <h1 class="panelconfig-titulo">⚙️ Configuración General</h1>
+    <p class="panelconfig-desc">
+        Estos valores se guardan como datos (no como código), así que cambiarlos
+        acá no requiere ninguna migración.
+    </p>
+
+    <form method="post">
+        {% csrf_token %}
+
+        <!-- Precio de entradas -->
+        <div class="card panelconfig-card">
+            <div class="card-header"><h3>💰 Precio de entradas</h3></div>
+            <div class="card-body panelconfig-card-body">
+                <div>
+                    <label class="form-label">
+                        {{ form.precio_entrada_base.label }} <span class="required">*</span>
+                    </label>
+                    {{ form.precio_entrada_base }}
+                    <div class="form-help">{{ form.precio_entrada_base.help_text }}</div>
+                    {% if form.precio_entrada_base.errors %}
+                    <div class="field-error">{{ form.precio_entrada_base.errors.0 }}</div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <!-- Reservas y pagos -->
+        <div class="card panelconfig-card">
+            <div class="card-header"><h3>🎟️ Reservas y pagos</h3></div>
+            <div class="card-body panelconfig-card-body">
+                <div class="panelconfig-fila-3">
+                    <div>
+                        <label class="form-label">{{ form.tiempo_limite_pago_minutos.label }} <span class="required">*</span></label>
+                        {{ form.tiempo_limite_pago_minutos }}
+                        <div class="form-help">{{ form.tiempo_limite_pago_minutos.help_text }}</div>
+                        {% if form.tiempo_limite_pago_minutos.errors %}
+                        <div class="field-error">{{ form.tiempo_limite_pago_minutos.errors.0 }}</div>
+                        {% endif %}
+                    </div>
+                    <div>
+                        <label class="form-label">{{ form.max_asientos_por_reserva.label }} <span class="required">*</span></label>
+                        {{ form.max_asientos_por_reserva }}
+                        <div class="form-help">{{ form.max_asientos_por_reserva.help_text }}</div>
+                        {% if form.max_asientos_por_reserva.errors %}
+                        <div class="field-error">{{ form.max_asientos_por_reserva.errors.0 }}</div>
+                        {% endif %}
+                    </div>
+                    <div>
+                        <label class="form-label">{{ form.qr_minutos_antes_funcion.label }} <span class="required">*</span></label>
+                        {{ form.qr_minutos_antes_funcion }}
+                        <div class="form-help">{{ form.qr_minutos_antes_funcion.help_text }}</div>
+                        {% if form.qr_minutos_antes_funcion.errors %}
+                        <div class="field-error">{{ form.qr_minutos_antes_funcion.errors.0 }}</div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Integraciones -->
+        <div class="card panelconfig-card">
+            <div class="card-header"><h3>🔌 Integraciones</h3></div>
+            <div class="card-body panelconfig-card-body">
+                <div>
+                    <label class="form-label">{{ form.tmdb_api_key.label }}</label>
+                    {{ form.tmdb_api_key }}
+                    <div class="form-help">{{ form.tmdb_api_key.help_text }}</div>
+                    {% if form.tmdb_api_key.errors %}
+                    <div class="field-error">{{ form.tmdb_api_key.errors.0 }}</div>
+                    {% endif %}
+                </div>
+                <div class="panelconfig-nota-pendiente">
+                    <strong>⏳ Pendiente:</strong> claves de Cloudinary (para subir imágenes) y
+                    configuración del carrusel del hero — el backend todavía no está preparado
+                    para ninguna de las dos cosas, así que no se agregaron campos acá todavía
+                    para no mostrar algo que no hace nada. Queda para una próxima tanda.
+                </div>
+            </div>
+        </div>
+
+        <!-- Email -->
+        <div class="card panelconfig-card">
+            <div class="card-header"><h3>✉️ Envío de emails</h3></div>
+            <div class="card-body panelconfig-card-body">
+                <div>
+                    <label class="form-label">{{ form.email_backend.label }}</label>
+                    {{ form.email_backend }}
+                    <div class="form-help">{{ form.email_backend.help_text }}</div>
+                </div>
+
+                <div id="panelconfig-smtp-campos" class="panelconfig-smtp-campos">
+                    <div class="panelconfig-fila-2">
+                        <div>
+                            <label class="form-label">{{ form.email_host.label }}</label>
+                            {{ form.email_host }}
+                            <div class="form-help">{{ form.email_host.help_text }}</div>
+                        </div>
+                        <div>
+                            <label class="form-label">{{ form.email_port.label }}</label>
+                            {{ form.email_port }}
+                            <div class="form-help">{{ form.email_port.help_text }}</div>
+                        </div>
+                    </div>
+                    <div class="panelconfig-fila-2">
+                        <div>
+                            <label class="form-label">{{ form.email_host_user.label }}</label>
+                            {{ form.email_host_user }}
+                        </div>
+                        <div>
+                            <label class="form-label">{{ form.email_host_password.label }}</label>
+                            {{ form.email_host_password }}
+                            <div class="form-help">{{ form.email_host_password.help_text }}</div>
+                        </div>
+                    </div>
+                    <div>
+                        <label class="form-label">{{ form.email_from.label }}</label>
+                        {{ form.email_from }}
+                    </div>
+                    <div class="checkbox-row panelconfig-checkbox-tls">
+                        {{ form.email_use_tls }}
+                        <label for="{{ form.email_use_tls.id_for_label }}">{{ form.email_use_tls.label }}</label>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="panelconfig-actualizado">
+            Última actualización: {{ config.actualizado_en|date:"d/m/Y H:i" }} hs.
+        </div>
+
+        <div class="panelconfig-botones">
+            <button type="submit" class="btn btn-success panelconfig-btn-guardar">
+                💾 Guardar Cambios
+            </button>
+        </div>
+    </form>
+
+</div>
+
+{% endblock %}
+
+{% block extra_js %}
+<script src="{% static 'js/panel/config_general/general.js' %}"></script>
+{% endblock %}
