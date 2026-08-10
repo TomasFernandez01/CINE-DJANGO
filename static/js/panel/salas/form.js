@@ -95,9 +95,8 @@
         plantilla.querySelectorAll('td').forEach(function (celda) {
             html += '<td>' + celda.innerHTML.replace(/__prefix__/g, index) + '</td>';
         });
-        html += '<td style="text-align:center;">' +
-                '<button type="button" class="btn btn-ghost btn-quitar-nueva" ' +
-                'style="font-size:0.7rem; padding:0.25rem 0.6rem;">✕ Quitar</button>' +
+        html += '<td class="panelsalasform-celda-centro">' +
+                '<button type="button" class="btn btn-ghost btn-quitar-nueva">✕ Quitar</button>' +
                 '</td>';
         nuevaFila.innerHTML = html;
         seccionesBody.appendChild(nuevaFila);
@@ -127,20 +126,3 @@
 
     calcularCapacidad();
 })();
-
-// const filasInput = document.getElementById('id_filas');
-// const colsInput  = document.getElementById('id_columnas');
-// const capEl   = document.getElementById('capacidadCalc');
-// const filasEl = document.getElementById('filasVal');
-// const colsEl  = document.getElementById('colsVal');
-
-// function actualizarCapacidad() {
-//     const f = parseInt(filasInput.value) || 0;
-//     const c = parseInt(colsInput.value)  || 0;
-//     capEl.textContent   = f * c || '—';
-//     filasEl.textContent = f || '?';
-//     colsEl.textContent  = c || '?';
-// }
-
-// filasInput?.addEventListener('input', actualizarCapacidad);
-// colsInput?.addEventListener('input', actualizarCapacidad);

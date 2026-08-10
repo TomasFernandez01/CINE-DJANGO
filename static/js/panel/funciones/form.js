@@ -51,29 +51,21 @@ function consultarCronograma() {
             if (data.funciones && data.funciones.length > 0) {
                 data.funciones.forEach(func => {
                     const item = document.createElement('div');
-                    item.style.padding = '0.5rem';
-                    item.style.background = '#f8f9fa';
-                    item.style.borderLeft = '4px solid #f39c12';
-                    item.style.borderRadius = '4px';
-                    item.style.display = 'flex';
-                    item.style.justifyContent = 'space-between';
-                    item.style.alignItems = 'center';
-                    
+                    item.className = 'panelfuncform-cronograma-item';
+
                     item.innerHTML = `
                         <div>
                             <strong>${func.pelicula}</strong>
                         </div>
-                        <div style="font-weight: 600; color: #555;">
-                            ⏰ ${func.inicio} a ${func.fin} <span style="font-size: 0.75rem; font-weight: normal; color: #999;">(${func.duracion} min)</span>
+                        <div class="panelfuncform-cronograma-horario">
+                            ⏰ ${func.inicio} a ${func.fin} <span class="panelfuncform-cronograma-duracion">(${func.duracion} min)</span>
                         </div>
                     `;
                     cronogramaLista.appendChild(item);
                 });
             } else {
                 const item = document.createElement('div');
-                item.style.padding = '0.5rem';
-                item.style.color = '#27ae60';
-                item.style.fontWeight = '600';
+                item.className = 'panelfuncform-cronograma-libre';
                 item.innerHTML = '✅ No hay funciones programadas para este día en esta sala. Horario totalmente libre.';
                 cronogramaLista.appendChild(item);
             }
