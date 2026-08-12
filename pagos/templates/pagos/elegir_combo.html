@@ -15,6 +15,17 @@
 {{ items_json|json_script:"items-data" }}
 
 <div class="pago-ec-wrapper">
+    {# ──────────────── CONTADOR REGRESIVO ──────────────── #}
+    {% if reserva.tiempo_restante_pago %}
+    <div id="countdownContainer" class="pago-ec-countdown">
+        <div class="pago-ec-countdown-label">Completá esta compra antes de que expire el tiempo:</div>
+        <div id="countdown" class="pago-ec-countdown-numero" data-tiempo="{{ reserva.tiempo_restante_pago }}">
+            {{ reserva.tiempo_restante_formato }}
+        </div>
+        <div class="pago-ec-countdown-footer">La reserva se cancelará automáticamente si no completás el pago</div>
+    </div>
+    {% endif %}
+
     <h1 class="pago-ec-titulo">🍿 Elegí para acompañar</h1>
 
     <form method="post" id="formCombo">
@@ -109,5 +120,13 @@
 {% endblock %}
 
 {% block extra_js %}
+{% if reserva.tiempo_restante_pago %}
+<script>
+    // nuevo: URL de redirección cuando expira el tiempo en este paso.
+    // Mismo destino que usa seleccionar_asientos.js al expirar (volver a
+    // funciones), ya que la reserva queda cancelada del lado del servidor.
+    window.ELEGIR_COMBO_URL_FUNCIONES = "{% url 'salas:lista_funciones' %}";
+</script>
+{% endif %}
 <script src="{% static 'js/pagos/elegir_combo.js' %}"></script>
 {% endblock %}

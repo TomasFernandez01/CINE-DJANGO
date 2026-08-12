@@ -4,6 +4,7 @@ from django.contrib.auth.forms import UserCreationForm
 from peliculas.models import Pelicula
 from django.forms import inlineformset_factory
 from salas.models import Sala, Funcion, SeccionSala
+from sedes.models import Sede
 from reservas.models import Reserva
 from promociones.models import Cupon, PromocionDia, Combo
 from panel.models import ConfiguracionGeneral
@@ -64,8 +65,12 @@ class PeliculaForm(forms.ModelForm):
 class SalaForm(forms.ModelForm):
     class Meta:
         model = Sala
-        fields = ['nombre', 'tipo', 'filas', 'columnas', 'multiplicador_precio', 'activa']
+        # nuevo (Sedes - Fase 1): 'sede' agregado — ahora es un campo
+        # obligatorio del modelo Sala, si no se agrega acá el form no deja
+        # crear/editar salas.
+        fields = ['sede', 'nombre', 'tipo', 'filas', 'columnas', 'multiplicador_precio', 'activa']
         widgets = {
+            'sede':     forms.Select(attrs=SELECT_ATTRS),
             'nombre':   forms.TextInput(attrs=INPUT_ATTRS),
             'tipo':     forms.Select(attrs=SELECT_ATTRS),
             'filas':    forms.NumberInput(attrs={**INPUT_ATTRS, 'min': 1, 'max': 26}),
@@ -74,6 +79,7 @@ class SalaForm(forms.ModelForm):
             'activa':   forms.CheckboxInput(attrs={'class': 'panel-checkbox'}),
         }
         labels = {
+            'sede':     'Sede',
             'nombre':   'Nombre de la sala',
             'tipo':     'Tipo de sala',
             'filas':    'Filas totales del lienzo (A, B, C...)',
@@ -82,6 +88,7 @@ class SalaForm(forms.ModelForm):
             'activa':   'Sala activa',
         }
         help_texts = {
+            'sede':     'A qué sede física pertenece esta sala.',
             'filas':    'Máximo 26 filas (A-Z). Debe alcanzar para la sección más profunda.',
             'columnas': 'Debe alcanzar para el ancho total (todas las secciones + pasillos).',
             'tipo':     'Al elegir el tipo se sugiere un multiplicador (podés cambiarlo igual).',

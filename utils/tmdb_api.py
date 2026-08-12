@@ -60,7 +60,35 @@ class TMDBClient:
         self.api_key = api_key or getattr(settings, 'TMDB_API_KEY', None)
         if not self.api_key:
             raise ValueError("TMDB_API_KEY no está configurada en settings.py")
-    
+
+    # modificado: mensajes de error de TMDB traducidos y más descriptivos.
+    # Antes se devolvía str(e) tal cual (en inglés, y en el caso de
+    # HTTPError incluía la URL completa con la api_key filtrada en el
+    # mensaje mostrado al staff). Esta función centraliza la traducción
+    # para buscar_peliculas() y obtener_detalles(), que antes duplicaban
+    # el mismo except.
+    def _mensaje_error(self, e):
+        """Traduce una excepción de requests a un mensaje en español,
+        pensado para mostrarse tal cual en el panel (messages.error)."""
+        if isinstance(e, requests.exceptions.HTTPError) and e.response is not None:
+            status = e.response.status_code
+            if status == 401:
+                return ("La API key de TMDB no es válida o no está configurada. "
+                        "Revisá el campo 'API Key de TMDB' en Panel > Configuración "
+                        "General (tiene prioridad), o la variable TMDB_API_KEY en "
+                        "configuracion/settings.py.")
+            if status == 404:
+                return "TMDB no encontró lo que se buscó (puede que el ID no exista)."
+            if status == 429:
+                return ("Se alcanzó el límite de solicitudes a TMDB. Esperá unos "
+                         "segundos e intentá de nuevo.")
+            return f"TMDB respondió con un error (código {status}). Intentá nuevamente más tarde."
+        if isinstance(e, requests.exceptions.ConnectionError):
+            return "No se pudo conectar con TMDB. Verificá tu conexión a internet."
+        if isinstance(e, requests.exceptions.Timeout):
+            return "TMDB tardó demasiado en responder. Intentá nuevamente."
+        return f"Ocurrió un error al comunicarse con TMDB: {e}"
+
     def buscar_peliculas(self, query, page=1, language='es-ES'):
         """
         Busca películas por nombre.
@@ -90,7 +118,7 @@ class TMDBClient:
         except requests.exceptions.RequestException as e:
             return {
                 'success': False,
-                'error': str(e),
+                'error': self._mensaje_error(e),  # modificado: antes str(e)
                 'results': []
             }
     
@@ -122,7 +150,7 @@ class TMDBClient:
         except requests.exceptions.RequestException as e:
             return {
                 'success': False,
-                'error': str(e)
+                'error': self._mensaje_error(e)  # modificado: antes str(e)
             }
     
     def _extraer_datos_pelicula(self, data):

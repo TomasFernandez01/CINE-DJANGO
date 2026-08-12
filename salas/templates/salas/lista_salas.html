@@ -177,7 +177,14 @@
                     
                     <!-- Contenedor scrollable interno para el mapa si la sala es muy grande -->
                     <div style="overflow-x: auto; padding-bottom: 1rem;">
-                        <div class="salas-mapa-inner" style="min-width: max-content; margin: 0 auto;">
+                        <!-- modificado: se saca el style inline (min-width: max-content; margin: 0 auto;)
+                             que pisaba a la clase .salas-mapa-inner. margin:auto no centra elementos
+                             inline-block (el navegador lo calcula como 0), por eso el mapa quedaba
+                             pegado a la izquierda. Se deja que .salas-mapa-inner (min-width: 100%,
+                             ver static/css/salas/mapa_salas.css) haga lo mismo que ya funciona en
+                             static/css/reservas/seleccionar_asientos.css: el contenedor ocupa todo
+                             el ancho disponible y cada fila se centra con justify-content: center. -->
+                        <div class="salas-mapa-inner">
                             {% for fila in sala.mapa_layout %}
                                 <div class="salas-mapa-fila">
                                     <span class="salas-mapa-fila-letra">{{ fila.letra }}</span>

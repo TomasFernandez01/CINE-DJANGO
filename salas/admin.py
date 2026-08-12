@@ -9,8 +9,8 @@ class SeccionSalaInline(admin.TabularInline):
 
 @admin.register(Sala)
 class SalaAdmin(admin.ModelAdmin):
-    list_display = ['nombre', 'tipo_badge', 'capacidad', 'filas', 'columnas', 'activa']
-    list_filter = ['activa', 'tipo']
+    list_display = ['nombre', 'sede', 'tipo_badge', 'capacidad', 'filas', 'columnas', 'activa']
+    list_filter = ['sede', 'activa', 'tipo']
     
     search_fields = ['nombre']
     list_editable = ['activa']
@@ -20,7 +20,7 @@ class SalaAdmin(admin.ModelAdmin):
     
     fieldsets = (
         ('Información Básica', {
-            'fields': ('nombre', 'tipo', 'activa')
+            'fields': ('sede', 'nombre', 'tipo', 'activa')
         }),
         ('Configuración de Asientos', {
             'fields': ('filas', 'columnas', 'capacidad'),

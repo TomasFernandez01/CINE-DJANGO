@@ -1,5 +1,6 @@
 from django.db import models
 from peliculas.models import Pelicula
+from sedes.models import Sede
 from datetime import timedelta
 from django.utils import timezone
 from django.core.exceptions import ValidationError
@@ -24,6 +25,17 @@ class Sala(models.Model):
         '2d_premium':{'icono': '⭐', 'color': '#fd7e14', 'badge': 'warning'},
         '3d_premium':{'icono': '💎', 'color': '#6f42c1', 'badge': 'purple'},
     }
+    # nuevo (Sedes - Fase 1): a qué sede pertenece esta sala. PROTECT en vez
+    # de CASCADE a propósito — borrar una Sede no debería poder arrastrarse
+    # y borrar en cascada todas sus salas/funciones/reservas/pagos; si se
+    # quiere dar de baja una sede, se desactiva (Sede.activa=False) o se
+    # borran sus salas explícitamente primero.
+    sede = models.ForeignKey(
+        Sede,
+        on_delete=models.PROTECT,
+        related_name='salas',
+        help_text="Sede física a la que pertenece esta sala."
+    )
     nombre = models.CharField(max_length=100,default='SALA')
     tipo = models.CharField(
         max_length=20,

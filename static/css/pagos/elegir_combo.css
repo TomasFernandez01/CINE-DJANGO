@@ -261,3 +261,24 @@
     font-size: 1.1rem;
     cursor: pointer;
 }
+
+/* ---- Contador regresivo (mismo lenguaje visual que pagos/procesar_pago.css,
+   con prefijo propio pago-ec- para no compartir clases entre archivos) ---- */
+.pago-ec-countdown {
+    background: linear-gradient(135deg, #ff6b6b 0%, #ff8e53 100%);
+    padding: 1.25rem;
+    border-radius: 8px;
+    margin-bottom: 1.25rem;
+    text-align: center;
+    color: white;
+}
+.pago-ec-countdown-label { font-size: 0.85rem; margin-bottom: 0.4rem; opacity: 0.95; }
+.pago-ec-countdown-numero {
+    font-size: 2.2rem;
+    font-weight: bold;
+    font-family: 'Courier New', monospace;
+    letter-spacing: 0.1em;
+}
+.pago-ec-countdown-footer { font-size: 0.78rem; margin-top: 0.4rem; opacity: 0.9; }
+.pago-ec-countdown-urgente { background: linear-gradient(135deg, #dc3545 0%, #c82333 100%); }
+.pago-ec-countdown-expirado { background: linear-gradient(135deg, #6c757d 0%, #495057 100%); }

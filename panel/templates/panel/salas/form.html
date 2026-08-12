@@ -41,6 +41,17 @@
 
                     <div>
                         <label class="form-label">
+                            Sede <span class="required">*</span>
+                        </label>
+                        {{ form.sede }}
+                        <div class="form-help">{{ form.sede.help_text }}</div>
+                        {% if form.sede.errors %}
+                        <div class="field-error">{{ form.sede.errors.0 }}</div>
+                        {% endif %}
+                    </div>
+
+                    <div>
+                        <label class="form-label">
                             Nombre <span class="required">*</span>
                         </label>
                         {{ form.nombre }}

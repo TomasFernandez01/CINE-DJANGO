@@ -72,6 +72,12 @@
     border: 1px solid #555555;
 }
 
+/* nuevo: modo "solo informar" (mostrarModalConfirmacion con soloInformar:
+   true) oculta el botón Cancelar — no hay nada que cancelar en un aviso. */
+.modal-confirmacion-btn--cancelar.oculto {
+    display: none;
+}
+
 .modal-confirmacion-btn--confirmar {
     background-color: #28a745;
     color: white;

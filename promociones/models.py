@@ -2,6 +2,7 @@ from django.db import models
 from django.contrib.auth.models import User
 from django.utils import timezone
 from decimal import Decimal
+from sedes.models import Sede
 
 
 class Cupon(models.Model):
@@ -33,6 +34,16 @@ class Cupon(models.Model):
         max_digits=10, decimal_places=2,
         null=True, blank=True,
         help_text="Monto mínimo de compra para poder aplicar el cupón"
+    )
+    # nuevo (Sedes - Fase 1): nullable a propósito. Vacío = cupón de toda
+    # la cadena (válido en cualquier sede); con valor = exclusivo de esa
+    # sede. No se toca la lógica de validación en pagos/views.py todavía
+    # (eso es Fase 2, cuando exista el selector de sede del cliente).
+    sede = models.ForeignKey(
+        Sede, on_delete=models.CASCADE, related_name='cupones',
+        null=True, blank=True,
+        help_text="Dejar vacío para que el cupón sea válido en todas las sedes. "
+                   "Elegir una sede para que sea exclusivo de esa sede."
     )
 
     def __str__(self):
@@ -89,6 +100,14 @@ class PromocionDia(models.Model):
     )
     activo = models.BooleanField(default=True)
     descripcion = models.TextField(blank=True, help_text="Descripción visible para el usuario")
+    # nuevo (Sedes - Fase 1): mismo criterio que Cupon.sede — vacío = promo
+    # de toda la cadena, con valor = exclusiva de esa sede.
+    sede = models.ForeignKey(
+        Sede, on_delete=models.CASCADE, related_name='promociones_dia',
+        null=True, blank=True,
+        help_text="Dejar vacío para que la promoción aplique en todas las sedes. "
+                   "Elegir una sede para que sea exclusiva de esa sede."
+    )
 
     def __str__(self):
         return f"{self.nombre} ({self.get_dia_semana_display()})"
@@ -142,6 +161,15 @@ class Combo(models.Model):
     # cargados en la base (todos combos armados hasta ahora) no queden sin
     # categoría tras la migración.
     categoria = models.CharField(max_length=20, choices=CATEGORIA_CHOICES, default='combo')
+    # nuevo (Sedes - Fase 1): mismo criterio que Cupon.sede — vacío = ítem
+    # de toda la cadena, con valor = exclusivo de esa sede (ej: un combo
+    # promocional que solo existe en una sucursal puntual).
+    sede = models.ForeignKey(
+        Sede, on_delete=models.CASCADE, related_name='combos',
+        null=True, blank=True,
+        help_text="Dejar vacío para que el ítem esté disponible en todas las sedes. "
+                   "Elegir una sede para que sea exclusivo de esa sede."
+    )
     
     def __str__(self):
         return f"{self.nombre} — ${self.precio}"

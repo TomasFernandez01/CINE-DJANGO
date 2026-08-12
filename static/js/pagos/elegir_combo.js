@@ -89,4 +89,67 @@
     });
 
     actualizarResumen();
+
+    // ════════════════════════════════════════════════════════════
+    // CONTADOR REGRESIVO
+    // nuevo: este paso (elegir combo, entre seleccionar_asientos y
+    // procesar_pago) no tenía countdown propio — el usuario podía
+    // quedarse acá sin ver que se le acababa el tiempo de la reserva.
+    // Al llegar a 0 se muestra un modal centrado (no un toast, a
+    // diferencia de seleccionar_asientos.js) y se redirige a funciones.
+    // ════════════════════════════════════════════════════════════
+    (function () {
+        const el = document.getElementById('countdown');
+        const container = document.getElementById('countdownContainer');
+        const btnContinuar = document.querySelector('.pago-ec-btn-continuar');
+        const form = document.getElementById('formCombo');
+        if (!el) return;
+        let tiempo = parseInt(el.dataset.tiempo, 10);
+        let yaExpiro = false;
+
+        function formatearTiempo(seg) {
+            const m = Math.floor(seg / 60), s = seg % 60;
+            return String(m).padStart(2, '0') + ':' + String(s).padStart(2, '0');
+        }
+
+        function expirar() {
+            if (yaExpiro) return;
+            yaExpiro = true;
+
+            el.textContent = '00:00';
+            container.classList.add('pago-ec-countdown-expirado');
+            if (btnContinuar) {
+                btnContinuar.disabled = true;
+                btnContinuar.style.opacity = '0.4';
+                btnContinuar.style.cursor = 'not-allowed';
+                btnContinuar.textContent = '⏰ Tiempo Expirado';
+            }
+            if (form) form.style.pointerEvents = 'none';
+
+            window.mostrarModalConfirmacion({
+                titulo: '⏰ Tiempo expirado',
+                mensaje: 'El tiempo para completar la compra expiró. La reserva será cancelada automáticamente y vas a ser redirigido a las funciones disponibles.',
+                textoConfirmar: 'Entendido',
+                soloInformar: true
+            }).then(function () {
+                window.location.href = window.ELEGIR_COMBO_URL_FUNCIONES || '/';
+            });
+        }
+
+        function tick() {
+            if (tiempo <= 0) {
+                expirar();
+                return;
+            }
+            el.textContent = formatearTiempo(tiempo);
+            if (tiempo <= 180) container.classList.add('pago-ec-countdown-urgente');
+            tiempo--;
+        }
+
+        tick();
+        const iv = setInterval(function () {
+            tick();
+            if (yaExpiro) clearInterval(iv);
+        }, 1000);
+    })();
 })();
