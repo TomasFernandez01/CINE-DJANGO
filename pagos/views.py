@@ -81,11 +81,12 @@ def _parsear_items_seleccionados(items_crudos):
 
 
 # def _calcular_descuentos(monto_original, cantidad_entradas, codigo_cupon, combo_id, usuario, promo_dia):
-def _calcular_descuentos(monto_original, cantidad_entradas, codigo_cupon, items_seleccionados, usuario, promo_dia):
+def _calcular_descuentos(monto_original, cantidad_entradas, codigo_cupon, items_seleccionados, usuario, promo_dia, sede_id=None):
     """
     Calcula todos los descuentos y retorna un dict con los resultados. La promo_dia y el cupón se aplican sobre el monto de entradas.
     Los ítems de concesión (combos/bebidas/snacks/pochoclos) son un adicional.
     modificado (combos múltiples): `combo_id` (uno solo) pasa a ser `items_seleccionados`, una lista de {'combo_id', 'cantidad'} — puede haber varios ítems distintos, cada uno con su propia cantidad.
+    nuevo (Sedes - Fase 2): sede_id es la sede de la función de la reserva que se está pagando. Si el cupón es exclusivo de otra sede, se trata igual que un código inexistente (mismo mensaje de error).
     """
     descuento_promo = Decimal('0')
     descuento_cupon_val = Decimal('0')
@@ -103,7 +104,10 @@ def _calcular_descuentos(monto_original, cantidad_entradas, codigo_cupon, items_
     if codigo_cupon and PROMOCIONES_DISPONIBLE:
         codigo_cupon = codigo_cupon.upper().strip()
         try:
-            cupon = Cupon.objects.get(codigo=codigo_cupon)
+            cupon = Cupon.objects.get(
+                Q(sede__isnull=True) | Q(sede_id=sede_id),
+                codigo=codigo_cupon,
+            )
             valido, msg = cupon.es_valido()
  
             if not valido:
@@ -296,6 +300,7 @@ def procesar_pago(request, reserva_id):
         items_seleccionados=items_seleccionados,
         usuario=request.user,
         promo_dia=promo_dia,
+        sede_id=reserva.funcion.sala.sede_id,
     )
     if calc['error_cupon']:
         messages.warning(request, f'⚠️ Cupón inválido: {calc["error_cupon"]}. El pago se procesará sin descuento por cupón.')

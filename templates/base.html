@@ -13,6 +13,8 @@
     <link rel="stylesheet" href="{% static 'css/base/offcanvas.css' %}">
     <!-- modificado: modal de confirmación compartido (reemplaza confirm() de JS en toda la app) -->
     <link rel="stylesheet" href="{% static 'css/shared/modal_confirmacion.css' %}">
+    <!-- nuevo (Sedes - Fase 2): selector "Elegí tu cine" en la navbar -->
+    <link rel="stylesheet" href="{% static 'css/base/selector_sede.css' %}">
     {% block extra_css %}{% endblock %}
 </head>
 <body>
@@ -22,6 +24,22 @@
             <li><a href="{% url 'peliculas:lista_peliculas' %}">Películas</a></li>
             <li><a href="{% url 'salas:lista_salas' %}">Salas</a></li>
             <li><a href="{% url 'salas:lista_funciones' %}">Funciones</a></li>
+
+            {# nuevo (Sedes - Fase 2): selector "Elegí tu cine". Autosubmit vía static/js/base/selector_sede.js #}
+            <li class="nav-selector-sede">
+                <form method="post" action="{% url 'sedes:cambiar_sede' %}" id="formSelectorSede">
+                    {% csrf_token %}
+                    <input type="hidden" name="next" value="{{ request.path }}">
+                    <select name="sede_id" id="selectorSede" class="nav-selector-sede-select" aria-label="Elegí tu cine">
+                        <option value="" {% if not sede_actual %}selected{% endif %}>📍 Todas las sedes</option>
+                        {% for sede in sedes_disponibles %}
+                        <option value="{{ sede.id }}" {% if sede_actual and sede_actual.id == sede.id %}selected{% endif %}>
+                            📍 {{ sede.nombre }}
+                        </option>
+                        {% endfor %}
+                    </select>
+                </form>
+            </li>
             
             {% if user.is_authenticated %}
                 <li>
@@ -127,6 +145,8 @@
     <script src="{% static 'js/base/offcanvas.js' %}"></script>
     <!-- modificado: JS del modal de confirmación compartido -->
     <script src="{% static 'js/shared/modal_confirmacion.js' %}"></script>
+    <!-- nuevo (Sedes - Fase 2): autosubmit del selector "Elegí tu cine" -->
+    <script src="{% static 'js/base/selector_sede.js' %}"></script>
     <script>
         document.addEventListener('DOMContentLoaded', function() {
             {% if messages %}

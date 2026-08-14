@@ -3,6 +3,7 @@ from django.contrib.auth.decorators import login_required
 from django.http import JsonResponse
 from django.views.decorators.csrf import csrf_exempt
 from django.utils import timezone
+from django.db.models import Q
 from decimal import Decimal
 from .models import Cupon, PromocionDia, Combo, CuponUsado
 
@@ -26,6 +27,19 @@ def lista_combos(request):
     # Promociones activas hoy
     dia_actual = timezone.now().weekday()
     promos_hoy = PromocionDia.objects.filter(dia_semana=dia_actual, activo=True)
+
+    # nuevo (Sedes - Fase 2): si el usuario eligió una sede, se muestran
+    # los ítems de toda la cadena (sede=None) + los exclusivos de esa
+    # sede puntual. Sin sede elegida, solo se muestran los de toda la
+    # cadena (no tendría sentido mostrar un combo exclusivo de una sede
+    # que el usuario ni siquiera eligió todavía).
+    sede_id_sesion = request.session.get('sede_id')
+    if sede_id_sesion:
+        combos = combos.filter(Q(sede__isnull=True) | Q(sede_id=sede_id_sesion))
+        promos_hoy = promos_hoy.filter(Q(sede__isnull=True) | Q(sede_id=sede_id_sesion))
+    else:
+        combos = combos.filter(sede__isnull=True)
+        promos_hoy = promos_hoy.filter(sede__isnull=True)
 
     contexto = {
         'combos': combos,
@@ -53,8 +67,15 @@ def verificar_cupon_api(request):
     if not codigo:
         return JsonResponse({'success': False, 'error': 'Ingresá un código'})
 
+    # nuevo (Sedes - Fase 2): mismo criterio que en pagos/views.py y
+    # reservas/views.py — un cupón exclusivo de otra sede se trata igual
+    # que un código inexistente.
+    sede_id_sesion = request.session.get('sede_id')
     try:
-        cupon = Cupon.objects.get(codigo=codigo)
+        cupon = Cupon.objects.get(
+            Q(sede__isnull=True) | Q(sede_id=sede_id_sesion),
+            codigo=codigo,
+        )
     except Cupon.DoesNotExist:
         return JsonResponse({'success': False, 'error': 'Código no encontrado'})
 
@@ -111,6 +132,11 @@ def promociones_dia_api(request):
     """
     dia_actual = timezone.now().weekday()
     promos = PromocionDia.objects.filter(dia_semana=dia_actual, activo=True)
+
+    # nuevo (Sedes - Fase 2): mismo criterio que lista_combos — de toda la
+    # cadena (sede=None) + exclusivas de la sede elegida en sesión.
+    sede_id_sesion = request.session.get('sede_id')
+    promos = promos.filter(Q(sede__isnull=True) | Q(sede_id=sede_id_sesion))
 
     data = []
     for promo in promos:

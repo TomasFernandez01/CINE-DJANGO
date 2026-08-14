@@ -3,6 +3,7 @@ from django.contrib.auth.decorators import login_required
 from django.contrib import messages
 from django.utils import timezone
 from django.http import JsonResponse
+from django.db.models import Q
 from datetime import timedelta , datetime
 from .models import Reserva
 from salas.models import Funcion
@@ -65,6 +66,7 @@ def elegir_tipo_entrada(request, funcion_id):
     dia_semana_funcion = funcion.fecha_hora.weekday()  
     
     promos_dia_activas = list(PromocionDia.objects.filter(
+        Q(sede__isnull=True) | Q(sede_id=funcion.sala.sede_id),
         dia_semana=dia_semana_funcion, activo=True
     ))
 
@@ -102,7 +104,14 @@ def elegir_tipo_entrada(request, funcion_id):
             if not cupon_codigo:
                 errores.append('Ingresá un código de cupón.')
             else:
-                cupon_valido = Cupon.objects.filter(codigo=cupon_codigo).first()
+                # nuevo (Sedes - Fase 2): un cupón exclusivo de otra sede se
+                # trata igual que un código inexistente (decisión: no sumar
+                # un mensaje distinto para este caso, mismo error genérico
+                # que ya existía).
+                cupon_valido = Cupon.objects.filter(
+                    Q(sede__isnull=True) | Q(sede_id=funcion.sala.sede_id),
+                    codigo=cupon_codigo,
+                ).first()
                 if not cupon_valido:
                     errores.append('El cupón no existe.')
                 else:

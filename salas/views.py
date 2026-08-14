@@ -10,6 +10,10 @@ from utils.funciones import agrupar_por_tipo_sala
 def lista_salas(request):
     
     salas = Sala.objects.filter(activa=True).prefetch_related('bloqueos_asientos', 'categorias_asientos')
+    # nuevo (Sedes - Fase 2): misma sede elegida en la navbar
+    sede_id_sesion = request.session.get('sede_id')
+    if sede_id_sesion:
+        salas = salas.filter(sede_id=sede_id_sesion)
     for sala in salas:
         sala.mapa_layout = sala.layout_asientos()
         sala.mapa_bloqueados = {
@@ -28,6 +32,14 @@ def lista_funciones(request):
         disponible=True,
         fecha_hora__gt=ahora
     ).select_related('pelicula', 'sala')
+
+    # nuevo (Sedes - Fase 2): si el usuario eligió una sede (selector de
+    # la navbar, guardado en session['sede_id'] vía sedes.context_processors),
+    # se filtra la cartelera a esa sede. Sin sede elegida, se sigue
+    # mostrando todo (comportamiento de antes de Sedes).
+    sede_id_sesion = request.session.get('sede_id')
+    if sede_id_sesion:
+        funciones = funciones.filter(sala__sede_id=sede_id_sesion)
     
     # FILTRO por película
     pelicula_id = request.GET.get('pelicula', '')
@@ -105,12 +117,20 @@ def lista_funciones(request):
     peliculas_con_funciones = Pelicula.objects.filter(
         funciones__disponible=True,
         funciones__fecha_hora__gt=ahora
-    ).distinct().order_by('titulo')
-    
+    )
     salas_con_funciones = Sala.objects.filter(
         funciones__disponible=True,
         funciones__fecha_hora__gt=ahora
-    ).distinct().order_by('nombre')
+    )
+    # nuevo (Sedes - Fase 2): mismo filtro de sede aplicado a las opciones
+    # de los desplegables, para no ofrecer películas/salas de otra sede
+    # que después no van a devolver resultados al combinarse con el
+    # filtro de arriba.
+    if sede_id_sesion:
+        peliculas_con_funciones = peliculas_con_funciones.filter(funciones__sala__sede_id=sede_id_sesion)
+        salas_con_funciones = salas_con_funciones.filter(sede_id=sede_id_sesion)
+    peliculas_con_funciones = peliculas_con_funciones.distinct().order_by('titulo')
+    salas_con_funciones = salas_con_funciones.distinct().order_by('nombre')
     
     contexto = {
         'funciones': funciones,
