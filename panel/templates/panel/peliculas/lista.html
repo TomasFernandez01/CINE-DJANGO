@@ -50,7 +50,11 @@
     {{ total }} película(s) encontrada(s)
 </div>
 
-<form method="post" action="{% url 'panel:peliculas_eliminar' %}" id="formPeliculas">
+<!-- modificado: data-eliminar-modal activa el flujo por modal de
+     static/js/panel/shared/eliminar_modal.js en vez de navegar a
+     confirmar_eliminar.html. Si JS falla, el form sigue apuntando a la
+     misma action de siempre (fallback intacto). -->
+<form method="post" action="{% url 'panel:peliculas_eliminar' %}" id="formPeliculas" data-eliminar-modal>
     {% csrf_token %}
 <!-- Grid de películas -->
 {% if peliculas %}

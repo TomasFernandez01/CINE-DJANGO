@@ -277,27 +277,35 @@ function initMapaAsientos(config) {
 
         document.getElementById('btnCancelarDesbloqueoMasivo').onclick = cerrarPanel;
         document.getElementById('btnConfirmarDesbloqueoMasivo').onclick = function () {
-            if (!confirm('¿Desbloquear los asientos seleccionados?')) return;
+            // modificado: antes era confirm() nativo, ahora el modal compartido del panel.
+            window.mostrarModalConfirmacion({
+                titulo: 'Desbloquear asientos',
+                mensaje: '¿Desbloquear los asientos seleccionados?',
+                textoConfirmar: 'Sí, desbloquear',
+                peligro: true
+            }).then(function (confirmado) {
+                if (!confirmado) return;
 
-            // Desbloquear uno por uno
-            let promesas = [];
-            codigosArray.forEach(codigo => {
-                const b = bloqueosPorAsiento[codigo];
-                if (b) {
-                    const fd = new FormData();
-                    fd.append('bloqueo_id', b.bloqueo_id);
-                    fd.append('csrfmiddlewaretoken', CSRF_TOKEN);
-                    promesas.push(
-                        fetch(`/panel/salas/${SALA_ID}/asientos/desbloquear/`, { method: 'POST', body: fd })
-                    );
-                }
+                // Desbloquear uno por uno
+                let promesas = [];
+                codigosArray.forEach(codigo => {
+                    const b = bloqueosPorAsiento[codigo];
+                    if (b) {
+                        const fd = new FormData();
+                        fd.append('bloqueo_id', b.bloqueo_id);
+                        fd.append('csrfmiddlewaretoken', CSRF_TOKEN);
+                        promesas.push(
+                            fetch(`/panel/salas/${SALA_ID}/asientos/desbloquear/`, { method: 'POST', body: fd })
+                        );
+                    }
+                });
+
+                Promise.all(promesas)
+                    .then(() => {
+                        location.reload();
+                    })
+                    .catch(() => alert('Error al procesar el desbloqueo masivo.'));
             });
-
-            Promise.all(promesas)
-                .then(() => {
-                    location.reload();
-                })
-                .catch(() => alert('Error al procesar el desbloqueo masivo.'));
         };
     }
 
@@ -327,23 +335,31 @@ function initMapaAsientos(config) {
     }
 
     function desbloquearAsiento(codigo, bloqueoId) {
-        if (!confirm('¿Desbloquear el asiento ' + codigo + '?')) return;
+        // modificado: antes era confirm() nativo, ahora el modal compartido del panel.
+        window.mostrarModalConfirmacion({
+            titulo: 'Desbloquear asiento',
+            mensaje: '¿Desbloquear el asiento ' + codigo + '?',
+            textoConfirmar: 'Sí, desbloquear',
+            peligro: true
+        }).then(function (confirmado) {
+            if (!confirmado) return;
 
-        const fd = new FormData();
-        fd.append('bloqueo_id', bloqueoId);
-        fd.append('csrfmiddlewaretoken', CSRF_TOKEN);
+            const fd = new FormData();
+            fd.append('bloqueo_id', bloqueoId);
+            fd.append('csrfmiddlewaretoken', CSRF_TOKEN);
 
-        fetch(`/panel/salas/${SALA_ID}/asientos/desbloquear/`, { method: 'POST', body: fd })
-            .then(r => r.json())
-            .then(data => {
-                if (!data.success) { alert('No se pudo desbloquear.'); return; }
-                delete bloqueosPorAsiento[codigo];
-                const btn = document.querySelector(`.asiento-btn[data-asiento="${codigo}"]`);
-                if (btn) pintarBoton(btn);
-                cerrarPanel();
-                location.reload();
-            })
-            .catch(() => alert('Error de conexión al desbloquear el asiento.'));
+            fetch(`/panel/salas/${SALA_ID}/asientos/desbloquear/`, { method: 'POST', body: fd })
+                .then(r => r.json())
+                .then(data => {
+                    if (!data.success) { alert('No se pudo desbloquear.'); return; }
+                    delete bloqueosPorAsiento[codigo];
+                    const btn = document.querySelector(`.asiento-btn[data-asiento="${codigo}"]`);
+                    if (btn) pintarBoton(btn);
+                    cerrarPanel();
+                    location.reload();
+                })
+                .catch(() => alert('Error de conexión al desbloquear el asiento.'));
+        });
     }
 
     function asignarCategoria(codigo, nombre, multiplicador, color) {
@@ -372,23 +388,31 @@ function initMapaAsientos(config) {
     }
 
     function quitarCategoria(codigo, categoriaId) {
-        if (!confirm('¿Quitar la categoría especial del asiento ' + codigo + '?')) return;
+        // modificado: antes era confirm() nativo, ahora el modal compartido del panel.
+        window.mostrarModalConfirmacion({
+            titulo: 'Quitar categoría',
+            mensaje: '¿Quitar la categoría especial del asiento ' + codigo + '?',
+            textoConfirmar: 'Sí, quitar',
+            peligro: true
+        }).then(function (confirmado) {
+            if (!confirmado) return;
 
-        const fd = new FormData();
-        fd.append('categoria_id', categoriaId);
-        fd.append('csrfmiddlewaretoken', CSRF_TOKEN);
+            const fd = new FormData();
+            fd.append('categoria_id', categoriaId);
+            fd.append('csrfmiddlewaretoken', CSRF_TOKEN);
 
-        fetch(`/panel/salas/${SALA_ID}/asientos/categoria/quitar/`, { method: 'POST', body: fd })
-            .then(r => r.json())
-            .then(data => {
-                if (!data.success) { alert('No se pudo quitar la categoría.'); return; }
-                delete categoriasPorAsiento[codigo];
-                const btn = document.querySelector(`.asiento-btn[data-asiento="${codigo}"]`);
-                if (btn) pintarBoton(btn);
-                cerrarPanel();
-                location.reload();
-            })
-            .catch(() => alert('Error de conexión al quitar la categoría.'));
+            fetch(`/panel/salas/${SALA_ID}/asientos/categoria/quitar/`, { method: 'POST', body: fd })
+                .then(r => r.json())
+                .then(data => {
+                    if (!data.success) { alert('No se pudo quitar la categoría.'); return; }
+                    delete categoriasPorAsiento[codigo];
+                    const btn = document.querySelector(`.asiento-btn[data-asiento="${codigo}"]`);
+                    if (btn) pintarBoton(btn);
+                    cerrarPanel();
+                    location.reload();
+                })
+                .catch(() => alert('Error de conexión al quitar la categoría.'));
+        });
     }
 
     // Botones "Quitar" en la tabla inferior

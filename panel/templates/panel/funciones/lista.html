@@ -28,7 +28,11 @@
     </div>
 </div>
 
-<form method="post" action="{% url 'panel:funciones_eliminar' %}" id="formFunciones">
+<!-- modificado: data-eliminar-modal activa el flujo por modal de
+     static/js/panel/shared/eliminar_modal.js en vez de navegar a
+     confirmar_eliminar.html. Si JS falla, el form sigue apuntando a la
+     misma action de siempre (fallback intacto). -->
+<form method="post" action="{% url 'panel:funciones_eliminar' %}" id="formFunciones" data-eliminar-modal>
     {% csrf_token %}
 <!-- Filtros por tipo -->
 <div class="panelfunc-filtros">

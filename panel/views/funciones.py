@@ -88,13 +88,21 @@ def funciones_eliminar(request):
          borrar en cascada (Funcion -> Reserva -> Pago).
       2. Con 'confirmado=1': borra de verdad.
     """
+    # modificado: mismo mecanismo que salas_eliminar (ver comentario ahí) -
+    # paso 1 responde JSON cuando lo pide static/js/panel/shared/eliminar_modal.js.
+    es_ajax = request.headers.get('X-Requested-With') == 'XMLHttpRequest'
+
     ids = request.POST.getlist('seleccionadas')
     if not ids:
+        if es_ajax:
+            return JsonResponse({'error': 'No seleccionaste ninguna función.'}, status=400)
         messages.error(request, 'No seleccionaste ninguna función.')
         return redirect('panel:funciones_lista')
 
     funciones_qs = Funcion.objects.filter(id__in=ids).select_related('pelicula', 'sala')
     if not funciones_qs.exists():
+        if es_ajax:
+            return JsonResponse({'error': 'Las funciones seleccionadas ya no existen.'}, status=400)
         messages.error(request, 'Las funciones seleccionadas ya no existen.')
         return redirect('panel:funciones_lista')
 
@@ -105,6 +113,8 @@ def funciones_eliminar(request):
         ]
         funciones_qs.delete()  # cascada: borra también sus reservas y pagos
         messages.success(request, f'🗑️ Función(es) eliminada(s): {", ".join(descripciones)}.')
+        if es_ajax:
+            return JsonResponse({'success': True})  # modificado
         return redirect('panel:funciones_lista')
 
     # Paso 1: vista previa de lo que se va a borrar en cascada
@@ -116,6 +126,21 @@ def funciones_eliminar(request):
             'funcion': funcion,
             'total_reservas': total_reservas,
             'total_pagos': total_pagos,
+        })
+
+    if es_ajax:
+        # modificado
+        lineas = [
+            f'{item["funcion"].pelicula.titulo} '
+            f'({item["funcion"].fecha_hora.strftime("%d/%m/%Y %H:%M")}): '
+            f'{item["total_reservas"]} reserva(s), {item["total_pagos"]} pago(s)'
+            for item in resumen
+        ]
+        return JsonResponse({
+            'lineas': lineas,
+            'advertencia': ('Esta acción no se puede deshacer. Al borrar una función, '
+                             'también se borran en cascada sus reservas y los pagos '
+                             'asociados.'),
         })
 
     return render(request, 'panel/funciones/confirmar_eliminar.html', {

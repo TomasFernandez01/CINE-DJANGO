@@ -11,12 +11,30 @@
          renderizaban con el estilo default del navegador. Se linkea acá, global, para no
          tener que acordarse de incluirlo en cada template nuevo. -->
     <link rel="stylesheet" href="{% static 'css/panel/components.css' %}">
+    <!-- nuevo: modal de confirmación del Panel (reemplaza confirm() nativo), estilizado
+         con la paleta de variables de acá arriba para que sea uniforme con el resto. -->
+    <link rel="stylesheet" href="{% static 'css/panel/modal_confirmacion.css' %}">
     <!-- nuevo: bloque extra_css, hacía falta para que cada vista de Panel pueda cargar su propio
          CSS separado (hasta ahora todo estaba con style="" inline en los templates). Cambio
          mínimo y compatible, no afecta nada de lo existente. -->
     {% block extra_css %}{% endblock %}
 </head>
 <body>
+
+<!-- nuevo: modal de confirmación compartido de todo el Panel (reemplaza confirm()
+     nativo). Vive una sola vez acá, lo completan/muestran los scripts de
+     static/js/panel/shared/ vía window.mostrarModalConfirmacion(...). -->
+<div id="modalConfirmacion" class="modal-confirmacion oculto" role="dialog" aria-modal="true" aria-hidden="true">
+    <div class="modal-confirmacion-fondo" data-modal-cerrar></div>
+    <div class="modal-confirmacion-caja">
+        <h3 id="modalConfirmacionTitulo" class="modal-confirmacion-titulo"></h3>
+        <p id="modalConfirmacionMensaje" class="modal-confirmacion-mensaje"></p>
+        <div class="modal-confirmacion-acciones">
+            <button type="button" id="modalConfirmacionCancelar" class="modal-confirmacion-btn modal-confirmacion-btn--cancelar"></button>
+            <button type="button" id="modalConfirmacionConfirmar" class="modal-confirmacion-btn modal-confirmacion-btn--confirmar"></button>
+        </div>
+    </div>
+</div>
 
 <!-- ============================================================ -->
 <!-- SIDEBAR                                                       -->
@@ -204,6 +222,14 @@ function toggleSidebar() {
     document.getElementById('sidebar').classList.toggle('open');
 }
 </script>
+
+<!-- nuevo: JS del modal de confirmación compartido (mismo motor que el del sitio
+     cliente, solo cambia el CSS). Cargados acá, global, para que cualquier
+     template de Panel pueda usar data-confirm o data-eliminar-modal sin
+     tener que acordarse de incluir los scripts. -->
+<script src="{% static 'js/shared/modal_confirmacion.js' %}"></script>
+<script src="{% static 'js/panel/shared/confirmaciones.js' %}"></script>
+<script src="{% static 'js/panel/shared/eliminar_modal.js' %}"></script>
 
 {% block extra_js %}{% endblock %}
 </body>

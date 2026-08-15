@@ -91,13 +91,25 @@ def salas_eliminar(request):
          reservas se van a borrar en cascada (Sala -> Funcion -> Reserva).
       2. Con 'confirmado=1': borra de verdad.
     """
+    # modificado: request.headers.get('X-Requested-With') identifica el
+    # fetch() de static/js/panel/shared/eliminar_modal.js, que ahora maneja
+    # el paso 1 con un modal en vez de navegar a confirmar_eliminar.html.
+    # Si el pedido NO es AJAX (JS deshabilitado u otra integración), el
+    # comportamiento de siempre (redirect/render de la página completa)
+    # sigue intacto.
+    es_ajax = request.headers.get('X-Requested-With') == 'XMLHttpRequest'
+
     ids = request.POST.getlist('seleccionadas')
     if not ids:
+        if es_ajax:
+            return JsonResponse({'error': 'No seleccionaste ninguna sala.'}, status=400)
         messages.error(request, 'No seleccionaste ninguna sala.')
         return redirect('panel:salas_lista')
 
     salas_qs = Sala.objects.filter(id__in=ids)
     if not salas_qs.exists():
+        if es_ajax:
+            return JsonResponse({'error': 'Las salas seleccionadas ya no existen.'}, status=400)
         messages.error(request, 'Las salas seleccionadas ya no existen.')
         return redirect('panel:salas_lista')
 
@@ -105,6 +117,8 @@ def salas_eliminar(request):
         nombres = list(salas_qs.values_list('nombre', flat=True))
         salas_qs.delete()  # cascada: borra también sus funciones y reservas
         messages.success(request, f'🗑️ Sala(s) eliminada(s): {", ".join(nombres)}.')
+        if es_ajax:
+            return JsonResponse({'success': True})  # modificado
         return redirect('panel:salas_lista')
 
     # Paso 1: vista previa de lo que se va a borrar en cascada
@@ -116,6 +130,21 @@ def salas_eliminar(request):
             'sala': sala,
             'total_funciones': total_funciones,
             'total_reservas': total_reservas,
+        })
+
+    if es_ajax:
+        # modificado: mismo resumen de arriba, formateado como líneas de
+        # texto listas para mostrarse en el modal (ver eliminar_modal.js).
+        lineas = [
+            f'{item["sala"].nombre}: {item["total_funciones"]} función(es), '
+            f'{item["total_reservas"]} reserva(s)'
+            for item in resumen
+        ]
+        return JsonResponse({
+            'lineas': lineas,
+            'advertencia': ('Esta acción no se puede deshacer. Al borrar una sala, '
+                             'también se borran en cascada todas sus funciones y las '
+                             'reservas asociadas a esas funciones.'),
         })
 
     return render(request, 'panel/salas/confirmar_eliminar.html', {

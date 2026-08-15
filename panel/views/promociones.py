@@ -4,6 +4,7 @@
 from datetime import timedelta
 from django.contrib import messages
 from django.db.models import Sum, Count, Q
+from django.http import JsonResponse  # modificado: respuesta AJAX para eliminar_modal.js
 from django.shortcuts import render, redirect, get_object_or_404
 from django.utils import timezone
 from django.views.decorators.http import require_POST
@@ -82,13 +83,21 @@ def combos_eliminar(request):
     A diferencia de Sala/Pelicula/Funcion, Combo NO borra en cascada: los Pagos
     que lo usaron quedan con combo=null (Pago.combo es on_delete=SET_NULL).
     """
+    # modificado: mismo mecanismo que salas_eliminar - paso 1 responde JSON
+    # cuando lo pide static/js/panel/shared/eliminar_modal.js.
+    es_ajax = request.headers.get('X-Requested-With') == 'XMLHttpRequest'
+
     ids = request.POST.getlist('seleccionadas')
     if not ids:
+        if es_ajax:
+            return JsonResponse({'error': 'No seleccionaste ningún combo.'}, status=400)
         messages.error(request, 'No seleccionaste ningún combo.')
         return redirect('panel:combos_lista')
 
     combos_qs = Combo.objects.filter(id__in=ids)
     if not combos_qs.exists():
+        if es_ajax:
+            return JsonResponse({'error': 'Los combos seleccionados ya no existen.'}, status=400)
         messages.error(request, 'Los combos seleccionados ya no existen.')
         return redirect('panel:combos_lista')
 
@@ -96,6 +105,8 @@ def combos_eliminar(request):
         nombres = list(combos_qs.values_list('nombre', flat=True))
         combos_qs.delete()
         messages.success(request, f'🗑️ Combo(s) eliminado(s): {", ".join(nombres)}.')
+        if es_ajax:
+            return JsonResponse({'success': True})  # modificado
         return redirect('panel:combos_lista')
 
     # Paso 1: vista previa (no hay cascada, solo informamos pagos que quedarían sin combo)
@@ -105,6 +116,18 @@ def combos_eliminar(request):
         resumen.append({
             'combo': combo,
             'total_pagos': total_pagos,
+        })
+
+    if es_ajax:
+        # modificado
+        lineas = [
+            f'{item["combo"].nombre}: {item["total_pagos"]} pago(s) quedarían sin combo asociado'
+            for item in resumen
+        ]
+        return JsonResponse({
+            'lineas': lineas,
+            'advertencia': ('Los combos no se borran en cascada: los pagos que los '
+                             'usaron quedan sin combo asociado, no se eliminan.'),
         })
 
     return render(request, 'panel/promociones/combos/confirmar_eliminar.html', {
@@ -194,13 +217,21 @@ def cupones_eliminar(request):
     Cupon SÍ borra en cascada su historial de usos (CuponUsado.cupon es CASCADE),
     pero los Pagos que lo usaron quedan con cupon_usado=null (SET_NULL), no se borran.
     """
+    # modificado: mismo mecanismo que salas_eliminar - paso 1 responde JSON
+    # cuando lo pide static/js/panel/shared/eliminar_modal.js.
+    es_ajax = request.headers.get('X-Requested-With') == 'XMLHttpRequest'
+
     ids = request.POST.getlist('seleccionadas')
     if not ids:
+        if es_ajax:
+            return JsonResponse({'error': 'No seleccionaste ningún cupón.'}, status=400)
         messages.error(request, 'No seleccionaste ningún cupón.')
         return redirect('panel:cupones_lista')
 
     cupones_qs = Cupon.objects.filter(id__in=ids)
     if not cupones_qs.exists():
+        if es_ajax:
+            return JsonResponse({'error': 'Los cupones seleccionados ya no existen.'}, status=400)
         messages.error(request, 'Los cupones seleccionados ya no existen.')
         return redirect('panel:cupones_lista')
 
@@ -208,6 +239,8 @@ def cupones_eliminar(request):
         codigos = list(cupones_qs.values_list('codigo', flat=True))
         cupones_qs.delete()  # cascada: borra también su historial de usos (CuponUsado)
         messages.success(request, f'🗑️ Cupón(es) eliminado(s): {", ".join(codigos)}.')
+        if es_ajax:
+            return JsonResponse({'success': True})  # modificado
         return redirect('panel:cupones_lista')
 
     # Paso 1: vista previa de lo que se va a borrar en cascada
@@ -217,6 +250,19 @@ def cupones_eliminar(request):
         resumen.append({
             'cupon': cupon,
             'total_usos': total_usos,
+        })
+
+    if es_ajax:
+        # modificado
+        lineas = [
+            f'{item["cupon"].codigo}: {item["total_usos"]} uso(s) registrado(s)'
+            for item in resumen
+        ]
+        return JsonResponse({
+            'lineas': lineas,
+            'advertencia': ('Esta acción no se puede deshacer. Se borra también el '
+                             'historial de usos del cupón, pero los pagos que lo '
+                             'usaron NO se borran (quedan sin cupón asociado).'),
         })
 
     return render(request, 'panel/promociones/cupones/confirmar_eliminar.html', {
@@ -290,13 +336,21 @@ def promodia_eliminar(request):
     salas_eliminar). PromocionDia NO borra en cascada: los Pagos que la usaron
     quedan con promo_dia=null (Pago.promo_dia es on_delete=SET_NULL).
     """
+    # modificado: mismo mecanismo que salas_eliminar - paso 1 responde JSON
+    # cuando lo pide static/js/panel/shared/eliminar_modal.js.
+    es_ajax = request.headers.get('X-Requested-With') == 'XMLHttpRequest'
+
     ids = request.POST.getlist('seleccionadas')
     if not ids:
+        if es_ajax:
+            return JsonResponse({'error': 'No seleccionaste ninguna promoción.'}, status=400)
         messages.error(request, 'No seleccionaste ninguna promoción.')
         return redirect('panel:promodia_lista')
 
     promos_qs = PromocionDia.objects.filter(id__in=ids)
     if not promos_qs.exists():
+        if es_ajax:
+            return JsonResponse({'error': 'Las promociones seleccionadas ya no existen.'}, status=400)
         messages.error(request, 'Las promociones seleccionadas ya no existen.')
         return redirect('panel:promodia_lista')
 
@@ -304,6 +358,8 @@ def promodia_eliminar(request):
         nombres = list(promos_qs.values_list('nombre', flat=True))
         promos_qs.delete()
         messages.success(request, f'🗑️ Promoción(es) eliminada(s): {", ".join(nombres)}.')
+        if es_ajax:
+            return JsonResponse({'success': True})  # modificado
         return redirect('panel:promodia_lista')
 
     # Paso 1: vista previa (no hay cascada, solo informamos pagos que quedarían sin promo)
@@ -313,6 +369,18 @@ def promodia_eliminar(request):
         resumen.append({
             'promo': promo,
             'total_pagos': total_pagos,
+        })
+
+    if es_ajax:
+        # modificado
+        lineas = [
+            f'{item["promo"].nombre}: {item["total_pagos"]} pago(s) quedarían sin promoción asociada'
+            for item in resumen
+        ]
+        return JsonResponse({
+            'lineas': lineas,
+            'advertencia': ('La promoción no se borra en cascada: los pagos que la '
+                             'usaron quedan sin promoción asociada, no se eliminan.'),
         })
 
     return render(request, 'panel/promociones/promodia/confirmar_eliminar.html', {

@@ -96,7 +96,10 @@
                 {% endif %}
                 <a href="{% url 'panel:peliculas_importar_tmdb' p.id %}"
                    class="btn btn-primary panelpelistmdb-card-btn-importar"
-                   onclick="return confirm('¿Importar: {{ p.title }}?')">
+                   data-confirm="¿Importar la película &quot;{{ p.title }}&quot;?"
+                   data-confirm-titulo="Importar película"
+                   data-confirm-texto="Sí, importar"
+                   data-confirm-peligro="false">
                     Importar
                 </a>
             </div>

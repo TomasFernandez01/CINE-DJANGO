@@ -13,6 +13,12 @@
      configuracion/settings.py. Separación CSS completa (12 estilos inline -> 0),
      movidos a static/css/panel/config_general/general.css. -->
 {% block extra_css %}
+<!-- modificado: form_styles.css define .panel-input/.panel-select/.form-label/.form-help/
+     .field-error/.checkbox-row (usadas en el form de más abajo) con el mismo estilo que el
+     resto de los formularios del Panel (foco dorado = --accent, fuente heredada del body).
+     Antes no estaba linkeado acá, por eso los campos se veían con el estilo default del
+     navegador en vez de uniformes con el resto de Panel. -->
+<link rel="stylesheet" href="{% static 'css/panel/form_styles.css' %}">
 <link rel="stylesheet" href="{% static 'css/panel/config_general/general.css' %}">
 {% endblock %}
 

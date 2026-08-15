@@ -5,6 +5,7 @@ from django.contrib import messages
 from django.core.files.base import ContentFile
 from django.core.paginator import Paginator
 from django.db.models import Q
+from django.http import JsonResponse  # modificado: respuesta AJAX para eliminar_modal.js
 from django.shortcuts import render, redirect, get_object_or_404
 from django.utils import timezone
 from django.views.decorators.http import require_POST
@@ -91,13 +92,21 @@ def peliculas_eliminar(request):
          se van a borrar en cascada (Pelicula -> Funcion -> Reserva -> Pago).
       2. Con 'confirmado=1': borra de verdad.
     """
+    # modificado: mismo mecanismo que salas_eliminar - paso 1 responde JSON
+    # cuando lo pide static/js/panel/shared/eliminar_modal.js.
+    es_ajax = request.headers.get('X-Requested-With') == 'XMLHttpRequest'
+
     ids = request.POST.getlist('seleccionadas')
     if not ids:
+        if es_ajax:
+            return JsonResponse({'error': 'No seleccionaste ninguna película.'}, status=400)
         messages.error(request, 'No seleccionaste ninguna película.')
         return redirect('panel:peliculas_lista')
 
     peliculas_qs = Pelicula.objects.filter(id__in=ids)
     if not peliculas_qs.exists():
+        if es_ajax:
+            return JsonResponse({'error': 'Las películas seleccionadas ya no existen.'}, status=400)
         messages.error(request, 'Las películas seleccionadas ya no existen.')
         return redirect('panel:peliculas_lista')
 
@@ -105,6 +114,8 @@ def peliculas_eliminar(request):
         titulos = list(peliculas_qs.values_list('titulo', flat=True))
         peliculas_qs.delete()  # cascada: borra también sus funciones, reservas y pagos
         messages.success(request, f'🗑️ Película(s) eliminada(s): {", ".join(titulos)}.')
+        if es_ajax:
+            return JsonResponse({'success': True})  # modificado
         return redirect('panel:peliculas_lista')
 
     # Paso 1: vista previa de lo que se va a borrar en cascada
@@ -118,6 +129,20 @@ def peliculas_eliminar(request):
             'total_funciones': total_funciones,
             'total_reservas': total_reservas,
             'total_pagos': total_pagos,
+        })
+
+    if es_ajax:
+        # modificado
+        lineas = [
+            f'{item["pelicula"].titulo}: {item["total_funciones"]} función(es), '
+            f'{item["total_reservas"]} reserva(s), {item["total_pagos"]} pago(s)'
+            for item in resumen
+        ]
+        return JsonResponse({
+            'lineas': lineas,
+            'advertencia': ('Esta acción no se puede deshacer. Al borrar una película, '
+                             'también se borran en cascada sus funciones, las reservas '
+                             'de esas funciones y los pagos asociados.'),
         })
 
     return render(request, 'panel/peliculas/confirmar_eliminar.html', {
