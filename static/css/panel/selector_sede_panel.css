@@ -1,0 +1,28 @@
+/* nuevo (Sedes - Fase 3): selector de sede activa en la topbar del Panel */
+
+.panel-topbar-sede-fija {
+    font-size: 0.8rem;
+    font-weight: 600;
+    color: #1a1a2e;
+    background-color: #f0f0f5;
+    border: 1px solid #d5d5e0;
+    border-radius: 20px;
+    padding: 0.3rem 0.8rem;
+}
+
+.panel-topbar-selector-sede select {
+    font-size: 0.8rem;
+    font-weight: 600;
+    color: #1a1a2e;
+    background-color: #ffffff;
+    border: 1px solid #d5d5e0;
+    border-radius: 20px;
+    padding: 0.3rem 0.8rem;
+    cursor: pointer;
+}
+
+.panel-topbar-selector-sede select:hover,
+.panel-topbar-selector-sede select:focus {
+    border-color: #6c5ce7;
+    outline: none;
+}

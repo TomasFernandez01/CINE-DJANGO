@@ -158,6 +158,21 @@
                 </div>
             </div>
 
+            <!-- nuevo (Sedes - Fase 3) -->
+            <div class="card">
+                <div class="card-header"><h3>📍 Sede</h3></div>
+                <div class="card-body paneluserform-permisos-stack">
+                    <div>
+                        <label class="form-label">Sede que administra</label>
+                        {{ form.sede_administrada }}
+                        <div class="form-help">{{ form.sede_administrada.help_text }}</div>
+                        {% if form.sede_administrada.errors %}
+                        <div class="field-error">{{ form.sede_administrada.errors.0 }}</div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+
         </div>
 
         {% if form.non_field_errors %}

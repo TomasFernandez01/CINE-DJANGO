@@ -7,7 +7,7 @@ from django.shortcuts import render
 from django.utils import timezone
 from pagos.models import Pago
 from salas.models import Funcion
-from ..decorators import staff_required
+from ..decorators import staff_required, get_sede_activa_panel
 
 
 # ============================================================
@@ -23,6 +23,11 @@ def pagos_lista(request):
         'reserva__usuario',
         'reserva__funcion__pelicula'
     ).order_by('-fecha_pago')
+
+    # nuevo (Sedes - Fase 3)
+    sede_activa = get_sede_activa_panel(request)
+    if sede_activa:
+        pagos = pagos.filter(reserva__funcion__sala__sede=sede_activa)
 
     if estado:
         pagos = pagos.filter(estado=estado)
@@ -52,30 +57,38 @@ def pagos_estadisticas(request):
     ahora = timezone.now()
     hoy = ahora.replace(hour=0, minute=0, second=0, microsecond=0)
 
-    pagos_hoy = Pago.objects.filter(estado='aprobado', fecha_pago__gte=hoy)
+    # nuevo (Sedes - Fase 3): filtro base a encadenar en cada query de
+    # esta vista, según la sede activa del staff (fija o elegida).
+    sede_activa = get_sede_activa_panel(request)
+    filtro_pago_sede = {'reserva__funcion__sala__sede': sede_activa} if sede_activa else {}
+    filtro_funcion_sede = {'sala__sede': sede_activa} if sede_activa else {}
+
+    pagos_hoy = Pago.objects.filter(estado='aprobado', fecha_pago__gte=hoy, **filtro_pago_sede)
     recaudado_hoy = pagos_hoy.aggregate(t=Sum('monto'))['t'] or 0
     entradas_hoy = pagos_hoy.aggregate(
         t=Sum('reserva__cantidad_entradas')
     )['t'] or 0
 
     total_recaudado = Pago.objects.filter(
-        estado='aprobado'
+        estado='aprobado', **filtro_pago_sede
     ).aggregate(t=Sum('monto'))['t'] or 0
 
     qr_escaneados_hoy = Pago.objects.filter(
-        qr_escaneado=True, fecha_escaneo__gte=hoy
+        qr_escaneado=True, fecha_escaneo__gte=hoy, **filtro_pago_sede
     ).count()
-    qr_total = Pago.objects.filter(qr_escaneado=True).count()
+    qr_total = Pago.objects.filter(qr_escaneado=True, **filtro_pago_sede).count()
     qr_pendientes = Pago.objects.filter(
         estado='aprobado',
         qr_escaneado=False,
         reserva__estado='confirmada',
-        reserva__funcion__fecha_hora__gte=ahora
+        reserva__funcion__fecha_hora__gte=ahora,
+        **filtro_pago_sede
     ).count()
 
     funciones_hoy = Funcion.objects.filter(
         fecha_hora__gte=hoy,
-        fecha_hora__lt=hoy + timedelta(days=1)
+        fecha_hora__lt=hoy + timedelta(days=1),
+        **filtro_funcion_sede
     ).select_related('pelicula', 'sala').order_by('fecha_hora')
 
     funciones_con_stats = []
@@ -95,13 +108,13 @@ def pagos_estadisticas(request):
         })
 
     ultimos_pagos = Pago.objects.filter(
-        estado='aprobado'
+        estado='aprobado', **filtro_pago_sede
     ).select_related(
         'reserva__usuario', 'reserva__funcion__pelicula'
     ).order_by('-fecha_pago')[:10]
 
     ultimos_escaneos = Pago.objects.filter(
-        qr_escaneado=True
+        qr_escaneado=True, **filtro_pago_sede
     ).select_related(
         'reserva__usuario',
         'reserva__funcion__pelicula',

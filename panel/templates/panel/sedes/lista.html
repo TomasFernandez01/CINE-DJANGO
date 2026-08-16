@@ -1,0 +1,60 @@
+{% extends 'panel/base_panel.html' %}
+
+{% load static %}
+{% block titulo %}Sedes — Panel{% endblock %}
+
+{% block breadcrumb %}
+<span class="sep">›</span>
+<span class="current">Sedes</span>
+{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/panel/sedes/lista.css' %}">
+{% endblock %}
+
+{% block contenido %}
+
+<div class="panelsedes-lista-encabezado">
+
+    <div>
+        <h1 class="panelsedes-lista-titulo">📍 Sedes</h1>
+        <p class="panelsedes-lista-subtitulo">Ubicaciones físicas del cine. Cada Sala pertenece a una de estas sedes.</p>
+    </div>
+
+    <div class="panelsedes-lista-acciones">
+        <button type="submit" form="formSedes" id="btnEliminarSeleccionadas" class="btn btn-danger panelsedes-lista-btn-eliminar" disabled>Eliminar</button>
+        <a href="{% url 'panel:sedes_crear' %}" class="btn btn-primary">NUEVA</a>
+        <a href="{% url 'panel:inicio' %}" class="btn btn-primary">INICIO</a>
+    </div>
+
+</div>
+
+<form method="post" action="{% url 'panel:sedes_eliminar' %}" id="formSedes">
+    {% csrf_token %}
+    <div class="panelsedes-lista-grid">
+        {% for sede in sedes %}
+        <div class="card">
+            <div class="card-header">
+                <label class="panelsedes-lista-check-label">
+                    <input type="checkbox" name="seleccionadas" value="{{ sede.id }}" class="chk-sede panel-checkbox">
+                    <h3 class="panelsedes-lista-nombre">{{ sede.nombre }}</h3>
+                </label>
+                <span class="panelsedes-lista-badge {% if sede.activa %}panelsedes-lista-badge--activa{% else %}panelsedes-lista-badge--inactiva{% endif %}">
+                    {% if sede.activa %}Activa{% else %}Inactiva{% endif %}
+                </span>
+            </div>
+            <div class="card-body">
+                <div class="panelsedes-lista-direccion">📌 {{ sede.direccion }}, {{ sede.ciudad }}</div>
+                {% if sede.telefono %}<div class="panelsedes-lista-telefono">☎️ {{ sede.telefono }}</div>{% endif %}
+                <div class="panelsedes-lista-salas">🎬 {{ sede.salas.count }} sala{{ sede.salas.count|pluralize }}</div>
+                <a href="{% url 'panel:sedes_editar' sede.id %}" class="btn btn-ghost panelsedes-lista-btn-editar">EDITAR</a>
+            </div>
+        </div>
+        {% empty %}
+        <div class="card panelsedes-lista-vacio-card"><div class="card-body panelsedes-lista-vacio">Todavía no hay sedes cargadas.</div></div>
+        {% endfor %}
+    </div>
+</form>
+
+<script src="{% static 'js/panel/sedes/lista.js' %}"></script>
+{% endblock %}

@@ -79,4 +79,11 @@ urlpatterns = [
     path('cupones-usados/',                     views.cupones_usados_lista, name='cupones_usados_lista'),
     # ---- Configuración General --------------------------------------------------------------------------------
     path('configuracion/',                      views.configuracion_general, name='configuracion_general'),
+
+    # ---- Sedes (solo superuser) -------------------------------------------------------------------------------
+    path('sedes/',                              views.sedes_lista,    name='sedes_lista'),
+    path('sedes/crear/',                        views.sedes_crear,    name='sedes_crear'),
+    path('sedes/<int:sede_id>/editar/',         views.sedes_editar,   name='sedes_editar'),
+    path('sedes/eliminar/',                     views.sedes_eliminar, name='sedes_eliminar'),
+    path('sedes/cambiar/',                      views.cambiar_sede_panel, name='cambiar_sede_panel'),
 ]

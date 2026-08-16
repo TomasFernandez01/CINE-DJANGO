@@ -43,10 +43,16 @@
                         <label class="form-label">
                             Sede <span class="required">*</span>
                         </label>
+                        {% if sede_fija %}
+                        {# nuevo (Sedes - Fase 3): staff restringido a una sede — no elige, se muestra fijo #}
+                        <div class="panelsalasform-sede-fija">📍 {{ sede_fija.nombre }}</div>
+                        <div class="form-help">Tu cuenta administra únicamente esta sede.</div>
+                        {% else %}
                         {{ form.sede }}
                         <div class="form-help">{{ form.sede.help_text }}</div>
                         {% if form.sede.errors %}
                         <div class="field-error">{{ form.sede.errors.0 }}</div>
+                        {% endif %}
                         {% endif %}
                     </div>
 

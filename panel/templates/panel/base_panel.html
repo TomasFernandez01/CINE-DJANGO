@@ -133,6 +133,12 @@
                 <span class="icon">👥</span> Usuarios
                 <span class="badge-admin">Admin</span>
             </a>
+            <!-- nuevo (Sedes - Fase 3) -->
+            <a href="{% url 'panel:sedes_lista' %}"
+               class="sidebar-link {% if seccion_activa == 'sedes' %}active{% endif %}">
+                <span class="icon">📍</span> Sedes
+                <span class="badge-admin">Admin</span>
+            </a>
             <a href="{% url 'admin:index' %}" class="sidebar-link" target="_blank">
                 <span class="icon">⚙️</span> Django Admin
                 <span class="badge-admin">Admin</span>
@@ -168,6 +174,25 @@
             {% block breadcrumb %}{% endblock %}
         </nav>
         <div class="topbar-actions">
+            <!-- nuevo (Sedes - Fase 3): sede activa del staff en el Panel -->
+            {% if panel_sede_fija %}
+            <span class="panel-topbar-sede-fija" title="Tu cuenta administra únicamente esta sede">
+                📍 {{ panel_sede_fija.nombre }}
+            </span>
+            {% elif user.is_staff %}
+            <form method="post" action="{% url 'panel:cambiar_sede_panel' %}" id="formPanelSelectorSede" class="panel-topbar-selector-sede">
+                {% csrf_token %}
+                <input type="hidden" name="next" value="{{ request.path }}">
+                <select name="sede_id" id="panelSelectorSede" aria-label="Sede activa del Panel">
+                    <option value="" {% if not panel_sede_activa %}selected{% endif %}>📍 Todas las sedes</option>
+                    {% for sede in panel_sedes_disponibles %}
+                    <option value="{{ sede.id }}" {% if panel_sede_activa and panel_sede_activa.id == sede.id %}selected{% endif %}>
+                        📍 {{ sede.nombre }}
+                    </option>
+                    {% endfor %}
+                </select>
+            </form>
+            {% endif %}
             <span class="topbar-time" id="reloj"></span>
             <a href="{% url 'usuarios:logout' %}" class="btn btn-ghost" style="font-size:0.8rem;">
                 Cerrar sesión

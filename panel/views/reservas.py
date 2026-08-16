@@ -5,10 +5,16 @@ from django.contrib import messages
 from django.db.models import Q
 from django.shortcuts import render, redirect, get_object_or_404
 from reservas.models import Reserva
-from ..decorators import staff_required
+from ..decorators import staff_required, get_sede_activa_panel, get_sede_staff
 from ..forms import (
     ReservaForm,
 )
+
+
+def _filtro_sede(request):
+    """nuevo (Sedes - Fase 3): ver panel/views/salas.py, mismo patrón."""
+    sede_fija = get_sede_staff(request.user)
+    return {'funcion__sala__sede': sede_fija} if sede_fija is not None else {}
 
 
 # ============================================================
@@ -23,6 +29,11 @@ def reservas_lista(request):
     reservas = Reserva.objects.select_related(
         'usuario', 'funcion__pelicula', 'funcion__sala'
     ).order_by('-fecha_reserva')
+
+    # nuevo (Sedes - Fase 3)
+    sede_activa = get_sede_activa_panel(request)
+    if sede_activa:
+        reservas = reservas.filter(funcion__sala__sede=sede_activa)
 
     if estado:
         reservas = reservas.filter(estado=estado)
@@ -46,7 +57,7 @@ def reservas_lista(request):
 
 @staff_required
 def reservas_detalle(request, reserva_id):
-    reserva = get_object_or_404(Reserva, id=reserva_id)
+    reserva = get_object_or_404(Reserva, id=reserva_id, **_filtro_sede(request))
     pago = getattr(reserva, 'pago', None)
 
     contexto = {
@@ -68,7 +79,7 @@ def reservas_detalle(request, reserva_id):
 
 @staff_required
 def reservas_editar(request, reserva_id):
-    reserva = get_object_or_404(Reserva, id=reserva_id)
+    reserva = get_object_or_404(Reserva, id=reserva_id, **_filtro_sede(request))
 
     if request.method == 'POST':
         form = ReservaForm(request.POST, instance=reserva)

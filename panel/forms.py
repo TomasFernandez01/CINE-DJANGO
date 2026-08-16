@@ -94,6 +94,24 @@ class SalaForm(forms.ModelForm):
             'tipo':     'Al elegir el tipo se sugiere un multiplicador (podés cambiarlo igual).',
             'multiplicador_precio': 'Se aplica sobre el precio base de la entrada. 1.00 = precio normal.',
         }
+
+    # nuevo (Sedes - Fase 3): si el staff que abre el form está
+    # restringido a una sede fija (perfil.sede_administrada), no tiene
+    # sentido dejarlo elegir sede — se saca el campo del form y se fuerza
+    # en save(). Un superuser (sede_fija=None) sigue eligiendo libremente.
+    def __init__(self, *args, sede_fija=None, **kwargs):
+        super().__init__(*args, **kwargs)
+        self._sede_fija = sede_fija
+        if sede_fija is not None:
+            self.fields.pop('sede', None)
+
+    def save(self, commit=True):
+        instance = super().save(commit=False)
+        if self._sede_fija is not None:
+            instance.sede = self._sede_fija
+        if commit:
+            instance.save()
+        return instance
 # ============================================================
 # SALAS — SECCIONES (formset inline)
 # ============================================================
@@ -147,7 +165,7 @@ class FuncionForm(forms.ModelForm):
             'disponible': 'Disponible para reservas',
         }
         
-    def __init__(self, *args, **kwargs):
+    def __init__(self, *args, sede_fija=None, **kwargs):
         super().__init__(*args, **kwargs)
         # Formatear la fecha correctamente para el input datetime-local
         if self.instance and self.instance.pk and self.instance.fecha_hora:
@@ -156,6 +174,11 @@ class FuncionForm(forms.ModelForm):
         self.fields['pelicula'].queryset = Pelicula.objects.filter(
             en_cartelera=True
         ).order_by('titulo')
+        # nuevo (Sedes - Fase 3): si el staff está restringido a una sede,
+        # solo puede elegir salas de esa sede (si no, podría crear
+        # funciones en salas de otra sede que ni administra).
+        if sede_fija is not None:
+            self.fields['sala'].queryset = Sala.objects.filter(sede=sede_fija).order_by('nombre')
 
 # ============================================================
 # USUARIOS
@@ -176,6 +199,14 @@ class CrearUsuarioForm(UserCreationForm):
         max_length=30, required=False,
         widget=forms.TextInput(attrs=INPUT_ATTRS),
         label='Apellido'
+    )
+    # nuevo (Sedes - Fase 3): vive en Perfil (OneToOne), no en User — se
+    # maneja aparte del ModelForm y se guarda a mano en save().
+    sede_administrada = forms.ModelChoiceField(
+        queryset=Sede.objects.filter(activa=True), required=False,
+        widget=forms.Select(attrs=SELECT_ATTRS),
+        label='Sede que administra',
+        help_text='Vacío = administra TODAS las sedes en el Panel (dejalo vacío solo para roles de confianza).'
     )
 
     class Meta:
@@ -202,9 +233,26 @@ class CrearUsuarioForm(UserCreationForm):
         self.fields['password1'].label = 'Contraseña'
         self.fields['password2'].label = 'Confirmar contraseña'
 
+    def save(self, commit=True):
+        user = super().save(commit=commit)
+        if commit:
+            # nuevo (Sedes - Fase 3): el Perfil ya existe acá gracias a la
+            # señal post_save de usuarios/models.py (se crea junto al User).
+            user.perfil.sede_administrada = self.cleaned_data.get('sede_administrada')
+            user.perfil.save(update_fields=['sede_administrada'])
+        return user
+
 
 class EditarUsuarioForm(forms.ModelForm):
     """Para editar usuarios existentes (sin cambiar contraseña)."""
+    # nuevo (Sedes - Fase 3): ver CrearUsuarioForm
+    sede_administrada = forms.ModelChoiceField(
+        queryset=Sede.objects.filter(activa=True), required=False,
+        widget=forms.Select(attrs=SELECT_ATTRS),
+        label='Sede que administra',
+        help_text='Vacío = administra TODAS las sedes en el Panel (dejalo vacío solo para roles de confianza).'
+    )
+
     class Meta:
         model = User
         fields = [
@@ -229,6 +277,21 @@ class EditarUsuarioForm(forms.ModelForm):
             'is_superuser': 'Superusuario (acceso total)',
             'is_active':    'Cuenta activa',
         }
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        # nuevo (Sedes - Fase 3): precarga la sede actual del perfil
+        if self.instance and self.instance.pk:
+            perfil = getattr(self.instance, 'perfil', None)
+            if perfil is not None:
+                self.initial['sede_administrada'] = perfil.sede_administrada
+
+    def save(self, commit=True):
+        user = super().save(commit=commit)
+        if commit:
+            user.perfil.sede_administrada = self.cleaned_data.get('sede_administrada')
+            user.perfil.save(update_fields=['sede_administrada'])
+        return user
 
 # ============================================================
 # AGREGAR ESTA CLASE AL FINAL DE panel/forms.py
@@ -362,6 +425,32 @@ class PromocionDiaForm(forms.ModelForm):
         }
         help_texts = {
             'porcentaje_descuento': 'Solo aplica si el tipo es "Descuento porcentual"',
+        }
+
+
+# ============================================================
+# SEDES — nuevo (Sedes - Fase 3)
+# ============================================================
+class SedeForm(forms.ModelForm):
+    class Meta:
+        model = Sede
+        fields = ['nombre', 'direccion', 'ciudad', 'telefono', 'activa']
+        widgets = {
+            'nombre':    forms.TextInput(attrs=INPUT_ATTRS),
+            'direccion': forms.TextInput(attrs=INPUT_ATTRS),
+            'ciudad':    forms.TextInput(attrs=INPUT_ATTRS),
+            'telefono':  forms.TextInput(attrs=INPUT_ATTRS),
+            'activa':    forms.CheckboxInput(attrs={'class': 'panel-checkbox'}),
+        }
+        labels = {
+            'nombre':    'Nombre de la sede',
+            'direccion': 'Dirección',
+            'ciudad':    'Ciudad',
+            'telefono':  'Teléfono (opcional)',
+            'activa':    'Sede activa',
+        }
+        help_texts = {
+            'activa': 'Si está desactivada, no aparece en el selector "Elegí tu cine" del cliente ni como opción para asignar staff.',
         }
 
 # ============================================================

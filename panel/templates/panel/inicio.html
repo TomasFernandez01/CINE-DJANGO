@@ -1,10 +1,16 @@
 {% extends 'panel/base_panel.html' %}
+{% load static %}
 
 {% block titulo %}Dashboard — Panel Cine Online{% endblock %}
 
 {% block breadcrumb %}
 <span class="sep">›</span>
 <span class="current">Dashboard</span>
+{% endblock %}
+
+{% block extra_css %}
+<!-- nuevo (Sedes - Fase 3): banner de sede activa, separado del <style> inline heredado del template original -->
+<link rel="stylesheet" href="{% static 'css/panel/inicio_sede_banner.css' %}">
 {% endblock %}
 
 {% block contenido %}
@@ -167,6 +173,13 @@
         background: #f8fafc;
     }
 </style>
+
+<!-- nuevo (Sedes - Fase 3): indicador de qué sede se está viendo -->
+{% if panel_sede_activa %}
+<div class="panelinicio-sede-banner">📍 Mostrando datos de: <strong>{{ panel_sede_activa.nombre }}</strong></div>
+{% else %}
+<div class="panelinicio-sede-banner panelinicio-sede-banner--todas">📍 Mostrando datos de <strong>todas las sedes</strong></div>
+{% endif %}
 
 <!-- ============================================================ -->
 <!-- STAT CARDS                                                    -->

@@ -10,10 +10,16 @@ from django.utils import timezone
 from django.views.decorators.http import require_POST
 from pagos.models import Pago
 from salas.models import Sala, Funcion
-from ..decorators import staff_required
+from ..decorators import staff_required, get_sede_activa_panel, get_sede_staff
 from ..forms import (
     FuncionForm,
 )
+
+
+def _filtro_sede(request):
+    """nuevo (Sedes - Fase 3): ver panel/views/salas.py, mismo patrón."""
+    sede_fija = get_sede_staff(request.user)
+    return {'sala__sede': sede_fija} if sede_fija is not None else {}
 
 
 # ============================================================
@@ -22,8 +28,9 @@ from ..forms import (
 
 @staff_required
 def funciones_crear(request):
+    sede_fija = get_sede_staff(request.user)  # nuevo (Sedes - Fase 3)
     if request.method == 'POST':
-        form = FuncionForm(request.POST)
+        form = FuncionForm(request.POST, sede_fija=sede_fija)
         if form.is_valid():
             try:
                 funcion = form.save()
@@ -44,7 +51,7 @@ def funciones_crear(request):
             initial['pelicula'] = request.GET.get('pelicula')
         if request.GET.get('sala'):
             initial['sala'] = request.GET.get('sala')
-        form = FuncionForm(initial=initial)
+        form = FuncionForm(initial=initial, sede_fija=sede_fija)
 
     return render(request, 'panel/funciones/form.html', {
         'form': form,
@@ -56,10 +63,11 @@ def funciones_crear(request):
 
 @staff_required
 def funciones_editar(request, funcion_id):
-    funcion = get_object_or_404(Funcion, id=funcion_id)
+    sede_fija = get_sede_staff(request.user)  # nuevo (Sedes - Fase 3)
+    funcion = get_object_or_404(Funcion, id=funcion_id, **_filtro_sede(request))
 
     if request.method == 'POST':
-        form = FuncionForm(request.POST, instance=funcion)
+        form = FuncionForm(request.POST, instance=funcion, sede_fija=sede_fija)
         if form.is_valid():
             try:
                 form.save()
@@ -70,7 +78,7 @@ def funciones_editar(request, funcion_id):
             except Exception as e:
                 messages.error(request, f'Error: {str(e)}')
     else:
-        form = FuncionForm(instance=funcion)
+        form = FuncionForm(instance=funcion, sede_fija=sede_fija)
 
     return render(request, 'panel/funciones/form.html', {
         'form': form,
@@ -99,7 +107,7 @@ def funciones_eliminar(request):
         messages.error(request, 'No seleccionaste ninguna función.')
         return redirect('panel:funciones_lista')
 
-    funciones_qs = Funcion.objects.filter(id__in=ids).select_related('pelicula', 'sala')
+    funciones_qs = Funcion.objects.filter(id__in=ids, **_filtro_sede(request)).select_related('pelicula', 'sala')
     if not funciones_qs.exists():
         if es_ajax:
             return JsonResponse({'error': 'Las funciones seleccionadas ya no existen.'}, status=400)
@@ -160,6 +168,11 @@ def funciones_lista(request):
 
     funciones = Funcion.objects.select_related('pelicula', 'sala').order_by('fecha_hora')
 
+    # nuevo (Sedes - Fase 3): filtra por la sede activa del staff (fija o elegida en el selector del Panel)
+    sede_activa = get_sede_activa_panel(request)
+    if sede_activa:
+        funciones = funciones.filter(sala__sede=sede_activa)
+
     if filtro == 'hoy':
         hoy = ahora.replace(hour=0, minute=0, second=0, microsecond=0)
         funciones = funciones.filter(
@@ -193,7 +206,7 @@ def funciones_lista(request):
 
 @staff_required
 def funciones_detalle(request, funcion_id):
-    funcion = get_object_or_404(Funcion, id=funcion_id)
+    funcion = get_object_or_404(Funcion, id=funcion_id, **_filtro_sede(request))
     reservas = funcion.reservas.select_related(
         'usuario', 'pago'
     ).order_by('-fecha_reserva')
@@ -236,7 +249,11 @@ def funciones_margen_tiempo(request):
         return JsonResponse({'error': 'Faltan parámetros'}, status=400)
         
     try:
-        sala = Sala.objects.get(id=sala_id)
+        filtro_sala = {'id': sala_id}
+        sede_fija = get_sede_staff(request.user)
+        if sede_fija is not None:
+            filtro_sala['sede'] = sede_fija
+        sala = Sala.objects.get(**filtro_sala)
         from django.utils.dateparse import parse_date
         fecha_date = parse_date(fecha_str)
         if not fecha_date:

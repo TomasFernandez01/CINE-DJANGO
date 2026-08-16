@@ -11,11 +11,22 @@ from django.utils import timezone
 from django.views.decorators.http import require_POST
 from reservas.models import Reserva
 from salas.models import Sala, Funcion, AsientoBloqueado, CategoriaAsiento
-from ..decorators import staff_required
+from ..decorators import staff_required, get_sede_activa_panel, get_sede_staff
 from ..forms import (
     SalaForm,
     SeccionSalaFormSet,
 )
+
+
+def _filtro_sede(request):
+    """
+    nuevo (Sedes - Fase 3): dict listo para pasar a get_object_or_404 /
+    filter — {'sede': sede_fija} si el staff está restringido, {} (sin
+    filtrar) si puede ver todas. Evita repetir el if en cada vista de
+    este archivo.
+    """
+    sede_fija = get_sede_staff(request.user)
+    return {'sede': sede_fija} if sede_fija is not None else {}
 
 
 # ============================================================
@@ -23,8 +34,9 @@ from ..forms import (
 # ============================================================
 @staff_required
 def salas_crear(request):
+    sede_fija = get_sede_staff(request.user)  # nuevo (Sedes - Fase 3)
     if request.method == 'POST':
-        form = SalaForm(request.POST)
+        form = SalaForm(request.POST, sede_fija=sede_fija)
         if form.is_valid():
             sala_temp = form.save(commit=False)
             formset = SeccionSalaFormSet(request.POST, instance=sala_temp)
@@ -39,12 +51,13 @@ def salas_crear(request):
         else:
             formset = SeccionSalaFormSet(request.POST, instance=Sala())
     else:
-        form = SalaForm()
+        form = SalaForm(sede_fija=sede_fija)
         formset = SeccionSalaFormSet(instance=Sala())
 
     return render(request, 'panel/salas/form.html', {
         'form': form,
         'formset': formset,
+        'sede_fija': sede_fija,
         'titulo_pagina': 'Agregar Sala',
         'accion': 'crear',
         'seccion_activa': 'salas',
@@ -52,10 +65,14 @@ def salas_crear(request):
 
 @staff_required
 def salas_editar(request, sala_id):
-    sala = get_object_or_404(Sala, id=sala_id)
+    sede_fija = get_sede_staff(request.user)  # nuevo (Sedes - Fase 3)
+    filtro_sala = {'id': sala_id}
+    if sede_fija is not None:
+        filtro_sala['sede'] = sede_fija
+    sala = get_object_or_404(Sala, **filtro_sala)
 
     if request.method == 'POST':
-        form = SalaForm(request.POST, instance=sala)
+        form = SalaForm(request.POST, instance=sala, sede_fija=sede_fija)
         if form.is_valid():
             sala_temp = form.save(commit=False)
             formset = SeccionSalaFormSet(request.POST, instance=sala_temp)
@@ -70,13 +87,14 @@ def salas_editar(request, sala_id):
         else:
             formset = SeccionSalaFormSet(request.POST, instance=sala)
     else:
-        form = SalaForm(instance=sala)
+        form = SalaForm(instance=sala, sede_fija=sede_fija)
         formset = SeccionSalaFormSet(instance=sala)
 
     return render(request, 'panel/salas/form.html', {
         'form': form,
         'formset': formset,
         'objeto': sala,
+        'sede_fija': sede_fija,
         'titulo_pagina': f'Editar sala: {sala.nombre}',
         'accion': 'editar',
         'seccion_activa': 'salas',
@@ -107,6 +125,10 @@ def salas_eliminar(request):
         return redirect('panel:salas_lista')
 
     salas_qs = Sala.objects.filter(id__in=ids)
+    # nuevo (Sedes - Fase 3): un staff restringido no puede borrar salas de otra sede
+    sede_fija = get_sede_staff(request.user)
+    if sede_fija is not None:
+        salas_qs = salas_qs.filter(sede=sede_fija)
     if not salas_qs.exists():
         if es_ajax:
             return JsonResponse({'error': 'Las salas seleccionadas ya no existen.'}, status=400)
@@ -162,7 +184,7 @@ def salas_asientos(request, sala_id):
       - Una función puntual: afecta solo a esa función (además de lo
         permanente, que siempre se hereda).
     """
-    sala = get_object_or_404(Sala, id=sala_id)
+    sala = get_object_or_404(Sala, id=sala_id, **_filtro_sede(request))
 
     funcion_id = request.GET.get('funcion', '')
     funcion_seleccionada = None
@@ -217,7 +239,7 @@ def salas_asientos(request, sala_id):
 @staff_required
 @require_POST
 def salas_asientos_bloquear(request, sala_id):
-    sala = get_object_or_404(Sala, id=sala_id)
+    sala = get_object_or_404(Sala, id=sala_id, **_filtro_sede(request))
 
     asiento_codigo_raw = request.POST.get('asiento_codigo', '').strip()
     motivo = request.POST.get('motivo', 'admin')
@@ -274,7 +296,7 @@ def salas_asientos_bloquear(request, sala_id):
 @require_POST
 def salas_asientos_desbloquear(request, sala_id):
     """Endpoint AJAX: elimina un bloqueo existente."""
-    sala = get_object_or_404(Sala, id=sala_id)
+    sala = get_object_or_404(Sala, id=sala_id, **_filtro_sede(request))
     bloqueo_id = request.POST.get('bloqueo_id')
 
     bloqueo = get_object_or_404(AsientoBloqueado, id=bloqueo_id, sala=sala)
@@ -288,7 +310,7 @@ def salas_asientos_desbloquear(request, sala_id):
 @staff_required
 @require_POST
 def salas_categoria_asignar(request, sala_id):
-    sala = get_object_or_404(Sala, id=sala_id)
+    sala = get_object_or_404(Sala, id=sala_id, **_filtro_sede(request))
 
     asiento_codigo_raw = request.POST.get('asiento_codigo', '').strip()
     nombre = request.POST.get('nombre', 'Mejorado').strip() or 'Mejorado'
@@ -336,7 +358,7 @@ def salas_categoria_asignar(request, sala_id):
 @require_POST
 def salas_categoria_quitar(request, sala_id):
     """Endpoint AJAX: elimina la categoría especial de un asiento."""
-    sala = get_object_or_404(Sala, id=sala_id)
+    sala = get_object_or_404(Sala, id=sala_id, **_filtro_sede(request))
     categoria_id = request.POST.get('categoria_id')
 
     categoria = get_object_or_404(CategoriaAsiento, id=categoria_id, sala=sala)
@@ -353,6 +375,12 @@ def salas_categoria_quitar(request, sala_id):
 def salas_lista(request):
     salas = Sala.objects.all().order_by('nombre')
     ahora = timezone.now()
+
+    # nuevo (Sedes - Fase 3): filtra por la sede activa del staff (fija o
+    # elegida en el selector del Panel)
+    sede_activa = get_sede_activa_panel(request)
+    if sede_activa:
+        salas = salas.filter(sede=sede_activa)
 
     salas_con_info = []
     for sala in salas:

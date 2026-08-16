@@ -65,3 +65,11 @@ from .promociones import (
     promodia_lista,
 )
 from .config_general import configuracion_general
+# nuevo (Sedes - Fase 3)
+from .sedes import (
+    cambiar_sede_panel,
+    sedes_crear,
+    sedes_editar,
+    sedes_eliminar,
+    sedes_lista,
+)
