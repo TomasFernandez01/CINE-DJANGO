@@ -37,7 +37,7 @@
                 <span class="detalle-badge detalle-badge-gris">⏱ {{ pelicula.duracion_formato }}</span>
             {% endif %}
             {% if pelicula.año %}
-                <span class="detalle-badge detalle-badge-gris">📅 {{ pelicula.año }}</span>
+                <span class="detalle-badge detalle-badge-gris">{{ pelicula.año }}</span>
             {% endif %}
         </div>
 
@@ -141,9 +141,9 @@
     <div class="detalle-horarios">
         {# nuevo (Sedes - tareasnuevas punto 1): título dinámico según la sede elegida #}
         {% if sede_actual %}
-        <h2>🎟️ Horarios de {{ sede_actual.nombre }}</h2>
+        <h2>Horarios de {{ sede_actual.nombre }}</h2>
         {% else %}
-        <h2>🎟️ Horarios</h2>
+        <h2>Todos los Horarios</h2>
         {% endif %}
 
         {% if fechas_disponibles %}

@@ -22,7 +22,7 @@
         <ul>
             <li><a href="{% url 'peliculas:inicio' %}">Inicio</a></li>
             <li><a href="{% url 'peliculas:lista_peliculas' %}">Películas</a></li>
-            <li><a href="{% url 'salas:lista_salas' %}">Salas</a></li>
+            {% comment %} <li><a href="{% url 'salas:lista_salas' %}">Salas</a></li> {% endcomment %}
             <li><a href="{% url 'salas:lista_funciones' %}">Funciones</a></li>
 
             {# nuevo (Sedes - Fase 2): selector "Elegí tu cine". Autosubmit vía static/js/base/selector_sede.js #}
@@ -31,7 +31,7 @@
                     {% csrf_token %}
                     <input type="hidden" name="next" value="{{ request.path }}">
                     <select name="sede_id" id="selectorSede" class="nav-selector-sede-select" aria-label="Elegí tu cine">
-                        <option value="" {% if not sede_actual %}selected{% endif %}>📍 Todas las sedes</option>
+                        <option value="" {% if not sede_actual %}selected{% endif %}>Todas las sedes</option>
                         {% for sede in sedes_disponibles %}
                         <option value="{{ sede.id }}" {% if sede_actual and sede_actual.id == sede.id %}selected{% endif %}>
                             📍 {{ sede.nombre }}
@@ -46,11 +46,14 @@
                     <a href="{% url 'reservas:mis_reservas' %}">Mis Reservas</a>
                 </li>
                 <li>
-                    <a href="{% url 'promociones:mis_cupones' %}">🏷️ Mis Cupones</a>
+                    <a href="{% url 'promociones:mis_cupones' %}">Mis Cupones</a>
                 </li>
                 <li>
-                    <a href="{% url 'promociones:lista_combos' %}">🍿 Combos & Promos</a>
+                    <a href="{% url 'promociones:lista_combos' %}">Combos & Promos</a>
                 </li>
+                <li>
+                    <a href="{% url 'salas:lista_salas' %}">Salas</a>
+                </li> 
                 <li style="margin-left: auto;">
                     <button type="button" class="nav-avatar-trigger" id="offcanvasAbrir" aria-haspopup="dialog" aria-controls="offcanvasPanel">
                         <span class="nav-avatar">

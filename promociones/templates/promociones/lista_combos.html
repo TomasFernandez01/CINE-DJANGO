@@ -10,13 +10,13 @@
 
 {% block contenido %}
 <div class="combos-page">
-    <h1 class="combos-titulo">🍿 Combos y Promociones</h1>
+    <h1 class="combos-titulo">Combos y Promociones</h1>
     <p class="combos-subtitulo">Aprovechá nuestras ofertas al reservar tus entradas</p>
 
     <!-- Promos del día -->
     {% if promos_hoy %}
     <div class="combos-promodia-seccion">
-        <h2 class="combos-seccion-subtitulo">🎉 Promociones de Hoy</h2>
+        <h2 class="combos-seccion-subtitulo">Promociones de Hoy</h2>
         <div class="combos-promodia-grid">
             {% for promo in promos_hoy %}
             <div class="combos-promodia-card">
@@ -41,7 +41,7 @@
     <!-- Combos -->
     {% if combos %}
     <div>
-        <h2 class="combos-seccion-subtitulo">🍟 Nuestros Combos</h2>
+        <h2 class="combos-seccion-subtitulo">Nuestros Combos</h2>
         <div class="combos-grid">
             {% for combo in combos %}
             <div class="combos-card"

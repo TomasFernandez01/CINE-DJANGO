@@ -22,9 +22,9 @@
 
     <div class="hero-contenido">
         {% if not posters_hero %}
-            <div class="hero-aviso-admin">📸 Subí posters a tus películas desde el panel para que roten automáticamente acá</div>
+            <div class="hero-aviso-admin">Subí posters a tus películas desde el panel para que roten automáticamente acá</div>
         {% endif %}
-        <h1>🎬 Bienvenido a tu Cine Online</h1>
+        <h1>Bienvenido a tu Cine Online</h1>
         <p style="margin-bottom: 2rem;">Descubrí las mejores películas en cartelera y reservá tus entradas de forma fácil y rápida</p>
         
         <!-- Saludo e invitaciones de registro dentro del Hero -->
@@ -33,10 +33,10 @@
                 <p style="color: #ffffff; margin-bottom: 1rem; font-size: 1rem;">¿Primera vez aquí? Creá tu cuenta gratis y empezá a disfrutar del cine.</p>
                 <div class="hero-botones">
                     <a href="{% url 'peliculas:lista_peliculas' %}" class="hero-btn hero-btn-primario">
-                        🎥 Ver Cartelera
+                        Ver Cartelera
                     </a>
                     <a href="{% url 'usuarios:registro' %}" class="hero-btn hero-btn-secundario">
-                        🔑 Registrarse
+                        Registrarse
                     </a>
                 </div>
             </div>
@@ -45,13 +45,13 @@
                 <p style="color: #ffffff; margin-bottom: 1rem; font-size: 1.1rem;">¡Hola, <strong>{{ user.first_name|default:user.username }}</strong>!</p>
                 <div class="hero-botones">
                     <a href="{% url 'peliculas:lista_peliculas' %}" class="hero-btn hero-btn-primario">
-                        🎥 Ver Cartelera
+                        Ver Cartelera
                     </a>
                     <a href="{% url 'reservas:mis_reservas' %}" class="hero-btn hero-btn-secundario">
-                        🎫 Mis Reservas
+                        Mis Reservas
                     </a>
                     <a href="{% url 'usuarios:perfil' %}" class="hero-btn hero-btn-outline" style="border: 2px solid #ffffff; padding: 0.8rem 1.5rem; border-radius: 6px; color: #ffffff; text-decoration: none; font-weight: bold;">
-                        👤 Perfil
+                        Perfil
                     </a>
                 </div>
             </div>
@@ -163,7 +163,7 @@
         &copy; 2026 Cine Online. Todos los derechos reservados.
     </div>
     <div style="display: flex; gap: 1.5rem;">
-        <a href="{% url 'peliculas:ayuda' %}" style="color: #ffffff; text-decoration: none; font-weight: bold; font-size: 0.95rem; transition: color 0.2s;">💡 Centro de Ayuda</a>
+        <a href="{% url 'peliculas:ayuda' %}" style="color: #ffffff; text-decoration: none; font-weight: bold; font-size: 0.95rem; transition: color 0.2s;">AYUDA</a>
         <a href="#" style="color: #888; text-decoration: none; font-size: 0.95rem;">Twitter</a>
         <a href="#" style="color: #888; text-decoration: none; font-size: 0.95rem;">Instagram</a>
         <a href="#" style="color: #888; text-decoration: none; font-size: 0.95rem;">Facebook</a>
