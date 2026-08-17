@@ -139,7 +139,12 @@
 
     <!-- ===== Columna derecha: horarios ===== -->
     <div class="detalle-horarios">
+        {# nuevo (Sedes - tareasnuevas punto 1): título dinámico según la sede elegida #}
+        {% if sede_actual %}
+        <h2>🎟️ Horarios de {{ sede_actual.nombre }}</h2>
+        {% else %}
         <h2>🎟️ Horarios</h2>
+        {% endif %}
 
         {% if fechas_disponibles %}
             <!-- nuevo: carrusel de fechas acotado a los dias reales con funcion (no un rango fijo) -->

@@ -36,6 +36,11 @@
                 <div class="ticket-pelicula-titulo">{{ reserva.funcion.pelicula.titulo }}</div>
             </div>
 
+            <div class="ticket-lugar-mini">
+                {# nuevo (Sedes - tareasnuevas punto 2/4): sede visible en el ticket #}
+                📍 {{ reserva.funcion.sala.sede.nombre }}
+            </div>
+
             <!-- Grid de detalles -->
             <div class="ticket-detalles-grid">
                 <div class="ticket-detalle-box-azul">

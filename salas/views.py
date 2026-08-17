@@ -31,7 +31,7 @@ def lista_funciones(request):
     funciones = Funcion.objects.filter(
         disponible=True,
         fecha_hora__gt=ahora
-    ).select_related('pelicula', 'sala')
+    ).select_related('pelicula', 'sala__sede')
 
     # nuevo (Sedes - Fase 2): si el usuario eligió una sede (selector de
     # la navbar, guardado en session['sede_id'] vía sedes.context_processors),

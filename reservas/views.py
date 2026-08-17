@@ -374,7 +374,7 @@ def mis_reservas(request):
         mostrar_canceladas = 'si'
         mostrar_expiradas = 'si'
     
-    reservas = Reserva.objects.filter(usuario=request.user).select_related('funcion__pelicula', 'funcion__sala')
+    reservas = Reserva.objects.filter(usuario=request.user).select_related('funcion__pelicula', 'funcion__sala__sede')
     
     # Auto-cancelar reservas que expiraron por tiempo
     canceladas_tiempo = 0

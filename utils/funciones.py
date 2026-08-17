@@ -13,19 +13,43 @@ def agrupar_por_tipo_sala(funciones_iterable):
     """Recibe un iterable de Funcion (ya filtradas) y devuelve una lista de
     dicts: [{'tipo': '2d', 'etiqueta': '2D', 'funciones': [...]}, ...]
     en el orden definido por Sala.TIPO_CHOICES, salteando los tipos sin
-    ninguna funcion."""
+    ninguna funcion.
+
+    nuevo (Sedes - tareasnuevas punto 2): si el conjunto mezcla funciones
+    de MÁS DE UNA sede (típico cuando el cliente no eligió sede en el
+    selector "Elegí tu cine"), se agrupa también por sede — si no, un
+    mismo grupo "2D" mezclaría horarios de sedes distintas sin ninguna
+    forma de distinguirlos. La etiqueta pasa a ser "2D — San Justo" en
+    ese caso. Cuando hay una sola sede en juego (el caso normal, con
+    sede elegida), la etiqueta queda igual que antes."""
     from salas.models import Sala  # import local para evitar import circular a nivel de modulo
 
-    por_tipo = {}
-    for funcion in funciones_iterable:
-        por_tipo.setdefault(funcion.sala.tipo, []).append(funcion)
+    funciones_list = list(funciones_iterable)
+    sedes_distintas = {f.sala.sede_id for f in funciones_list}
+    mostrar_sede = len(sedes_distintas) > 1
+
+    por_clave = {}
+    orden_claves = []
+    for funcion in funciones_list:
+        clave = (funcion.sala.tipo, funcion.sala.sede_id if mostrar_sede else None)
+        if clave not in por_clave:
+            por_clave[clave] = []
+            orden_claves.append(clave)
+        por_clave[clave].append(funcion)
+
+    orden_tipos = [valor for valor, _ in Sala.TIPO_CHOICES]
+    orden_claves.sort(key=lambda c: orden_tipos.index(c[0]))
+    etiquetas_tipo = dict(Sala.TIPO_CHOICES)
 
     grupos = []
-    for valor_tipo, etiqueta_tipo in Sala.TIPO_CHOICES:
-        if valor_tipo in por_tipo:
-            grupos.append({
-                'tipo': valor_tipo,
-                'etiqueta': etiqueta_tipo,
-                'funciones': por_tipo[valor_tipo],
-            })
+    for tipo, sede_id in orden_claves:
+        funciones_grupo = por_clave[(tipo, sede_id)]
+        etiqueta = etiquetas_tipo[tipo]
+        if mostrar_sede:
+            etiqueta = f"{etiqueta} — {funciones_grupo[0].sala.sede.nombre}"
+        grupos.append({
+            'tipo': tipo,
+            'etiqueta': etiqueta,
+            'funciones': funciones_grupo,
+        })
     return grupos

@@ -12,7 +12,7 @@
 {# ================================================================ #}
 <link rel="stylesheet" href="{% static 'css/reservas/mis_reservas.css' %}">
 
-<h1>🎫 Mis Reservas</h1>
+<h1>Mis Reservas</h1>
 
 <!-- Filtros -->
 <div class="reserva-mr-filtros">
@@ -56,7 +56,8 @@
                             {{ reserva.funcion.fecha_hora|date:"d/m/Y" }} · <strong>{{ reserva.funcion.fecha_hora|date:"H:i" }} hs</strong>
                         </div>
                         <div class="reserva-mr-meta-fila">
-                            {{ reserva.funcion.sala.nombre }}
+                            {# nuevo (Sedes - tareasnuevas punto 2/4): dato derivado, sin campo nuevo en el modelo #}
+                            📍 {{ reserva.funcion.sala.sede.nombre }} — {{ reserva.funcion.sala.nombre }}
                         </div>
                     </div>
 

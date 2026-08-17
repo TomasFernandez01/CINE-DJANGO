@@ -120,7 +120,8 @@
                     <div class="pago-resumen-label">Película</div>
                     <div class="pago-resumen-valor">{{ reserva.funcion.pelicula.titulo }}</div>
                     <div class="pago-resumen-detalle">
-                        {{ reserva.funcion.sala.nombre }} · {{ reserva.funcion.fecha_hora|date:"d/m/Y" }} · {{ reserva.funcion.fecha_hora|date:"H:i" }} hs
+                        {# nuevo (Sedes - tareasnuevas punto 4): sede visible antes de confirmar el pago #}
+                        📍 {{ reserva.funcion.sala.sede.nombre }} — {{ reserva.funcion.sala.nombre }} · {{ reserva.funcion.fecha_hora|date:"d/m/Y" }} · {{ reserva.funcion.fecha_hora|date:"H:i" }} hs
                     </div>
                 </div>
 

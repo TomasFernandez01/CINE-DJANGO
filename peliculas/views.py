@@ -187,7 +187,15 @@ def detalle_pelicula(request, pelicula_id):
     funciones_todas = pelicula.funciones.filter(
         disponible=True,
         fecha_hora__gt=ahora
-    ).select_related('sala').order_by('fecha_hora')
+    ).select_related('sala__sede').order_by('fecha_hora')
+
+    # nuevo (Sedes - tareasnuevas punto 1): si el usuario eligió una sede
+    # (selector de la navbar, session['sede_id']), los horarios de esta
+    # película se acotan a esa sede. Mismo criterio que salas/views.py::
+    # lista_funciones — sin sede elegida, se sigue mostrando todo.
+    sede_id_sesion = request.session.get('sede_id')
+    if sede_id_sesion:
+        funciones_todas = funciones_todas.filter(sala__sede_id=sede_id_sesion)
 
     fechas_qs = funciones_todas.annotate(dia=TruncDate('fecha_hora')) \
         .values_list('dia', flat=True).distinct().order_by('dia')
