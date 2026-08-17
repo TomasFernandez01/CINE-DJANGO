@@ -42,14 +42,17 @@ document.addEventListener('DOMContentLoaded', function () {
                         });
                     }
 
-                    let mensaje = (data.lineas || []).join('\n');
-                    if (data.advertencia) {
-                        mensaje += (mensaje ? '\n\n' : '') + data.advertencia;
-                    }
-
+                    // modificado: antes se armaba todo (lineas + advertencia)
+                    // en un solo string "mensaje" con \n\n, y quedaba todo
+                    // amontonado en un párrafo de texto plano. Ahora se pasan
+                    // por separado: mostrarModalConfirmacion arma una lista
+                    // con viñetas + un recuadro de aviso aparte.
                     return window.mostrarModalConfirmacion({
                         titulo: 'Confirmar eliminación',
-                        mensaje: mensaje || '¿Confirmás que querés eliminar los elementos seleccionados?',
+                        lineas: data.lineas && data.lineas.length > 0
+                            ? data.lineas
+                            : ['¿Confirmás que querés eliminar los elementos seleccionados?'],
+                        advertencia: data.advertencia || '',
                         textoConfirmar: 'Sí, eliminar definitivamente',
                         textoCancelar: 'Cancelar',
                         peligro: true

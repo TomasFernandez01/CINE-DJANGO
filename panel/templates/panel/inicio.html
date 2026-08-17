@@ -74,6 +74,9 @@
         align-items: center;
         gap: 4px;
     }
+    /* nuevo: comparativa % vs periodo anterior, sube/baja de color según signo */
+    .stat-sub.subida { color: #1e8e3e; }
+    .stat-sub.bajada { color: #d93025; }
 
     /* Accesos rapidos estilizados */
     .quick-actions {
@@ -103,7 +106,80 @@
         box-shadow: 0 8px 25px rgba(0,0,0,0.2);
         filter: brightness(1.05);
     }
-    
+
+    /* nuevo: barra de filtros de fecha/agrupación para los gráficos interactivos */
+    .filtro-fechas {
+        background: white;
+        border-radius: 16px;
+        padding: 1.25rem 1.5rem;
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.04);
+        border: 1px solid rgba(0, 0, 0, 0.05);
+        margin-bottom: 1.5rem;
+        display: flex;
+        flex-wrap: wrap;
+        align-items: flex-end;
+        gap: 1rem;
+    }
+    .filtro-fechas .campo {
+        display: flex;
+        flex-direction: column;
+        gap: 0.3rem;
+    }
+    .filtro-fechas label {
+        font-size: 0.75rem;
+        font-weight: 600;
+        color: #888;
+        text-transform: uppercase;
+        letter-spacing: 0.4px;
+    }
+    .filtro-fechas input[type="date"],
+    .filtro-fechas select {
+        padding: 0.5rem 0.7rem;
+        border: 1px solid #e0e2e8;
+        border-radius: 8px;
+        font-family: inherit;
+        font-size: 0.9rem;
+        color: #1a1a2e;
+    }
+    .filtro-fechas .presets {
+        display: flex;
+        gap: 0.4rem;
+        flex-wrap: wrap;
+    }
+    .filtro-fechas .preset-btn {
+        background: #f0f2f5;
+        border: none;
+        border-radius: 20px;
+        padding: 0.4rem 0.9rem;
+        font-size: 0.8rem;
+        font-weight: 600;
+        color: #444;
+        cursor: pointer;
+        transition: background 0.2s;
+    }
+    .filtro-fechas .preset-btn:hover,
+    .filtro-fechas .preset-btn.activo {
+        background: #e2b96f;
+        color: #1a1a2e;
+    }
+    .filtro-fechas .btn-aplicar {
+        background: #1a1a2e;
+        color: white;
+        border: none;
+        border-radius: 8px;
+        padding: 0.55rem 1.3rem;
+        font-weight: 600;
+        font-size: 0.9rem;
+        cursor: pointer;
+    }
+    .filtro-fechas .btn-aplicar:hover { background: #2a2a45; }
+    #filtroError {
+        color: #d93025;
+        font-size: 0.85rem;
+        margin-top: 0.5rem;
+        display: none;
+    }
+
     /* Seccion de graficos */
     .charts-grid {
         display: grid;
@@ -130,7 +206,30 @@
         margin-bottom: 1.25rem;
         display: flex;
         align-items: center;
+        justify-content: space-between;
         gap: 8px;
+    }
+    /* nuevo: toggle recaudación/entradas dentro del título del gráfico de ventas */
+    .metrica-toggle {
+        display: flex;
+        gap: 0.3rem;
+        background: #f0f2f5;
+        border-radius: 20px;
+        padding: 3px;
+    }
+    .metrica-toggle button {
+        border: none;
+        background: transparent;
+        border-radius: 16px;
+        padding: 0.3rem 0.8rem;
+        font-size: 0.75rem;
+        font-weight: 600;
+        color: #666;
+        cursor: pointer;
+    }
+    .metrica-toggle button.activo {
+        background: #1a1a2e;
+        color: white;
     }
 
     /* Tablas y tarjetas de datos */
@@ -172,6 +271,24 @@
     .tabla tr:hover td {
         background: #f8fafc;
     }
+
+    /* nuevo: card del embudo de reservas (pendiente/confirmada/cancelada/expirada) */
+    .embudo-lista {
+        display: flex;
+        flex-direction: column;
+        gap: 0.75rem;
+        padding: 1.5rem;
+    }
+    .embudo-fila {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+    }
+    .embudo-fila .cantidad {
+        font-weight: 700;
+        font-size: 1.1rem;
+        color: #1a1a2e;
+    }
 </style>
 
 <!-- nuevo (Sedes - Fase 3): indicador de qué sede se está viendo -->
@@ -182,7 +299,7 @@
 {% endif %}
 
 <!-- ============================================================ -->
-<!-- STAT CARDS                                                    -->
+<!-- STAT CARDS (sin cambios: son datos de "hoy", no del rango elegido) -->
 <!-- ============================================================ -->
 <div class="stat-grid">
 
@@ -225,27 +342,6 @@
 </div>
 
 <!-- ============================================================ -->
-<!-- SECCIÓN DE GRÁFICOS (MODIFICACION GEMINI)                     -->
-<!-- ============================================================ -->
-<div class="charts-grid">
-    <!-- Gráfico de Ventas -->
-    <div class="chart-card">
-        <div class="chart-title">📈 Ventas Diarias (Últimos 7 días)</div>
-        <div style="position: relative; height: 260px; width: 100%;">
-            <canvas id="recaudacionChart"></canvas>
-        </div>
-    </div>
-
-    <!-- Gráfico de Promociones -->
-    <div class="chart-card">
-        <div class="chart-title">🍿 Uso de Promociones</div>
-        <div style="position: relative; height: 260px; width: 100%;">
-            <canvas id="promocionesChart"></canvas>
-        </div>
-    </div>
-</div>
-
-<!-- ============================================================ -->
 <!-- ACCESOS RÁPIDOS                                               -->
 <!-- ============================================================ -->
 <div class="quick-actions">
@@ -268,245 +364,178 @@
 </div>
 
 <!-- ============================================================ -->
-<!-- DOS COLUMNAS: funciones hoy / últimas reservas               -->
+<!-- nuevo: FILTRO DE FECHAS + AGRUPACIÓN (alimenta gráficos y KPIs) -->
 <!-- ============================================================ -->
-<div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(450px, 1fr)); gap:1.5rem; margin-bottom: 1.5rem;">
+<div class="filtro-fechas">
+    <div class="campo">
+        <label for="filtroDesde">Desde</label>
+        <input type="date" id="filtroDesde" value="{{ periodo_desde_default }}">
+    </div>
+    <div class="campo">
+        <label for="filtroHasta">Hasta</label>
+        <input type="date" id="filtroHasta" value="{{ periodo_hasta_default }}">
+    </div>
+    <div class="campo">
+        <label for="filtroAgrupacion">Agrupar por</label>
+        <select id="filtroAgrupacion">
+            <option value="dia" selected>Día</option>
+            <option value="semana">Semana</option>
+            <option value="mes">Mes</option>
+            <option value="bimestre">Bimestre</option>
+            <option value="trimestre">Trimestre</option>
+            <option value="cuatrimestre">Cuatrimestre</option>
+            <option value="anual">Anual</option>
+        </select>
+    </div>
+    <div class="campo">
+        <label>Rangos rápidos</label>
+        <div class="presets">
+            <button type="button" class="preset-btn" data-preset="7d">Últimos 7 días</button>
+            <button type="button" class="preset-btn activo" data-preset="30d">Últimos 30 días</button>
+            <button type="button" class="preset-btn" data-preset="mes">Este mes</button>
+            <button type="button" class="preset-btn" data-preset="anio">Este año</button>
+        </div>
+    </div>
+    <button type="button" class="btn-aplicar" id="btnAplicarFiltro">Aplicar</button>
+    <div id="filtroError"></div>
+</div>
 
-    <!-- Próximas funciones -->
+<!-- ============================================================ -->
+<!-- nuevo: KPIs de negocio del período elegido                    -->
+<!-- ============================================================ -->
+<div class="stat-grid">
+    <div class="stat-card blue">
+        <div class="stat-label">Recaudado en el período</div>
+        <div class="stat-value" id="kpiRecaudado">${{ kpis.recaudado_periodo|floatformat:0 }}</div>
+        <div class="stat-sub{% if kpis.comparativa_pct > 0 %} subida{% elif kpis.comparativa_pct < 0 %} bajada{% endif %}" id="kpiComparativa">
+            {% if kpis.comparativa_pct is not None %}
+                {% if kpis.comparativa_pct > 0 %}▲{% elif kpis.comparativa_pct < 0 %}▼{% else %}▬{% endif %}
+                {{ kpis.comparativa_pct }}% vs. período anterior
+            {% else %}
+                Sin datos del período anterior para comparar
+            {% endif %}
+        </div>
+    </div>
+    <div class="stat-card gold">
+        <div class="stat-label">Ticket promedio</div>
+        <div class="stat-value" id="kpiTicket">${{ kpis.ticket_promedio|floatformat:0 }}</div>
+        <div class="stat-sub">🎟️ por pago aprobado</div>
+    </div>
+    <div class="stat-card green">
+        <div class="stat-label">Ocupación promedio</div>
+        <div class="stat-value" id="kpiOcupacion">{% if kpis.ocupacion_promedio is not None %}{{ kpis.ocupacion_promedio }}%{% else %}—{% endif %}</div>
+        <div class="stat-sub">🎬 sobre la capacidad de sala</div>
+    </div>
+    <div class="stat-card purple">
+        <div class="stat-label">Día y horario más elegidos</div>
+        <div class="stat-value" id="kpiDiaHorario" style="font-size:1.4rem;">
+            {% if kpis.dia_top %}{{ kpis.dia_top }}{% else %}—{% endif %}
+        </div>
+        <div class="stat-sub" id="kpiHorarioSub">🕐 {% if kpis.horario_pico %}{{ kpis.horario_pico }} hs{% else %}sin datos{% endif %}</div>
+    </div>
+</div>
+
+<!-- ============================================================ -->
+<!-- SECCIÓN DE GRÁFICOS (interactivos, según el filtro de arriba) -->
+<!-- ============================================================ -->
+<div class="charts-grid">
+    <!-- Gráfico de Ventas / Entradas -->
+    <div class="chart-card">
+        <div class="chart-title">
+            <span>📈 Ventas del período</span>
+            <div class="metrica-toggle" id="metricaToggle">
+                <button type="button" data-metrica="recaudacion" class="activo">Recaudación ($)</button>
+                <button type="button" data-metrica="entradas">Entradas vendidas</button>
+            </div>
+        </div>
+        <div style="position: relative; height: 260px; width: 100%;">
+            <canvas id="ventasChart"></canvas>
+        </div>
+    </div>
+
+    <!-- Gráfico de consumo de comida por categoría -->
+    <div class="chart-card">
+        <div class="chart-title">🍿 Consumo por categoría</div>
+        <div style="position: relative; height: 260px; width: 100%;">
+            <canvas id="comboChart"></canvas>
+        </div>
+    </div>
+</div>
+
+<!-- ============================================================ -->
+<!-- nuevo: TOP PELÍCULAS + EMBUDO DE RESERVAS DEL PERÍODO         -->
+<!-- ============================================================ -->
+<div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(400px, 1fr)); gap:1.5rem; margin-bottom: 1.5rem;">
+
     <div class="card">
         <div class="card-header">
-            <h3>📅 Funciones Próximas (hoy y mañana)</h3>
-            <a href="{% url 'panel:funciones_lista' %}" class="btn btn-ghost" style="font-size:0.75rem; border-radius: 20px;">
-                Ver todas
-            </a>
+            <h3>🏆 Top 5 películas por recaudación</h3>
         </div>
         <div style="overflow-x:auto;">
-            {% if proximas_funciones %}
-            <table class="tabla">
+            <table class="tabla" id="tablaTopPeliculas">
                 <thead>
                     <tr>
                         <th>Película</th>
-                        <th>Sala</th>
-                        <th>Horario</th>
-                        <th>Disponibles</th>
+                        <th>Recaudado</th>
                     </tr>
                 </thead>
                 <tbody>
-                    {% for f in proximas_funciones %}
+                    {% for p in kpis.top_peliculas %}
                     <tr>
-                        <td>
-                            <a href="{% url 'panel:funciones_detalle' f.id %}"
-                               style="color:#1a1a2e; font-weight:600; text-decoration:none; transition: color 0.2s;">
-                                {{ f.pelicula.titulo }}
-                            </a>
-                        </td>
-                        <td style="color:#666;">{{ f.sala.nombre }}</td>
-                        <td style="font-weight:600;">{{ f.fecha_hora|date:"d/m H:i" }}</td>
-                        <td>
-                            {% with disp=f.asientos_disponibles total=f.sala.capacidad %}
-                            <span style="font-size:0.8rem; font-weight: 700;
-                                color:{% if disp > total|divisibleby:2 %}#27ae60{% elif disp > 0 %}#f39c12{% else %}#e74c3c{% endif %};">
-                                {{ disp }}/{{ total }}
-                            </span>
-                            {% endwith %}
-                        </td>
+                        <td style="font-weight:600;">{{ p.titulo|default:"—" }}</td>
+                        <td style="color:#27ae60; font-weight:600;">${{ p.total|floatformat:0 }}</td>
                     </tr>
+                    {% empty %}
+                    <tr><td colspan="2" style="padding:2rem;text-align:center;color:#999;">Sin ventas en este período.</td></tr>
                     {% endfor %}
                 </tbody>
             </table>
-            {% else %}
-            <div style="padding:3rem;text-align:center;color:#999; font-size: 0.95rem;">
-                No hay funciones programadas para hoy ni mañana.
-            </div>
-            {% endif %}
         </div>
     </div>
 
-    <!-- Últimas reservas -->
     <div class="card">
         <div class="card-header">
-            <h3>🎫 Últimas Reservas</h3>
-            <a href="{% url 'panel:reservas_lista' %}" class="btn btn-ghost" style="font-size:0.75rem; border-radius: 20px;">
-                Ver todas
-            </a>
+            <h3>🧭 Embudo de reservas del período</h3>
         </div>
-        <div style="overflow-x:auto;">
-            {% if ultimas_reservas %}
-            <table class="tabla">
-                <thead>
-                    <tr>
-                        <th>Código</th>
-                        <th>Usuario</th>
-                        <th>Estado</th>
-                        <th>Total</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {% for r in ultimas_reservas %}
-                    <tr>
-                        <td>
-                            <a href="{% url 'panel:reservas_detalle' r.id %}"
-                               style="color:#1a1a2e; font-weight:600;
-                                      text-decoration:none; font-family:monospace; font-size: 0.95rem;">
-                                {{ r.codigo_reserva }}
-                            </a>
-                        </td>
-                        <td style="color:#666;">
-                            {{ r.usuario.get_full_name|default:r.usuario.username }}
-                        </td>
-                        <td>
-                            <span class="badge badge-{{ r.estado }}">
-                                {{ r.get_estado_display }}
-                            </span>
-                        </td>
-                        <td style="font-weight:600; color:#27ae60;">${{ r.total|floatformat:0 }}</td>
-                    </tr>
-                    {% endfor %}
-                </tbody>
-            </table>
-            {% else %}
-            <div style="padding:3rem;text-align:center;color:#999; font-size: 0.95rem;">Sin reservas aún.</div>
-            {% endif %}
+        <div class="embudo-lista" id="embudoLista">
+            <div class="embudo-fila">
+                <span class="badge badge-confirmada">Confirmadas</span>
+                <span class="cantidad">{{ kpis.embudo.confirmada|default:0 }}</span>
+            </div>
+            <div class="embudo-fila">
+                <span class="badge badge-pendiente">Pendientes</span>
+                <span class="cantidad">{{ kpis.embudo.pendiente|default:0 }}</span>
+            </div>
+            <div class="embudo-fila">
+                <span class="badge badge-cancelada">Canceladas</span>
+                <span class="cantidad">{{ kpis.embudo.cancelada|default:0 }}</span>
+            </div>
+            <div class="embudo-fila">
+                <span class="badge badge-expirada">Expiradas</span>
+                <span class="cantidad">{{ kpis.embudo.expirada|default:0 }}</span>
+            </div>
         </div>
     </div>
 
 </div>
 
-<!-- Últimos pagos -->
-<div class="card">
-    <div class="card-header">
-        <h3>💳 Últimos Pagos Aprobados</h3>
-        <a href="{% url 'panel:pagos_lista' %}" class="btn btn-ghost" style="font-size:0.75rem; border-radius: 20px;">
-            Ver todos
-        </a>
-    </div>
-    <div style="overflow-x:auto;">
-        {% if ultimos_pagos %}
-        <table class="tabla">
-            <thead>
-                <tr>
-                    <th>Transacción</th>
-                    <th>Usuario</th>
-                    <th>Película</th>
-                    <th>Método</th>
-                    <th>Monto</th>
-                    <th>Fecha</th>
-                </tr>
-            </thead>
-            <tbody>
-                {% for pago in ultimos_pagos %}
-                <tr>
-                    <td style="font-family:monospace;font-size:0.85rem; font-weight: 600;">{{ pago.numero_transaccion }}</td>
-                    <td>{{ pago.reserva.usuario.get_full_name|default:pago.reserva.usuario.username }}</td>
-                    <td style="color:#666;">{{ pago.reserva.funcion.pelicula.titulo }}</td>
-                    <td style="color:#666;">{{ pago.get_metodo_pago_display }}</td>
-                    <td style="font-weight:600; color:#27ae60;">${{ pago.monto|floatformat:0 }}</td>
-                    <td style="color:#999; font-size:0.8rem;">{{ pago.fecha_pago|date:"d/m H:i" }}</td>
-                </tr>
-                {% endfor %}
-            </tbody>
-        </table>
-        {% else %}
-        <div style="padding:3rem;text-align:center;color:#999; font-size: 0.95rem;">Sin pagos registrados.</div>
-        {% endif %}
-    </div>
-</div>
-
-<!-- MODIFICACION GEMINI: Scripts de Chart.js para cargar graficos interactivos -->
+<!-- Chart.js + JS del dashboard interactivo -->
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script>
-    document.addEventListener("DOMContentLoaded", function () {
-        // Grafico de Recaudacion (Lineas)
-        const ctxRecaudacion = document.getElementById('recaudacionChart').getContext('2d');
-        
-        // Crear un gradiente azul para el fondo de la linea
-        const gradientBlue = ctxRecaudacion.createLinearGradient(0, 0, 0, 240);
-        gradientBlue.addColorStop(0, 'rgba(52, 152, 219, 0.4)');
-        gradientBlue.addColorStop(1, 'rgba(52, 152, 219, 0.0)');
-
-        new Chart(ctxRecaudacion, {
-            type: 'line',
-            data: {
-                labels: {{ chart_recaudacion_labels|safe }},
-                datasets: [{
-                    label: 'Ventas ($)',
-                    data: {{ chart_recaudacion_valores|safe }},
-                    borderColor: '#3498db',
-                    borderWidth: 3,
-                    backgroundColor: gradientBlue,
-                    fill: true,
-                    tension: 0.4,
-                    pointBackgroundColor: '#3498db',
-                    pointBorderColor: '#fff',
-                    pointBorderWidth: 2,
-                    pointRadius: 4,
-                    pointHoverRadius: 6
-                }]
-            },
-            options: {
-                responsive: true,
-                maintainAspectRatio: false,
-                plugins: {
-                    legend: { display: false }
-                },
-                scales: {
-                    y: {
-                        beginAtZero: true,
-                        grid: { color: '#f0f2f5' },
-                        ticks: { color: '#888', font: { size: 10 } }
-                    },
-                    x: {
-                        grid: { display: false },
-                        ticks: { color: '#888', font: { size: 10 } }
-                    }
-                }
-            }
-        });
-
-        // Grafico de Promociones (Dona o barras apiladas)
-        const ctxPromociones = document.getElementById('promocionesChart').getContext('2d');
-        
-        // Unir datos de combos y cupones en una sola visualizacion
-        const comboLabels = {{ chart_combos_labels|safe }};
-        const comboValores = {{ chart_combos_valores|safe }};
-        const cuponLabels = {{ chart_cupones_labels|safe }};
-        const cuponValores = {{ chart_cupones_valores|safe }};
-        
-        const allLabels = [...comboLabels, ...cuponLabels];
-        const allValues = [...comboValores, ...cuponValores];
-        const colors = [
-            '#e2b96f', '#f39c12', '#27ae60', '#2ecc71', '#9b59b6',
-            '#34495e', '#1abc9c', '#e74c3c', '#d35400', '#7f8c8d'
-        ];
-
-        new Chart(ctxPromociones, {
-            type: 'doughnut',
-            data: {
-                labels: allLabels.length > 0 ? allLabels : ['Sin datos de promociones'],
-                datasets: [{
-                    data: allValues.length > 0 ? allValues : [1],
-                    backgroundColor: allValues.length > 0 ? colors.slice(0, allLabels.length) : ['#e0e0e0'],
-                    borderWidth: 2,
-                    borderColor: '#ffffff'
-                }]
-            },
-            options: {
-                responsive: true,
-                maintainAspectRatio: false,
-                plugins: {
-                    legend: {
-                        position: 'bottom',
-                        labels: {
-                            color: '#444',
-                            font: { size: 10 },
-                            boxWidth: 12,
-                            padding: 8
-                        }
-                    }
-                },
-                cutout: '60%'
-            }
-        });
-    });
+    // nuevo: datos iniciales renderizados por el servidor (panel/views/dashboard.py),
+    // para que los gráficos ya tengan algo dibujado antes de tocar ningún filtro.
+    window.DASHBOARD_INICIAL = {
+        ventasLabels: {{ chart_ventas_labels|safe }},
+        ventasValores: {{ chart_ventas_valores|safe }},
+        entradasValores: {{ chart_entradas_valores|safe }},
+        comboLabels: {{ chart_combos_labels|safe }},
+        comboValores: {{ chart_combos_valores|safe }},
+    };
+    window.DASHBOARD_URLS = {
+        grafico_ventas: "{% url 'panel:dashboard_grafico_ventas' %}",
+        grafico_combos: "{% url 'panel:dashboard_grafico_combos' %}",
+        kpis: "{% url 'panel:dashboard_kpis' %}",
+    };
 </script>
+<script src="{% static 'js/panel/dashboard.js' %}"></script>
 {% endblock %}

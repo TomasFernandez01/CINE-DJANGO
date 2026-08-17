@@ -3,7 +3,12 @@
 # exactamente igual (sigue haciendo 'from . import views' y llamando
 # views.nombre_funcion sin ningún cambio).
 
-from .dashboard import inicio
+from .dashboard import (
+    dashboard_grafico_combos,
+    dashboard_grafico_ventas,
+    dashboard_kpis,
+    inicio,
+)  # modificado: se suman los 3 endpoints AJAX nuevos del dashboard
 from .peliculas import (
     peliculas_buscar_tmdb,
     peliculas_crear,

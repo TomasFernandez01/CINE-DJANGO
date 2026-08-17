@@ -6,6 +6,10 @@ app_name = 'panel'
 urlpatterns = [
     # Dashboard 
     path('',                                    views.inicio,                   name='inicio'),
+    # modificado: endpoints AJAX del dashboard interactivo (ver panel/views/dashboard.py)
+    path('dashboard/grafico-ventas/',            views.dashboard_grafico_ventas, name='dashboard_grafico_ventas'),
+    path('dashboard/grafico-combos/',            views.dashboard_grafico_combos, name='dashboard_grafico_combos'),
+    path('dashboard/kpis/',                      views.dashboard_kpis,           name='dashboard_kpis'),
     # ---- Películas ----------------------------------------------------------------------------
     path('peliculas/',                          views.peliculas_lista,          name='peliculas_lista'),
     # CRUD

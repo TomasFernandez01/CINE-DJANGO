@@ -29,6 +29,11 @@
     <div class="modal-confirmacion-caja">
         <h3 id="modalConfirmacionTitulo" class="modal-confirmacion-titulo"></h3>
         <p id="modalConfirmacionMensaje" class="modal-confirmacion-mensaje"></p>
+        <!-- modificado: contenedores para el modo "resumen" (lista con viñetas +
+             aviso destacado aparte), en vez de todo mezclado en un solo párrafo de
+             texto plano. Ver mostrarModalConfirmacion() en modal_confirmacion.js -->
+        <ul id="modalConfirmacionLista" class="modal-confirmacion-lista oculto"></ul>
+        <p id="modalConfirmacionAdvertencia" class="modal-confirmacion-advertencia oculto"></p>
         <div class="modal-confirmacion-acciones">
             <button type="button" id="modalConfirmacionCancelar" class="modal-confirmacion-btn modal-confirmacion-btn--cancelar"></button>
             <button type="button" id="modalConfirmacionConfirmar" class="modal-confirmacion-btn modal-confirmacion-btn--confirmar"></button>

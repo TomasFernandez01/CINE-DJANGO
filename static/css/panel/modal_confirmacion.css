@@ -56,6 +56,48 @@
     margin-bottom: 1.5rem;
 }
 
+.modal-confirmacion-mensaje.oculto {
+    display: none;
+}
+
+/* nuevo: lista con viñetas para el modo "resumen" (ver mostrarModalConfirmacion
+   en modal_confirmacion.js). Reemplaza al párrafo de texto plano amontonado
+   cuando hay varios ítems que listar (ej: sala por sala en un borrado masivo). */
+.modal-confirmacion-lista {
+    color: var(--text-dim);
+    font-size: 0.88rem;
+    line-height: 1.5;
+    margin: 0 0 1rem 0;
+    padding-left: 1.2rem;
+    max-height: 200px;
+    overflow-y: auto;
+}
+
+.modal-confirmacion-lista li {
+    margin-bottom: 0.4rem;
+}
+
+.modal-confirmacion-lista.oculto {
+    display: none;
+}
+
+/* nuevo: aviso destacado, separado del resumen (antes iba pegado al final
+   del mismo párrafo de texto). */
+.modal-confirmacion-advertencia {
+    background-color: rgba(226, 185, 111, 0.12);
+    border: 1px solid rgba(226, 185, 111, 0.35);
+    border-radius: 6px;
+    color: var(--text);
+    font-size: 0.85rem;
+    line-height: 1.5;
+    padding: 0.65rem 0.85rem;
+    margin: 0 0 1.5rem 0;
+}
+
+.modal-confirmacion-advertencia.oculto {
+    display: none;
+}
+
 .modal-confirmacion-acciones {
     display: flex;
     justify-content: flex-end;

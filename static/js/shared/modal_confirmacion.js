@@ -28,6 +28,22 @@
 // El modal en sí (el HTML) vive una sola vez en base.html, así que no hay
 // que repetirlo en cada template — esta función solo lo completa y lo
 // muestra/oculta.
+// nuevo: modo "resumen" — en vez de un mensaje de texto plano, se puede pasar
+// una lista con viñetas + un aviso destacado aparte (pensado para los
+// modales de "eliminar" del panel, que muestran cuántas funciones/reservas/
+// pagos se van a borrar en cascada):
+//
+//   window.mostrarModalConfirmacion({
+//       titulo: 'Confirmar eliminación',
+//       lineas: ['Sala A: 3 función(es), 12 reserva(s)', 'Sala B: 0 función(es), 0 reserva(s)'],
+//       advertencia: 'Esta acción no se puede deshacer.',
+//       textoConfirmar: 'Sí, eliminar definitivamente',
+//       peligro: true
+//   }).then(function (confirmado) { ... });
+//
+// Si no se pasa 'lineas', se usa 'mensaje' como antes (texto plano, con
+// soporte para \n gracias a white-space:pre-line en el CSS).
+//
 window.mostrarModalConfirmacion = function (opciones) {
     opciones = opciones || {};
 
@@ -44,13 +60,53 @@ window.mostrarModalConfirmacion = function (opciones) {
         const fondo         = modal.querySelector('[data-modal-cerrar]');
         const tituloEl       = document.getElementById('modalConfirmacionTitulo');
         const mensajeEl      = document.getElementById('modalConfirmacionMensaje');
+        const listaEl        = document.getElementById('modalConfirmacionLista');
+        const advertenciaEl  = document.getElementById('modalConfirmacionAdvertencia');
         const btnConfirmar   = document.getElementById('modalConfirmacionConfirmar');
         const btnCancelar    = document.getElementById('modalConfirmacionCancelar');
 
         const soloInformar = opciones.soloInformar === true;
 
         tituloEl.textContent  = opciones.titulo || 'Confirmar';
-        mensajeEl.textContent = opciones.mensaje || '¿Confirmás esta acción?';
+
+        // modificado: modo "resumen" — si viene opciones.lineas (array de
+        // strings), se arma una lista con viñetas en vez de texto plano
+        // pegado con \n. opciones.advertencia (opcional) se muestra aparte,
+        // en un recuadro destacado, en vez de ir mezclada dentro del mismo
+        // párrafo que el resumen. Antes eliminar_modal.js armaba todo esto
+        // como un solo string con \n\n, y quedaba todo amontonado en un
+        // párrafo de texto plano (aun con white-space:pre-line, es más
+        // difícil de leer que una lista real).
+        if (listaEl && Array.isArray(opciones.lineas) && opciones.lineas.length > 0) {
+            mensajeEl.classList.add('oculto');
+            mensajeEl.textContent = '';
+
+            listaEl.innerHTML = '';
+            opciones.lineas.forEach(function (linea) {
+                const li = document.createElement('li');
+                li.textContent = linea;
+                listaEl.appendChild(li);
+            });
+            listaEl.classList.remove('oculto');
+        } else {
+            if (listaEl) {
+                listaEl.classList.add('oculto');
+                listaEl.innerHTML = '';
+            }
+            mensajeEl.classList.remove('oculto');
+            mensajeEl.textContent = opciones.mensaje || '¿Confirmás esta acción?';
+        }
+
+        if (advertenciaEl) {
+            if (opciones.advertencia) {
+                advertenciaEl.textContent = '⚠️ ' + opciones.advertencia;
+                advertenciaEl.classList.remove('oculto');
+            } else {
+                advertenciaEl.classList.add('oculto');
+                advertenciaEl.textContent = '';
+            }
+        }
+
         btnConfirmar.textContent = opciones.textoConfirmar || (soloInformar ? 'Entendido' : 'Confirmar');
         btnCancelar.textContent  = opciones.textoCancelar || 'Cancelar';
         btnConfirmar.classList.toggle('modal-confirmacion-btn--peligro', opciones.peligro !== false);
