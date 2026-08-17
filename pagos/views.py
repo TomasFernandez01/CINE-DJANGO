@@ -8,6 +8,9 @@ from decimal import Decimal
 from .models import Pago, ItemPago
 from reservas.models import Reserva
 from django.db.models import Count, Q
+# modificado: se agrega logging para reemplazar los print() de debug de más abajo
+import logging
+logger = logging.getLogger(__name__)
 try:
     from utils.email_utils import enviar_email_pago_confirmado
     EMAIL_DISPONIBLE = True
@@ -18,7 +21,8 @@ try:
     QR_DISPONIBLE = True
 except ImportError:
     QR_DISPONIBLE = False
-    print("⚠️ Módulo qrcode no encontrado. Instalar con: pip install qrcode[pil]")
+    # modificado: print() reemplazado por logger.warning
+    logger.warning("Módulo qrcode no encontrado. Instalar con: pip install qrcode[pil]")
 try:
     from promociones.models import Cupon, PromocionDia, Combo, CuponUsado
     PROMOCIONES_DISPONIBLE = True
@@ -430,7 +434,8 @@ def comprobante_pago(request, pago_id):
         try:
             qr_imagen = generar_qr_imagen(pago.codigo_qr)
         except Exception as e:
-            print(f"Error generando QR: {e}")
+            # modificado: print() de debug reemplazado por logger.error
+            logger.error(f"Error generando QR: {e}")
     
     contexto = {
         'pago': pago,

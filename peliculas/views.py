@@ -13,6 +13,9 @@ from utils.fechas import generar_proximos_dias, formatear_fecha
 from utils.funciones import agrupar_por_tipo_sala  # nuevo: helper compartido de agrupado por tipo de sala
 from django.core.files.base import ContentFile
 import requests
+# modificado: se agrega logging para reemplazar los print() de debug de más abajo (x3)
+import logging
+logger = logging.getLogger(__name__)
 try:
     from utils.tmdb_api import TMDBClient, buscar_pelicula_tmdb, importar_pelicula_tmdb
     TMDB_DISPONIBLE = True
@@ -304,7 +307,8 @@ def descargar_poster(poster_url, titulo):
         # Retornar ContentFile que Django puede guardar
         return ContentFile(response.content, name=nombre_archivo)
     except Exception as e:
-        print(f"Error descargando poster: {e}")
+        # modificado: print() de debug reemplazado por logger.error
+        logger.error(f"Error descargando poster: {e}")
         return None
 # ============================================ NUEVAS VISTAS PARA TMDB
 
@@ -398,7 +402,8 @@ def importar_tmdb(request, tmdb_id):
                     pelicula.poster.save(poster_file.name, poster_file, save=True)
                     poster_descargado = True
             except Exception as e:
-                print(f"Error descargando poster: {e}")
+                # modificado: print() de debug reemplazado por logger.error
+                logger.error(f"Error descargando poster: {e}")
         
         # Mensaje de éxito
         if poster_descargado:
@@ -516,7 +521,8 @@ def actualizar_desde_tmdb(request, pelicula_id):
                     pelicula.poster.save(poster_file.name, poster_file, save=False)
                     campos_actualizados.append('poster')
             except Exception as e:
-                print(f"Error descargando poster: {e}")
+                # modificado: print() de debug reemplazado por logger.error
+                logger.error(f"Error descargando poster: {e}")
 
         if campos_actualizados:
             pelicula.save()

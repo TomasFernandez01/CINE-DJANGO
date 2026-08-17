@@ -112,10 +112,13 @@ def extraer_codigo_reserva(codigo_qr):
     Returns:
         str: Código de reserva o None
     """
+    # modificado: "except:" bare reemplazado por "except (AttributeError, TypeError):"
+    # (los únicos errores esperables si codigo_qr no es un string, p.ej. None) para no
+    # esconder silenciosamente otro tipo de errores inesperados.
     try:
         partes = codigo_qr.split('-')
         if len(partes) == 3:
             return partes[2]
-    except:
+    except (AttributeError, TypeError):
         pass
     return None

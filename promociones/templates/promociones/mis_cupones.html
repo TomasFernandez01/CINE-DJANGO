@@ -9,9 +9,10 @@
 {% endblock %}
 
 {% block contenido %}
+<!-- MODIFICACION GEMINI: Rediseño de cupones alineado a la paleta rojo/negro/gris (estilos en static/css/promociones/mis_cupones.css) -->
 <div class="cupones-page">
     <h1 class="cupones-titulo">Historial de Cupones</h1>
-    <p class="cupones-subtitulo">Cupones que utilizaste en tus compras anteriores</p>
+    <p class="cupones-subtitulo">Cupones de descuento aplicados en tus compras anteriores</p>
 
     {% if historial %}
     <div class="cupones-lista">
@@ -23,7 +24,7 @@
                         <span class="cupones-card-codigo">
                             {{ uso.cupon.codigo }}
                         </span>
-                        <span class="cupones-card-descuento">-${{ uso.descuento_aplicado }}</span>
+                        <span class="cupones-card-descuento">Descuento -${{ uso.descuento_aplicado }}</span>
                     </div>
                     <p class="cupones-card-descripcion">{{ uso.cupon.descripcion }}</p>
                     {% if uso.reserva %}
@@ -34,7 +35,7 @@
                     {% endif %}
                 </div>
                 <div class="cupones-card-fecha">
-                    {{ uso.fecha_uso|date:"d/m/Y H:i" }}
+                    Usado el: {{ uso.fecha_uso|date:"d/m/Y H:i" }}
                 </div>
             </div>
         </div>
@@ -42,9 +43,9 @@
     </div>
     {% else %}
     <div class="cupones-vacio">
-        <p class="cupones-vacio-texto">Todavía no usaste ningún cupón.</p>
+        <p class="cupones-vacio-texto">Todavía no usaste ningún cupón de descuento.</p>
         <a href="{% url 'peliculas:lista_peliculas' %}" class="cupones-vacio-btn">
-            Ver Películas
+            Explorar Cartelera
         </a>
     </div>
     {% endif %}

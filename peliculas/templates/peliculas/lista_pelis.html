@@ -81,7 +81,7 @@
 
 {% block contenido %}
 
-<!-- MEJORAS/REDISEÑO GEMINI: Buscador y barra de filtros unificados en una sola línea -->
+<!-- MODIFICACION GEMINI: Buscador y barra de filtros unificados sin carrusel de fechas -->
 <div class="filtro-buscador-contenedor">
     <div class="buscador-caja">
         <input
@@ -99,9 +99,8 @@
     
     <div class="filtros-caja">
         <form method="get" action="{% url 'peliculas:lista_peliculas' %}" id="form-filtros">
-            <!-- Campos ocultos para mantener los valores en submit -->
+            <!-- Campo oculto para mantener búsqueda en submit -->
             <input type="hidden" name="buscar" id="hidden-buscar" value="{{ busqueda }}">
-            <input type="hidden" name="fecha" id="hidden-fecha" value="{{ fecha_seleccionada }}">
 
             <div class="filtros-grid">
                 <!-- Filtro Género -->
@@ -136,30 +135,7 @@
     </div>
 </div>
 
-<!-- MEJORAS/REDISEÑO GEMINI: Carrusel de fechas con deselección por toggle tocando el item activo -->
-<div class="fechas-carrusel-wrap">
-    <button type="button" class="fecha-flecha fecha-flecha-prev" aria-label="Días anteriores">‹</button>
-    <div class="fechas-carrusel">
-        {% for f in proximas_fechas %}
-            {% if fecha_seleccionada == f.valor %}
-                <a href="?buscar={{ busqueda }}&genero={{ genero_seleccionado }}&clasificacion={{ clasificacion_seleccionada }}"
-                   class="fecha-item fecha-activa">
-                    <span class="fecha-item-diasemana">{{ f.dia_semana }}</span>
-                    <span class="fecha-item-diames">{{ f.dia_mes }}</span>
-                </a>
-            {% else %}
-                <a href="?buscar={{ busqueda }}&genero={{ genero_seleccionado }}&clasificacion={{ clasificacion_seleccionada }}&fecha={{ f.valor }}"
-                   class="fecha-item{% if forloop.first and not fecha_seleccionada %} fecha-hoy{% endif %}">
-                    <span class="fecha-item-diasemana">{{ f.dia_semana }}</span>
-                    <span class="fecha-item-diames">{{ f.dia_mes }}</span>
-                </a>
-            {% endif %}
-        {% endfor %}
-    </div>
-    <button type="button" class="fecha-flecha fecha-flecha-next" aria-label="Días siguientes">›</button>
-</div>
-
-<!-- MEJORAS/REDISEÑO GEMINI: Contenedor para AJAX de la grilla de películas -->
+<!-- MODIFICACION GEMINI: Contenedor para la grilla de películas (sin carrusel de fechas) -->
 <div id="peliculas-grid-container">
     {% include 'peliculas/partials/_lista_pelis_grid.html' %}
 </div>
@@ -167,7 +143,6 @@
 {% endblock %}
 
 {% block extra_js %}
-<!-- nuevo: buscador en vivo Netflix + flechas del carrusel de fechas -->
+<!-- MODIFICACION GEMINI: Buscador en vivo -->
 <script src="{% static 'js/peliculas/buscador_vivo.js' %}"></script>
-<script src="{% static 'js/shared/fechas_carrusel.js' %}"></script>
 {% endblock %}

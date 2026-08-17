@@ -57,17 +57,17 @@
     background-color: #242424;
 }
 
-/* Color del borde izquierdo según estado */
-.reserva-mr-card--confirmada { border-left-color: #2ecc71; border-left-width: 5px; }
+/* MODIFICACION GEMINI: Color del borde izquierdo en rojo (#e50914) acorde a la paleta del sitio */
+.reserva-mr-card--confirmada { border-left-color: #e50914; border-left-width: 5px; }
 .reserva-mr-card--pendiente { border-left-color: #f1c40f; border-left-width: 5px; }
-.reserva-mr-card--expirada { border-left-color: #95a5a6; border-left-width: 5px; }
-.reserva-mr-card--cancelada { border-left-color: #e74c3c; border-left-width: 5px; }
+.reserva-mr-card--expirada { border-left-color: #777777; border-left-width: 5px; }
+.reserva-mr-card--cancelada { border-left-color: #999999; border-left-width: 5px; }
 
-/* Poster */
+/* MODIFICACION GEMINI: El tamaño del poster de la tarjeta de reserva se controla en esta propiedad width */
 .reserva-mr-poster {
     flex: 0 0 auto;
     display: block;
-    width: 110px;
+    width: 135px; /* Modificá este valor en píxeles para cambiar el ancho del póster */
     overflow: hidden;
     border-radius: 8px;
 }
@@ -86,15 +86,16 @@
 }
 
 .reserva-mr-poster-placeholder {
-    width: 110px;
+    width: 135px;
     aspect-ratio: 2/3;
-    background: linear-gradient(135deg, #2c3e50 0%, #000000 100%);
+    background: linear-gradient(135deg, #2c2c2c 0%, #141414 100%);
     border-radius: 8px;
     display: flex;
     align-items: center;
     justify-content: center;
-    color: white;
-    font-size: 2.2rem;
+    color: #aaaaaa;
+    font-size: 1rem;
+    font-weight: bold;
 }
 
 /* Info */
@@ -271,6 +272,9 @@
 
 .reserva-mr-btn--detalle { background-color: #333333; }
 .reserva-mr-btn--detalle:hover { background-color: #444444; }
+
+.reserva-mr-btn--comprobante { background-color: #e50914; box-shadow: 0 4px 10px rgba(229, 9, 20, 0.3); }
+.reserva-mr-btn--comprobante:hover { background-color: #ff1f2a; }
 
 .reserva-mr-btn--pagar { background-color: #27ae60; box-shadow: 0 4px 10px rgba(39, 174, 96, 0.2); }
 .reserva-mr-btn--pagar:hover { background-color: #2ecc71; }

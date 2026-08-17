@@ -9,6 +9,9 @@ from .models import Reserva
 from salas.models import Funcion
 from django.conf import settings
 from promociones.models import PromocionDia, Cupon
+# modificado: se agrega logging para reemplazar el print() de debug de más abajo
+import logging
+logger = logging.getLogger(__name__)
 try:
     from utils.email_utils import enviar_email_confirmacion_reserva, enviar_email_cancelacion_reserva
     EMAIL_DISPONIBLE = True
@@ -19,11 +22,6 @@ try:
     QR_DISPONIBLE = True
 except ImportError:
     QR_DISPONIBLE = False
-
-# def get_max_asientos():
-#     return getattr(settings, 'MAX_ASIENTOS_POR_RESERVA', 6) 
-# def get_tiempo_limite():
-#     return getattr(settings, 'TIEMPO_LIMITE_PAGO_MINUTOS', 15)
 
 def get_max_asientos():
     # modificado (Hilo 1 - Tanda D): ver mismo comentario en get_tiempo_limite() de abajo.
@@ -426,7 +424,8 @@ def detalle_reserva(request, reserva_id):
             try:
                 qr_imagen = generar_qr_imagen(reserva.pago.codigo_qr)
             except Exception as e:
-                print(f"Error generando QR: {e}")
+                # modificado: print() de debug reemplazado por logger.error
+                logger.error(f"Error generando QR: {e}")
     
     contexto = {
         'reserva': reserva,

@@ -65,6 +65,7 @@
 {% endblock %}
 
 {% block contenido %}
+<h1>Funciones Disponibles</h1>
 
 <!-- MEJORAS/REDISEÑO GEMINI: Buscador vivo y filtros rápidos en una cabecera unificada -->
 <div class="funciones-cabecera-contenedor">
@@ -120,7 +121,7 @@
     </div>
 </div>
 
-<!-- MEJORAS/REDISEÑO GEMINI: Carrusel de fechas con deselección al tocar de nuevo la fecha activa -->
+<!-- MODIFICACION GEMINI: Carrusel de fechas con formato a la par (ej. Hoy-17, Mar-18, Mié-19, Jue-20) -->
 <div class="fechas-carrusel-wrap">
     <button type="button" class="fecha-flecha fecha-flecha-prev" aria-label="Días anteriores">‹</button>
     <div class="fechas-carrusel">
@@ -128,14 +129,12 @@
             {% if fecha_seleccionada == f.valor %}
                 <a href="?buscar={{ busqueda }}&sala={{ sala_seleccionada }}"
                    class="fecha-item fecha-activa">
-                    <span class="fecha-item-diasemana">{{ f.dia_semana }}</span>
-                    <span class="fecha-item-diames">{{ f.dia_mes }}</span>
+                    <span class="fecha-item-diasemana">{{ f.dia_semana }}</span>-<span class="fecha-item-diames">{{ f.dia_mes }}</span>
                 </a>
             {% else %}
                 <a href="?buscar={{ busqueda }}&sala={{ sala_seleccionada }}&fecha={{ f.valor }}"
                    class="fecha-item{% if forloop.first and not fecha_seleccionada %} fecha-hoy{% endif %}">
-                    <span class="fecha-item-diasemana">{{ f.dia_semana }}</span>
-                    <span class="fecha-item-diames">{{ f.dia_mes }}</span>
+                    <span class="fecha-item-diasemana">{{ f.dia_semana }}</span>-<span class="fecha-item-diames">{{ f.dia_mes }}</span>
                 </a>
             {% endif %}
         {% endfor %}

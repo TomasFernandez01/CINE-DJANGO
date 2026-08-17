@@ -48,32 +48,26 @@ def enviar_email_confirmacion_reserva(reserva, request=None):
     """
     Envía email de confirmación cuando se crea una reserva
     """
-    print("🔍 DEBUG: Intentando enviar email de confirmación...")  # ← AGREGAR
-    
+    # modificado: se sacaron los print("🔍 DEBUG: ...") que quedaron de una sesión de
+    # debugging (comentario "# ← AGREGAR" delataba que eran temporales). El logger.info/
+    # logger.error de abajo ya cubre el mismo registro, sin ensuciar la consola en producción.
     try:
         usuario = reserva.usuario
         subject = f'🎬 Reserva Confirmada - {reserva.codigo_reserva}'
-        
-        print(f"🔍 DEBUG: Email destino: {usuario.email}")  # ← AGREGAR
-        print(f"🔍 DEBUG: Subject: {subject}")  # ← AGREGAR
-        
+
         # Obtener el dominio del sitio
         if request:
             domain = request.build_absolute_uri('/').rstrip('/')
         else:
             domain = settings.SITE_URL if hasattr(settings, 'SITE_URL') else 'http://localhost:8000'
-        
-        print(f"🔍 DEBUG: Domain: {domain}")  # ← AGREGAR
-        
+
         # Renderizar el template HTML
-        print("🔍 DEBUG: Intentando renderizar template...")  # ← AGREGAR
         html_content = render_to_string('emails/reserva_confirmada.html', {
             'usuario': usuario,
             'reserva': reserva,
             'domain': domain,
         })
-        print("🔍 DEBUG: Template renderizado OK")  # ← AGREGAR
-        
+
         # Crear el email
         email = EmailMultiAlternatives(
             subject=subject,
@@ -83,17 +77,14 @@ def enviar_email_confirmacion_reserva(reserva, request=None):
             connection=_obtener_conexion()
         )
         email.attach_alternative(html_content, "text/html")
-        
+
         # Enviar
-        print("🔍 DEBUG: Intentando enviar email...")  # ← AGREGAR
         email.send()
-        print("🔍 DEBUG: Email enviado exitosamente!")  # ← AGREGAR
-        
+
         logger.info(f'Email de confirmación enviado a {usuario.email}')
         return True
-        
+
     except Exception as e:
-        print(f"❌ DEBUG ERROR: {str(e)}")  # ← AGREGAR
         logger.error(f'Error enviando email de confirmación: {str(e)}')
         return False
 

@@ -72,14 +72,18 @@
 
 .fecha-item {
     flex: 0 0 auto;
-    min-width: 68px;
-    text-align: center;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.25rem;
+    padding: 0.5rem 0.9rem;
     background-color: #1f1f1f;
     border: 2px solid #333;
-    border-radius: 10px;
-    padding: 0.6rem 0.4rem;
+    border-radius: 20px;
     text-decoration: none;
     color: #eee;
+    font-size: 0.85rem;
+    white-space: nowrap;
     transition: border-color 0.2s, background-color 0.2s;
 }
 
@@ -93,22 +97,22 @@
     border-color: #e50914;
 }
 
-/* nuevo: dia efectivamente seleccionado por el usuario (distinto de "Hoy" por defecto) */
+/* MODIFICACION GEMINI: Día seleccionado activo */
 .fecha-item.fecha-activa {
     background-color: #ffffff;
     color: #1a1a1a;
     border-color: #ffffff;
+    font-weight: bold;
 }
 
 .fecha-item-diasemana {
-    display: block;
-    font-size: 0.75rem;
+    display: inline;
+    font-size: 0.85rem;
     font-weight: 700;
     text-transform: uppercase;
-    margin-bottom: 0.2rem;
 }
 
 .fecha-item-diames {
-    display: block;
+    display: inline;
     font-size: 0.85rem;
 }

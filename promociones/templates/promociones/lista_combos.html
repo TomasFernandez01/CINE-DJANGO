@@ -9,6 +9,7 @@
 {% endblock %}
 
 {% block contenido %}
+<!-- MODIFICACION GEMINI: Listado de combos y promos sin emojis y con diseño alineado (estilos en static/css/promociones/lista_combos.css) -->
 <div class="combos-page">
     <h1 class="combos-titulo">Combos y Promociones</h1>
     <p class="combos-subtitulo">Aprovechá nuestras ofertas al reservar tus entradas</p>
@@ -16,7 +17,7 @@
     <!-- Promos del día -->
     {% if promos_hoy %}
     <div class="combos-promodia-seccion">
-        <h2 class="combos-seccion-subtitulo">Promociones de Hoy</h2>
+        <h2 class="combos-seccion-subtitulo">Promociones del Día</h2>
         <div class="combos-promodia-grid">
             {% for promo in promos_hoy %}
             <div class="combos-promodia-card">
@@ -30,7 +31,7 @@
                 <p class="combos-promodia-descripcion">{{ promo.descripcion }}</p>
                 {% endif %}
                 <div class="combos-promodia-badge combos-promodia-badge-hover">
-                    Solo hoy — {{ promo.get_dia_semana_display }}
+                    Válido hoy — {{ promo.get_dia_semana_display }}
                 </div>
             </div>
             {% endfor %}
@@ -44,13 +45,12 @@
         <h2 class="combos-seccion-subtitulo">Nuestros Combos</h2>
         <div class="combos-grid">
             {% for combo in combos %}
-            <div class="combos-card"
->
+            <div class="combos-card">
                 {% if combo.imagen %}
                 <img src="{{ combo.imagen.url }}" alt="{{ combo.nombre }}" class="combos-card-imagen">
                 {% else %}
                 <div class="combos-card-imagen-placeholder">
-                    🍿
+                    [COMBO]
                 </div>
                 {% endif %}
                 <div class="combos-card-info">

@@ -1,4 +1,4 @@
-<!-- MEJORAS/REDISEÑO GEMINI: Partial para la grilla de funciones agrupada por película -->
+<!-- MODIFICACION GEMINI: Partial para la grilla de funciones agrupada por película (sin emojis) -->
 {% if tarjetas_peliculas %}
     <p class="funciones-resultado-info">{{ total_resultados }} función(es) encontrada(s)</p>
 
@@ -9,7 +9,7 @@
                     {% if tarjeta.pelicula.poster %}
                         <img src="{{ tarjeta.pelicula.poster.url }}" alt="{{ tarjeta.pelicula.titulo }}">
                     {% else %}
-                        <div class="funcion-pelicula-poster-placeholder">🎬</div>
+                        <div class="funcion-pelicula-poster-placeholder">[POSTER]</div>
                     {% endif %}
                 </a>
 
@@ -20,7 +20,6 @@
                                 {{ tarjeta.pelicula.titulo }}
                             </a>
                         </h3>
-                        <!-- MEJORAS/REDISEÑO GEMINI: Precio verde removido y rediseñado a un formato más discreto al lado del título -->
                         <span style="font-size: 0.9rem; color: #aaaaaa;">Entradas desde <strong>${{ tarjeta.precio_desde }}</strong></span>
                     </div>
 
@@ -33,7 +32,6 @@
                         {% endif %}
                     </div>
 
-                    <!-- MEJORAS/REDISEÑO GEMINI: Agregar sinopsis truncada de la película para mejor información del cliente -->
                     {% if tarjeta.pelicula.sinopsis %}
                         <p class="funcion-pelicula-sinopsis" style="color: #cccccc; font-size: 0.9rem; line-height: 1.5; margin: 0 0 1.25rem 0;">
                             {{ tarjeta.pelicula.sinopsis|truncatechars:220 }}
@@ -50,7 +48,6 @@
     </div>
 {% else %}
     <div class="pelis-vacio">
-        <p class="pelis-vacio-icono">😕</p>
         <p class="pelis-vacio-texto-principal">No se encontraron funciones</p>
         <p class="pelis-vacio-texto-secundario">Intentá con otros filtros o buscando otra película.</p>
     </div>
