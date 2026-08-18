@@ -4,14 +4,14 @@
 from datetime import timedelta
 from django.contrib import messages
 from django.core.exceptions import ValidationError
-from django.db.models import Q
+from django.db.models import Q, Sum
 from django.http import JsonResponse
 from django.shortcuts import render, redirect, get_object_or_404
 from django.utils import timezone
 from django.views.decorators.http import require_POST
 from reservas.models import Reserva
 from salas.models import Sala, Funcion, AsientoBloqueado, CategoriaAsiento
-from ..decorators import staff_required, get_sede_activa_panel, get_sede_staff
+from ..decorators import staff_required, get_sede_activa_panel, get_sede_staff, superuser_required
 from ..forms import (
     SalaForm,
     SeccionSalaFormSet,
@@ -32,9 +32,10 @@ def _filtro_sede(request):
 # ============================================================
 # SALAS — CRUD
 # ============================================================
-@staff_required
+# MODIFICACION GEMINI: Crear salas es función exclusiva del SuperUser (Corporate HQ)
+@superuser_required
 def salas_crear(request):
-    sede_fija = get_sede_staff(request.user)  # nuevo (Sedes - Fase 3)
+    sede_fija = get_sede_staff(request.user)
     if request.method == 'POST':
         form = SalaForm(request.POST, sede_fija=sede_fija)
         if form.is_valid():
@@ -44,7 +45,7 @@ def salas_crear(request):
             if formset.is_valid():
                 sala_temp.save()
                 formset.save()
-                messages.success(request, f'✅ Sala "{sala_temp.nombre}" creada.')
+                messages.success(request, f'Sala "{sala_temp.nombre}" creada.')
                 if request.POST.get('guardar_y_agregar_otro'):
                     return redirect('panel:salas_crear')
                 return redirect('panel:salas_lista')
@@ -65,7 +66,7 @@ def salas_crear(request):
 
 @staff_required
 def salas_editar(request, sala_id):
-    sede_fija = get_sede_staff(request.user)  # nuevo (Sedes - Fase 3)
+    sede_fija = get_sede_staff(request.user)
     filtro_sala = {'id': sala_id}
     if sede_fija is not None:
         filtro_sala['sede'] = sede_fija
@@ -80,7 +81,7 @@ def salas_editar(request, sala_id):
             if formset.is_valid():
                 sala_temp.save()
                 formset.save()
-                messages.success(request, f'✅ Sala "{sala_temp.nombre}" actualizada.')
+                messages.success(request, f'Sala "{sala_temp.nombre}" actualizada.')
                 if request.POST.get('guardar_y_agregar_otro'):
                     return redirect('panel:salas_crear')
                 return redirect('panel:salas_lista')
@@ -98,23 +99,13 @@ def salas_editar(request, sala_id):
         'titulo_pagina': f'Editar sala: {sala.nombre}',
         'accion': 'editar',
         'seccion_activa': 'salas',
+        'es_super': request.user.is_superuser,
     })
 
-@staff_required
+# MODIFICACION GEMINI: Eliminación de salas exclusiva para SuperUser
+@superuser_required
 @require_POST
 def salas_eliminar(request):
-    """
-    Borrado múltiple de salas, en dos pasos:
-      1. Sin 'confirmado': muestra una vista previa con cuántas funciones y
-         reservas se van a borrar en cascada (Sala -> Funcion -> Reserva).
-      2. Con 'confirmado=1': borra de verdad.
-    """
-    # modificado: request.headers.get('X-Requested-With') identifica el
-    # fetch() de static/js/panel/shared/eliminar_modal.js, que ahora maneja
-    # el paso 1 con un modal en vez de navegar a confirmar_eliminar.html.
-    # Si el pedido NO es AJAX (JS deshabilitado u otra integración), el
-    # comportamiento de siempre (redirect/render de la página completa)
-    # sigue intacto.
     es_ajax = request.headers.get('X-Requested-With') == 'XMLHttpRequest'
 
     ids = request.POST.getlist('seleccionadas')
@@ -125,7 +116,6 @@ def salas_eliminar(request):
         return redirect('panel:salas_lista')
 
     salas_qs = Sala.objects.filter(id__in=ids)
-    # nuevo (Sedes - Fase 3): un staff restringido no puede borrar salas de otra sede
     sede_fija = get_sede_staff(request.user)
     if sede_fija is not None:
         salas_qs = salas_qs.filter(sede=sede_fija)
@@ -137,13 +127,12 @@ def salas_eliminar(request):
 
     if request.POST.get('confirmado') == '1':
         nombres = list(salas_qs.values_list('nombre', flat=True))
-        salas_qs.delete()  # cascada: borra también sus funciones y reservas
-        messages.success(request, f'🗑️ Sala(s) eliminada(s): {", ".join(nombres)}.')
+        salas_qs.delete()
+        messages.success(request, f'Sala(s) eliminada(s): {", ".join(nombres)}.')
         if es_ajax:
-            return JsonResponse({'success': True})  # modificado
+            return JsonResponse({'success': True})
         return redirect('panel:salas_lista')
 
-    # Paso 1: vista previa de lo que se va a borrar en cascada
     resumen = []
     for sala in salas_qs:
         total_funciones = sala.funciones.count()
@@ -155,8 +144,6 @@ def salas_eliminar(request):
         })
 
     if es_ajax:
-        # modificado: mismo resumen de arriba, formateado como líneas de
-        # texto listas para mostrarse en el modal (ver eliminar_modal.js).
         lineas = [
             f'{item["sala"].nombre}: {item["total_funciones"]} función(es), '
             f'{item["total_reservas"]} reserva(s)'
@@ -177,13 +164,6 @@ def salas_eliminar(request):
 
 @staff_required
 def salas_asientos(request, sala_id):
-    """
-    Mapa visual de la sala para que el staff bloquee/desbloquee asientos
-    con un clic. Tiene dos "modos":
-      - Permanente (sin función): afecta a la sala para siempre.
-      - Una función puntual: afecta solo a esa función (además de lo
-        permanente, que siempre se hereda).
-    """
     sala = get_object_or_404(Sala, id=sala_id, **_filtro_sede(request))
 
     funcion_id = request.GET.get('funcion', '')
@@ -191,7 +171,6 @@ def salas_asientos(request, sala_id):
     if funcion_id:
         funcion_seleccionada = get_object_or_404(Funcion, id=funcion_id, sala=sala)
 
-    # Bloqueos aplicables al modo actual
     if funcion_seleccionada:
         bloqueos = sala.bloqueos_asientos.filter(
             Q(funcion__isnull=True) | Q(funcion=funcion_seleccionada)
@@ -200,22 +179,16 @@ def salas_asientos(request, sala_id):
         bloqueos = sala.bloqueos_asientos.filter(funcion__isnull=True)
 
     bloqueos_por_codigo = {b.asiento_codigo: b for b in bloqueos}
-
-    # Todos los bloqueos de la sala (para el listado inferior, sin importar el modo actual)
     todos_los_bloqueos = sala.bloqueos_asientos.select_related('funcion__pelicula').order_by('asiento_codigo')
 
     funciones_sala = sala.funciones.filter(
         fecha_hora__gte=timezone.now()
     ).select_related('pelicula').order_by('fecha_hora')[:30]
 
-    # Si hay una función seleccionada, mostramos también qué asientos ya
-    # están vendidos/reservados (informativo, no se pueden bloquear desde acá).
     asientos_ocupados_reserva = []
     if funcion_seleccionada:
         asientos_ocupados_reserva = funcion_seleccionada.asientos_ocupados()
 
-    # Categorías especiales (ej: "Mejorado") — siempre permanentes por sala,
-    # no dependen de la función seleccionada en el modo de arriba.
     categorias = sala.categorias_asientos.all().order_by('asiento_codigo')
     categorias_por_codigo = {c.asiento_codigo: c for c in categorias}
 
@@ -235,7 +208,6 @@ def salas_asientos(request, sala_id):
     return render(request, 'panel/salas/asientos.html', contexto)
 
 
-# MODIFICACION GEMINI: Endpoint AJAX adaptado para bloqueo masivo (admite codigos separados por comas)
 @staff_required
 @require_POST
 def salas_asientos_bloquear(request, sala_id):
@@ -250,14 +222,12 @@ def salas_asientos_bloquear(request, sala_id):
     if funcion_id:
         funcion = get_object_or_404(Funcion, id=funcion_id, sala=sala)
 
-    # Separar codigos por comas
     codigos = [c.strip() for c in asiento_codigo_raw.split(',') if c.strip()]
     if not codigos:
         return JsonResponse({'success': False, 'errors': {'asiento_codigo': ['Debe indicar al menos un asiento.']}}, status=400)
 
     bloqueados_data = []
     for codigo in codigos:
-        # Evitar duplicar bloqueo si ya existe para esta funcion o permanente
         existente = AsientoBloqueado.objects.filter(sala=sala, asiento_codigo=codigo, funcion=funcion).first()
         if existente:
             continue
@@ -281,7 +251,6 @@ def salas_asientos_bloquear(request, sala_id):
                 'permanente': bloqueo.funcion_id is None,
             })
         except ValidationError as e:
-            # Si uno falla, seguimos con los demas, o devolvemos error si fue el unico
             if len(codigos) == 1:
                 errores = e.message_dict if hasattr(e, 'message_dict') else {'__all__': e.messages}
                 return JsonResponse({'success': False, 'errors': errores}, status=400)
@@ -289,13 +258,12 @@ def salas_asientos_bloquear(request, sala_id):
     return JsonResponse({
         'success': True,
         'bloqueados': bloqueados_data,
-        'asiento_codigo': asiento_codigo_raw  # compatibilidad con JS antiguo
+        'asiento_codigo': asiento_codigo_raw
     })
 
 @staff_required
 @require_POST
 def salas_asientos_desbloquear(request, sala_id):
-    """Endpoint AJAX: elimina un bloqueo existente."""
     sala = get_object_or_404(Sala, id=sala_id, **_filtro_sede(request))
     bloqueo_id = request.POST.get('bloqueo_id')
 
@@ -305,7 +273,6 @@ def salas_asientos_desbloquear(request, sala_id):
 
     return JsonResponse({'success': True, 'asiento_codigo': asiento_codigo})
 
-# MODIFICACION GEMINI: Endpoint AJAX adaptado para categorizacion masiva (admite codigos separados por comas)
 
 @staff_required
 @require_POST
@@ -317,14 +284,12 @@ def salas_categoria_asignar(request, sala_id):
     multiplicador = request.POST.get('multiplicador', '1.25').strip()
     color = request.POST.get('color', '#f1c40f').strip()
 
-    # Separar codigos por comas
     codigos = [c.strip() for c in asiento_codigo_raw.split(',') if c.strip()]
     if not codigos:
         return JsonResponse({'success': False, 'errors': {'asiento_codigo': ['Debe indicar al menos un asiento.']}}, status=400)
 
     categorias_data = []
     for codigo in codigos:
-        # Si ya existe una categoría para ese asiento, la actualizamos
         categoria = CategoriaAsiento.objects.filter(sala=sala, asiento_codigo=codigo).first()
         if categoria is None:
             categoria = CategoriaAsiento(sala=sala, asiento_codigo=codigo)
@@ -351,13 +316,12 @@ def salas_categoria_asignar(request, sala_id):
     return JsonResponse({
         'success': True,
         'categorias': categorias_data,
-        'asiento_codigo': asiento_codigo_raw  # compatibilidad con JS antiguo
+        'asiento_codigo': asiento_codigo_raw
     })
 
 @staff_required
 @require_POST
 def salas_categoria_quitar(request, sala_id):
-    """Endpoint AJAX: elimina la categoría especial de un asiento."""
     sala = get_object_or_404(Sala, id=sala_id, **_filtro_sede(request))
     categoria_id = request.POST.get('categoria_id')
 
@@ -368,7 +332,7 @@ def salas_categoria_quitar(request, sala_id):
     return JsonResponse({'success': True, 'asiento_codigo': asiento_codigo})
 
 # ============================================================
-# SALAS
+# SALAS - LISTA Y ANALÍTICA
 # ============================================================
 
 @staff_required
@@ -376,8 +340,6 @@ def salas_lista(request):
     salas = Sala.objects.all().order_by('nombre')
     ahora = timezone.now()
 
-    # nuevo (Sedes - Fase 3): filtra por la sede activa del staff (fija o
-    # elegida en el selector del Panel)
     sede_activa = get_sede_activa_panel(request)
     if sede_activa:
         salas = salas.filter(sede=sede_activa)
@@ -388,13 +350,23 @@ def salas_lista(request):
             fecha_hora__gte=ahora.replace(hour=0, minute=0, second=0),
             fecha_hora__lt=ahora.replace(hour=0, minute=0, second=0) + timedelta(days=1)
         ).count()
+        
+        # MODIFICACION GEMINI: Métrica de ocupación por sala
+        total_reservas_sala = Reserva.objects.filter(funcion__sala=sala, estado='confirmada').count()
+        total_entradas_sala = Reserva.objects.filter(funcion__sala=sala, estado='confirmada').aggregate(
+            total=Sum('cantidad_entradas')
+        )['total'] or 0
+
         salas_con_info.append({
             'sala': sala,
             'funciones_hoy': funciones_hoy,
+            'total_reservas_sala': total_reservas_sala,
+            'total_entradas_sala': total_entradas_sala,
         })
 
     contexto = {
         'salas_con_info': salas_con_info,
+        'es_super': request.user.is_superuser,
         'seccion_activa': 'salas',
     }
     return render(request, 'panel/salas/lista.html', contexto)

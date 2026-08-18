@@ -24,9 +24,16 @@ from ..forms import (
 
 @staff_required
 def combos_lista(request):
-    combos = Combo.objects.all().order_by('precio')
+    combos = Combo.objects.annotate(
+        # modificado: el related_name real en ItemPago es 'items_pago' (no 'pago_items'),
+        # causaba FieldError "Cannot resolve keyword 'pago_items' into field"
+        unidades_vendidas=Sum('items_pago__cantidad'),  # modificado
+        recaudacion_combo=Sum('items_pago__precio_unitario')  # modificado
+    ).order_by('-unidades_vendidas', 'precio')
+
     return render(request, 'panel/promociones/combos/lista.html', {
         'combos': combos,
+        'es_super': request.user.is_superuser,
         'seccion_activa': 'combos',
     })
 
@@ -37,7 +44,7 @@ def combos_crear(request):
         form = ComboForm(request.POST, request.FILES)
         if form.is_valid():
             combo = form.save()
-            messages.success(request, f'✅ Combo "{combo.nombre}" creado.')
+            messages.success(request, f'Combo "{combo.nombre}" creado.')
             if request.POST.get('guardar_y_agregar_otro'):
                 return redirect('panel:combos_crear')
             return redirect('panel:combos_lista')
@@ -60,7 +67,7 @@ def combos_editar(request, combo_id):
         form = ComboForm(request.POST, request.FILES, instance=combo)
         if form.is_valid():
             form.save()
-            messages.success(request, f'✅ Combo "{combo.nombre}" actualizado.')
+            messages.success(request, f'Combo "{combo.nombre}" actualizado.')
             if request.POST.get('guardar_y_agregar_otro'):
                 return redirect('panel:combos_crear')
             return redirect('panel:combos_lista')
@@ -78,13 +85,6 @@ def combos_editar(request, combo_id):
 @staff_required
 @require_POST
 def combos_eliminar(request):
-    """
-    Borrado múltiple de combos, en dos pasos (mismo patrón que salas_eliminar).
-    A diferencia de Sala/Pelicula/Funcion, Combo NO borra en cascada: los Pagos
-    que lo usaron quedan con combo=null (Pago.combo es on_delete=SET_NULL).
-    """
-    # modificado: mismo mecanismo que salas_eliminar - paso 1 responde JSON
-    # cuando lo pide static/js/panel/shared/eliminar_modal.js.
     es_ajax = request.headers.get('X-Requested-With') == 'XMLHttpRequest'
 
     ids = request.POST.getlist('seleccionadas')
@@ -104,12 +104,11 @@ def combos_eliminar(request):
     if request.POST.get('confirmado') == '1':
         nombres = list(combos_qs.values_list('nombre', flat=True))
         combos_qs.delete()
-        messages.success(request, f'🗑️ Combo(s) eliminado(s): {", ".join(nombres)}.')
+        messages.success(request, f'Combo(s) eliminado(s): {", ".join(nombres)}.')
         if es_ajax:
-            return JsonResponse({'success': True})  # modificado
+            return JsonResponse({'success': True})
         return redirect('panel:combos_lista')
 
-    # Paso 1: vista previa (no hay cascada, solo informamos pagos que quedarían sin combo)
     resumen = []
     for combo in combos_qs:
         total_pagos = Pago.objects.filter(combo=combo).count()
@@ -119,7 +118,6 @@ def combos_eliminar(request):
         })
 
     if es_ajax:
-        # modificado
         lineas = [
             f'{item["combo"].nombre}: {item["total_pagos"]} pago(s) quedarían sin combo asociado'
             for item in resumen
@@ -145,7 +143,11 @@ def cupones_lista(request):
     busqueda = request.GET.get('q', '')
     estado = request.GET.get('estado', '')
 
-    cupones = Cupon.objects.all().order_by('-fecha_inicio')
+    cupones = Cupon.objects.annotate(
+        total_usos_realizados=Count('usos'),
+        monto_total_descontado=Sum('usos__descuento_aplicado')
+    ).order_by('-fecha_inicio')
+
     if busqueda:
         cupones = cupones.filter(
             Q(codigo__icontains=busqueda) | Q(descripcion__icontains=busqueda)
@@ -160,6 +162,7 @@ def cupones_lista(request):
         'busqueda': busqueda,
         'estado': estado,
         'total': cupones.count(),
+        'es_super': request.user.is_superuser,
         'seccion_activa': 'cupones',
     }
     return render(request, 'panel/promociones/cupones/lista.html', contexto)
@@ -171,7 +174,7 @@ def cupones_crear(request):
         form = CuponForm(request.POST)
         if form.is_valid():
             cupon = form.save()
-            messages.success(request, f'✅ Cupón "{cupon.codigo}" creado.')
+            messages.success(request, f'Cupón "{cupon.codigo}" creado.')
             if request.POST.get('guardar_y_agregar_otro'):
                 return redirect('panel:cupones_crear')
             return redirect('panel:cupones_lista')
@@ -194,7 +197,7 @@ def cupones_editar(request, cupon_id):
         form = CuponForm(request.POST, instance=cupon)
         if form.is_valid():
             form.save()
-            messages.success(request, f'✅ Cupón "{cupon.codigo}" actualizado.')
+            messages.success(request, f'Cupón "{cupon.codigo}" actualizado.')
             if request.POST.get('guardar_y_agregar_otro'):
                 return redirect('panel:cupones_crear')
             return redirect('panel:cupones_lista')
@@ -212,13 +215,6 @@ def cupones_editar(request, cupon_id):
 @staff_required
 @require_POST
 def cupones_eliminar(request):
-    """
-    Borrado múltiple de cupones, en dos pasos (mismo patrón que salas_eliminar).
-    Cupon SÍ borra en cascada su historial de usos (CuponUsado.cupon es CASCADE),
-    pero los Pagos que lo usaron quedan con cupon_usado=null (SET_NULL), no se borran.
-    """
-    # modificado: mismo mecanismo que salas_eliminar - paso 1 responde JSON
-    # cuando lo pide static/js/panel/shared/eliminar_modal.js.
     es_ajax = request.headers.get('X-Requested-With') == 'XMLHttpRequest'
 
     ids = request.POST.getlist('seleccionadas')
@@ -237,13 +233,12 @@ def cupones_eliminar(request):
 
     if request.POST.get('confirmado') == '1':
         codigos = list(cupones_qs.values_list('codigo', flat=True))
-        cupones_qs.delete()  # cascada: borra también su historial de usos (CuponUsado)
-        messages.success(request, f'🗑️ Cupón(es) eliminado(s): {", ".join(codigos)}.')
+        cupones_qs.delete()
+        messages.success(request, f'Cupón(es) eliminado(s): {", ".join(codigos)}.')
         if es_ajax:
-            return JsonResponse({'success': True})  # modificado
+            return JsonResponse({'success': True})
         return redirect('panel:cupones_lista')
 
-    # Paso 1: vista previa de lo que se va a borrar en cascada
     resumen = []
     for cupon in cupones_qs:
         total_usos = cupon.usos.count()
@@ -253,7 +248,6 @@ def cupones_eliminar(request):
         })
 
     if es_ajax:
-        # modificado
         lineas = [
             f'{item["cupon"].codigo}: {item["total_usos"]} uso(s) registrado(s)'
             for item in resumen
@@ -290,7 +284,7 @@ def promodia_crear(request):
         form = PromocionDiaForm(request.POST)
         if form.is_valid():
             promo = form.save()
-            messages.success(request, f'✅ Promoción "{promo.nombre}" creada.')
+            messages.success(request, f'Promoción "{promo.nombre}" creada.')
             if request.POST.get('guardar_y_agregar_otro'):
                 return redirect('panel:promodia_crear')
             return redirect('panel:promodia_lista')
@@ -313,7 +307,7 @@ def promodia_editar(request, promo_id):
         form = PromocionDiaForm(request.POST, instance=promo)
         if form.is_valid():
             form.save()
-            messages.success(request, f'✅ Promoción "{promo.nombre}" actualizada.')
+            messages.success(request, f'Promoción "{promo.nombre}" actualizada.')
             if request.POST.get('guardar_y_agregar_otro'):
                 return redirect('panel:promodia_crear')
             return redirect('panel:promodia_lista')
@@ -331,13 +325,6 @@ def promodia_editar(request, promo_id):
 @staff_required
 @require_POST
 def promodia_eliminar(request):
-    """
-    Borrado múltiple de promociones por día, en dos pasos (mismo patrón que
-    salas_eliminar). PromocionDia NO borra en cascada: los Pagos que la usaron
-    quedan con promo_dia=null (Pago.promo_dia es on_delete=SET_NULL).
-    """
-    # modificado: mismo mecanismo que salas_eliminar - paso 1 responde JSON
-    # cuando lo pide static/js/panel/shared/eliminar_modal.js.
     es_ajax = request.headers.get('X-Requested-With') == 'XMLHttpRequest'
 
     ids = request.POST.getlist('seleccionadas')
@@ -357,12 +344,11 @@ def promodia_eliminar(request):
     if request.POST.get('confirmado') == '1':
         nombres = list(promos_qs.values_list('nombre', flat=True))
         promos_qs.delete()
-        messages.success(request, f'🗑️ Promoción(es) eliminada(s): {", ".join(nombres)}.')
+        messages.success(request, f'Promoción(es) eliminada(s): {", ".join(nombres)}.')
         if es_ajax:
-            return JsonResponse({'success': True})  # modificado
+            return JsonResponse({'success': True})
         return redirect('panel:promodia_lista')
 
-    # Paso 1: vista previa (no hay cascada, solo informamos pagos que quedarían sin promo)
     resumen = []
     for promo in promos_qs:
         total_pagos = Pago.objects.filter(promo_dia=promo).count()
@@ -372,7 +358,6 @@ def promodia_eliminar(request):
         })
 
     if es_ajax:
-        # modificado
         lineas = [
             f'{item["promo"].nombre}: {item["total_pagos"]} pago(s) quedarían sin promoción asociada'
             for item in resumen
@@ -388,8 +373,6 @@ def promodia_eliminar(request):
         'ids': ids,
         'seccion_activa': 'promodia',
     })
-
-
 
 # ============================================================
 # CUPONES USADOS (solo lectura) — vive en Operaciones
@@ -423,7 +406,6 @@ def cupones_usados_lista(request):
 
 @staff_required
 def cupones_estadisticas(request):
-    """Estadísticas de uso de cupones (único dato realmente trackeado hoy)."""
     ahora = timezone.now()
     hoy = ahora.replace(hour=0, minute=0, second=0, microsecond=0)
     semana = hoy - timedelta(days=7)
@@ -444,7 +426,6 @@ def cupones_estadisticas(request):
         'descuento_total': CuponUsado.objects.aggregate(t=Sum('descuento_aplicado'))['t'] or 0,
     }
 
-    # Ranking histórico de cupones más usados
     top_cupones = CuponUsado.objects.values(
         'cupon__codigo', 'cupon__descripcion'
     ).annotate(
@@ -452,7 +433,6 @@ def cupones_estadisticas(request):
         descuento_generado=Sum('descuento_aplicado')
     ).order_by('-veces_usado')[:10]
 
-    # Cupones activos que no se usaron en los últimos 30 días (candidatos a revisar)
     cupones_activos_sin_uso = Cupon.objects.filter(
         activo=True
     ).exclude(

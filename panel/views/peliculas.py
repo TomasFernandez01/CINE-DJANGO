@@ -1,11 +1,8 @@
-# modificado (Paso 0 - split de panel/views.py): módulo extraído automáticamente,
-# sin cambios de lógica, solo de ubicación. Ver panel/views/__init__.py.
-
 from django.contrib import messages
 from django.core.files.base import ContentFile
 from django.core.paginator import Paginator
-from django.db.models import Q
-from django.http import JsonResponse  # modificado: respuesta AJAX para eliminar_modal.js
+from django.db.models import Q, Count, Sum
+from django.http import JsonResponse
 from django.shortcuts import render, redirect, get_object_or_404
 from django.utils import timezone
 from django.views.decorators.http import require_POST
@@ -13,7 +10,7 @@ from pagos.models import Pago
 from peliculas.models import Pelicula
 from reservas.models import Reserva
 import requests
-from ..decorators import staff_required
+from ..decorators import staff_required, superuser_required
 from ..forms import (
     PeliculaForm,
 )
@@ -28,7 +25,8 @@ except ImportError:
 # PELÍCULAS — CRUD
 # ============================================================
 
-@staff_required
+# MODIFICACION GEMINI: Crear películas es función exclusiva del SuperUser (Corporate HQ)
+@superuser_required
 def peliculas_crear(request):
     if request.method == 'POST':
         form = PeliculaForm(request.POST, request.FILES)
@@ -43,7 +41,7 @@ def peliculas_crear(request):
                     pelicula.poster.save(nombre, ContentFile(resp.content), save=True)
                 except Exception:
                     pass 
-            messages.success(request, f'✅ Película "{pelicula.titulo}" creada exitosamente.')
+            messages.success(request, f'Película "{pelicula.titulo}" creada exitosamente.')
             if request.POST.get('guardar_y_agregar_otro'):
                 return redirect('panel:peliculas_crear')
             return redirect('panel:peliculas_detalle', pelicula_id=pelicula.id)
@@ -55,7 +53,6 @@ def peliculas_crear(request):
         'titulo_pagina': 'Agregar Película',
         'accion': 'crear',
         'seccion_activa': 'peliculas',
-        # Si Validacion falla y formulario lo rellena TMDB (trae el campo oculto poster_url_tmdb en el POST), lo re-pasamos al contexto para no perder la preview del poster al re-renderizar.
         'poster_url_tmdb': request.POST.get('poster_url_tmdb', '') if request.method == 'POST' else '',
     })
 
@@ -63,15 +60,36 @@ def peliculas_crear(request):
 @staff_required
 def peliculas_editar(request, pelicula_id):
     pelicula = get_object_or_404(Pelicula, id=pelicula_id)
+    es_super = request.user.is_superuser
 
     if request.method == 'POST':
         form = PeliculaForm(request.POST, request.FILES, instance=pelicula)
-        if form.is_valid():
-            form.save()
-            messages.success(request, f'✅ Película "{pelicula.titulo}" actualizada.')
-            if request.POST.get('guardar_y_agregar_otro'):
-                return redirect('panel:peliculas_crear')
-            return redirect('panel:peliculas_detalle', pelicula_id=pelicula.id)
+        
+        # MODIFICACION GEMINI: Si es Staff (no SuperUser), solo se permite alterar en_cartelera y fecha_estreno
+        if not es_super:
+            # Preservar valores originales de los demás campos
+            if form.is_valid():
+                obj = form.save(commit=False)
+                original = Pelicula.objects.get(id=pelicula.id)
+                obj.titulo = original.titulo
+                obj.sinopsis = original.sinopsis
+                obj.duracion = original.duracion
+                obj.genero = original.genero
+                obj.clasificacion = original.clasificacion
+                obj.director = original.director
+                obj.actores = original.actores
+                obj.año = original.año
+                obj.poster = original.poster
+                obj.save()
+                messages.success(request, f'Película "{pelicula.titulo}" actualizada (activación/estreno por Staff).')
+                return redirect('panel:peliculas_detalle', pelicula_id=pelicula.id)
+        else:
+            if form.is_valid():
+                form.save()
+                messages.success(request, f'Película "{pelicula.titulo}" actualizada completamente por SuperUser.')
+                if request.POST.get('guardar_y_agregar_otro'):
+                    return redirect('panel:peliculas_crear')
+                return redirect('panel:peliculas_detalle', pelicula_id=pelicula.id)
     else:
         form = PeliculaForm(instance=pelicula)
 
@@ -81,19 +99,13 @@ def peliculas_editar(request, pelicula_id):
         'titulo_pagina': f'Editar: {pelicula.titulo}',
         'accion': 'editar',
         'seccion_activa': 'peliculas',
+        'es_super': es_super,
     })
 
-@staff_required
+# MODIFICACION GEMINI: Eliminación de películas exclusiva para SuperUser
+@superuser_required
 @require_POST
 def peliculas_eliminar(request):
-    """
-    Borrado múltiple de películas, en dos pasos (mismo patrón que salas_eliminar):
-      1. Sin 'confirmado': vista previa con cuántas funciones, reservas y pagos
-         se van a borrar en cascada (Pelicula -> Funcion -> Reserva -> Pago).
-      2. Con 'confirmado=1': borra de verdad.
-    """
-    # modificado: mismo mecanismo que salas_eliminar - paso 1 responde JSON
-    # cuando lo pide static/js/panel/shared/eliminar_modal.js.
     es_ajax = request.headers.get('X-Requested-With') == 'XMLHttpRequest'
 
     ids = request.POST.getlist('seleccionadas')
@@ -112,13 +124,12 @@ def peliculas_eliminar(request):
 
     if request.POST.get('confirmado') == '1':
         titulos = list(peliculas_qs.values_list('titulo', flat=True))
-        peliculas_qs.delete()  # cascada: borra también sus funciones, reservas y pagos
-        messages.success(request, f'🗑️ Película(s) eliminada(s): {", ".join(titulos)}.')
+        peliculas_qs.delete()
+        messages.success(request, f'Película(s) eliminada(s): {", ".join(titulos)}.')
         if es_ajax:
-            return JsonResponse({'success': True})  # modificado
+            return JsonResponse({'success': True})
         return redirect('panel:peliculas_lista')
 
-    # Paso 1: vista previa de lo que se va a borrar en cascada
     resumen = []
     for pelicula in peliculas_qs:
         total_funciones = pelicula.funciones.count()
@@ -132,7 +143,6 @@ def peliculas_eliminar(request):
         })
 
     if es_ajax:
-        # modificado
         lineas = [
             f'{item["pelicula"].titulo}: {item["total_funciones"]} función(es), '
             f'{item["total_reservas"]} reserva(s), {item["total_pagos"]} pago(s)'
@@ -150,13 +160,13 @@ def peliculas_eliminar(request):
         'ids': ids,
         'seccion_activa': 'peliculas',
     })
+
 # ============================================================
-# PELÍCULAS — T M D B
+# PELÍCULAS — T M D B (Exclusivo SuperUser)
 # ============================================================
 
-@staff_required
+@superuser_required
 def peliculas_buscar_tmdb(request):
-    """Búsqueda TMDB integrada en el panel."""
     resultados = []
     query = ''
 
@@ -179,11 +189,8 @@ def peliculas_buscar_tmdb(request):
     })
 
 
-@staff_required
+@superuser_required
 def peliculas_importar_tmdb(request, tmdb_id):
-    """
-    Importa una película desde TMDB y redirige al formulario de edición. Precarga datos en el formulario (accion='crear'), SIN guardar en BD. El poster no se puede precargar en un <input type="file">, así que se muestra como preview y se pasa la URL original en un campo oculto: si el usuario no sube un poster propio, recién al guardar (en peliculas_crear) se descarga esa imagen.
-    """
     if not TMDB_DISPONIBLE:
         messages.error(request, 'TMDB no está configurado.')
         return redirect('panel:peliculas_buscar_tmdb')
@@ -222,7 +229,7 @@ def peliculas_importar_tmdb(request, tmdb_id):
     })
 
 # ============================================================
-# PELÍCULAS
+# PELÍCULAS LISTA Y ANALÍTICA
 # ============================================================
 
 @staff_required
@@ -242,7 +249,25 @@ def peliculas_lista(request):
 
     peliculas = peliculas.order_by('-en_cartelera', 'titulo')
 
-    # MODIFICACION GEMINI: Paginacion en la lista de peliculas del panel (8 por pagina)
+    # MODIFICACION GEMINI: Analítica contextual para el dashboard de películas (Top Títulos y Géneros)
+    top_peliculas_stats = Pelicula.objects.annotate(
+        total_reservas_confirmadas=Count(
+            'funciones__reservas',
+            filter=Q(funciones__reservas__estado='confirmada')
+        ),
+        # modificado: 'total' es un método Python de Reserva, no un campo de BD.
+        # El monto pagado real está en Pago.monto (related_name='pago' desde Reserva).
+        # Causaba FieldError "Unsupported lookup 'total' for BigAutoField...".
+        recaudacion_estimada=Sum(
+            'funciones__reservas__pago__monto',  # modificado
+            filter=Q(funciones__reservas__estado='confirmada')
+        )
+    ).order_by('-total_reservas_confirmadas')[:5]
+
+    generos_stats = Pelicula.objects.values('genero').annotate(
+        total=Count('id')
+    ).order_by('-total')
+
     paginator = Paginator(peliculas, 8)
     page_number = request.GET.get('page')
     page_obj = paginator.get_page(page_number)
@@ -253,6 +278,9 @@ def peliculas_lista(request):
         'busqueda': busqueda,
         'en_cartelera': en_cartelera,
         'total': peliculas.count(),
+        'top_peliculas_stats': top_peliculas_stats,
+        'generos_stats': generos_stats,
+        'es_super': request.user.is_superuser,
         'seccion_activa': 'peliculas',
     }
     return render(request, 'panel/peliculas/lista.html', contexto)
@@ -266,15 +294,16 @@ def peliculas_detalle(request, pelicula_id):
         fecha_hora__gte=ahora
     ).select_related('sala').order_by('fecha_hora')
     
-    # MODIFICACION GEMINI: Obtener calificaciones para el panel admin
     ratings = pelicula.ratings.all().select_related('usuario').order_by('-fecha_creacion')
 
     contexto = {
         'pelicula': pelicula,
         'funciones': funciones,
         'ratings': ratings,
+        'es_super': request.user.is_superuser,
         'seccion_activa': 'peliculas',
     }
     return render(request, 'panel/peliculas/detalle.html', contexto)
+
 
 

@@ -28,6 +28,11 @@
     <div class="panelpelisform-header">
         <div>
             <h1 class="panelpelisform-titulo">{{ titulo_pagina }}</h1>
+            {% if not es_super and accion == 'editar' %}
+            <div style="background: rgba(229, 9, 20, 0.15); border-left: 4px solid #e50914; padding: 0.75rem 1rem; border-radius: 4px; margin-top: 0.5rem; color: #ffffff; font-size: 0.9rem;">
+                <strong>Rol Staff:</strong> Podés actualizar el estado de cartelera y fecha de estreno local. Los metadatos generales del catálogo son administrados por el SuperUser (HQ).
+            </div>
+            {% endif %}
             {% if accion == 'crear' %}
             <p class="panelpelisform-subtitulo">
                 También podés
@@ -159,10 +164,10 @@
                         <div class="panelpelisform-poster-preview-wrap panelpelisform-poster-preview-wrap--tmdb">
                             <img src="{{ poster_url_tmdb }}" alt="poster TMDB" id="posterPreview" class="panelpelisform-poster-img">
                         </div>
-                        <div class="form-help panelpelisform-poster-help-tmdb">📥 Poster de TMDB. Descarga al guardar, salvo que subas otro acá abajo.</div>
+                        <div class="form-help panelpelisform-poster-help-tmdb">Poster de TMDB. Descarga al guardar, salvo que subas otro acá abajo.</div>
 
                         {% else %}
-                        <div id="posterPlaceholder" class="panelpelisform-poster-placeholder">🎬</div>
+                        <div id="posterPlaceholder" class="panelpelisform-poster-placeholder">[POSTER]</div>
                         <img id="posterPreview" class="panelpelisform-poster-img panelpelisform-poster-img--oculta">
                         {% endif %}
 

@@ -4,31 +4,30 @@
 {% block titulo %}Películas — Panel{% endblock %}
 
 {% block breadcrumb %}
-<span class="sep">›</span>
+<span class="sep">></span>
 <span class="current">Películas</span>
 {% endblock %}
 
-<!-- modificado (Hilo 1): separación CSS completa (29 estilos inline -> 0), movidos a
-     static/css/panel/peliculas/lista.css. Se borró un <form> comentado (código muerto,
-     leftover de un reordenamiento viejo del formulario de borrado - el form real ya
-     está más abajo en el archivo). -->
 {% block extra_css %}
 <link rel="stylesheet" href="{% static 'css/panel/peliculas/lista.css' %}">
 {% endblock %}
 
 {% block contenido %}
 
+<!-- MODIFICACION GEMINI: Encabezado del módulo con acciones filtradas por rol (SuperUser vs Staff) -->
 <div class="panelpelis-header">
     <h1 class="panelpelis-titulo">Películas</h1>
     <div class="panelpelis-header-acciones">
-        <button type="submit" form="formPeliculas" id="btnEliminarSeleccionadas" class="btn btn-danger" disabled>Eliminar</button>
         <a href="{% url 'panel:inicio' %}" class="btn btn-primary">INICIO</a>
-        <a href="{% url 'panel:peliculas_crear' %}" class="btn btn-primary">NUEVA</a>
-        <a href="{% url 'panel:peliculas_buscar_tmdb' %}" class="btn btn-primary">TMDB</a>
+        {% if es_super %}
+            <button type="submit" form="formPeliculas" id="btnEliminarSeleccionadas" class="btn btn-danger" disabled>Eliminar</button>
+            <a href="{% url 'panel:peliculas_crear' %}" class="btn btn-primary">NUEVA</a>
+            <a href="{% url 'panel:peliculas_buscar_tmdb' %}" class="btn btn-primary">TMDB</a>
+        {% endif %}
     </div>
 </div>
 
-<!-- Filtros (form GET propio, fuera del form de borrado para no anidarlos) -->
+<!-- Filtros de búsqueda -->
 <div class="card panelpelis-filtros-card">
     <div class="card-body panelpelis-filtros-body">
         <form method="get" class="panelpelis-filtros-form">
@@ -45,70 +44,66 @@
     </div>
 </div>
 
-<!-- Resultado -->
+<!-- Contador de resultados -->
 <div class="panelpelis-resultado-contador">
     {{ total }} película(s) encontrada(s)
 </div>
 
-<!-- modificado: data-eliminar-modal activa el flujo por modal de
-     static/js/panel/shared/eliminar_modal.js en vez de navegar a
-     confirmar_eliminar.html. Si JS falla, el form sigue apuntando a la
-     misma action de siempre (fallback intacto). -->
 <form method="post" action="{% url 'panel:peliculas_eliminar' %}" id="formPeliculas" data-eliminar-modal>
     {% csrf_token %}
-<!-- Grid de películas -->
-{% if peliculas %}
-<div class="panelpelis-grid">
-    {% for p in peliculas %}
-    <div class="card panelpelis-card">
+    {% if peliculas %}
+    <div class="panelpelis-grid">
+        {% for p in peliculas %}
+        <div class="card panelpelis-card">
+            <!-- Poster -->
+            <div class="panelpelis-card-poster">
+                {% if p.poster %}
+                    <img src="{{ p.poster.url }}" alt="{{ p.titulo }}" class="panelpelis-card-poster-img">
+                {% else %}
+                    <div class="panelpelis-card-poster-placeholder">[POSTER]</div>
+                {% endif %}
 
-        <!-- Poster -->
-        <div class="panelpelis-card-poster">
-            {% if p.poster %}
-                <img src="{{ p.poster.url }}" alt="{{ p.titulo }}" class="panelpelis-card-poster-img">
-            {% else %}
-                <div class="panelpelis-card-poster-placeholder">🎬</div>
-            {% endif %}
-            <!-- Checkbox de seleccion -->
-            <label class="panelpelis-card-checkbox-label">
-                <input type="checkbox" name="seleccionadas" value="{{ p.id }}" class="chk-pelicula panel-checkbox">
-            </label>
-            <!-- Cartelera badge -->
-            <span class="panelpelis-card-badge {% if p.en_cartelera %}panelpelis-card-badge--activa{% else %}panelpelis-card-badge--inactiva{% endif %}">
-                {% if p.en_cartelera %}En cartelera{% else %}Inactiva{% endif %}
-            </span>
+                {% if es_super %}
+                <label class="panelpelis-card-checkbox-label">
+                    <input type="checkbox" name="seleccionadas" value="{{ p.id }}" class="chk-pelicula panel-checkbox">
+                </label>
+                {% endif %}
+
+                <span class="panelpelis-card-badge {% if p.en_cartelera %}panelpelis-card-badge--activa{% else %}panelpelis-card-badge--inactiva{% endif %}">
+                    {% if p.en_cartelera %}En cartelera{% else %}Inactiva{% endif %}
+                </span>
+            </div>
+
+            <!-- Info -->
+            <div class="panelpelis-card-info">
+                <div class="panelpelis-card-nombre" title="{{ p.titulo }}">{{ p.titulo }}</div>
+                <div class="panelpelis-card-dato">
+                    {% if p.genero %}{{ p.get_genero_display }}{% endif %}
+                    {% if p.año %} · {{ p.año }}{% endif %}
+                    {% if p.duracion %} · {{ p.duracion_formato }}{% endif %}
+                </div>
+                <div class="panelpelis-card-acciones">
+                    <a href="{% url 'panel:peliculas_detalle' p.id %}" class="btn btn-dark panelpelis-card-btn-ver">VER</a>
+                    <a href="{% url 'panel:peliculas_editar' p.id %}" class="btn btn-ghost panelpelis-card-btn-editar" title="Editar película">EDITAR</a>
+                </div>
+            </div>
         </div>
-
-        <!-- Info -->
-        <div class="panelpelis-card-info">
-            <div class="panelpelis-card-nombre" title="{{ p.titulo }}">{{ p.titulo }}</div>
-            <div class="panelpelis-card-dato">
-                {% if p.genero %}{{ p.get_genero_display }}{% endif %}
-                {% if p.año %} · {{ p.año }}{% endif %}
-                {% if p.duracion %} · {{ p.duracion_formato }}{% endif %}
-            </div>
-            <div class="panelpelis-card-acciones">
-                <a href="{% url 'panel:peliculas_detalle' p.id %}" class="btn btn-dark panelpelis-card-btn-ver">VER</a>
-                <a href="{% url 'panel:peliculas_editar' p.id %}" class="btn btn-ghost panelpelis-card-btn-editar" title="Editar en admin">EDITAR</a>
-            </div>
+        {% endfor %}
+    </div>
+    {% else %}
+    <div class="card">
+        <div class="card-body panelpelis-vacio">
+            No se encontraron películas con esos filtros.
         </div>
     </div>
-    {% endfor %}
-</div>
-{% else %}
-<div class="card">
-    <div class="card-body panelpelis-vacio">
-        No se encontraron películas con esos filtros.
-    </div>
-</div>
-{% endif %}
+    {% endif %}
 </form>
 
 {% if page_obj.has_other_pages %}
 <div class="panelpelis-paginacion">
     {% if page_obj.has_previous %}
-        <a href="?page=1{% if busqueda %}&q={{ busqueda }}{% endif %}{% if en_cartelera %}&cartelera={{ en_cartelera }}{% endif %}" class="btn btn-ghost panelpelis-paginacion-btn">« Primero</a>
-        <a href="?page={{ page_obj.previous_page_number }}{% if busqueda %}&q={{ busqueda }}{% endif %}{% if en_cartelera %}&cartelera={{ en_cartelera }}{% endif %}" class="btn btn-ghost panelpelis-paginacion-btn">‹ Anterior</a>
+        <a href="?page=1{% if busqueda %}&q={{ busqueda }}{% endif %}{% if en_cartelera %}&cartelera={{ en_cartelera }}{% endif %}" class="btn btn-ghost panelpelis-paginacion-btn">Primero</a>
+        <a href="?page={{ page_obj.previous_page_number }}{% if busqueda %}&q={{ busqueda }}{% endif %}{% if en_cartelera %}&cartelera={{ en_cartelera }}{% endif %}" class="btn btn-ghost panelpelis-paginacion-btn">Anterior</a>
     {% endif %}
 
     <span class="panelpelis-paginacion-info">
@@ -116,11 +111,53 @@
     </span>
 
     {% if page_obj.has_next %}
-        <a href="?page={{ page_obj.next_page_number }}{% if busqueda %}&q={{ busqueda }}{% endif %}{% if en_cartelera %}&cartelera={{ en_cartelera }}{% endif %}" class="btn btn-ghost panelpelis-paginacion-btn">Siguiente ›</a>
-        <a href="?page={{ page_obj.paginator.num_pages }}{% if busqueda %}&q={{ busqueda }}{% endif %}{% if en_cartelera %}&cartelera={{ en_cartelera }}{% endif %}" class="btn btn-ghost panelpelis-paginacion-btn">Último »</a>
+        <a href="?page={{ page_obj.next_page_number }}{% if busqueda %}&q={{ busqueda }}{% endif %}{% if en_cartelera %}&cartelera={{ en_cartelera }}{% endif %}" class="btn btn-ghost panelpelis-paginacion-btn">Siguiente</a>
+        <a href="?page={{ page_obj.paginator.num_pages }}{% if busqueda %}&q={{ busqueda }}{% endif %}{% if en_cartelera %}&cartelera={{ en_cartelera }}{% endif %}" class="btn btn-ghost panelpelis-paginacion-btn">Último</a>
     {% endif %}
 </div>
 {% endif %}
+
+<!-- MODIFICACION GEMINI: Dashboard Analítico de Películas (Estadísticas y Rankings de Catálogo) -->
+<div class="card" style="margin-top: 3rem; background: #1c1c1c; border-top: 3px solid #e50914; padding: 1.5rem;">
+    <h3 style="color: #ffffff; margin-bottom: 1.25rem; font-size: 1.3rem;">Analítica del Catálogo de Películas</h3>
+    
+    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 1.5rem;">
+        <!-- Top 5 Películas Más Reservadas -->
+        <div style="background: #232323; padding: 1.25rem; border-radius: 8px; border: 1px solid #333;">
+            <h4 style="color: #e50914; margin-top: 0; margin-bottom: 1rem; font-size: 1.05rem;">Top 5 Películas Más Reservadas</h4>
+            {% if top_peliculas_stats %}
+                <ul style="list-style: none; padding: 0; margin: 0;">
+                    {% for p in top_peliculas_stats %}
+                        <li style="display: flex; justify-content: space-between; align-items: center; padding: 0.6rem 0; border-bottom: 1px solid #2e2e2e; font-size: 0.9rem; color: #eee;">
+                            <span><strong>{{ forloop.counter }}.</strong> {{ p.titulo }}</span>
+                            <span style="color: #aaa;">{{ p.total_reservas_confirmadas }} reservas (${{ p.recaudacion_estimada|default:0 }})</span>
+                        </li>
+                    {% endfor %}
+                </ul>
+            {% else %}
+                <p style="color: #888; font-size: 0.9rem; margin: 0;">Sin datos de reservas registradas aún.</p>
+            {% endif %}
+        </div>
+
+        <!-- Distribución por Géneros -->
+        <div style="background: #232323; padding: 1.25rem; border-radius: 8px; border: 1px solid #333;">
+            <h4 style="color: #e50914; margin-top: 0; margin-bottom: 1rem; font-size: 1.05rem;">Distribución por Géneros</h4>
+            {% if generos_stats %}
+                <div style="display: flex; flex-wrap: wrap; gap: 0.5rem;">
+                    {% for g in generos_stats %}
+                        {% if g.genero %}
+                            <span style="background: #141414; color: #ffffff; padding: 0.3rem 0.7rem; border-radius: 6px; font-size: 0.85rem; border: 1px solid #333;">
+                                {{ g.genero|title }}: <strong>{{ g.total }}</strong>
+                            </span>
+                        {% endif %}
+                    {% endfor %}
+                </div>
+            {% else %}
+                <p style="color: #888; font-size: 0.9rem; margin: 0;">Sin películas cargadas en el catálogo.</p>
+            {% endif %}
+        </div>
+    </div>
+</div>
 
 {% endblock %}
 
