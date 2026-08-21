@@ -376,15 +376,24 @@ def salas_lista(request):
             total=Sum('cantidad_entradas')
         )['total'] or 0
 
-        # modificado (T3): % de ocupación real (entradas vendidas / capacidad
-        # total de la sala), en vez de mostrar solo el número crudo de
-        # entradas. Se usa sala.capacidad (se autocalcula en Sala.save() como
-        # filas*columnas o según secciones) y se evita división por cero.
+        # modificado (T3, corregido): la versión anterior dividía el total
+        # HISTÓRICO de entradas vendidas (todas las funciones que tuvo la
+        # sala, para siempre) por la capacidad de UNA sola función. Si la
+        # sala tenía, por ejemplo, 5 funciones con buena venta, el % podía
+        # superar el 100% sin sentido — el numerador sumaba entradas de
+        # varias funciones distintas y el denominador solo contaba una vez.
+        # La ocupación real de "una sala" no existe como concepto único (una
+        # sala puede tener muchas funciones con distinta ocupación cada una);
+        # lo que sí tiene sentido es el PROMEDIO de ocupación entre todas sus
+        # funciones. Por eso ahora se divide por (capacidad * cantidad de
+        # funciones que tuvo esa sala), no por la capacidad de una sola.
         capacidad_total = sala.capacidad or (sala.filas * sala.columnas)
-        if capacidad_total:
-            ocupacion_pct = round((total_entradas_sala / capacidad_total) * 100, 1)
+        cantidad_funciones_sala = sala.funciones.count()
+        capacidad_acumulada = capacidad_total * cantidad_funciones_sala
+        if capacidad_acumulada:
+            ocupacion_pct = round((total_entradas_sala / capacidad_acumulada) * 100, 1)
         else:
-            ocupacion_pct = 0  # modificado (T3): sin capacidad cargada -> 0% en vez de error
+            ocupacion_pct = 0  # modificado (T3): sin capacidad o sin funciones -> 0%
 
         salas_con_info.append({
             'sala': sala,

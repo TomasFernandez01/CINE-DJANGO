@@ -52,9 +52,18 @@
                 </div>
 
                 <!-- modificado (combos múltiples): categoría del ítem -->
+                <!-- modificado (categoría libre): el campo pasó de <select> fijo a
+                     texto libre con sugerencias vía <datalist>, para poder cargar una
+                     categoría nueva (ej: "merch") sin tocar el modelo ni migraciones.
+                     Ver ComboForm.__init__ en panel/forms.py para el detalle. ESTA ROTO LLEVARLO A REVISION EN PROXIMA TANDA-->
                 <div>
                     <label class="form-label">Categoría <span class="required">*</span></label>
                     {{ form.categoria }}
+                    {% comment %} <datalist id="categorias-combo-datalist">
+                        {% for c in form.categorias_sugeridas %}
+                        <option value="{{ c }}"></option>
+                        {% endfor %}
+                    </datalist> {% endcomment %}
                     {% if form.categoria.errors %}<div class="field-error">{{ form.categoria.errors.0 }}</div>{% endif %}
                 </div>
 

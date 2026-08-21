@@ -134,42 +134,46 @@
 {% endif %}
 
 <!-- MODIFICACION GEMINI: Dashboard Analítico de Películas (Estadísticas y Rankings de Catálogo) -->
-<div class="card" style="margin-top: 3rem; background: #1c1c1c; border-top: 3px solid #e50914; padding: 1.5rem;">
-    <h3 style="color: #ffffff; margin-bottom: 1.25rem; font-size: 1.3rem;">Analítica del Catálogo de Películas</h3>
+<!-- modificado (paleta panel): este bloque tenía la paleta oscura roja/negra
+     del sitio público (Cinemark-style), invasiva dentro del panel administrativo,
+     que usa fondo claro + acento dorado (--accent: #e2b96f, ver base_panel.css).
+     Se reemplazan los colores fijos por los del panel, sin tocar estructura ni JS. -->
+<div class="card" style="margin-top: 3rem; padding: 1.5rem;">
+    <h3 style="color: #1a1a2e; margin-bottom: 1.25rem; font-size: 1.3rem; border-bottom: 3px solid #e2b96f; padding-bottom: 0.5rem;">Analítica del Catálogo de Películas</h3>
     
     <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 1.5rem;">
         <!-- Top 5 Películas Más Reservadas -->
-        <div style="background: #232323; padding: 1.25rem; border-radius: 8px; border: 1px solid #333;">
-            <h4 style="color: #e50914; margin-top: 0; margin-bottom: 1rem; font-size: 1.05rem;">Top 5 Películas Más Reservadas</h4>
+        <div style="background: #f7f8fa; padding: 1.25rem; border-radius: 8px; border: 1px solid #e2e4e8;">
+            <h4 style="color: #c9973a; margin-top: 0; margin-bottom: 1rem; font-size: 1.05rem;">Top 5 Películas Más Reservadas</h4>
             {% if top_peliculas_stats %}
                 <ul style="list-style: none; padding: 0; margin: 0;">
                     {% for p in top_peliculas_stats %}
-                        <li style="display: flex; justify-content: space-between; align-items: center; padding: 0.6rem 0; border-bottom: 1px solid #2e2e2e; font-size: 0.9rem; color: #eee;">
+                        <li style="display: flex; justify-content: space-between; align-items: center; padding: 0.6rem 0; border-bottom: 1px solid #e2e4e8; font-size: 0.9rem; color: #333;">
                             <span><strong>{{ forloop.counter }}.</strong> {{ p.titulo }}</span>
-                            <span style="color: #aaa;">{{ p.total_reservas_confirmadas }} reservas (${{ p.recaudacion_estimada|default:0 }})</span>
+                            <span style="color: #777;">{{ p.total_reservas_confirmadas }} reservas (${{ p.recaudacion_estimada|default:0 }})</span>
                         </li>
                     {% endfor %}
                 </ul>
             {% else %}
-                <p style="color: #888; font-size: 0.9rem; margin: 0;">Sin datos de reservas registradas aún.</p>
+                <p style="color: #999; font-size: 0.9rem; margin: 0;">Sin datos de reservas registradas aún.</p>
             {% endif %}
         </div>
 
         <!-- Distribución por Géneros -->
-        <div style="background: #232323; padding: 1.25rem; border-radius: 8px; border: 1px solid #333;">
-            <h4 style="color: #e50914; margin-top: 0; margin-bottom: 1rem; font-size: 1.05rem;">Distribución por Géneros</h4>
+        <div style="background: #f7f8fa; padding: 1.25rem; border-radius: 8px; border: 1px solid #e2e4e8;">
+            <h4 style="color: #c9973a; margin-top: 0; margin-bottom: 1rem; font-size: 1.05rem;">Distribución por Géneros</h4>
             {% if generos_stats %}
                 <div style="display: flex; flex-wrap: wrap; gap: 0.5rem;">
                     {% for g in generos_stats %}
                         {% if g.genero %}
-                            <span style="background: #141414; color: #ffffff; padding: 0.3rem 0.7rem; border-radius: 6px; font-size: 0.85rem; border: 1px solid #333;">
+                            <span style="background: #ffffff; color: #333; padding: 0.3rem 0.7rem; border-radius: 6px; font-size: 0.85rem; border: 1px solid #e2e4e8;">
                                 {{ g.genero|title }}: <strong>{{ g.total }}</strong>
                             </span>
                         {% endif %}
                     {% endfor %}
                 </div>
             {% else %}
-                <p style="color: #888; font-size: 0.9rem; margin: 0;">Sin películas cargadas en el catálogo.</p>
+                <p style="color: #999; font-size: 0.9rem; margin: 0;">Sin películas cargadas en el catálogo.</p>
             {% endif %}
         </div>
     </div>

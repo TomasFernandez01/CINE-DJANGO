@@ -17,6 +17,14 @@
      datos que sí necesitan Django (bloqueos, categorías, ocupados, motivos) armados acá
      abajo en un bloque chico, y el resto de la lógica vive en el archivo externo. -->
 {% block extra_css %}
+<!-- modificado: faltaba este stylesheet. El panel de acción (bloquear asiento /
+     asignar categoría), armado dinámicamente por asientos.js, usa las clases
+     .panel-select / .panel-input / .form-label — definidas en form_base.css,
+     que esta página nunca cargaba. Por eso se veía como HTML sin estilo
+     ("etiqueta html"), a diferencia de "Bloqueos de esta sala" y "Categorías
+     especiales" (esas sí son contenido estático del template, con .card ya
+     estilado). No se tocó form_base.css, solo se agregó el link acá. -->
+<link rel="stylesheet" href="{% static 'css/panel/form_base.css' %}">
 <link rel="stylesheet" href="{% static 'css/panel/salas/asientos.css' %}">
 {% endblock %}
 

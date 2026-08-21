@@ -357,6 +357,39 @@ class ComboForm(forms.ModelForm):
             'imagen':      'Imagen',
         }
 
+    # modificado (categoría libre): 'categoria' en el modelo sigue siendo un
+    # CharField(choices=CATEGORIA_CHOICES) — eso NO se tocó, cero migración.
+    # Pero el <select> del ModelForm rechazaba cualquier valor fuera de esa
+    # lista fija (ej: "merch" para una mochila). Acá se reemplaza el campo
+    # del FORM (no del modelo) por un CharField libre con un <input
+    # list="..."> (datalist HTML5): sigue sugiriendo las categorías ya
+    # existentes en la base para no tipear de más, pero el superuser puede
+    # escribir cualquier palabra nueva. La columna en la base es un
+    # VARCHAR(20) sin restricción real, así que guardar un valor fuera de
+    # CATEGORIA_CHOICES funciona sin problema — 'choices' en el modelo solo
+    # afecta validación de formularios y el admin de Django, no el ancho de
+    # la columna ni lo que la base acepta.
+    # def __init__(self, *args, **kwargs):
+    #     super().__init__(*args, **kwargs)
+    #     categorias_existentes = list(
+    #         Combo.objects.exclude(categoria='')
+    #         .order_by('categoria').values_list('categoria', flat=True).distinct()
+    #     )
+    #     # Se combinan las 4 categorías "de fábrica" con cualquier otra que ya
+    #     # se haya cargado a mano antes, para que el datalist sugiera todo lo
+    #     # que ya existe en la base, no solo lo hardcodeado en el modelo.
+    #     opciones = sorted(set([c for c, _ in Combo.CATEGORIA_CHOICES] + categorias_existentes))
+    #     self.categorias_sugeridas = opciones  # usado por el template para armar el <datalist>
+    #     self.fields['categoria'] = forms.CharField(
+    #         max_length=20,
+    #         label='Categoría',
+    #         widget=forms.TextInput(attrs={
+    #             **INPUT_ATTRS,
+    #             'list': 'categorias-combo-datalist',
+    #             'placeholder': 'Ej: combo, bebida, snack, pochoclo, merch...',
+    #         })
+    #     )
+# ESTA ROTO PORQUE HAY QUE TOCAR EL MODEL REVISION PARA PROXIMAS TANDAS
 
 # ============================================================
 # PROMOCIONES — CUPONES
