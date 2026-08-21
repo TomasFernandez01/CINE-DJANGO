@@ -40,7 +40,7 @@ def cambiar_sede_panel(request):
     if sede_id:
         sede = get_object_or_404(Sede, id=sede_id, activa=True)
         request.session['panel_sede_id'] = sede.id
-        messages.success(request, f'📍 Panel enfocado en: {sede.nombre}.')
+        messages.success(request, f'Panel enfocado en: {sede.nombre}.')  # modificado - se quitó el emoji
     else:
         request.session.pop('panel_sede_id', None)
         messages.info(request, 'Panel mostrando todas las sedes.')
@@ -63,7 +63,7 @@ def sedes_crear(request):
         form = SedeForm(request.POST)
         if form.is_valid():
             sede = form.save()
-            messages.success(request, f'✅ Sede "{sede.nombre}" creada.')
+            messages.success(request, f'Sede "{sede.nombre}" creada.')  # modificado - se quitó el emoji
             if request.POST.get('guardar_y_agregar_otro'):
                 return redirect('panel:sedes_crear')
             return redirect('panel:sedes_lista')
@@ -86,7 +86,7 @@ def sedes_editar(request, sede_id):
         form = SedeForm(request.POST, instance=sede)
         if form.is_valid():
             form.save()
-            messages.success(request, f'✅ Sede "{sede.nombre}" actualizada.')
+            messages.success(request, f'Sede "{sede.nombre}" actualizada.')  # modificado - se quitó el emoji
             if request.POST.get('guardar_y_agregar_otro'):
                 return redirect('panel:sedes_crear')
             return redirect('panel:sedes_lista')
@@ -137,7 +137,7 @@ def sedes_eliminar(request):
             return redirect('panel:sedes_lista')
         nombres = list(sedes_qs.values_list('nombre', flat=True))
         sedes_qs.delete()
-        messages.success(request, f'🗑️ Sede(s) eliminada(s): {", ".join(nombres)}.')
+        messages.success(request, f'Sede(s) eliminada(s): {", ".join(nombres)}.')  # modificado - se quitó el emoji
         return redirect('panel:sedes_lista')
 
     # Paso 1: vista previa

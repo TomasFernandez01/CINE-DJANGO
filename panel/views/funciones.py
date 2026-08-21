@@ -36,7 +36,8 @@ def funciones_crear(request):
                 funcion = form.save()
                 messages.success(
                     request,
-                    f'✅ Función de "{funcion.pelicula.titulo}" creada el '
+                    # modificado - se quitó el emoji, requerimiento "cero emojis" del panel
+                    f'Función de "{funcion.pelicula.titulo}" creada el '
                     f'{funcion.fecha_hora.strftime("%d/%m/%Y a las %H:%M")}.'
                 )
                 if request.POST.get('guardar_y_agregar_otro'):
@@ -71,7 +72,7 @@ def funciones_editar(request, funcion_id):
         if form.is_valid():
             try:
                 form.save()
-                messages.success(request, '✅ Función actualizada.')
+                messages.success(request, 'Función actualizada.')  # modificado - se quitó el emoji
                 if request.POST.get('guardar_y_agregar_otro'):
                     return redirect('panel:funciones_crear')
                 return redirect('panel:funciones_detalle', funcion_id=funcion.id)
@@ -120,7 +121,7 @@ def funciones_eliminar(request):
             for f in funciones_qs
         ]
         funciones_qs.delete()  # cascada: borra también sus reservas y pagos
-        messages.success(request, f'🗑️ Función(es) eliminada(s): {", ".join(descripciones)}.')
+        messages.success(request, f'Función(es) eliminada(s): {", ".join(descripciones)}.')  # modificado - se quitó el emoji
         if es_ajax:
             return JsonResponse({'success': True})  # modificado
         return redirect('panel:funciones_lista')
@@ -187,11 +188,12 @@ def funciones_lista(request):
         funciones = funciones.order_by('-fecha_hora')
 
     # NUEVO
+    # modificado - se quitaron los emojis de las etiquetas de los tabs
     filtros_tabs = [
-        ('hoy',      '📅 Hoy'),
-        ('proximas', '⏭️ Próximas'),
-        ('pasadas',  '⏮️ Pasadas'),
-        ('todas',    '📋 Todas'),
+        ('hoy',      'Hoy'),
+        ('proximas', 'Próximas'),
+        ('pasadas',  'Pasadas'),
+        ('todas',    'Todas'),
         ]
 
     contexto = {

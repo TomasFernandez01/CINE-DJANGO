@@ -27,7 +27,7 @@ def configuracion_general(request):
         form = ConfiguracionGeneralForm(request.POST, instance=config)
         if form.is_valid():
             form.save()
-            messages.success(request, '✅ Configuración general actualizada.')
+            messages.success(request, 'Configuración general actualizada.')  # modificado - se quitó el emoji
             return redirect('panel:configuracion_general')
     else:
         form = ConfiguracionGeneralForm(instance=config)

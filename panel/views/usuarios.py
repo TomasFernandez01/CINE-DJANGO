@@ -23,7 +23,7 @@ def usuarios_crear(request):
         form = CrearUsuarioForm(request.POST)
         if form.is_valid():
             user = form.save()
-            messages.success(request, f'✅ Usuario "{user.username}" creado.')
+            messages.success(request, f'Usuario "{user.username}" creado.')  # modificado - se quitó el emoji
             return redirect('panel:usuarios_detalle', usuario_id=user.id)
     else:
         form = CrearUsuarioForm()
@@ -44,7 +44,7 @@ def usuarios_editar(request, usuario_id):
         form = EditarUsuarioForm(request.POST, instance=usuario)
         if form.is_valid():
             form.save()
-            messages.success(request, f'✅ Usuario "{usuario.username}" actualizado.')
+            messages.success(request, f'Usuario "{usuario.username}" actualizado.')  # modificado - se quitó el emoji
             return redirect('panel:usuarios_detalle', usuario_id=usuario.id)
     else:
         form = EditarUsuarioForm(instance=usuario)
