@@ -10,7 +10,7 @@ from django.utils import timezone
 from django.views.decorators.http import require_POST
 from pagos.models import Pago
 from promociones.models import Cupon, PromocionDia, Combo, CuponUsado
-from ..decorators import staff_required
+from ..decorators import staff_required, superuser_required  # modificado (T1)
 from ..forms import (
     ComboForm,
     CuponForm,
@@ -38,7 +38,9 @@ def combos_lista(request):
     })
 
 
-@staff_required
+# modificado (T1): crear combos pasa a ser exclusivo de SuperUser (institucional,
+# mismo criterio que Cupones y que peliculas_crear).
+@superuser_required
 def combos_crear(request):
     if request.method == 'POST':
         form = ComboForm(request.POST, request.FILES)
@@ -62,10 +64,30 @@ def combos_crear(request):
 @staff_required
 def combos_editar(request, combo_id):
     combo = get_object_or_404(Combo, id=combo_id)
+    es_super = request.user.is_superuser  # modificado (T1)
 
     if request.method == 'POST':
         form = ComboForm(request.POST, request.FILES, instance=combo)
         if form.is_valid():
+            # modificado (T1): Staff (no SuperUser) solo puede activar/
+            # desactivar el combo. El modelo Combo no tiene un campo de
+            # disponibilidad POR SEDE (no existe ese campo hoy en
+            # promociones/models.py); se usa 'activo' como el equivalente
+            # más cercano a "disponibilidad local" que pide la consigna.
+            # No puede tocar nombre, descripción, precio, categoría ni
+            # imagen -- eso queda reservado a SuperUser.
+            if not es_super:
+                obj = form.save(commit=False)
+                original = Combo.objects.get(id=combo.id)
+                obj.nombre = original.nombre
+                obj.descripcion = original.descripcion
+                obj.precio = original.precio
+                obj.categoria = original.categoria
+                obj.imagen = original.imagen
+                obj.save()
+                messages.success(request, f'Combo "{combo.nombre}" actualizado (disponibilidad por Staff).')
+                return redirect('panel:combos_lista')
+
             form.save()
             messages.success(request, f'Combo "{combo.nombre}" actualizado.')
             if request.POST.get('guardar_y_agregar_otro'):
@@ -80,9 +102,11 @@ def combos_editar(request, combo_id):
         'titulo_pagina': f'Editar: {combo.nombre}',
         'accion': 'editar',
         'seccion_activa': 'combos',
+        'es_super': es_super,  # modificado (T1)
     })
 
-@staff_required
+# modificado (T1): eliminar combos pasa a ser exclusivo de SuperUser.
+@superuser_required
 @require_POST
 def combos_eliminar(request):
     es_ajax = request.headers.get('X-Requested-With') == 'XMLHttpRequest'
@@ -168,7 +192,9 @@ def cupones_lista(request):
     return render(request, 'panel/promociones/cupones/lista.html', contexto)
 
 
-@staff_required
+# modificado (T1): Cupones son institucionales -- crear queda exclusivo de
+# SuperUser. Staff solo tiene acceso de lectura (ver cupones_lista).
+@superuser_required
 def cupones_crear(request):
     if request.method == 'POST':
         form = CuponForm(request.POST)
@@ -189,7 +215,10 @@ def cupones_crear(request):
     })
 
 
-@staff_required
+# modificado (T1): editar cupones queda exclusivo de SuperUser (Staff:
+# solo lectura, sin excepción de campos -- a diferencia de Salas/Combos acá
+# no hay ningún campo "de disponibilidad" que tenga sentido dejarle a Staff).
+@superuser_required
 def cupones_editar(request, cupon_id):
     cupon = get_object_or_404(Cupon, id=cupon_id)
 
@@ -212,7 +241,8 @@ def cupones_editar(request, cupon_id):
         'seccion_activa': 'cupones',
     })
 
-@staff_required
+# modificado (T1): eliminar cupones queda exclusivo de SuperUser.
+@superuser_required
 @require_POST
 def cupones_eliminar(request):
     es_ajax = request.headers.get('X-Requested-With') == 'XMLHttpRequest'

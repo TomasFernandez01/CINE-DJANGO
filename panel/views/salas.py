@@ -71,13 +71,32 @@ def salas_editar(request, sala_id):
     if sede_fija is not None:
         filtro_sala['sede'] = sede_fija
     sala = get_object_or_404(Sala, **filtro_sala)
+    es_super = request.user.is_superuser  # modificado (T1)
 
     if request.method == 'POST':
         form = SalaForm(request.POST, instance=sala, sede_fija=sede_fija)
         if form.is_valid():
             sala_temp = form.save(commit=False)
-            formset = SeccionSalaFormSet(request.POST, instance=sala_temp)
 
+            # modificado (T1): Staff (no SuperUser) solo puede activar/
+            # desactivar la sala. No puede cambiar sede, nombre, tecnología
+            # (tipo), capacidad (filas/columnas) ni el multiplicador de
+            # precio -- esos campos quedan reservados a SuperUser (mismo
+            # patrón que panel/views/peliculas.py::peliculas_editar). Tampoco
+            # se toca el formset de secciones (estructura física de la sala).
+            if not es_super:
+                original = Sala.objects.get(id=sala.id)
+                sala_temp.sede = original.sede
+                sala_temp.nombre = original.nombre
+                sala_temp.tipo = original.tipo
+                sala_temp.filas = original.filas
+                sala_temp.columnas = original.columnas
+                sala_temp.multiplicador_precio = original.multiplicador_precio
+                sala_temp.save()
+                messages.success(request, f'Sala "{sala_temp.nombre}" actualizada (disponibilidad por Staff).')
+                return redirect('panel:salas_lista')
+
+            formset = SeccionSalaFormSet(request.POST, instance=sala_temp)
             if formset.is_valid():
                 sala_temp.save()
                 formset.save()
@@ -99,7 +118,7 @@ def salas_editar(request, sala_id):
         'titulo_pagina': f'Editar sala: {sala.nombre}',
         'accion': 'editar',
         'seccion_activa': 'salas',
-        'es_super': request.user.is_superuser,
+        'es_super': es_super,
     })
 
 # MODIFICACION GEMINI: Eliminación de salas exclusiva para SuperUser
@@ -357,11 +376,22 @@ def salas_lista(request):
             total=Sum('cantidad_entradas')
         )['total'] or 0
 
+        # modificado (T3): % de ocupación real (entradas vendidas / capacidad
+        # total de la sala), en vez de mostrar solo el número crudo de
+        # entradas. Se usa sala.capacidad (se autocalcula en Sala.save() como
+        # filas*columnas o según secciones) y se evita división por cero.
+        capacidad_total = sala.capacidad or (sala.filas * sala.columnas)
+        if capacidad_total:
+            ocupacion_pct = round((total_entradas_sala / capacidad_total) * 100, 1)
+        else:
+            ocupacion_pct = 0  # modificado (T3): sin capacidad cargada -> 0% en vez de error
+
         salas_con_info.append({
             'sala': sala,
             'funciones_hoy': funciones_hoy,
             'total_reservas_sala': total_reservas_sala,
             'total_entradas_sala': total_entradas_sala,
+            'ocupacion_pct': ocupacion_pct,  # modificado (T3)
         })
 
     contexto = {

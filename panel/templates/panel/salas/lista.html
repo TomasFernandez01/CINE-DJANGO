@@ -80,6 +80,17 @@
                     </div>
                 </div>
 
+                <!-- modificado (T3): % de ocupación real (entradas vendidas / capacidad).
+                     Reutiliza la clase panelsalas-stat-box ya existente (sin CSS nuevo)
+                     y solo agrega color inline según umbral, para no romper el diseño. -->
+                <div class="panelsalas-stat-box" style="text-align:center; margin-bottom:10px;">
+                    <div class="panelsalas-stat-valor" style="color:{% if item.ocupacion_pct >= 80 %}#dc3545{% elif item.ocupacion_pct >= 50 %}#fd7e14{% else %}#28a745{% endif %};">
+                        {{ item.ocupacion_pct }}%
+                    </div>
+                    <div class="panelsalas-stat-label">Ocupación</div>
+                </div>
+                <!-- fin modificado (T3) -->
+
                 <div class="panelsalas-card-acciones">
                     <a href="{% url 'panel:funciones_lista' %}?sala={{ s.id }}" class="btn btn-primary">FUNCIONES</a>
                     <a href="{% url 'panel:salas_editar' s.id %}" class="btn btn-primary" title="Editar">EDITAR</a>
