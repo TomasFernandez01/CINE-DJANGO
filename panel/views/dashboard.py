@@ -112,6 +112,15 @@ def inicio(request):
     _, chart_entradas_valores = _serie_entradas(periodos_iniciales, sede_activa)
     combos_iniciales = _combos_por_categoria(periodo_desde, periodo_hasta, sede_activa)
 
+    # modificado (T6 - BI): gráfico nuevo #1, heatmap de entradas vendidas
+    # por día de semana x hora de función, para el mismo período de 30 días
+    # que ya usan los KPIs de arriba.
+    heatmap = _heatmap_entradas_por_dia_hora(periodo_desde, periodo_hasta, sede_activa)
+
+    # modificado (T6 - BI): gráfico nuevo #4, ranking comparativo entre
+    # sedes — solo se calcula (y se muestra) para SuperUser.
+    ranking_sedes = _ranking_sedes(periodo_desde, periodo_hasta) if request.user.is_superuser else None
+
     contexto = {
         'stats': stats,
         'kpis': kpis,
@@ -123,6 +132,10 @@ def inicio(request):
         'chart_combos_valores': combos_iniciales['valores'],
         'periodo_desde_default': periodo_desde.strftime('%Y-%m-%d'),
         'periodo_hasta_default': periodo_hasta.strftime('%Y-%m-%d'),
+        # modificado (T6 - BI)
+        'heatmap_matriz': heatmap['matriz'],
+        'heatmap_horas': heatmap['horas'],
+        'ranking_sedes': ranking_sedes,
     }
     return render(request, 'panel/inicio.html', contexto)
 
@@ -406,3 +419,112 @@ def _calcular_kpis(desde, hasta, sede=None):
         'dia_top': dia_top,
         'horario_pico': horario_pico,
     }
+
+
+# modificado (T6 - BI): dos helpers nuevos, no tocan ni reemplazan nada de
+# lo que ya existía arriba.
+# ============================================================
+# nuevo (T6 - BI): heatmap día x hora + ranking de sedes
+# ============================================================
+
+def _heatmap_entradas_por_dia_hora(desde, hasta, sede=None):
+    """
+    Matriz de 7 (día de semana) x 24 (hora) con la cantidad de entradas
+    vendidas (Reserva.cantidad_entradas, reservas confirmadas) para el
+    rango [desde, hasta].
+
+    modificado (T6 - BI): usa el mismo criterio que ya usa
+    _calcular_kpis() para 'dia_top'/'horario_pico' — mismo filtro por
+    fecha_reserva, mismas ExtractWeekDay/ExtractHour tomadas de
+    funcion__fecha_hora (la franja horaria de la FUNCIÓN, no de cuándo se
+    pagó) — pero acá arma la matriz completa de 7x24 en vez de quedarse
+    solo con el máximo. Se usa cantidad de entradas y no recaudación
+    porque Reserva no tiene monto propio (el monto vive en Pago, 1 a 1
+    con la reserva) y este es el mismo dato base que ya usa el resto del
+    dashboard para "horario pico"; ver T6_thomp.md, opción b.
+
+    Devuelve {'matriz': [...], 'horas': [0..23]} donde 'matriz' es una
+    lista de 7 filas (orden = DIAS_EXTRACT_WEEKDAY) y cada fila es
+    {'dia': str, 'celdas': [{'valor': int, 'alpha': float 0-1}, ...24]}.
+    'alpha' ya viene calculado (valor / máximo de toda la matriz) para
+    poder pintar la celda directamente en el template sin lógica extra.
+    """
+    filtro_sede = {'funcion__sala__sede': sede} if sede else {}
+    filas = Reserva.objects.filter(
+        estado='confirmada',
+        fecha_reserva__date__gte=desde,
+        fecha_reserva__date__lte=hasta,
+        **filtro_sede,
+    ).annotate(
+        dow=ExtractWeekDay('funcion__fecha_hora'),
+        hora=ExtractHour('funcion__fecha_hora'),
+    ).values('dow', 'hora').annotate(entradas=Sum('cantidad_entradas'))
+
+    valores = [[0 for _ in range(24)] for _ in range(7)]
+    for fila in filas:
+        dia_idx = fila['dow'] - 1  # ExtractWeekDay: 1=Domingo..7=Sábado
+        hora_idx = fila['hora']
+        valores[dia_idx][hora_idx] = fila['entradas'] or 0
+
+    maximo = max((v for fila in valores for v in fila), default=0)
+    matriz = []
+    for i, fila_valores in enumerate(valores):
+        celdas = []
+        for v in fila_valores:
+            alpha = round(v / maximo, 2) if maximo else 0
+            celdas.append({'valor': v, 'alpha': alpha})
+        matriz.append({'dia': DIAS_EXTRACT_WEEKDAY[i], 'celdas': celdas})
+
+    return {'matriz': matriz, 'horas': list(range(24))}
+
+
+def _ranking_sedes(desde, hasta):
+    """
+    Comparativo entre todas las Sedes activas para el rango [desde,
+    hasta]: recaudación total, ocupación promedio y ticket promedio (ATV).
+
+    nuevo (T6 - BI): pensado para llamarse solo cuando
+    request.user.is_superuser (ver inicio()) — un Staff con sede fija no
+    debería ver comparativas de otras sedes. Reutiliza el mismo criterio
+    de ocupación aproximada que ya usa _calcular_kpis() (entradas
+    pendientes+confirmadas / capacidad de sala, promediada por función),
+    pero separado por sede en vez de agregado global.
+    """
+    from sedes.models import Sede
+
+    ranking = []
+    for sede in Sede.objects.filter(activa=True).order_by('nombre'):
+        pagos_sede = Pago.objects.filter(
+            estado='aprobado',
+            fecha_pago__date__gte=desde,
+            fecha_pago__date__lte=hasta,
+            reserva__funcion__sala__sede=sede,
+        )
+        recaudacion = pagos_sede.aggregate(t=Sum('monto'))['t'] or 0
+        atv = pagos_sede.aggregate(t=Avg('monto'))['t'] or 0
+
+        funciones_sede = Funcion.objects.filter(
+            fecha_hora__date__gte=desde, fecha_hora__date__lte=hasta,
+            sala__sede=sede,
+        ).select_related('sala')
+        ocupaciones = []
+        for f in funciones_sede:
+            if not f.sala.capacidad:
+                continue
+            entradas = f.reservas.filter(
+                estado__in=['pendiente', 'confirmada']
+            ).aggregate(t=Sum('cantidad_entradas'))['t'] or 0
+            ocupaciones.append(min(entradas / f.sala.capacidad, 1.0))
+        ocupacion_promedio = (
+            round(sum(ocupaciones) / len(ocupaciones) * 100, 1) if ocupaciones else None
+        )
+
+        ranking.append({
+            'sede': sede.nombre,
+            'recaudacion': float(recaudacion),
+            'atv': float(atv),
+            'ocupacion_promedio': ocupacion_promedio,
+        })
+
+    ranking.sort(key=lambda r: r['recaudacion'], reverse=True)
+    return ranking

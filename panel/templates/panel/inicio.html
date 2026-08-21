@@ -289,6 +289,32 @@
         font-size: 1.1rem;
         color: #1a1a2e;
     }
+
+    /* modificado (T6 - BI): heatmap entradas por día x hora de función */
+    .heatmap-wrap { overflow-x: auto; padding: 0.5rem 1.5rem 1.5rem; }
+    .heatmap-tabla { border-collapse: collapse; font-size: 0.72rem; }
+    .heatmap-tabla th {
+        padding: 0.3rem 0.4rem;
+        color: #888;
+        font-weight: 600;
+        text-align: center;
+    }
+    .heatmap-tabla td.heatmap-dia {
+        padding: 0.3rem 0.6rem;
+        color: #666;
+        font-weight: 600;
+        white-space: nowrap;
+        text-align: right;
+    }
+    .heatmap-celda {
+        width: 22px;
+        height: 22px;
+        border-radius: 4px;
+        background-color: #f0f2f5; /* alpha=0 => sin datos */
+    }
+
+    /* modificado (T6 - BI): ranking comparativo entre sedes (solo SuperUser) */
+    .ranking-sedes-card { margin-top: 1.5rem; }
 </style>
 
 <!-- nuevo (Sedes - Fase 3): indicador de qué sede se está viendo -->
@@ -518,6 +544,84 @@
     </div>
 
 </div>
+
+<!-- ============================================================ -->
+<!-- modificado (T6 - BI): HEATMAP DE ENTRADAS — DÍA x HORA DE FUNCIÓN  -->
+<!-- ============================================================ -->
+<div class="card">
+    <div class="card-header">
+        <h3>Franjas horarias pico (entradas vendidas)</h3>
+    </div>
+    <div class="heatmap-wrap">
+        {% if heatmap_matriz %}
+        <table class="heatmap-tabla">
+            <thead>
+                <tr>
+                    <th></th>
+                    {% for h in heatmap_horas %}<th>{{ h }}</th>{% endfor %}
+                </tr>
+            </thead>
+            <tbody>
+                {% for fila in heatmap_matriz %}
+                <tr>
+                    <td class="heatmap-dia">{{ fila.dia }}</td>
+                    {% for celda in fila.celdas %}
+                    <td>
+                        <div class="heatmap-celda"
+                             style="background-color: rgba(52,152,219,{{ celda.alpha }});"
+                             title="{{ fila.dia }} {{ forloop.counter0 }}:00 — {{ celda.valor }} entrada(s)"></div>
+                    </td>
+                    {% endfor %}
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        {% else %}
+        <div class="card-body" style="text-align:center;color:#999;padding:2rem;">
+            Sin entradas vendidas en este período.
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+<!-- ============================================================ -->
+<!-- modificado (T6 - BI): RANKING COMPARATIVO ENTRE SEDES (solo SuperUser) -->
+<!-- ============================================================ -->
+{% if request.user.is_superuser %}
+<div class="card ranking-sedes-card">
+    <div class="card-header">
+        <h3>Ranking de sedes</h3>
+    </div>
+    {% if ranking_sedes %}
+    <div style="overflow-x:auto;">
+        <table class="tabla">
+            <thead>
+                <tr>
+                    <th>Sede</th>
+                    <th>Recaudación</th>
+                    <th>Ocupación promedio</th>
+                    <th>Ticket promedio (ATV)</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for r in ranking_sedes %}
+                <tr>
+                    <td style="font-weight:600;">{{ r.sede }}</td>
+                    <td style="color:#27ae60; font-weight:600;">${{ r.recaudacion|floatformat:0 }}</td>
+                    <td>{% if r.ocupacion_promedio is not None %}{{ r.ocupacion_promedio }}%{% else %}—{% endif %}</td>
+                    <td>${{ r.atv|floatformat:0 }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    {% else %}
+    <div class="card-body" style="text-align:center;color:#999;padding:2rem;">
+        No hay sedes activas para comparar.
+    </div>
+    {% endif %}
+</div>
+{% endif %}
 
 <!-- Chart.js + JS del dashboard interactivo -->
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
