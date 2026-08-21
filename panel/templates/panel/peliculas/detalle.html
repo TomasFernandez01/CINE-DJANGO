@@ -102,11 +102,16 @@
                 <h3>Próximas Funciones ({{ funciones.count }})</h3>
             </div>
             {% if funciones %}
+            <!-- modificado (T2): columna Sede agregada a la tabla. Esta vista muestra
+                 funciones de TODAS las sedes para la película (no se filtra acá, ver
+                 panel/views/peliculas.py::peliculas_detalle), así que sin esta columna
+                 no había forma de distinguir a qué sede pertenece cada función. -->
             <table class="tabla">
                 <thead>
                     <tr>
                         <th>Fecha y Hora</th>
                         <th>Sala</th>
+                        <th>Sede</th>
                         <th>Precio</th>
                         <th>Disponibles</th>
                         <th></th>
@@ -117,6 +122,7 @@
                     <tr>
                         <td class="paneldetpelis-func-fecha">{{ f.fecha_hora|date:"d/m/Y H:i" }}</td>
                         <td class="paneldetpelis-func-sala">{{ f.sala.nombre }}</td>
+                        <td class="paneldetpelis-func-sala">{{ f.sala.sede.nombre }}</td>{# modificado (T2) #}
                         <td class="paneldetpelis-func-precio">
                             ${{ f.precio_final }}
                             {% if f.precio is None %}<span class="paneldetpelis-func-precio-auto">(auto)</span>{% endif %}

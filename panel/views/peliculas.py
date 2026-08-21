@@ -1,7 +1,7 @@
 from django.contrib import messages
 from django.core.files.base import ContentFile
 from django.core.paginator import Paginator
-from django.db.models import Q, Count, Sum
+from django.db.models import Q, Count, Sum, Exists, OuterRef  # modificado (T2): Exists/OuterRef para anotar funciones por sede
 from django.http import JsonResponse
 from django.shortcuts import render, redirect, get_object_or_404
 from django.utils import timezone
@@ -9,8 +9,9 @@ from django.views.decorators.http import require_POST
 from pagos.models import Pago
 from peliculas.models import Pelicula
 from reservas.models import Reserva
+from salas.models import Funcion  # modificado (T2): para el subquery de funciones por sede
 import requests
-from ..decorators import staff_required, superuser_required
+from ..decorators import staff_required, superuser_required, get_sede_staff  # modificado (T2): get_sede_staff, mismo patrón que funciones.py
 from ..forms import (
     PeliculaForm,
 )
@@ -66,6 +67,16 @@ def peliculas_editar(request, pelicula_id):
         form = PeliculaForm(request.POST, request.FILES, instance=pelicula)
         
         # MODIFICACION GEMINI: Si es Staff (no SuperUser), solo se permite alterar en_cartelera y fecha_estreno
+        # modificado - TODO (T2): este checkbox en_cartelera sigue siendo un campo GLOBAL de
+        # Pelicula (afecta a TODAS las sedes a la vez). Lo correcto a futuro sería que el
+        # Staff no controle este campo global, sino que "estar en cartelera" para un Staff
+        # de sede se derive de si existen Funcion programadas para esta película en
+        # Sala.sede == get_sede_staff(request.user) (ver peliculas_lista más abajo, que ya
+        # anota tiene_funciones_en_mi_sede con ese mismo criterio). Cambiar esto de fondo
+        # implica sacarle a Staff la edición directa de en_cartelera y decidir qué hacer
+        # cuando una película no tiene ninguna Funcion en ninguna sede todavía (¿debería
+        # poder marcarse "en cartelera" igual, para pre-anunciarla?). Se deja sin tocar en
+        # esta tanda para no romper el flujo de edición actual; queda para una tanda futura.
         if not es_super:
             # Preservar valores originales de los demás campos
             if form.is_valid():
@@ -236,6 +247,7 @@ def peliculas_importar_tmdb(request, tmdb_id):
 def peliculas_lista(request):
     busqueda = request.GET.get('q', '')
     en_cartelera = request.GET.get('cartelera', '')
+    es_super = request.user.is_superuser  # modificado (T2): calculado antes para decidir el anotado por sede
 
     peliculas = Pelicula.objects.all()
     if busqueda:
@@ -246,6 +258,25 @@ def peliculas_lista(request):
         peliculas = peliculas.filter(en_cartelera=True)
     elif en_cartelera == 'no':
         peliculas = peliculas.filter(en_cartelera=False)
+
+    # modificado (T2 - Visibilidad por sede): NO se filtra el catálogo (el
+    # Staff sigue viendo todas las películas, igual que antes), pero si es
+    # Staff con sede fija asignada se ANOTA cada película con si tiene o no
+    # funciones programadas en su sede. Mismo patrón que get_sede_staff() ya
+    # usa en panel/views/funciones.py (_filtro_sede) — no se filtra por
+    # completo el listado porque el Staff puede necesitar ver el catálogo
+    # entero para decidir qué programar en su sede.
+    sede_staff = None
+    if not es_super:
+        sede_staff = get_sede_staff(request.user)
+        if sede_staff is not None:
+            funciones_en_mi_sede = Funcion.objects.filter(
+                pelicula=OuterRef('pk'),
+                sala__sede=sede_staff,
+            )
+            peliculas = peliculas.annotate(
+                tiene_funciones_en_mi_sede=Exists(funciones_en_mi_sede)
+            )
 
     peliculas = peliculas.order_by('-en_cartelera', 'titulo')
 
@@ -280,7 +311,8 @@ def peliculas_lista(request):
         'total': peliculas.count(),
         'top_peliculas_stats': top_peliculas_stats,
         'generos_stats': generos_stats,
-        'es_super': request.user.is_superuser,
+        'es_super': es_super,
+        'sede_staff': sede_staff,  # modificado (T2): para mostrar el badge "en tu sede" en el template
         'seccion_activa': 'peliculas',
     }
     return render(request, 'panel/peliculas/lista.html', contexto)
@@ -292,7 +324,7 @@ def peliculas_detalle(request, pelicula_id):
     ahora = timezone.now()
     funciones = pelicula.funciones.filter(
         fecha_hora__gte=ahora
-    ).select_related('sala').order_by('fecha_hora')
+    ).select_related('sala', 'sala__sede').order_by('fecha_hora')  # modificado (T2): sala__sede para la columna Sede nueva en detalle.html
     
     ratings = pelicula.ratings.all().select_related('usuario').order_by('-fecha_creacion')
 
