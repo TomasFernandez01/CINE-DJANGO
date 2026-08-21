@@ -18,9 +18,11 @@
 
 {% block contenido %}
 
+<!-- modificado (T5 - cero emojis): se sacaron los emojis del título (⚠️) y del botón
+     "🗑️ Sí, eliminar definitivamente" (más abajo). Texto plano, sin ícono. -->
 <div class="panelpelisconf-wrapper">
 
-    <h1 class="panelpelisconf-titulo">⚠️ Confirmar eliminación</h1>
+    <h1 class="panelpelisconf-titulo"> Confirmar eliminación</h1>
     <p class="panelpelisconf-desc">
         Esta acción no se puede deshacer. Al borrar una película, también se borran
         <strong>en cascada</strong> todas sus funciones, las reservas de esas funciones,
@@ -80,7 +82,7 @@
 
         <div class="panelpelisconf-botones">
             <button type="submit" class="btn btn-danger panelpelisconf-btn-eliminar">
-                🗑️ Sí, eliminar definitivamente
+                 Sí, eliminar definitivamente
             </button>
             <a href="{% url 'panel:peliculas_lista' %}" class="btn btn-ghost">Cancelar</a>
         </div>

@@ -14,10 +14,11 @@
 {% endblock %}
 
 {% block contenido %}
+<!-- modificado (T5 - cero emojis): se sacaron los emojis del título (🍿) y del placeholder de imagen del combo (🍿, más abajo). -->
 
 <div class="panelcombo-lista-encabezado">
         <div>
-            <h1 class="panelcombo-lista-titulo">🍿 Gestión de Combos</h1>
+            <h1 class="panelcombo-lista-titulo"> Gestión de Combos</h1>
             <p class="panelcombo-lista-subtitulo">Activá o desactivá combos disponibles para la venta</p>
         </div>
 
@@ -41,7 +42,7 @@
         {% if c.imagen %}
         <img src="{{ c.imagen.url }}" alt="{{ c.nombre }}" class="panelcombo-lista-imagen">
         {% else %}
-        <div class="panelcombo-lista-imagen-placeholder">🍿</div>
+        <div class="panelcombo-lista-imagen-placeholder"></div>
         {% endif %}
         
         <div class="card-header">

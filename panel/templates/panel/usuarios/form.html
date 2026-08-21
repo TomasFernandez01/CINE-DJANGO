@@ -21,6 +21,7 @@
 {% endblock %}
 
 {% block contenido %}
+<!-- modificado (T5 - cero emojis): se sacaron los emojis de "🔒 Solo visible para administradores", los encabezados "👤 Datos del Usuario", "🔑 Contraseña", "🛡️ Permisos", "📍 Sede", del aviso "Superusuario ⚠️" y del botón "✅ Crear Usuario / 💾 Guardar Cambios", todos más abajo. La flecha "←" de los links "Volver" no se tocó (no es emoji). -->
 {% include 'panel/_form_styles.html' %}
 
 <div class="paneluserform-wrap">
@@ -29,7 +30,7 @@
         <div>
             <h1 class="paneluserform-titulo">{{ titulo_pagina }}</h1>
             <div class="paneluserform-solo-admin">
-                🔒 Solo visible para administradores
+                 Solo visible para administradores
             </div>
         </div>
         {% if objeto %}
@@ -46,7 +47,7 @@
 
             <!-- Datos personales -->
             <div class="card">
-                <div class="card-header"><h3>👤 Datos del Usuario</h3></div>
+                <div class="card-header"><h3> Datos del Usuario</h3></div>
                 <div class="card-body paneluserform-card-body-stack">
 
                     <div>
@@ -84,7 +85,7 @@
             <!-- Contraseña (solo al crear) -->
             {% if accion == 'crear' %}
             <div class="card">
-                <div class="card-header"><h3>🔑 Contraseña</h3></div>
+                <div class="card-header"><h3> Contraseña</h3></div>
                 <div class="card-body paneluserform-card-body-stack">
                     <div>
                         <label class="form-label">
@@ -113,7 +114,7 @@
 
             <!-- Permisos -->
             <div class="card">
-                <div class="card-header"><h3>🛡️ Permisos</h3></div>
+                <div class="card-header"><h3> Permisos</h3></div>
                 <div class="card-body paneluserform-permisos-stack">
 
                     <div class="checkbox-row paneluserform-checkbox-row">
@@ -145,7 +146,7 @@
                         {{ form.is_superuser }}
                         <div>
                             <label for="{{ form.is_superuser.id_for_label }}" class="paneluserform-checkbox-label--super">
-                                Superusuario ⚠️
+                                Superusuario 
                             </label>
                             <div class="paneluserform-checkbox-help">
                                 Acceso total al sistema incluyendo sección de usuarios.
@@ -160,7 +161,7 @@
 
             <!-- nuevo (Sedes - Fase 3) -->
             <div class="card">
-                <div class="card-header"><h3>📍 Sede</h3></div>
+                <div class="card-header"><h3> Sede</h3></div>
                 <div class="card-body paneluserform-permisos-stack">
                     <div>
                         <label class="form-label">Sede que administra</label>
@@ -185,7 +186,7 @@
 
         <div class="paneluserform-botones">
             <button type="submit" class="btn btn-success paneluserform-btn-guardar">
-                {% if accion == 'crear' %}✅ Crear Usuario{% else %}💾 Guardar Cambios{% endif %}
+                {% if accion == 'crear' %} Crear Usuario{% else %} Guardar Cambios{% endif %}
             </button>
             {% if objeto %}
             <a href="{% url 'panel:usuarios_detalle' objeto.id %}" class="btn btn-ghost">

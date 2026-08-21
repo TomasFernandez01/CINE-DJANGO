@@ -15,11 +15,12 @@
 {% endblock %}
 
 {% block contenido %}
+<!-- modificado (T5 - cero emojis): se sacaron los emojis del título (📋) y del botón "🎟️ Ver cupones". -->
 
 <div class="panelcuponused-encabezado">
-    <h1 class="panelcuponused-titulo">📋 Cupones Usados</h1>
+    <h1 class="panelcuponused-titulo"> Cupones Usados</h1>
     <div class="panelcuponused-acciones">
-        <a href="{% url 'panel:cupones_lista' %}" class="btn btn-primary">🎟️ Ver cupones</a>
+        <a href="{% url 'panel:cupones_lista' %}" class="btn btn-primary"> Ver cupones</a>
         <a href="{% url 'panel:inicio' %}" class="btn btn-primary">INICIO</a>
     </div>
 </div>

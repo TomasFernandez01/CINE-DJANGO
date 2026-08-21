@@ -13,11 +13,12 @@
 {% endblock %}
 
 {% block contenido %}
+<!-- modificado (T5 - cero emojis): se sacaron los emojis del título (📍), la dirección (📌), el teléfono (☎️) y la cantidad de salas (🎬), más abajo. -->
 
 <div class="panelsedes-lista-encabezado">
 
     <div>
-        <h1 class="panelsedes-lista-titulo">📍 Sedes</h1>
+        <h1 class="panelsedes-lista-titulo"> Sedes</h1>
         <p class="panelsedes-lista-subtitulo">Ubicaciones físicas del cine. Cada Sala pertenece a una de estas sedes.</p>
     </div>
 
@@ -44,9 +45,9 @@
                 </span>
             </div>
             <div class="card-body">
-                <div class="panelsedes-lista-direccion">📌 {{ sede.direccion }}, {{ sede.ciudad }}</div>
-                {% if sede.telefono %}<div class="panelsedes-lista-telefono">☎️ {{ sede.telefono }}</div>{% endif %}
-                <div class="panelsedes-lista-salas">🎬 {{ sede.salas.count }} sala{{ sede.salas.count|pluralize }}</div>
+                <div class="panelsedes-lista-direccion"> {{ sede.direccion }}, {{ sede.ciudad }}</div>
+                {% if sede.telefono %}<div class="panelsedes-lista-telefono"> {{ sede.telefono }}</div>{% endif %}
+                <div class="panelsedes-lista-salas"> {{ sede.salas.count }} sala{{ sede.salas.count|pluralize }}</div>
                 <a href="{% url 'panel:sedes_editar' sede.id %}" class="btn btn-ghost panelsedes-lista-btn-editar">EDITAR</a>
             </div>
         </div>

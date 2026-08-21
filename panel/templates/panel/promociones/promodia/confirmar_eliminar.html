@@ -17,10 +17,11 @@
 {% endblock %}
 
 {% block contenido %}
+<!-- modificado (T5 - cero emojis): se sacaron los emojis del título (⚠️) y del botón "🗑️ Sí, eliminar definitivamente" (más abajo). -->
 
 <div class="panelconfelim-wrap">
 
-    <h1 class="panelconfelim-titulo">⚠️ Confirmar eliminación</h1>
+    <h1 class="panelconfelim-titulo"> Confirmar eliminación</h1>
     <p class="panelconfelim-texto">
         Esta acción no se puede deshacer. Borrar una promoción por día
         <strong>no borra pagos en cascada</strong>: los pagos históricos que la usaron
@@ -64,7 +65,7 @@
 
         <div class="panelconfelim-botones">
             <button type="submit" class="btn btn-danger panelconfelim-btn-eliminar">
-                🗑️ Sí, eliminar definitivamente
+                 Sí, eliminar definitivamente
             </button>
             <a href="{% url 'panel:promodia_lista' %}" class="btn btn-ghost">Cancelar</a>
         </div>

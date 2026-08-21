@@ -22,9 +22,13 @@
 
 <div class="panelpelistmdb-wrapper">
 
+    <!-- modificado (T5 - cero emojis): se sacaron los emojis del título (🎬), del aviso
+         "⚠️ TMDB no está configurado", del placeholder de poster (🎬), de la fecha de
+         estreno (📅) y del ícono de "sin resultados" (🔍), todos más abajo en este
+         archivo. Texto plano, sin ícono de reemplazo. -->
     <div class="panelpelistmdb-header">
         <div>
-            <h1 class="panelpelistmdb-titulo">🎬 Buscar en TMDB</h1>
+            <h1 class="panelpelistmdb-titulo"> Buscar en TMDB</h1>
             <p class="panelpelistmdb-subtitulo">
                 Buscá películas en The Movie Database e importalas con un clic.
             </p>
@@ -37,7 +41,7 @@
 
     {% if not tmdb_disponible %}
     <div class="panelpelistmdb-aviso-no-disponible">
-        <strong>⚠️ TMDB no está configurado.</strong>Verificá que <code>TMDB_API_KEY</code> esté en settings.py y que<code>utils/tmdb_api.py</code> esté disponible.
+        <strong> TMDB no está configurado.</strong>Verificá que <code>TMDB_API_KEY</code> esté en settings.py y que<code>utils/tmdb_api.py</code> esté disponible.
     </div>
     {% endif %}
 
@@ -74,7 +78,7 @@
                      class="panelpelistmdb-card-poster-img">
                 {% else %}
                 <div class="panelpelistmdb-card-poster-placeholder">
-                    🎬
+                    
                 </div>
                 {% endif %}
             </div>
@@ -86,7 +90,7 @@
                 </div>
                 {% if p.release_date %}
                 <div class="panelpelistmdb-card-fecha">
-                    📅 {{ p.release_date|slice:":4" }}
+                     {{ p.release_date|slice:":4" }}
                 </div>
                 {% endif %}
                 {% if p.overview %}
@@ -110,7 +114,7 @@
     {% elif query %}
     <div class="card">
         <div class="card-body panelpelistmdb-sin-resultados">
-            <div class="panelpelistmdb-sin-resultados-icono">🔍</div>
+            <div class="panelpelistmdb-sin-resultados-icono"></div>
             <div class="panelpelistmdb-sin-resultados-titulo">Sin resultados para "<strong>{{ query }}</strong>"</div>
             <div class="panelpelistmdb-sin-resultados-sub">
                 Probá buscar en inglés o con el título original

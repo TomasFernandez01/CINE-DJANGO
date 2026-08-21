@@ -24,9 +24,13 @@
 
 {% block contenido %}
 
+<!-- modificado (T5 - cero emojis): se sacaron los emojis de este template — título
+     principal (⚙️), los 4 encabezados de card (💰 Precio de entradas, 🎟️ Reservas y
+     pagos, 🔌 Integraciones, ✉️ Envío de emails), el botón "💾 Guardar Cambios" y el
+     aviso "⏳ Pendiente". No hay librería de íconos cargada, así que queda solo texto. -->
 <div class="panelconfig-wrapper">
 
-    <h1 class="panelconfig-titulo">⚙️ Configuración General</h1>
+    <h1 class="panelconfig-titulo"> Configuración General</h1>
     <p class="panelconfig-desc">
         Estos valores se guardan como datos (no como código), así que cambiarlos
         acá no requiere ninguna migración.
@@ -37,7 +41,7 @@
 
         <!-- Precio de entradas -->
         <div class="card panelconfig-card">
-            <div class="card-header"><h3>💰 Precio de entradas</h3></div>
+            <div class="card-header"><h3> Precio de entradas</h3></div>
             <div class="card-body panelconfig-card-body">
                 <div>
                     <label class="form-label">
@@ -54,7 +58,7 @@
 
         <!-- Reservas y pagos -->
         <div class="card panelconfig-card">
-            <div class="card-header"><h3>🎟️ Reservas y pagos</h3></div>
+            <div class="card-header"><h3> Reservas y pagos</h3></div>
             <div class="card-body panelconfig-card-body">
                 <div class="panelconfig-fila-3">
                     <div>
@@ -87,7 +91,7 @@
 
         <!-- Integraciones -->
         <div class="card panelconfig-card">
-            <div class="card-header"><h3>🔌 Integraciones</h3></div>
+            <div class="card-header"><h3> Integraciones</h3></div>
             <div class="card-body panelconfig-card-body">
                 <div>
                     <label class="form-label">{{ form.tmdb_api_key.label }}</label>
@@ -98,7 +102,7 @@
                     {% endif %}
                 </div>
                 <div class="panelconfig-nota-pendiente">
-                    <strong>⏳ Pendiente:</strong> claves de Cloudinary (para subir imágenes) y
+                    <strong>Pendiente:</strong> claves de Cloudinary (para subir imágenes) y
                     configuración del carrusel del hero — el backend todavía no está preparado
                     para ninguna de las dos cosas, así que no se agregaron campos acá todavía
                     para no mostrar algo que no hace nada. Queda para una próxima tanda.
@@ -108,7 +112,7 @@
 
         <!-- Email -->
         <div class="card panelconfig-card">
-            <div class="card-header"><h3>✉️ Envío de emails</h3></div>
+            <div class="card-header"><h3> Envío de emails</h3></div>
             <div class="card-body panelconfig-card-body">
                 <div>
                     <label class="form-label">{{ form.email_backend.label }}</label>
@@ -158,7 +162,7 @@
 
         <div class="panelconfig-botones">
             <button type="submit" class="btn btn-success panelconfig-btn-guardar">
-                💾 Guardar Cambios
+                 Guardar Cambios
             </button>
         </div>
     </form>

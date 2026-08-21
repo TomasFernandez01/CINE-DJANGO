@@ -15,16 +15,17 @@
 {% endblock %}
 
 {% block contenido %}
+<!-- modificado (T5 - cero emojis): se sacaron los emojis del título (👥), "🔒 Solo visible para administradores" y del ícono editar (✏️, botón sin texto — se dejó vacío, no hay librería de íconos cargada), más abajo. -->
 
 <div class="paneluser-lista-encabezado">
     <div>
-        <h1 class="paneluser-lista-titulo">👥 Usuarios</h1>
+        <h1 class="paneluser-lista-titulo"> Usuarios</h1>
         <div class="paneluser-lista-solo-admin">
-            🔒 Solo visible para administradores
+             Solo visible para administradores
         </div>
     </div>
     <!-- modificado: se saca el link comentado al admin de Django (código muerto), ya se usa panel:usuarios_crear -->
-    <a href="{% url 'panel:usuarios_crear' %}" class="btn btn-success">+ Agregar usuario</a>
+    <a href="{% url 'panel:usuarios_crear' %}" class="btn btn-success">Crear</a>
 </div>
 
 <!-- Filtros -->
@@ -105,7 +106,7 @@
                             Ver
                         </a>
                         <!-- modificado: se saca el link comentado al admin de Django (código muerto), ya se usa panel:usuarios_editar -->
-                        <a href="{% url 'panel:usuarios_editar' u.id %}" class="btn btn-ghost paneluser-lista-btn-chico" title="Editar">✏️</a>
+                        <a href="{% url 'panel:usuarios_editar' u.id %}" class="btn btn-ghost paneluser-lista-btn-chico" title="Editar">Editar</a>
                     </div>
                 </td>
             </tr>

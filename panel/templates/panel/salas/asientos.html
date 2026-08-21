@@ -21,6 +21,7 @@
 {% endblock %}
 
 {% block contenido %}
+<!-- modificado (T5 - cero emojis): se sacaron los emojis de "🖱️ Modo Selección Múltiple", "📋 Bloqueos de esta sala" y "⭐ Categorías especiales", más abajo en este archivo. No se tocó nada de la lógica ni la estructura del mapa de asientos (asientos.js queda fuera de esta tanda). -->
 
 <div class="panelasientos-header">
     <div>
@@ -62,7 +63,7 @@
         <div class="card-header panelasientos-mapa-header">
             <h3 class="panelasientos-mapa-header-titulo">Mapa de Asientos</h3>
             <button type="button" id="btnModoSeleccion" class="btn-modo-seleccion">
-                <span>🖱️</span> Modo Selección Múltiple
+                <span></span> Modo Selección Múltiple
             </button>
         </div>
         <div class="card-header panelasientos-mapa-header panelasientos-mapa-header--leyenda">
@@ -128,7 +129,7 @@
 
         <!-- Listado de todos los bloqueos de la sala -->
         <div class="card">
-            <div class="card-header"><h3>📋 Bloqueos de esta sala</h3></div>
+            <div class="card-header"><h3> Bloqueos de esta sala</h3></div>
             <div class="panelasientos-lista-scroll">
                 {% if todos_los_bloqueos %}
                 <table class="tabla" id="tablaBloqueos">
@@ -172,7 +173,7 @@
 
         <!-- Listado de categorías especiales de esta sala -->
         <div class="card">
-            <div class="card-header"><h3>⭐ Categorías especiales</h3></div>
+            <div class="card-header"><h3> Categorías especiales</h3></div>
             <div class="panelasientos-lista-scroll">
                 {% if todas_las_categorias %}
                 <table class="tabla" id="tablaCategorias">

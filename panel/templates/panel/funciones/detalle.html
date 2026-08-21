@@ -66,10 +66,13 @@
 
 <div class="panelfuncdet-grid">
 
+    <!-- modificado (T5 - cero emojis): se sacaron los emojis de "🪑 Mapa de Asientos" (acá
+         abajo), "🎫 Reservas (...)" (más abajo) y del ícono "✅" de reserva escaneada en la
+         tabla (queda el <span> vacío, el estado ya lo marca el título="Escaneado"). -->
     <!-- Mapa de asientos -->
     <div class="card">
         <div class="card-header">
-            <h3>🪑 Mapa de Asientos</h3>
+            <h3> Mapa de Asientos</h3>
             <div class="panelfuncdet-leyenda">
                 <span class="panelfuncdet-leyenda-item">
                     <span class="panelfuncdet-leyenda-swatch panelfuncdet-leyenda-swatch--libre"></span> Libre
@@ -111,7 +114,7 @@
     <!-- Reservas -->
     <div class="card">
         <div class="card-header">
-            <h3>🎫 Reservas ({{ reservas.count }})</h3>
+            <h3> Reservas ({{ reservas.count }})</h3>
         </div>
         <div class="panelfuncdet-reservas-scroll">
             {% if reservas %}
@@ -148,9 +151,9 @@
                         </td>
                         <td class="panelfuncdet-qr-td">
                             {% if r.pago and r.pago.qr_escaneado %}
-                                <span class="panelfuncdet-qr-ok" title="Escaneado">✅</span>
+                                <span class="panelfuncdet-qr-ok" title="Escaneado"></span>
                             {% elif r.estado == 'confirmada' %}
-                                <span class="panelfuncdet-qr-pendiente" title="Pendiente de escaneo">⏳</span>
+                                <span class="panelfuncdet-qr-pendiente" title="Pendiente de escaneo"></span>
                             {% else %}—{% endif %}
                         </td>
                     </tr>

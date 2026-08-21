@@ -50,16 +50,25 @@
 <!-- ============================================================ -->
 <aside id="sidebar">
     <div class="sidebar-logo">
-        <div class="logo-title">🎬 Cine Online</div>
+        <!-- modificado (T5 - cero emojis): se sacó el emoji 🎬 del logo. No hay librería de
+             íconos cargada en este template, así que se deja solo el texto, sin ícono. -->
+        <div class="logo-title"> Cine Online</div>
         <div class="logo-sub">Panel de Gestión</div>
     </div>
 
     <nav>
+        <!-- modificado (T5 - cero emojis): se vaciaron todos los <span class="icon"> de este
+             <nav> (Dashboard, Películas, Salas, Funciones, Combos, Cupones, Descuentos,
+             Reservas, Pagos, Estadísticas, Cupones Usados, Verificador QR, Configuración
+             General, Usuarios, Sedes, Django Admin). No se tocó la clase "icon" ni la
+             estructura de los <span> porque no hay librería de íconos cargada en el
+             proyecto (se revisó el <head> de este mismo archivo) — si en el futuro se agrega
+             una, estos <span class="icon"> vacíos son el lugar donde va el ícono nuevo. -->
         <!-- Dashboard -->
         <div class="sidebar-section">
             <a href="{% url 'panel:inicio' %}" 
                 class="sidebar-link {% if seccion_activa == 'inicio' %}active{% endif %}">
-                <span class="icon">🏠</span> Dashboard
+                <span class="icon"></span> Dashboard
             </a>
         </div>
         
@@ -70,15 +79,15 @@
             <div class="sidebar-section-label">Catálogo</div>
             <a href="{% url 'panel:peliculas_lista' %}" 
                 class="sidebar-link {% if seccion_activa == 'peliculas' %}active{% endif %}">
-                <span class="icon">🎬</span> Películas
+                <span class="icon"></span> Películas
             </a>
             <a href="{% url 'panel:salas_lista' %}" 
                 class="sidebar-link {% if seccion_activa == 'salas' %}active{% endif %}">
-                <span class="icon">🏢</span> Salas
+                <span class="icon"></span> Salas
             </a>
             <a href="{% url 'panel:funciones_lista' %}" 
                 class="sidebar-link {% if seccion_activa == 'funciones' %}active{% endif %}">
-                <span class="icon">📅</span> Funciones
+                <span class="icon"></span> Funciones
             </a>
         </div>
 
@@ -89,15 +98,15 @@
             <div class="sidebar-section-label">Promociones</div>
             <a href="{% url 'panel:combos_lista' %}"
                 class="sidebar-link {% if seccion_activa == 'combos' %}active{% endif %}">
-                <span class="icon">🍿</span>Combos
+                <span class="icon"></span>Combos
             </a>
             <a href="{% url 'panel:cupones_lista' %}"
                 class="sidebar-link {% if seccion_activa == 'cupones' %}active{% endif %}">
-                <span class="icon">🎟️</span>Cupones
+                <span class="icon"></span>Cupones
             </a>
             <a href="{% url 'panel:promodia_lista' %}"
                 class="sidebar-link {% if seccion_activa == 'promodia' %}active{% endif %}">
-                <span class="icon">📆</span>Descuentos
+                <span class="icon"></span>Descuentos
             </a>
         </div>
 
@@ -108,27 +117,27 @@
             <div class="sidebar-section-label">Operaciones</div>
             <a href="{% url 'panel:reservas_lista' %}"
                class="sidebar-link {% if seccion_activa == 'reservas' %}active{% endif %}">
-                <span class="icon">🎫</span> Reservas
+                <span class="icon"></span> Reservas
             </a>
             <a href="{% url 'panel:pagos_lista' %}"
                class="sidebar-link {% if seccion_activa == 'pagos' %}active{% endif %}">
-                <span class="icon">💳</span> Pagos
+                <span class="icon"></span> Pagos
             </a>
             <a href="{% url 'panel:pagos_estadisticas' %}"
                class="sidebar-link {% if seccion_activa == 'estadisticas' %}active{% endif %}">
-                <span class="icon">📊</span> Estadísticas
+                <span class="icon"></span> Estadísticas
             </a>
             <a href="{% url 'panel:cupones_usados_lista' %}"
                class="sidebar-link {% if seccion_activa == 'cupones_usados' %}active{% endif %}">
-                <span class="icon">📋</span> Cupones Usados
+                <span class="icon"></span> Cupones Usados
             </a>
             <a href="{% url 'panel:verificador_qr' %}"
                class="sidebar-link {% if seccion_activa == 'verificador' %}active{% endif %}">
-                <span class="icon">📱</span> Verificador QR
+                <span class="icon"></span> Verificador QR
             </a>
             <a href="{% url 'panel:configuracion_general' %}"
                class="sidebar-link {% if seccion_activa == 'configuracion' %}active{% endif %}">
-                <span class="icon">⚙️</span> Configuración General
+                <span class="icon"></span> Configuración General
             </a>
         </div>
 
@@ -139,17 +148,17 @@
             <div class="sidebar-section-label">Administración</div>
             <a href="{% url 'panel:usuarios_lista' %}"
                class="sidebar-link {% if seccion_activa == 'usuarios' %}active{% endif %}">
-                <span class="icon">👥</span> Usuarios
+                <span class="icon"></span> Usuarios
                 <span class="badge-admin">Admin</span>
             </a>
             <!-- nuevo (Sedes - Fase 3) -->
             <a href="{% url 'panel:sedes_lista' %}"
                class="sidebar-link {% if seccion_activa == 'sedes' %}active{% endif %}">
-                <span class="icon">📍</span> Sedes
+                <span class="icon"></span> Sedes
                 <span class="badge-admin">Admin</span>
             </a>
             <a href="{% url 'admin:index' %}" class="sidebar-link" target="_blank">
-                <span class="icon">⚙️</span> Django Admin
+                <span class="icon"></span> Django Admin
                 <span class="badge-admin">Admin</span>
             </a>
         </div>
@@ -184,19 +193,22 @@
         </nav>
         <div class="topbar-actions">
             <!-- nuevo (Sedes - Fase 3): sede activa del staff en el Panel -->
+            <!-- modificado (T5 - cero emojis): se sacó el emoji 📍 de las 3 apariciones de
+                 "sede" acá abajo (sede fija, opción "Todas las sedes" y cada <option> del
+                 select). Texto plano, sin ícono de reemplazo. -->
             {% if panel_sede_fija %}
             <span class="panel-topbar-sede-fija" title="Tu cuenta administra únicamente esta sede">
-                📍 {{ panel_sede_fija.nombre }}
+                 {{ panel_sede_fija.nombre }}
             </span>
             {% elif user.is_staff %}
             <form method="post" action="{% url 'panel:cambiar_sede_panel' %}" id="formPanelSelectorSede" class="panel-topbar-selector-sede">
                 {% csrf_token %}
                 <input type="hidden" name="next" value="{{ request.path }}">
                 <select name="sede_id" id="panelSelectorSede" aria-label="Sede activa del Panel">
-                    <option value="" {% if not panel_sede_activa %}selected{% endif %}>📍 Todas las sedes</option>
+                    <option value="" {% if not panel_sede_activa %}selected{% endif %}> Todas las sedes</option>
                     {% for sede in panel_sedes_disponibles %}
                     <option value="{{ sede.id }}" {% if panel_sede_activa and panel_sede_activa.id == sede.id %}selected{% endif %}>
-                        📍 {{ sede.nombre }}
+                         {{ sede.nombre }}
                     </option>
                     {% endfor %}
                 </select>
@@ -232,7 +244,13 @@ setInterval(actualizarReloj, 1000);
 class Toast {
     constructor() { this.container = document.getElementById('toastContainer'); }
     show(msg, type = 'info', ms = 5000) {
-        const icons = { success:'✅', error:'❌', warning:'⚠️', info:'ℹ️' };
+        // modificado (T5 - cero emojis): antes cada tipo de toast tenía un emoji
+        // (success:'✅', error:'❌', warning:'⚠️', info:'ℹ️'). Se vaciaron los 4 valores;
+        // el <span> que los envuelve queda vacío pero se conserva (no se tocó la
+        // estructura), y el color/estado del toast lo sigue dando la clase `type`
+        // (success/error/warning/info) sobre `.toast`, igual que en los badges de
+        // estado del resto del Panel que ya funcionan solo con clases CSS.
+        const icons = { success:'', error:'', warning:'', info:'' };
         const el = document.createElement('div');
         el.className = `toast ${type}`;
         el.innerHTML = `<span>${icons[type]}</span><span class="toast-msg">${msg}</span><button class="toast-close" onclick="this.parentElement.remove()">×</button>`;

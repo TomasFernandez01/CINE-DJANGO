@@ -18,6 +18,11 @@
 {% endblock %}
 
 {% block contenido %}
+<!-- modificado (T5 - cero emojis): se sacaron los emojis de los encabezados "🔄 Estado",
+     "🪑 Asientos", "📋 Datos (solo lectura)", "💳 Pago" y "⏰ Tiempo de Pago", del botón
+     "💾 Guardar Cambios" y de los badges "✅ Escaneado" / "⏳ Sin escanear", todos más abajo
+     en este archivo. La flecha "←" de "Volver al detalle" NO se tocó: no es un emoji
+     decorativo, es una flecha de navegación de texto plano. -->
 {% include 'panel/_form_styles.html' %}
 
 <div class="panelresform-wrap">
@@ -49,7 +54,7 @@
 
                 <!-- Estado -->
                 <div class="card">
-                    <div class="card-header"><h3>🔄 Estado</h3></div>
+                    <div class="card-header"><h3> Estado</h3></div>
                     <div class="card-body">
                         <label class="form-label">
                             Estado de la reserva <span class="required">*</span>
@@ -67,7 +72,7 @@
                 <!-- Asientos -->
                 <div class="card">
                     <div class="card-header">
-                        <h3>🪑 Asientos</h3>
+                        <h3> Asientos</h3>
                         <span class="panelresform-funcion-info">
                             Función: {{ reserva.funcion.pelicula.titulo }}
                             · {{ reserva.funcion.fecha_hora|date:"d/m H:i" }}
@@ -103,7 +108,7 @@
 
                 <!-- Fecha límite de pago -->
                 <div class="card">
-                    <div class="card-header"><h3>⏰ Tiempo de Pago</h3></div>
+                    <div class="card-header"><h3>Tiempo de Pago</h3></div>
                     <div class="card-body">
                         <label class="form-label">Fecha límite para completar el pago</label>
                         {{ form.fecha_limite_pago }}
@@ -145,7 +150,7 @@
                 <!-- Botones -->
                 <div class="panelresform-botones">
                     <button type="submit" class="btn btn-success panelresform-btn-guardar">
-                        💾 Guardar Cambios
+                         Guardar Cambios
                     </button>
                     <a href="{% url 'panel:reservas_detalle' reserva.id %}"
                        class="btn btn-ghost">
@@ -161,7 +166,7 @@
 
             <!-- Datos de la reserva (lectura) -->
             <div class="card">
-                <div class="card-header"><h3>📋 Datos (solo lectura)</h3></div>
+                <div class="card-header"><h3> Datos (solo lectura)</h3></div>
                 <div class="card-body panelresform-card-body-sm">
                     <div class="panelresform-lectura-stack">
                         <div>
@@ -198,7 +203,7 @@
 
             <!-- Pago asociado (lectura) -->
             <div class="card">
-                <div class="card-header"><h3>💳 Pago</h3></div>
+                <div class="card-header"><h3> Pago</h3></div>
                 <div class="card-body panelresform-card-body-sm">
                     {% if pago %}
                     <div class="panelresform-lectura-stack">
@@ -218,9 +223,9 @@
                             <div class="panelresform-lectura-label">QR</div>
                             <div>
                                 {% if pago.qr_escaneado %}
-                                <span class="panelresform-qr-ok">✅ Escaneado</span>
+                                <span class="panelresform-qr-ok"> Escaneado</span>
                                 {% elif pago.codigo_qr %}
-                                <span class="panelresform-qr-pendiente">⏳ Sin escanear</span>
+                                <span class="panelresform-qr-pendiente">Sin escanear</span>
                                 {% else %}
                                 <span class="panelresform-qr-sin">— Sin QR</span>
                                 {% endif %}

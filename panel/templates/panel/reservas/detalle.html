@@ -17,6 +17,7 @@
 {% endblock %}
 
 {% block contenido %}
+<!-- modificado (T5 - cero emojis): se sacaron los emojis del botón "✏️ Editar reserva", de los encabezados "🎫 Datos de la Reserva" y "💳 Información de Pago", de los links "📅 Ver función"/"👤 Ver usuario", del badge "✅ Escaneado" y del ícono de pago vacío (💳), todos más abajo en este archivo. -->
 
 <div class="paneldet-encabezado">
     <div>
@@ -30,7 +31,7 @@
         </div>
     </div>
     <a href="{% url 'panel:reservas_editar' reserva.id %}"
-       class="btn btn-primary">✏️ Editar reserva</a>
+       class="btn btn-primary"> Editar reserva</a>
 </div>
 
 <div class="paneldet-grid-2col">
@@ -39,7 +40,7 @@
     <div class="paneldet-columna">
 
         <div class="card">
-            <div class="card-header"><h3>🎫 Datos de la Reserva</h3></div>
+            <div class="card-header"><h3> Datos de la Reserva</h3></div>
             <div class="card-body">
                 <div class="paneldet-stack">
                     <div class="paneldet-fila paneldet-fila--top">
@@ -113,12 +114,12 @@
         <div class="paneldet-links-rapidos">
             <a href="{% url 'panel:funciones_detalle' reserva.funcion.id %}"
                class="btn btn-ghost paneldet-link-chico">
-                📅 Ver función
+                 Ver función
             </a>
             {% if reserva.usuario %}
             <a href="{% url 'panel:usuarios_detalle' reserva.usuario.id %}"
                class="btn btn-ghost paneldet-link-chico">
-                👤 Ver usuario
+                 Ver usuario
             </a>
             {% endif %}
         </div>
@@ -126,7 +127,7 @@
 
     <!-- Pago -->
     <div class="card">
-        <div class="card-header"><h3>💳 Información de Pago</h3></div>
+        <div class="card-header"><h3> Información de Pago</h3></div>
         <div class="card-body">
             {% if pago %}
             <div class="paneldet-stack">
@@ -177,7 +178,7 @@
                     <div class="paneldet-qr-estado-wrap">
                         {% if pago.qr_escaneado %}
                         <span class="paneldet-qr-badge paneldet-qr-badge--ok">
-                            ✅ Escaneado
+                             Escaneado
                         </span>
                         <span class="paneldet-qr-fecha">
                             {{ pago.fecha_escaneo|date:"d/m H:i" }}
@@ -185,7 +186,7 @@
                         </span>
                         {% else %}
                         <span class="paneldet-qr-badge paneldet-qr-badge--pendiente">
-                            ⏳ Pendiente de escaneo
+                            Pendiente de escaneo
                         </span>
                         {% endif %}
                     </div>
@@ -196,7 +197,7 @@
             </div>
             {% else %}
             <div class="paneldet-pago-vacio">
-                <div class="paneldet-pago-vacio-icon">💳</div>
+                <div class="paneldet-pago-vacio-icon"></div>
                 Esta reserva no tiene pago registrado aún.
                 {% if reserva.estado == 'pendiente' %}
                 <div class="paneldet-pago-vacio-nota">

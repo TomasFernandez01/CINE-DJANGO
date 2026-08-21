@@ -17,10 +17,11 @@
 {% endblock %}
 
 {% block contenido %}
+<!-- modificado (T5 - cero emojis): se sacaron los emojis del título (⚠️) y del botón "🗑️ Sí, eliminar definitivamente" (más abajo). -->
 
 <div class="panelsalasconf-wrapper">
 
-    <h1 class="panelsalasconf-titulo">⚠️ Confirmar eliminación</h1>
+    <h1 class="panelsalasconf-titulo"> Confirmar eliminación</h1>
     <p class="panelsalasconf-desc">
         Esta acción no se puede deshacer. Al borrar una sala, también se borran
         <strong>en cascada</strong> todas sus funciones y las reservas asociadas a esas funciones.
@@ -71,7 +72,7 @@
 
         <div class="panelsalasconf-botones">
             <button type="submit" class="btn btn-danger panelsalasconf-btn-eliminar">
-                🗑️ Sí, eliminar definitivamente
+                 Sí, eliminar definitivamente
             </button>
             <a href="{% url 'panel:salas_lista' %}" class="btn btn-ghost">Cancelar</a>
         </div>

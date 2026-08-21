@@ -17,9 +17,10 @@
 {% endblock %}
 
 {% block contenido %}
+<!-- modificado (T5 - cero emojis): se sacaron los emojis del título (📊), de los encabezados "🏆 Cupones Más Usados", "⚠️ Activos sin uso en 30 días", "🕒 Últimos Usos Registrados" y del ícono editar (✏️, botón sin texto — se dejó el botón vacío, no hay librería de íconos cargada). -->
 
 <div class="panelcuponest-encabezado">
-    <h1 class="panelcuponest-titulo">📊 Estadísticas de Cupones</h1>
+    <h1 class="panelcuponest-titulo"> Estadísticas de Cupones</h1>
     <a href="{% url 'panel:cupones_lista' %}" class="btn btn-ghost">Volver a cupones</a>
 </div>
 
@@ -52,7 +53,7 @@
     <!-- Ranking de cupones más usados -->
     <div class="card">
         <div class="card-header">
-            <h3>🏆 Cupones Más Usados</h3>
+            <h3> Cupones Más Usados</h3>
         </div>
         <div class="panelcuponest-tabla-wrap">
             {% if top_cupones %}
@@ -90,7 +91,7 @@
     <!-- Cupones activos sin uso reciente -->
     <div class="card">
         <div class="card-header">
-            <h3>⚠️ Activos sin uso en 30 días</h3>
+            <h3> Activos sin uso en 30 días</h3>
         </div>
         <div class="panelcuponest-tabla-wrap">
             {% if cupones_activos_sin_uso %}
@@ -110,7 +111,7 @@
                             {{ c.fecha_inicio|date:"d/m/Y" }} — {{ c.fecha_fin|date:"d/m/Y" }}
                         </td>
                         <td>
-                            <a href="{% url 'panel:cupones_editar' c.id %}" class="btn btn-ghost panelcuponest-btn-chico">✏️</a>
+                            <a href="{% url 'panel:cupones_editar' c.id %}" class="btn btn-ghost panelcuponest-btn-chico">Editar</a>
                         </td>
                     </tr>
                     {% endfor %}
@@ -127,7 +128,7 @@
 <!-- Últimos usos -->
 <div class="card">
     <div class="card-header">
-        <h3>🕒 Últimos Usos Registrados</h3>
+        <h3> Últimos Usos Registrados</h3>
         <a href="{% url 'panel:cupones_usados_lista' %}" class="btn btn-ghost panelcuponest-btn-chico">
             Ver historial completo
         </a>

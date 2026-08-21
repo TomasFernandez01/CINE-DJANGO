@@ -18,8 +18,11 @@
 
 {% block contenido %}
 
+<!-- modificado (T5 - cero emojis): se sacaron los emojis del título (📊), de los
+     encabezados "🎬 Funciones de Hoy", "💳 Últimos Pagos" y "📱 Últimos Escaneos QR", y
+     de la etiqueta "✅ Ingresó" (más abajo). Texto plano, sin ícono de reemplazo. -->
 <div class="panelpag-est-encabezado">
-    <h1 class="panelpag-est-titulo">📊 Estadísticas</h1>
+    <h1 class="panelpag-est-titulo"> Estadísticas</h1>
     <span class="panelpag-est-actualizado">
         Actualizado: {{ ahora|date:"d/m/Y H:i" }} hs
     </span>
@@ -52,7 +55,7 @@
 <!-- Funciones de hoy -->
 <div class="card panelpag-est-funciones-card">
     <div class="card-header">
-        <h3>🎬 Funciones de Hoy — Ocupación</h3>
+        <h3> Funciones de Hoy — Ocupación</h3>
     </div>
     {% if funciones_con_stats %}
     <table class="tabla">
@@ -114,7 +117,7 @@
     <!-- Últimos pagos -->
     <div class="card">
         <div class="card-header">
-            <h3>💳 Últimos Pagos</h3>
+            <h3> Últimos Pagos</h3>
             <a href="{% url 'panel:pagos_lista' %}" class="btn btn-ghost panelpag-est-link-chico">Ver todos</a>
         </div>
         {% for pago in ultimos_pagos %}
@@ -140,7 +143,7 @@
     <!-- Últimos escaneos -->
     <div class="card">
         <div class="card-header">
-            <h3>📱 Últimos Escaneos QR</h3>
+            <h3> Últimos Escaneos QR</h3>
             <a href="{% url 'panel:verificador_qr' %}" class="btn btn-ghost panelpag-est-link-chico">Ir al verificador</a>
         </div>
         {% for pago in ultimos_escaneos %}
@@ -155,7 +158,7 @@
                 </div>
             </div>
             <div class="panelpag-est-item-derecha">
-                <div class="panelpag-est-item-ingreso">✅ Ingresó</div>
+                <div class="panelpag-est-item-ingreso"> Ingresó</div>
                 <div class="panelpag-est-item-hora">
                     {{ pago.fecha_escaneo|date:"H:i" }} hs
                 </div>

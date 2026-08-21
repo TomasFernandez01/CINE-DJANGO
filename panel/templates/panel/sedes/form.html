@@ -17,6 +17,7 @@
 {% endblock %}
 
 {% block contenido %}
+<!-- modificado (T5 - cero emojis): se sacó el emoji 📍 del encabezado "Datos de la Sede". -->
 {% include 'panel/_form_styles.html' %}
 
 <div class="panelpromoform-wrap">
@@ -29,7 +30,7 @@
     <form method="post">
         {% csrf_token %}
         <div class="card">
-            <div class="card-header"><h3>📍 Datos de la Sede</h3></div>
+            <div class="card-header"><h3> Datos de la Sede</h3></div>
             <div class="card-body panelpromoform-card-body-stack">
 
                 <div>

@@ -19,6 +19,11 @@
 
 {% block contenido %}
 
+<!-- modificado (T5 - cero emojis): se sacaron los emojis del botón "🌐 WEB" (acá abajo),
+     del placeholder de poster sin imagen (🎬), del badge "✅ En cartelera / ⛔ Fuera de
+     cartelera" y del título "⭐ Calificaciones y Reseñas de Usuarios" (más abajo en este
+     archivo). No se tocaron los ★/☆ del widget de puntuación (son el contenido real del
+     rating de 5 estrellas, no un emoji decorativo) ni el comentario de Hilo 1 más arriba. -->
 <div class="paneldetpelis-header">
     <h1 class="paneldetpelis-titulo">{{ pelicula.titulo }}</h1>
     <div class="paneldetpelis-header-acciones">
@@ -47,7 +52,7 @@
         <!-- Estado -->
         <div class="paneldetpelis-estado-wrap">
             <span class="paneldetpelis-estado-badge {% if pelicula.en_cartelera %}paneldetpelis-estado-badge--activa{% else %}paneldetpelis-estado-badge--inactiva{% endif %}">
-                {% if pelicula.en_cartelera %}✅ En cartelera{% else %}⛔ Fuera de cartelera{% endif %}
+                {% if pelicula.en_cartelera %} En cartelera{% else %} Fuera de cartelera{% endif %}
             </span>
         </div>
     </div>
@@ -152,7 +157,7 @@
         <!-- Calificaciones y reseñas -->
         <div class="card paneldetpelis-ratings-card">
             <div class="card-header paneldetpelis-ratings-header">
-                <h3>⭐ Calificaciones y Reseñas de Usuarios ({{ ratings.count }})</h3>
+                <h3> Calificaciones y Reseñas de Usuarios ({{ ratings.count }})</h3>
                 <span class="paneldetpelis-ratings-promedio">★ {{ pelicula.rating_promedio }} / 5</span>
             </div>
             <div class="paneldetpelis-ratings-scroll">

@@ -14,11 +14,12 @@
 {% endblock %}
 
 {% block contenido %}
+<!-- modificado (T5 - cero emojis): se sacaron los emojis del título (📅) y del badge de tipo de promo (🎬 2x1 🎬 / 💸, más abajo). -->
 
 <div class="panelpromodia-lista-encabezado">
         
     <div>
-            <h1 class="panelpromodia-lista-titulo">📅 Promociones por Día</h1><p class="panelpromodia-lista-subtitulo">2x1, descuentos especiales y promos según el día de la semana</p>
+            <h1 class="panelpromodia-lista-titulo"> Promociones por Día</h1><p class="panelpromodia-lista-subtitulo">2x1, descuentos especiales y promos según el día de la semana</p>
         </div>
 
         <div class="panelpromodia-lista-acciones">
@@ -50,7 +51,7 @@
         <div class="card-body">
             <div class="panelpromodia-lista-nombre">{{ p.nombre }}</div>
             <div class="panelpromodia-lista-tipo">
-                {% if p.tipo == '2x1' %}🎬 2x1 🎬{% else %}💸{{ p.porcentaje_descuento }}% {% endif %}
+                {% if p.tipo == '2x1' %} 2x1 {% else %}{{ p.porcentaje_descuento }}% {% endif %}
             </div>
             {% if p.descripcion %}<p class="panelpromodia-lista-descripcion">{{ p.descripcion }}</p>{% endif %}
             <a href="{% url 'panel:promodia_editar' p.id %}" class="btn btn-ghost panelpromodia-lista-btn-editar">EDITAR</a>

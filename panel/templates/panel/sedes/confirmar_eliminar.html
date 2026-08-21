@@ -16,10 +16,11 @@
 {% endblock %}
 
 {% block contenido %}
+<!-- modificado (T5 - cero emojis): se sacaron los emojis del título (⚠️) y de los dos estados del botón de eliminar (🗑️ "No se puede eliminar" / 🗑️ "Sí, eliminar definitivamente"), más abajo. -->
 
 <div class="panelconfelim-wrap">
 
-    <h1 class="panelconfelim-titulo">⚠️ Confirmar eliminación</h1>
+    <h1 class="panelconfelim-titulo"> Confirmar eliminación</h1>
     <p class="panelconfelim-texto">
         Esta acción no se puede deshacer. Una sede con salas asociadas
         <strong>no se puede eliminar</strong> — primero hay que mover o
@@ -72,11 +73,11 @@
         <div class="panelconfelim-botones">
             {% if hay_bloqueadas %}
             <button type="button" class="btn btn-danger panelconfelim-btn-eliminar" disabled title="Hay sedes con salas asociadas, no se puede eliminar">
-                🗑️ No se puede eliminar (hay salas asociadas)
+                 No se puede eliminar (hay salas asociadas)
             </button>
             {% else %}
             <button type="submit" class="btn btn-danger panelconfelim-btn-eliminar">
-                🗑️ Sí, eliminar definitivamente
+                 Sí, eliminar definitivamente
             </button>
             {% endif %}
             <a href="{% url 'panel:sedes_lista' %}" class="btn btn-ghost">Cancelar</a>

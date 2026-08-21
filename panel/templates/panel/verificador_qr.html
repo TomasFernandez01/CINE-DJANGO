@@ -15,6 +15,7 @@
 {% endblock %}
 
 {% block contenido %}
+<!-- modificado (T5 - cero emojis): se sacaron los emojis del título (📱), el link "📊 Ver estadísticas", los encabezados "🔍 Ingresar Código Manualmente" y "📷 Escanear con Cámara", el botón "📷 Iniciar Escáner de Cámara", el botón "⏹️ Detener" y el encabezado "📋 Historial de Esta Sesión", todos más abajo. -->
 
 <!-- data-* nuevos: le pasan al JS externo las 2 URLs y el username que antes tenía embebidos
      con  url  user.username directo en el <script> inline -->
@@ -24,9 +25,9 @@
      data-username="{{ user.username }}">
 
     <div class="panelqr-encabezado">
-        <h1 class="panelqr-titulo">📱 Verificador de QR</h1>
+        <h1 class="panelqr-titulo"> Verificador de QR</h1>
         <a href="{% url 'panel:pagos_estadisticas' %}" class="btn btn-ghost">
-            📊 Ver estadísticas
+             Ver estadísticas
         </a>
     </div>
 
@@ -37,7 +38,7 @@
 
     <!-- Verificación manual -->
     <div class="card panelqr-manual-card">
-        <div class="card-header"><h3>🔍 Ingresar Código Manualmente</h3></div>
+        <div class="card-header"><h3> Ingresar Código Manualmente</h3></div>
         <div class="card-body">
             <div class="panelqr-manual-row">
                 <input type="text" id="codigoQR" placeholder="CINE-XXXXXXXX-YYYYYYYYYY"
@@ -52,17 +53,17 @@
 
     <!-- Escáner de cámara -->
     <div class="card panelqr-camara-card">
-        <div class="card-header"><h3>📷 Escanear con Cámara</h3></div>
+        <div class="card-header"><h3> Escanear con Cámara</h3></div>
         <div class="card-body panelqr-camara-body">
             <button id="btnEscanear" onclick="iniciarEscaneo()"
                     class="btn btn-success panelqr-btn-escanear">
-                📷 Iniciar Escáner de Cámara
+                 Iniciar Escáner de Cámara
             </button>
             <div id="videoContainer" class="panelqr-video-container">
                 <video id="video" class="panelqr-video"></video>
                 <div class="panelqr-video-detener-wrap">
                     <button onclick="detenerEscaneo()" class="btn btn-danger">
-                        ⏹️ Detener
+                        Detener
                     </button>
                 </div>
             </div>
@@ -75,7 +76,7 @@
     <!-- Historial -->
     <div class="card">
         <div class="card-header">
-            <h3>📋 Historial de Esta Sesión</h3>
+            <h3> Historial de Esta Sesión</h3>
             <button onclick="limpiarHistorial()" class="btn btn-ghost panelqr-historial-limpiar-btn">Limpiar</button>
         </div>
         <div id="historial">

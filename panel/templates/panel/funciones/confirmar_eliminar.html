@@ -18,9 +18,11 @@
 
 {% block contenido %}
 
+<!-- modificado (T5 - cero emojis): se sacaron los emojis del título (⚠️) y del botón
+     "🗑️ Sí, eliminar definitivamente" (más abajo). Texto plano, sin ícono. -->
 <div class="panelfuncconf-wrapper">
 
-    <h1 class="panelfuncconf-titulo">⚠️ Confirmar eliminación</h1>
+    <h1 class="panelfuncconf-titulo"> Confirmar eliminación</h1>
     <p class="panelfuncconf-desc">
         Esta acción no se puede deshacer. Al borrar una función, también se borran
         <strong>en cascada</strong> todas sus reservas y los pagos asociados a esas reservas.
@@ -76,7 +78,7 @@
 
         <div class="panelfuncconf-botones">
             <button type="submit" class="btn btn-danger panelfuncconf-btn-eliminar">
-                🗑️ Sí, eliminar definitivamente
+                 Sí, eliminar definitivamente
             </button>
             <a href="{% url 'panel:funciones_lista' %}" class="btn btn-ghost">Cancelar</a>
         </div>

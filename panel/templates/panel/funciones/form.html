@@ -34,8 +34,9 @@
         {% endif %}
     </div>
     <!-- Aviso de validación de solapamiento -->
+    <!-- modificado (T5 - cero emojis): se sacó el ícono ℹ️ de este aviso. -->
     <div class="panelfuncform-aviso">
-        <strong>ℹ Validación automática:</strong> El sistema verificará que la función no se
+        <strong>Validación automática:</strong> El sistema verificará que la función no se
         solape con otras en la misma sala (considera duración de la película + 30 min de margen).
     </div>
 
@@ -105,9 +106,10 @@
         </div>
 
         <!-- MODIFICACION GEMINI: Margen de tiempo entre funciones -->
+        <!-- modificado (T5 - cero emojis): se sacó el emoji 📅 de este título. -->
         <div class="card panelfuncform-cronograma-card panelfuncform-oculto" id="cronogramaCard">
             <div class="card-header">
-                <h3>📅 Cronograma de la Sala (Mismo día)</h3>
+                <h3> Cronograma de la Sala (Mismo día)</h3>
             </div>
             <div class="card-body">
                 <p class="panelfuncform-cronograma-ayuda">
@@ -145,9 +147,10 @@
         </div>
 
         {% if form.non_field_errors %}
+        <!-- modificado (T5 - cero emojis): se sacó el emoji ⚠️ de cada línea de error. -->
         <div class="panelfuncform-errores-generales">
             {% for error in form.non_field_errors %}
-            <p class="panelfuncform-error-linea">⚠️ {{ error }}</p>
+            <p class="panelfuncform-error-linea"> {{ error }}</p>
             {% endfor %}
         </div>
         {% endif %}

@@ -16,10 +16,14 @@
 
 {% block contenido %}
 
+<!-- modificado (T5 - cero emojis): se sacaron los emojis del título (💳), del botón
+     "📊 Ver estadísticas" y de los íconos de estado QR "✅"/"⏳" de la tabla (más abajo;
+     esos <span> quedan vacíos, el estado lo sigue marcando el title="..." y la clase
+     qr-ok/qr-pendiente). -->
 <div class="panelpag-lista-encabezado">
-    <h1 class="panelpag-lista-titulo">💳 Pagos</h1>
+    <h1 class="panelpag-lista-titulo"> Pagos</h1>
     <a href="{% url 'panel:pagos_estadisticas' %}" class="btn btn-success">
-        📊 Ver estadísticas
+         Ver estadísticas
     </a>
 </div>
 
@@ -101,9 +105,9 @@
                 </td>
                 <td class="panelpag-lista-qr-col">
                     {% if pago.qr_escaneado %}
-                        <span class="panelpag-lista-qr-ok" title="Escaneado {{ pago.fecha_escaneo|date:'H:i' }}">✅</span>
+                        <span class="panelpag-lista-qr-ok" title="Escaneado {{ pago.fecha_escaneo|date:'H:i' }}"></span>
                     {% elif pago.codigo_qr %}
-                        <span class="panelpag-lista-qr-pendiente" title="Sin escanear">⏳</span>
+                        <span class="panelpag-lista-qr-pendiente" title="Sin escanear"></span>
                     {% else %}—{% endif %}
                 </td>
                 <td class="panelpag-lista-fecha">

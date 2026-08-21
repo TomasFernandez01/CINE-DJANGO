@@ -20,6 +20,7 @@
 {% endblock %}
 
 {% block contenido %}
+<!-- modificado (T5 - cero emojis): se sacó el emoji 📍 de la etiqueta de sede fija, más abajo en este archivo. -->
 {% include 'panel/_form_styles.html' %}
 
 <div class="panelsalasform-wrapper">
@@ -45,7 +46,7 @@
                         </label>
                         {% if sede_fija %}
                         {# nuevo (Sedes - Fase 3): staff restringido a una sede — no elige, se muestra fijo #}
-                        <div class="panelsalasform-sede-fija">📍 {{ sede_fija.nombre }}</div>
+                        <div class="panelsalasform-sede-fija"> {{ sede_fija.nombre }}</div>
                         <div class="form-help">Tu cuenta administra únicamente esta sede.</div>
                         {% else %}
                         {{ form.sede }}

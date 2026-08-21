@@ -17,6 +17,7 @@
 {% endblock %}
 
 {% block contenido %}
+<!-- modificado (T5 - cero emojis): se sacaron los emojis de "🎫 Últimas Reservas" y "🎬 Historial de Películas Vistas", más abajo. -->
 
 <div class="paneluserdet-encabezado">
     <div>
@@ -124,7 +125,7 @@
         <!-- Últimas reservas -->
         <div class="card">
             <div class="card-header">
-                <h3>🎫 Últimas Reservas</h3>
+                <h3> Últimas Reservas</h3>
                 <a href="{% url 'panel:reservas_lista' %}?q={{ usuario_detalle.username }}"
                    class="btn btn-ghost paneluserdet-link-chico">
                     Ver todas
@@ -186,7 +187,7 @@
              existe del lado del cliente en usuarios/perfil.html — acá faltaba) -->
         <div class="card">
             <div class="card-header">
-                <h3>🎬 Historial de Películas Vistas</h3>
+                <h3> Historial de Películas Vistas</h3>
             </div>
             {% if historial %}
                 {% for entrada in historial %}
