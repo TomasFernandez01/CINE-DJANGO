@@ -601,6 +601,8 @@
                     <th>Recaudación</th>
                     <th>Ocupación promedio</th>
                     <th>Ticket promedio (ATV)</th>
+                    <th>Funciones</th>
+                    <!-- modificado (T7 - Parte B): columna "cantidad de funciones" pedida por SEDESactualizacion.txt punto 2 -->
                 </tr>
             </thead>
             <tbody>
@@ -610,6 +612,8 @@
                     <td style="color:#27ae60; font-weight:600;">${{ r.recaudacion|floatformat:0 }}</td>
                     <td>{% if r.ocupacion_promedio is not None %}{{ r.ocupacion_promedio }}%{% else %}—{% endif %}</td>
                     <td>${{ r.atv|floatformat:0 }}</td>
+                    <td>{{ r.funciones_count }}</td>
+                    <!-- modificado (T7 - Parte B) -->
                 </tr>
                 {% endfor %}
             </tbody>
@@ -623,6 +627,43 @@
 </div>
 {% endif %}
 
+<!-- ============================================================ -->
+<!-- nuevo (T7 - BI): CALIFICACIÓN vs. RECAUDACIÓN POR PELÍCULA -->
+<!-- ============================================================ -->
+<div class="card">
+    <div class="card-header">
+        <h3>Calificación vs. recaudación por película</h3>
+    </div>
+    {% if rating_recaudacion_datos %}
+    <div style="position: relative; height: 320px; width: 100%; padding: 1rem;">
+        <canvas id="ratingRecaudacionChart"></canvas>
+    </div>
+    {% else %}
+    <div class="card-body" style="text-align:center;color:#999;padding:2rem;">
+        No hay películas con calificaciones y recaudación en este período todavía.
+    </div>
+    {% endif %}
+</div>
+
+<!-- ============================================================ -->
+<!-- nuevo (T7 - BI): TICKET PROMEDIO CON COMBO vs. SIN COMBO -->
+<!-- ============================================================ -->
+<div class="card">
+    <div class="card-header">
+        <h3>Ticket promedio: con combo vs. sin combo</h3>
+    </div>
+    <div class="card-body" style="display:flex; gap:2rem; justify-content:center; padding:1.5rem; flex-wrap:wrap;">
+        <div style="text-align:center;">
+            <div style="font-size:1.8rem; font-weight:700; color:#27ae60;">${{ atv_combo.atv_con_combo|floatformat:0 }}</div>
+            <div style="color:#666;">Con combo ({{ atv_combo.cantidad_con_combo }} pago{{ atv_combo.cantidad_con_combo|pluralize }})</div>
+        </div>
+        <div style="text-align:center;">
+            <div style="font-size:1.8rem; font-weight:700; color:#7f8c8d;">${{ atv_combo.atv_sin_combo|floatformat:0 }}</div>
+            <div style="color:#666;">Sin combo ({{ atv_combo.cantidad_sin_combo }} pago{{ atv_combo.cantidad_sin_combo|pluralize }})</div>
+        </div>
+    </div>
+</div>
+
 <!-- Chart.js + JS del dashboard interactivo -->
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script>
@@ -634,6 +675,8 @@
         entradasValores: {{ chart_entradas_valores|safe }},
         comboLabels: {{ chart_combos_labels|safe }},
         comboValores: {{ chart_combos_valores|safe }},
+        // modificado (T7 - BI)
+        ratingRecaudacionDatos: {{ rating_recaudacion_datos|safe }},
     };
     window.DASHBOARD_URLS = {
         grafico_ventas: "{% url 'panel:dashboard_grafico_ventas' %}",
@@ -641,5 +684,44 @@
         kpis: "{% url 'panel:dashboard_kpis' %}",
     };
 </script>
+{% if rating_recaudacion_datos %}
+<!-- nuevo (T7 - BI): scatter de calificación vs. recaudación. Se instancia
+     acá mismo (mismo patrón que metodoPagoChart en pagos/estadisticas.html
+     de T6), no se toca static/js/panel/dashboard.js. -->
+<script>
+    (function() {
+        var datos = window.DASHBOARD_INICIAL.ratingRecaudacionDatos;
+        new Chart(document.getElementById('ratingRecaudacionChart').getContext('2d'), {
+            type: 'scatter',
+            data: {
+                datasets: [{
+                    label: 'Películas',
+                    data: datos.map(function(d) { return {x: d.rating_promedio, y: d.recaudacion}; }),
+                    backgroundColor: '#3498db',
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                scales: {
+                    x: { title: { display: true, text: 'Calificación promedio (1-5 ⭐)' }, min: 0, max: 5 },
+                    y: { title: { display: true, text: 'Recaudación ($)' }, beginAtZero: true },
+                },
+                plugins: {
+                    legend: { display: false },
+                    tooltip: {
+                        callbacks: {
+                            label: function(ctx) {
+                                var d = datos[ctx.dataIndex];
+                                return d.titulo + ': ' + d.rating_promedio + '★ — $' + d.recaudacion.toFixed(0);
+                            }
+                        }
+                    },
+                }
+            }
+        });
+    })();
+</script>
+{% endif %}
 <script src="{% static 'js/panel/dashboard.js' %}"></script>
 {% endblock %}

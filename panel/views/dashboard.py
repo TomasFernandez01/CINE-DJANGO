@@ -121,6 +121,12 @@ def inicio(request):
     # sedes — solo se calcula (y se muestra) para SuperUser.
     ranking_sedes = _ranking_sedes(periodo_desde, periodo_hasta) if request.user.is_superuser else None
 
+    # modificado (T7 - BI): gráfico nuevo #1 (calificación vs. recaudación
+    # por película) y #2 (ticket promedio con combo vs. sin combo), sobre
+    # el mismo período de 30 días que ya usan los KPIs de arriba.
+    rating_vs_recaudacion = _rating_vs_recaudacion(periodo_desde, periodo_hasta, sede_activa)
+    atv_combo = _atv_combo_vs_sin_combo(periodo_desde, periodo_hasta, sede_activa)
+
     contexto = {
         'stats': stats,
         'kpis': kpis,
@@ -136,6 +142,9 @@ def inicio(request):
         'heatmap_matriz': heatmap['matriz'],
         'heatmap_horas': heatmap['horas'],
         'ranking_sedes': ranking_sedes,
+        # modificado (T7 - BI)
+        'rating_recaudacion_datos': rating_vs_recaudacion,
+        'atv_combo': atv_combo,
     }
     return render(request, 'panel/inicio.html', contexto)
 
@@ -524,7 +533,103 @@ def _ranking_sedes(desde, hasta):
             'recaudacion': float(recaudacion),
             'atv': float(atv),
             'ocupacion_promedio': ocupacion_promedio,
+            # modificado (T7 - Parte B): columna "cantidad de funciones" que
+            # pedía SEDESactualizacion.txt punto 2 y esta tabla todavía no
+            # tenía. Se reutiliza el mismo queryset funciones_sede ya armado
+            # arriba para el cálculo de ocupación, no se agrega query nueva.
+            'funciones_count': funciones_sede.count(),
         })
 
     ranking.sort(key=lambda r: r['recaudacion'], reverse=True)
     return ranking
+
+
+# modificado (T7 - BI): dos helpers nuevos, no tocan ni reemplazan nada de
+# lo que ya existía arriba (T6).
+# ============================================================
+# nuevo (T7 - BI): rating vs. recaudación + ATV con/sin combo
+# ============================================================
+
+def _rating_vs_recaudacion(desde, hasta, sede=None):
+    """
+    Por película: calificación promedio (RatingPelicula.puntuacion, vía el
+    related_name 'ratings' de Pelicula — no requiere importar el modelo
+    RatingPelicula acá, Django lo resuelve por relación inversa) vs.
+    recaudación generada por esa película en el rango [desde, hasta]
+    (Pago.monto de pagos aprobados, vía reserva__funcion__pelicula).
+
+    nuevo (T7): decisión de interpretación — el RATING se promedia sobre
+    TODO el historial de calificaciones de la película (no se filtra por
+    [desde, hasta]), porque una calificación de un usuario no está atada a
+    una compra puntual dentro del período, a diferencia de la recaudación
+    que sí es "de ese período" igual que el resto de los KPIs del
+    dashboard. Solo se incluyen películas que tengan AMBOS datos (al menos
+    una calificación Y recaudación > 0 en el período) — si faltara
+    cualquiera de los dos, el punto no aporta a la pregunta "¿correlaciona
+    rating con ventas?" que pide la consigna.
+
+    Devuelve una lista de dicts {titulo, rating_promedio, recaudacion},
+    ordenada por recaudación descendente (mismo criterio que 'top_peliculas'
+    de _calcular_kpis).
+    """
+    filtro_sede = {'reserva__funcion__sala__sede': sede} if sede else {}
+    recaudacion_qs = Pago.objects.filter(
+        estado='aprobado',
+        fecha_pago__date__gte=desde, fecha_pago__date__lte=hasta,
+        **filtro_sede,
+    ).values('reserva__funcion__pelicula').annotate(recaudacion=Sum('monto'))
+    recaudacion_por_pelicula = {
+        r['reserva__funcion__pelicula']: float(r['recaudacion'] or 0) for r in recaudacion_qs
+    }
+
+    peliculas_con_rating = Pelicula.objects.filter(
+        id__in=recaudacion_por_pelicula.keys()
+    ).annotate(rating_promedio=Avg('ratings__puntuacion')).filter(
+        rating_promedio__isnull=False
+    ).values('id', 'titulo', 'rating_promedio')
+
+    datos = [
+        {
+            'titulo': p['titulo'],
+            'rating_promedio': round(p['rating_promedio'], 1),
+            'recaudacion': recaudacion_por_pelicula.get(p['id'], 0),
+        }
+        for p in peliculas_con_rating
+    ]
+    datos.sort(key=lambda d: d['recaudacion'], reverse=True)
+    return datos
+
+
+def _atv_combo_vs_sin_combo(desde, hasta, sede=None):
+    """
+    Ticket promedio (ATV) comparado entre pagos que incluyeron al menos un
+    ItemPago con combo asociado vs. pagos que no, para el rango [desde,
+    hasta].
+
+    nuevo (T7): mismo criterio de ATV que ya usa _calcular_kpis()
+    (Avg('monto') sobre pagos aprobados) — no se inventa una fórmula
+    nueva, solo se separa ese mismo cálculo en dos grupos según si el pago
+    tiene o no items de combo (ItemPago, no el campo legacy Pago.combo —
+    mismo motivo que ya documentó _combos_por_categoria: ese campo solo
+    guarda el primer ítem del pedido).
+    """
+    from pagos.models import ItemPago  # import local, mismo patrón que _combos_por_categoria
+    filtro_sede = {'reserva__funcion__sala__sede': sede} if sede else {}
+    pagos_periodo = Pago.objects.filter(
+        estado='aprobado',
+        fecha_pago__date__gte=desde, fecha_pago__date__lte=hasta,
+        **filtro_sede,
+    )
+    ids_con_combo = ItemPago.objects.filter(
+        pago__in=pagos_periodo, combo__isnull=False
+    ).values_list('pago_id', flat=True).distinct()
+
+    pagos_con_combo = pagos_periodo.filter(id__in=ids_con_combo)
+    pagos_sin_combo = pagos_periodo.exclude(id__in=ids_con_combo)
+
+    return {
+        'atv_con_combo': float(pagos_con_combo.aggregate(t=Avg('monto'))['t'] or 0),
+        'atv_sin_combo': float(pagos_sin_combo.aggregate(t=Avg('monto'))['t'] or 0),
+        'cantidad_con_combo': pagos_con_combo.count(),
+        'cantidad_sin_combo': pagos_sin_combo.count(),
+    }

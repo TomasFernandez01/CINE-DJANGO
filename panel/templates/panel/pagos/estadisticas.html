@@ -223,6 +223,30 @@
 
 </div>
 
+<!-- nuevo (T7 - BI): tiempo promedio hasta el pago -->
+<div class="card">
+    <div class="card-header">
+        <h3>Tiempo promedio hasta el pago</h3>
+    </div>
+    {% if tiempo_hasta_pago.cantidad %}
+    <div class="card-body" style="text-align:center; padding:1.5rem;">
+        <div style="font-size:1.8rem; font-weight:700; color:#3498db;">
+            {% if tiempo_hasta_pago.promedio_horas >= 1 %}
+                {{ tiempo_hasta_pago.promedio_horas }} hs
+            {% else %}
+                {{ tiempo_hasta_pago.promedio_minutos }} min
+            {% endif %}
+        </div>
+        <div style="color:#666;">
+            Desde que se crea la reserva hasta que se aprueba el pago
+            (sobre {{ tiempo_hasta_pago.cantidad }} reserva{{ tiempo_hasta_pago.cantidad|pluralize }} confirmada{{ tiempo_hasta_pago.cantidad|pluralize }})
+        </div>
+    </div>
+    {% else %}
+    <div class="card-body panelpag-est-lista-vacia">Sin reservas confirmadas con pago aprobado todavía.</div>
+    {% endif %}
+</div>
+
 {% if metodo_pago_labels %}
 <!-- nuevo (T6 - BI): Chart.js cargado acá mismo (esta página todavía no lo
      usaba). No toca static/js/panel/dashboard.js: ese archivo es exclusivo

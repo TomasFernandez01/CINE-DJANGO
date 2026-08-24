@@ -10,6 +10,7 @@ from django.shortcuts import render
 from django.utils import timezone
 from pagos.models import Pago
 from promociones.models import CuponUsado
+from reservas.models import Reserva  # modificado (T7): solo lectura, para tiempo hasta el pago
 from salas.models import Funcion
 from ..decorators import staff_required, get_sede_activa_panel
 
@@ -130,6 +131,9 @@ def pagos_estadisticas(request):
     roi_cupones = _roi_cupones(sede_activa)
     metodo_pago = _distribucion_metodo_pago(sede_activa)
 
+    # modificado (T7 - BI): gráfico nuevo #3 (tiempo promedio hasta el pago).
+    tiempo_hasta_pago = _tiempo_promedio_hasta_pago(sede_activa)
+
     contexto = {
         'ahora': ahora,
         'recaudado_hoy': recaudado_hoy,
@@ -146,6 +150,8 @@ def pagos_estadisticas(request):
         'roi_cupones': roi_cupones,
         'metodo_pago_labels': metodo_pago['labels'],
         'metodo_pago_valores': metodo_pago['valores'],
+        # modificado (T7 - BI)
+        'tiempo_hasta_pago': tiempo_hasta_pago,
     }
     return render(request, 'panel/pagos/estadisticas.html', contexto)
 
@@ -223,5 +229,53 @@ def _distribucion_metodo_pago(sede=None):
     labels = [metodo_label.get(d['metodo_pago'], d['metodo_pago']) for d in datos]
     valores = [d['cantidad'] for d in datos]
     return {'labels': labels, 'valores': valores}
+
+
+# ============================================================
+# nuevo (T7 - BI): tiempo promedio hasta el pago
+# ============================================================
+
+def _tiempo_promedio_hasta_pago(sede=None):
+    """
+    Promedio de tiempo entre Reserva.fecha_reserva y el momento en que se
+    aprobó el pago, para reservas CONFIRMADAS con un Pago APROBADO.
+
+    nuevo (T7): se confirmó en pagos/models.py que Pago NO tiene un campo
+    separado tipo 'creado_en' — el único campo de fecha es 'fecha_pago'
+    (default=timezone.now), así que se usa ese como "momento del pago".
+    No se inventa un campo nuevo.
+
+    Igual que _distribucion_metodo_pago() y _roi_cupones() en este mismo
+    archivo, esto es sobre el TOTAL HISTÓRICO (pagos.py no tiene selector
+    de rango de fechas hoy — ver nota ya dejada en T6).
+
+    Se descartan diferencias negativas (pago con fecha_pago anterior a
+    fecha_reserva) como dato inconsistente en vez de romper el promedio;
+    en el proyecto real esto no debería pasar, pero evita que un dato
+    corrupto arrastre el promedio para abajo sin que se note.
+    """
+    filtro_sede = {'funcion__sala__sede': sede} if sede else {}
+    reservas = Reserva.objects.filter(
+        estado='confirmada',
+        pago__isnull=False,
+        pago__estado='aprobado',
+        **filtro_sede,
+    ).select_related('pago')
+
+    minutos_por_reserva = []
+    for r in reservas:
+        minutos = (r.pago.fecha_pago - r.fecha_reserva).total_seconds() / 60
+        if minutos >= 0:
+            minutos_por_reserva.append(minutos)
+
+    if not minutos_por_reserva:
+        return {'promedio_minutos': None, 'promedio_horas': None, 'cantidad': 0}
+
+    promedio_minutos = sum(minutos_por_reserva) / len(minutos_por_reserva)
+    return {
+        'promedio_minutos': round(promedio_minutos, 1),
+        'promedio_horas': round(promedio_minutos / 60, 1),
+        'cantidad': len(minutos_por_reserva),
+    }
 
 
