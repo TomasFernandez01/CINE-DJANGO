@@ -29,7 +29,8 @@
         <div>
             <h1 class="panelpelisform-titulo">{{ titulo_pagina }}</h1>
             {% if not es_super and accion == 'editar' %}
-            <div style="background: rgba(229, 9, 20, 0.15); border-left: 4px solid #e50914; padding: 0.75rem 1rem; border-radius: 4px; margin-top: 0.5rem; color: #ffffff; font-size: 0.9rem;">
+            <!-- modificado (T10): style="" inline movido a .panelpelisform-aviso-staff en form.css -->
+            <div class="panelpelisform-aviso-staff">
                 <strong>Rol Staff:</strong> Podés actualizar el estado de cartelera y fecha de estreno local. Los metadatos generales del catálogo son administrados por el SuperUser (HQ).
             </div>
             {% endif %}

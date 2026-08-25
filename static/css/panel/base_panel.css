@@ -318,3 +318,9 @@
             #main { margin-left: 0; }
             #content { padding: 1rem; }
         }
+
+        /* modificado (T10): estilo inline sacado del link "Cerrar sesión"
+           del topbar (panel/templates/panel/base_panel.html) */
+        .panelbase-topbar-logout {
+            font-size: 0.8rem;
+        }

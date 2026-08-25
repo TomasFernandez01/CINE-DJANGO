@@ -28,3 +28,15 @@
 .panelpelisform-error-linea { margin: 0; }
 
 .panelpelisform-botones { display: flex; gap: 1rem; margin-top: 1.5rem; flex-wrap: wrap; }
+
+/* modificado (T10): aviso de "Rol Staff" en el header del form, antes con
+   style="" inline */
+.panelpelisform-aviso-staff {
+    background: rgba(229, 9, 20, 0.15);
+    border-left: 4px solid #e50914;
+    padding: 0.75rem 1rem;
+    border-radius: 4px;
+    margin-top: 0.5rem;
+    color: #ffffff;
+    font-size: 0.9rem;
+}

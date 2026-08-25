@@ -215,7 +215,8 @@
             </form>
             {% endif %}
             <span class="topbar-time" id="reloj"></span>
-            <a href="{% url 'usuarios:logout' %}" class="btn btn-ghost" style="font-size:0.8rem;">
+            <!-- modificado (T10): style="font-size:0.8rem;" movido a .panelbase-topbar-logout en base_panel.css -->
+            <a href="{% url 'usuarios:logout' %}" class="btn btn-ghost panelbase-topbar-logout">
                 Cerrar sesión
             </a>
         </div>

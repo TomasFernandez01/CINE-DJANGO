@@ -1,5 +1,8 @@
 from django.db import models
 from decimal import Decimal
+# modificado (T9 - Config General por sede): mismo import que ya usa
+# promociones/models.py para Cupon.sede / Combo.sede.
+from sedes.models import Sede
 
 
 class ConfiguracionGeneral(models.Model):
@@ -73,6 +76,31 @@ class ConfiguracionGeneral(models.Model):
     )
     email_from = models.CharField(max_length=200, blank=True, help_text="Ej: Cine Online <noreply@cineonline.com>")
 
+    # nuevo (T9 - Config General por sede): mismo criterio que ya usan
+    # Cupon.sede y Combo.sede en promociones/models.py — null=True/blank=True,
+    # vacío = configuración global (aplica a toda la cadena), con valor =
+    # configuración específica de esa sede que sobreescribe a la global para
+    # esa ubicación. A diferencia de Cupon/Combo, acá tiene que haber a lo
+    # sumo UNA fila por sede (es un singleton por sede, no una lista de items
+    # que pueden repetirse), así que en vez de ForeignKey(unique=True) se usa
+    # directamente OneToOneField — es el mismo campo, pero es la forma
+    # correcta de expresar "uno a lo sumo" en Django (con
+    # ForeignKey(unique=True) sale el warning fields.W342 al correr
+    # makemigrations: "tiene el mismo efecto que OneToOneField, usá
+    # OneToOneField"). La fila global (sede=None) sigue protegida aparte por
+    # el pk=1 forzado en save() de más abajo — no por esta constraint
+    # (OneToOneField con null=True permite varias filas con sede=NULL a
+    # nivel de base de datos, así que la unicidad de la fila global depende
+    # exclusivamente de que save() siga forzando pk=1).
+    sede = models.OneToOneField(
+        Sede, on_delete=models.CASCADE, related_name='configuracion_general',
+        null=True, blank=True,
+        help_text="Dejar vacío para que esta sea la configuración global de la cadena "
+                   "(aplica a toda sede que no tenga su propia configuración cargada). "
+                   "Elegir una sede para que estos valores apliquen solo a esa sede, "
+                   "sobreescribiendo a la configuración global."
+    )
+
     actualizado_en = models.DateTimeField(auto_now=True)
 
     class Meta:
@@ -83,17 +111,43 @@ class ConfiguracionGeneral(models.Model):
         return "Configuración General del Sistema"
 
     def save(self, *args, **kwargs):
-        # Fuerza que siempre exista una única fila, con id=1.
-        self.pk = 1
+        # modificado (T9 - Config General por sede): el forzado de pk=1 ahora
+        # SOLO aplica a la fila global (sede=None), que sigue siendo un
+        # singleton como siempre. Una fila con sede cargada es una fila más
+        # de la tabla, con pk autoincremental normal — puede existir una por
+        # cada Sede que decida personalizar su configuración.
+        if self.sede_id is None:
+            self.pk = 1
         super().save(*args, **kwargs)
 
     def delete(self, *args, **kwargs):
-        pass  # no se permite borrar la configuración general
+        # modificado (T9 - Config General por sede): se sigue sin poder
+        # borrar la fila global (sede=None) — mismo comportamiento que antes.
+        # Una fila específica de sede sí se puede borrar (por ejemplo, si
+        # una sede quiere volver a heredar la configuración global); no hay
+        # botón para hacer esto en el panel todavía en esta tanda, queda
+        # documentado en el reporte como posible mejora futura.
+        if self.sede_id is None:
+            return
+        super().delete(*args, **kwargs)
 
     @classmethod
-    def obtener(cls):
-        """Devuelve la única instancia de configuración, creándola si no existe."""
-        obj, _ = cls.objects.get_or_create(pk=1)
+    def obtener(cls, sede=None):
+        """
+        Devuelve la configuración a usar.
+
+        - `sede=None` (default, comportamiento de siempre): devuelve
+          directamente la fila global, creándola si no existe. Ningún
+          llamado existente que no pase `sede` cambia de comportamiento.
+        - `sede=<Sede>`: si esa sede tiene su propia fila de configuración,
+          la devuelve. Si no la tiene, cae a la fila global (mismo criterio
+          que Cupon/Combo: sede vacía = aplica a toda la cadena).
+        """
+        if sede is not None:
+            config_sede = cls.objects.filter(sede=sede).first()
+            if config_sede is not None:
+                return config_sede
+        obj, _ = cls.objects.get_or_create(sede=None)
         return obj
 
 # Create your models here.

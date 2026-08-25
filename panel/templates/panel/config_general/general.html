@@ -36,8 +36,49 @@
         acá no requiere ninguna migración.
     </p>
 
+    <!-- nuevo (T9 - Config General por sede): selector de sede. Reutiliza las
+         clases .card/.panelconfig-card/.form-label/.panel-select que ya existen
+         en este mismo template y en form_styles.css (ya cargado más arriba) —
+         no se agregó CSS nuevo, esta tanda solo tiene autorizado tocar este
+         .html, panel/models.py, la migración y panel/views/config_general.py. -->
+    <div class="card panelconfig-card">
+        <div class="card-body panelconfig-card-body">
+            {% if sede_fija %}
+            <p class="form-help">
+                Estás viendo la configuración de <strong>{{ sede_fija.nombre }}</strong>.
+                Tu cuenta administra únicamente esta sede.
+            </p>
+            {% else %}
+            <form method="get" action="{% url 'panel:configuracion_general' %}">
+                <label class="form-label" for="panelconfig-selector-sede">Configuración de</label>
+                <select name="sede_id" id="panelconfig-selector-sede" class="panel-select" onchange="this.form.submit()">
+                    <option value="" {% if not sede_seleccionada %}selected{% endif %}>Global (toda la cadena)</option>
+                    {% for sede in sedes_disponibles %}
+                    <option value="{{ sede.id }}" {% if sede_seleccionada and sede_seleccionada.id == sede.id %}selected{% endif %}>
+                        {{ sede.nombre }}
+                    </option>
+                    {% endfor %}
+                </select>
+                <noscript><button type="submit" class="btn btn-primary">Ver</button></noscript>
+            </form>
+            {% endif %}
+
+            {% if creando_desde_global %}
+            <div class="panelconfig-nota-pendiente">
+                {{ sede_seleccionada.nombre }} todavía no tiene una configuración propia.
+                Acá abajo se muestran los valores <strong>heredados de la configuración
+                global</strong> como punto de partida — al tocar "Guardar" se crea la
+                configuración propia de esta sede (deja de heredar de la global).
+            </div>
+            {% endif %}
+        </div>
+    </div>
+
     <form method="post">
         {% csrf_token %}
+        {% if sede_seleccionada %}
+        <input type="hidden" name="sede_id" value="{{ sede_seleccionada.id }}">
+        {% endif %}
 
         <!-- Precio de entradas -->
         <div class="card panelconfig-card">
@@ -157,12 +198,16 @@
         </div>
 
         <div class="panelconfig-actualizado">
+            {% if config.actualizado_en %}
             Última actualización: {{ config.actualizado_en|date:"d/m/Y H:i" }} hs.
+            {% else %}
+            Todavía no se guardó ninguna configuración propia para esta sede.
+            {% endif %}
         </div>
 
         <div class="panelconfig-botones">
             <button type="submit" class="btn btn-success panelconfig-btn-guardar">
-                 Guardar Cambios
+                {% if creando_desde_global %} Crear Configuración de esta Sede{% else %} Guardar Cambios{% endif %}
             </button>
         </div>
     </form>
