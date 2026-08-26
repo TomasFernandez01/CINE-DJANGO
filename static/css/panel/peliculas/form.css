@@ -29,6 +29,23 @@
 
 .panelpelisform-botones { display: flex; gap: 1rem; margin-top: 1.5rem; flex-wrap: wrap; }
 
+/* nuevo (Hilo 4 - Claude): badge de solo lectura "En cartelera (global)" que
+   ve Staff en vez del checkbox editable (ver form.html y el TODO resuelto en
+   peliculas_editar). Mismos colores que panelpelis-card-badge--activa/
+   --inactiva de lista.css, pero definido acá directo (sin depender de que
+   lista.css esté cargado en esta página) y sin position:absolute (ahí el
+   badge flota sobre un poster; acá va dentro del flujo normal del form). */
+.panelpelisform-badge-estatico {
+    display: inline-block;
+    padding: 0.35rem 0.8rem;
+    border-radius: 4px;
+    font-size: 0.8rem;
+    font-weight: 700;
+    color: white;
+}
+.panelpelisform-badge-estatico.panelpelis-card-badge--activa { background: #27ae60; }
+.panelpelisform-badge-estatico.panelpelis-card-badge--inactiva { background: #6c757d; }
+
 /* modificado (T10): aviso de "Rol Staff" en el header del form, antes con
    style="" inline */
 .panelpelisform-aviso-staff {

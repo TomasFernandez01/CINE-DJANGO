@@ -22,10 +22,21 @@
             <p class="panelcombo-lista-subtitulo">Activá o desactivá combos disponibles para la venta</p>
         </div>
 
+        <!-- modificado (Hilo 4 - Claude): "NUEVO" y "Eliminar" ocultos para Staff.
+             Antes se mostraban a todos aunque el backend (combos_crear/combos_eliminar,
+             @superuser_required desde T1) los rechace igual para Staff -- quedaba
+             el botón visible pero inútil, una fuente de confusión que el pedido de
+             delegacion_v2.md ("están mezclados hoy") señalaba justamente para esto.
+             El criterio elegido y ahora aplicado consistente en todo el módulo:
+             Staff SOLO activa/desactiva (mismo patrón que Salas/Cupones/Películas). -->
         <div class="panelcombo-lista-acciones">
+            {% if es_super %}
             <button type="submit" form="formCombos" id="btnEliminarSeleccionadas" class="btn btn-danger panelcombo-lista-btn-eliminar" disabled>Eliminar</button>
+            {% endif %}
             <a href="{% url 'panel:inicio' %}" class="btn btn-primary">INICIO</a>
+            {% if es_super %}
             <a href="{% url 'panel:combos_crear' %}" class="btn btn-primary">NUEVO</a>
+            {% endif %}
         </div>
 </div>
 
@@ -46,10 +57,17 @@
         {% endif %}
         
         <div class="card-header">
+            <!-- modificado (Hilo 4 - Claude): el checkbox de selección para borrado
+                 masivo también se oculta para Staff -- no tiene sentido seleccionar
+                 combos para una acción (Eliminar) que no puede ejecutar. -->
+            {% if es_super %}
             <label class="panelcombo-lista-check-label">
                 <input type="checkbox" name="seleccionadas" value="{{ c.id }}" class="chk-combo panel-checkbox">
                 <h3 class="panelcombo-lista-nombre">{{ c.nombre }}</h3>
             </label>
+            {% else %}
+            <h3 class="panelcombo-lista-nombre">{{ c.nombre }}</h3>
+            {% endif %}
             <span class="panelcombo-lista-badge {% if c.activo %}panelcombo-lista-badge--activo{% else %}panelcombo-lista-badge--inactivo{% endif %}">{% if c.activo %}Activo{% else %}Inactivo{% endif %}</span>
         </div>
 

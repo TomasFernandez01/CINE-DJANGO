@@ -67,16 +67,22 @@ def peliculas_editar(request, pelicula_id):
         form = PeliculaForm(request.POST, request.FILES, instance=pelicula)
         
         # MODIFICACION GEMINI: Si es Staff (no SuperUser), solo se permite alterar en_cartelera y fecha_estreno
-        # modificado - TODO (T2): este checkbox en_cartelera sigue siendo un campo GLOBAL de
-        # Pelicula (afecta a TODAS las sedes a la vez). Lo correcto a futuro sería que el
-        # Staff no controle este campo global, sino que "estar en cartelera" para un Staff
-        # de sede se derive de si existen Funcion programadas para esta película en
-        # Sala.sede == get_sede_staff(request.user) (ver peliculas_lista más abajo, que ya
-        # anota tiene_funciones_en_mi_sede con ese mismo criterio). Cambiar esto de fondo
-        # implica sacarle a Staff la edición directa de en_cartelera y decidir qué hacer
-        # cuando una película no tiene ninguna Funcion en ninguna sede todavía (¿debería
-        # poder marcarse "en cartelera" igual, para pre-anunciarla?). Se deja sin tocar en
-        # esta tanda para no romper el flujo de edición actual; queda para una tanda futura.
+        # modificado (Hilo 4 - Claude): TODO de T2 resuelto. en_cartelera es un
+        # campo GLOBAL (afecta el sitio público entero, todas las sedes a la
+        # vez: peliculas/views.py::inicio y lista_peliculas filtran por
+        # en_cartelera=True sin distinguir sede). Dejar que un Staff de UNA
+        # sede lo apague de golpe sacaba la película de la cartelera pública
+        # de TODAS las sedes, no solo la suya -- exactamente el problema que
+        # señalaba el TODO. Resolución elegida: Staff ya NO controla
+        # en_cartelera (pasa a ser exclusivo de SuperUser, mismo criterio que
+        # el resto de los campos globales de Pelicula). El indicador real de
+        # "en cartelera en MI sede" para Staff no necesita un campo propio:
+        # ya se resuelve solo, sin acción manual, a partir de si existen
+        # Funcion en su sede (ver peliculas_lista más abajo,
+        # tiene_funciones_en_mi_sede) -- que es justamente lo que Staff sí
+        # controla creando/borrando funciones para su sede. Fecha de estreno
+        # sigue siendo editable por Staff (no tiene el mismo problema: es
+        # informativo, no filtra nada en el sitio público).
         if not es_super:
             # Preservar valores originales de los demás campos
             if form.is_valid():
@@ -91,6 +97,7 @@ def peliculas_editar(request, pelicula_id):
                 obj.actores = original.actores
                 obj.año = original.año
                 obj.poster = original.poster
+                obj.en_cartelera = original.en_cartelera  # modificado (Hilo 4): ver comentario arriba
                 obj.save()
                 messages.success(request, f'Película "{pelicula.titulo}" actualizada (activación/estreno por Staff).')
                 return redirect('panel:peliculas_detalle', pelicula_id=pelicula.id)

@@ -29,9 +29,14 @@
         <div>
             <h1 class="panelpelisform-titulo">{{ titulo_pagina }}</h1>
             {% if not es_super and accion == 'editar' %}
+
             <!-- modificado (T10): style="" inline movido a .panelpelisform-aviso-staff en form.css -->
             <div class="panelpelisform-aviso-staff">
                 <strong>Rol Staff:</strong> Podés actualizar el estado de cartelera y fecha de estreno local. Los metadatos generales del catálogo son administrados por el SuperUser (HQ).
+            <!-- modificado (Hilo 4 - Claude): texto del aviso actualizado -- Staff
+                 ya no controla en_cartelera (ver panel/views/peliculas.py::peliculas_editar). -->
+            <div style="background: rgba(229, 9, 20, 0.15); border-left: 4px solid #e50914; padding: 0.75rem 1rem; border-radius: 4px; margin-top: 0.5rem; color: #ffffff; font-size: 0.9rem;">
+                <strong>Rol Staff:</strong> Podés actualizar la fecha de estreno local. El estado de cartelera (global, afecta a todas las sedes) y los metadatos generales del catálogo son administrados por el SuperUser (HQ). Para tu sede, la película aparece "en cartelera" automáticamente en cuanto le programás una función.
             </div>
             {% endif %}
             {% if accion == 'crear' %}
@@ -136,12 +141,25 @@
                                 <label class="form-label">Fecha de estreno</label>
                                 {{ form.fecha_estreno }}
                             </div>
+                            <!-- modificado (Hilo 4 - Claude): en_cartelera ya no es editable
+                                 por Staff (ver TODO resuelto en peliculas_editar) -- se muestra
+                                 de solo lectura con el mismo badge que ya usa peliculas/lista.html,
+                                 en vez de un checkbox que el backend iba a ignorar igual. -->
+                            {% if es_super %}
                             <div class="checkbox-row">
                                 {{ form.en_cartelera }}
                                 <label for="{{ form.en_cartelera.id_for_label }}">
                                     Mostrar en cartelera
                                 </label>
                             </div>
+                            {% else %}
+                            <div>
+                                <label class="form-label">En cartelera (global)</label>
+                                <span class="panelpelis-card-badge {% if objeto.en_cartelera %}panelpelis-card-badge--activa{% else %}panelpelis-card-badge--inactiva{% endif %} panelpelisform-badge-estatico">
+                                    {% if objeto.en_cartelera %}En cartelera{% else %}Fuera de cartelera{% endif %}
+                                </span>
+                            </div>
+                            {% endif %}
                         </div>
 
                     </div>

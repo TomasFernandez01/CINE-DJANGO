@@ -33,6 +33,43 @@
             <div class="card-header"><h3> Datos del Combo</h3></div>
             <div class="card-body panelpromoform-card-body-stack">
 
+                <!-- modificado (Hilo 4 - Claude): antes estos 5 campos se mostraban
+                     como inputs editables para Staff aunque panel/views/promociones.py
+                     ::combos_editar los pisa con los valores originales antes de
+                     guardar (T1: Staff solo puede tocar 'activo'). El usuario Staff
+                     podía cambiar el precio en el form, mandarlo, y verlo "revertido"
+                     sin ningún aviso -- confuso. Ahora, si es Staff editando (no
+                     accion=='crear', que ya es @superuser_required y nunca llega
+                     acá para Staff), esos 5 campos se muestran de solo lectura con
+                     el valor ya guardado, y el mensaje de abajo explica por qué. -->
+                {% if accion == 'editar' and not es_super %}
+                <div class="panelpromoform-aviso-staff">
+                    Como Staff, solo podés activar o desactivar este combo. El resto
+                    de los datos los administra un SuperUser.
+                </div>
+                <div>
+                    <label class="form-label">Nombre</label>
+                    <p class="panelpromoform-campo-sololectura">{{ objeto.nombre }}</p>
+                </div>
+                <div>
+                    <label class="form-label">Descripción</label>
+                    <p class="panelpromoform-campo-sololectura">{{ objeto.descripcion }}</p>
+                </div>
+                <div>
+                    <label class="form-label">Precio ($)</label>
+                    <p class="panelpromoform-campo-sololectura">${{ objeto.precio|floatformat:0 }}</p>
+                </div>
+                <div>
+                    <label class="form-label">Categoría</label>
+                    <p class="panelpromoform-campo-sololectura">{{ objeto.categoria }}</p>
+                </div>
+                {% if objeto.imagen %}
+                <div>
+                    <label class="form-label">Imagen</label>
+                    <img src="{{ objeto.imagen.url }}" class="panelpromoform-imagen-preview">
+                </div>
+                {% endif %}
+                {% else %}
                 <div>
                     <label class="form-label">Nombre <span class="required">*</span></label>
                     {{ form.nombre }}
@@ -74,6 +111,7 @@
                     {% endif %}
                     {{ form.imagen }}
                 </div>
+                {% endif %}
 
                 <div class="checkbox-row">
                     {{ form.activo }}
@@ -88,13 +126,16 @@
             <button type="submit" name="guardar_y_agregar_otro" value="1" class="btn btn-primary">CARGAR</button>
             <a href="{% url 'panel:combos_lista' %}" class="btn btn-primary">Cancelar</a>
 
-            {% if objeto and accion == 'editar' %}
+            <!-- modificado (Hilo 4 - Claude): botón BORRAR oculto para Staff --
+                 combos_eliminar es @superuser_required desde T1, mostrárselo a
+                 Staff era otro botón que solo iba a rechazar el pedido. -->
+            {% if objeto and accion == 'editar' and es_super %}
             <button type="submit" form="formEliminarCombo" class="btn btn-danger">BORRAR</button>
             {% endif %}
 
         </div>
     </form>
-    {% if objeto and accion == 'editar' %}
+    {% if objeto and accion == 'editar' and es_super %}
     <form method="post" action="{% url 'panel:combos_eliminar' %}" id="formEliminarCombo">
         {% csrf_token %}
         <input type="hidden" name="seleccionadas" value="{{ objeto.id }}">

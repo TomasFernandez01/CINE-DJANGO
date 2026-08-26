@@ -28,6 +28,31 @@
     </span>
 </div>
 
+<!-- nuevo (Hilo 4 - Claude): filtro de rango de fechas real para ROI de
+     cupones y método de pago (antes esos dos gráficos eran sobre el total
+     histórico fijo, sin poder acotarlos — punto pendiente señalado en el
+     reporte de T6). GET simple (recarga la página), sin AJAX: esta página
+     no tenía JS propio para gráficos interactivos como dashboard.js, así
+     que no se le agregó esa complejidad para un filtro que no la
+     necesita. "Recaudado hoy" / "Total histórico" / QR arriba NO se ven
+     afectados por este filtro a propósito: son cifras de referencia fija
+     (hoy / siempre), no del rango elegido. -->
+{% if rango_error %}
+<div class="panelpag-est-rango-error">{{ rango_error }} Mostrando los últimos 30 días.</div>
+{% endif %}
+<form method="get" class="panelpag-est-rango-form">
+    <label class="panelpag-est-rango-label">
+        Desde
+        <input type="date" name="desde" value="{{ rango_desde }}" class="input">
+    </label>
+    <label class="panelpag-est-rango-label">
+        Hasta
+        <input type="date" name="hasta" value="{{ rango_hasta }}" class="input">
+    </label>
+    <button type="submit" class="btn btn-dark">Filtrar</button>
+    <a href="{% url 'panel:pagos_estadisticas' %}" class="btn btn-ghost">Últimos 30 días</a>
+</form>
+
 <!-- Stats -->
 <div class="stat-grid">
     <div class="stat-card green">
@@ -177,7 +202,11 @@
     <!-- ROI de cupones -->
     <div class="card">
         <div class="card-header">
-            <h3>🎟️ ROI de cupones (histórico)</h3>
+            <!-- modificado (Hilo 4 - Claude): se sacó el emoji 🎟️ (T5 había
+                 limpiado el resto del panel; este quedó afuera porque T6 lo
+                 agregó después). Título ahora aclara "en el rango" ya que
+                 dejó de ser histórico fijo. -->
+            <h3>ROI de cupones (en el rango seleccionado)</h3>
         </div>
         {% if roi_cupones %}
         <div style="overflow-x:auto;">
@@ -210,7 +239,9 @@
     <!-- Método de pago más usado -->
     <div class="card">
         <div class="card-header">
-            <h3>💳 Método de pago más usado</h3>
+            <!-- modificado (Hilo 4 - Claude): se sacó el emoji 💳 (mismo caso
+                 que el título de arriba, agregado por T6 después de T5). -->
+            <h3>Método de pago más usado (en el rango seleccionado)</h3>
         </div>
         {% if metodo_pago_labels %}
         <div style="position: relative; height: 260px; width: 100%; padding: 1rem;">

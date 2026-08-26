@@ -27,6 +27,24 @@
 .panelpelis-card-badge--activa { background: #27ae60; }
 .panelpelis-card-badge--inactiva { background: #6c757d; }
 
+/* nuevo (Hilo 4 - Claude): badge de sede con estilo propio para Staff. En T2
+   había quedado como texto plano (panelpelis-card-dato) porque esa tanda no
+   tenía permitido tocar CSS. Deliberadamente NO reutiliza
+   .panelpelis-card-badge (esa es position:absolute sobre el poster, para el
+   estado global "En cartelera"; superponer dos ahí se pisaría). Este va en
+   el flujo normal de la card, debajo del nombre. */
+.panelpelis-badge-sede {
+    display: inline-block;
+    padding: 0.2rem 0.6rem;
+    border-radius: 4px;
+    font-size: 0.7rem;
+    font-weight: 600;
+    color: white;
+    margin-bottom: 0.75rem;
+}
+.panelpelis-badge-sede--si { background: #27ae60; }
+.panelpelis-badge-sede--no { background: #6c757d; }
+
 .panelpelis-card-info { padding: 0.85rem; }
 .panelpelis-card-nombre { font-weight: 700; color: #1a1a2e; margin-bottom: 0.35rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .panelpelis-card-dato { font-size: 0.75rem; color: #999; margin-bottom: 0.75rem; }

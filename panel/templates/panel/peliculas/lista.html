@@ -82,20 +82,27 @@
                     {% if p.año %} · {{ p.año }}{% endif %}
                     {% if p.duracion %} · {{ p.duracion_formato }}{% endif %}
                 </div>
-                <!-- modificado (T2): badge de visibilidad por sede para Staff con sede fija.
+                <!-- modificado (Hilo 4 - Claude): el badge de T2 era texto plano
+                     (panelpelis-card-dato) porque esa tanda no tenía permitido tocar
+                     CSS. Ahora tiene su propio estilo de color, sin tocar
+                     panelpelis-card-badge (esa sigue reservada al estado global
+                     "En cartelera" sobre el poster, para no romper ese diseño). -->
+<!-- modificado (T2): badge de visibilidad por sede para Staff con sede fija.
                      Reutiliza la clase panelpelis-card-dato (ya existente, sin CSS nuevo:
                      esta tanda no tiene permitido tocar archivos .css) porque
                      panelpelis-card-badge está reservada/posicionada para el estado
                      de "En cartelera" sobre el poster y superponerla acá rompería el
                      diseño. No se filtra el listado: el Staff sigue viendo todo el
                      catálogo, solo se le indica si hay funciones en SU sede. -->
-                {% if not es_super and sede_staff %}
-                <div class="panelpelis-card-dato">
+                     {% if not es_super and sede_staff %}
+                     <div class="panelpelis-card-dato">
+                <span class="panelpelis-badge-sede {% if p.tiene_funciones_en_mi_sede %}panelpelis-badge-sede--si{% else %}panelpelis-badge-sede--no{% endif %}">
                     {% if p.tiene_funciones_en_mi_sede %}
                         En cartelera en tu sede ({{ sede_staff.nombre }})
                     {% else %}
                         Sin funciones en tu sede ({{ sede_staff.nombre }})
                     {% endif %}
+                </span>
                 </div>
                 {% endif %}
                 <div class="panelpelis-card-acciones">

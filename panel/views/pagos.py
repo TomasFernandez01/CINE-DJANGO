@@ -4,7 +4,7 @@
 # modificado (T6 - BI): + Count (distribución por método de pago) y
 # CuponUsado (solo lectura, para el ROI de cupones — el modelo Cupon vive
 # en la app promociones, no se toca nada ahí).
-from datetime import timedelta
+from datetime import date, timedelta  # modificado (Hilo 4 - Claude): date para el filtro desde/hasta
 from django.db.models import Sum, Q, Count
 from django.shortcuts import render
 from django.utils import timezone
@@ -18,6 +18,36 @@ from ..decorators import staff_required, get_sede_activa_panel
 # ============================================================
 # PAGOS
 # ============================================================
+
+# nuevo (Hilo 4 - Claude): filtro de rango de fechas real, resolviendo el
+# punto pendiente que había quedado señalado en el reporte de T6
+# ("pagos.py no tiene hoy un selector de rango de fechas"). Mismo formato
+# (?desde=YYYY-MM-DD&hasta=YYYY-MM-DD) y mismo criterio de validación que
+# ya usa panel/views/dashboard.py::_parsear_rango, pero implementado acá
+# como función propia (no se importa de dashboard.py -- son módulos
+# hermanos sin dependencia entre sí hoy, y esta función es chica) para no
+# crear un acoplamiento entre dos archivos que hasta ahora eran
+# independientes. Default: últimos 30 días (mismo default que dashboard.py)
+# si no se pasa nada por GET, para que la página no arranque vacía.
+def _parsear_rango_pagos(request):
+    """Lee ?desde=&hasta= de la request. Devuelve (desde, hasta, error).
+    Sin parámetros -> últimos 30 días (hoy incluido). Con error de
+    parseo o desde > hasta, devuelve (None, None, mensaje)."""
+    desde_raw = request.GET.get('desde', '')
+    hasta_raw = request.GET.get('hasta', '')
+    if not desde_raw and not hasta_raw:
+        hasta = timezone.now().date()
+        desde = hasta - timedelta(days=29)
+        return desde, hasta, None
+    try:
+        desde = date.fromisoformat(desde_raw)
+        hasta = date.fromisoformat(hasta_raw)
+    except ValueError:
+        return None, None, "Fechas inválidas. Formato esperado: YYYY-MM-DD."
+    if desde > hasta:
+        return None, None, "La fecha 'desde' no puede ser posterior a 'hasta'."
+    return desde, hasta, None
+
 
 @staff_required
 def pagos_lista(request):
@@ -67,6 +97,16 @@ def pagos_estadisticas(request):
     sede_activa = get_sede_activa_panel(request)
     filtro_pago_sede = {'reserva__funcion__sala__sede': sede_activa} if sede_activa else {}
     filtro_funcion_sede = {'sala__sede': sede_activa} if sede_activa else {}
+
+    # nuevo (Hilo 4 - Claude): rango de fechas real para ROI de cupones y
+    # método de pago (ver _parsear_rango_pagos arriba). Si viene mal
+    # formado, no se rompe la página entera: se avisa con un mensaje y se
+    # cae al default de 30 días, para que "Estadísticas" nunca quede en
+    # blanco por un querystring roto.
+    desde, hasta, error_rango = _parsear_rango_pagos(request)
+    if error_rango:
+        hasta = ahora.date()
+        desde = hasta - timedelta(days=29)
 
     pagos_hoy = Pago.objects.filter(estado='aprobado', fecha_pago__gte=hoy, **filtro_pago_sede)
     recaudado_hoy = pagos_hoy.aggregate(t=Sum('monto'))['t'] or 0
@@ -128,12 +168,15 @@ def pagos_estadisticas(request):
 
     # modificado (T6 - BI): gráfico nuevo #2 (ROI de cupones) y #3
     # (método de pago más usado). Ver helpers al final del archivo.
-    roi_cupones = _roi_cupones(sede_activa)
-    metodo_pago = _distribucion_metodo_pago(sede_activa)
-
+    # modificado (Hilo 4 - Claude): ambos ahora reciben desde/hasta, ya no
+    # son sobre el total histórico fijo (salvo que no se haya pasado
+    # ningún parámetro, en cuyo caso el rango es "últimos 30 días" y no
+    # "todo el histórico" — ver nota en _distribucion_metodo_pago).
+    roi_cupones = _roi_cupones(desde, hasta, sede_activa)
+    metodo_pago = _distribucion_metodo_pago(desde, hasta, sede_activa)
     # modificado (T7 - BI): gráfico nuevo #3 (tiempo promedio hasta el pago).
     tiempo_hasta_pago = _tiempo_promedio_hasta_pago(sede_activa)
-
+    
     contexto = {
         'ahora': ahora,
         'recaudado_hoy': recaudado_hoy,
@@ -152,6 +195,11 @@ def pagos_estadisticas(request):
         'metodo_pago_valores': metodo_pago['valores'],
         # modificado (T7 - BI)
         'tiempo_hasta_pago': tiempo_hasta_pago,
+        # nuevo (Hilo 4 - Claude): para precargar el form de rango y mostrar
+        # el error si el querystring vino mal formado.
+        'rango_desde': desde.strftime('%Y-%m-%d'),
+        'rango_hasta': hasta.strftime('%Y-%m-%d'),
+        'rango_error': error_rango,
     }
     return render(request, 'panel/pagos/estadisticas.html', contexto)
 
@@ -160,18 +208,26 @@ def pagos_estadisticas(request):
 # nuevo (T6 - BI): ROI de cupones + distribución por método de pago
 # ============================================================
 
-def _roi_cupones(sede=None):
+def _roi_cupones(desde, hasta, sede=None):
     """
     Por cada cupón usado: cuánto descuento otorgó en total
     (descuento_total_otorgado, de CuponUsado.descuento_aplicado) vs.
     cuánta recaudación generaron los pagos APROBADOS de esas reservas
-    (recaudacion_generada, de Pago.monto vía CuponUsado.reserva).
+    (recaudacion_generada, de Pago.monto vía CuponUsado.reserva), dentro
+    del rango [desde, hasta] (filtrado por la fecha del PAGO, no la fecha
+    en que se usó el cupón, para que el "generó" sea consistente con el
+    resto de las métricas de esta página, que también son por fecha_pago).
 
     nuevo (T6 - BI): cupones_estadisticas() ya vive en
     panel/views/promociones.py — fuera del alcance de esta tanda, no se
     toca — y calcula usos/descuentos, pero no compara contra la
     recaudación generada; eso es lo que agrega este cálculo, en modo
     lectura sobre CuponUsado/Cupon (ambos de la app promociones).
+
+    modificado (Hilo 4 - Claude): antes era sobre el total histórico fijo;
+    ahora recibe desde/hasta (ver _parsear_rango_pagos en
+    pagos_estadisticas), resolviendo el punto que había quedado señalado
+    en el reporte de T6.
 
     Una reserva con cupón que nunca se pagó (o cuyo pago fue rechazado)
     no suma a 'recaudacion_generada' porque se filtra
@@ -182,6 +238,8 @@ def _roi_cupones(sede=None):
     datos = CuponUsado.objects.filter(
         reserva__isnull=False,
         reserva__pago__estado='aprobado',
+        reserva__pago__fecha_pago__date__gte=desde,  # modificado (Hilo 4)
+        reserva__pago__fecha_pago__date__lte=hasta,  # modificado (Hilo 4)
         **filtro_sede,
     ).values('cupon__codigo').annotate(
         descuento_total_otorgado=Sum('descuento_aplicado'),
@@ -205,24 +263,23 @@ def _roi_cupones(sede=None):
     return roi
 
 
-def _distribucion_metodo_pago(sede=None):
+def _distribucion_metodo_pago(desde, hasta, sede=None):
     """
-    Distribución de pagos APROBADOS por método de pago (torta), sobre el
-    total histórico.
+    Distribución de pagos APROBADOS por método de pago (torta), dentro
+    del rango [desde, hasta].
 
-    nuevo (T6 - BI): a diferencia de panel/views/dashboard.py, esta vista
-    (pagos.py) no tiene hoy un selector de rango de fechas — trabaja con
-    'hoy' y 'total histórico' (ver pagos_estadisticas() arriba). El
-    paquete T6_thomp.md pide graficar "para el rango de fechas ya
-    filtrado en pagos.py", pero ese rango no existe todavía acá; se deja
-    explícito: esta distribución es sobre el total histórico, mismo
-    alcance que 'total_recaudado'. Si más adelante se agrega un filtro de
-    fechas a pagos.py, este cálculo debería recibir desde/hasta como
-    parámetros, igual que los helpers de dashboard.py.
+    modificado (Hilo 4 - Claude): resuelve el punto que había quedado
+    señalado en el reporte de T6 ("pagos.py no tiene hoy un selector de
+    rango de fechas"). Ahora sí lo tiene (ver _parsear_rango_pagos y el
+    form en pagos/estadisticas.html) y este cálculo lo recibe como
+    parámetro, igual que ya hacían los helpers de dashboard.py.
     """
     filtro_sede = {'reserva__funcion__sala__sede': sede} if sede else {}
     datos = Pago.objects.filter(
-        estado='aprobado', **filtro_sede
+        estado='aprobado',
+        fecha_pago__date__gte=desde,  # modificado (Hilo 4)
+        fecha_pago__date__lte=hasta,  # modificado (Hilo 4)
+        **filtro_sede
     ).values('metodo_pago').annotate(cantidad=Count('id')).order_by('-cantidad')
 
     metodo_label = dict(Pago.METODO_PAGO_CHOICES)
