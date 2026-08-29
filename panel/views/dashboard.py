@@ -117,6 +117,12 @@ def inicio(request):
     # que ya usan los KPIs de arriba.
     heatmap = _heatmap_entradas_por_dia_hora(periodo_desde, periodo_hasta, sede_activa)
 
+    # nuevo (T11): variante del heatmap anterior pero por recaudación
+    # (Pago.monto) en vez de cantidad de entradas — se pidió tenerlos los
+    # DOS, no reemplazar uno por el otro (confirmado por Tomás). Mismo
+    # período y misma matriz 7x24, el template los muestra con un toggle.
+    heatmap_recaudacion = _heatmap_recaudacion_por_dia_hora(periodo_desde, periodo_hasta, sede_activa)
+
     # modificado (T6 - BI): gráfico nuevo #4, ranking comparativo entre
     # sedes — solo se calcula (y se muestra) para SuperUser.
     ranking_sedes = _ranking_sedes(periodo_desde, periodo_hasta) if request.user.is_superuser else None
@@ -141,6 +147,8 @@ def inicio(request):
         # modificado (T6 - BI)
         'heatmap_matriz': heatmap['matriz'],
         'heatmap_horas': heatmap['horas'],
+        # nuevo (T11): segundo heatmap, por recaudación
+        'heatmap_recaudacion_matriz': heatmap_recaudacion['matriz'],
         'ranking_sedes': ranking_sedes,
         # modificado (T7 - BI)
         'rating_recaudacion_datos': rating_vs_recaudacion,
@@ -482,6 +490,48 @@ def _heatmap_entradas_por_dia_hora(desde, hasta, sede=None):
         for v in fila_valores:
             alpha = round(v / maximo, 2) if maximo else 0
             celdas.append({'valor': v, 'alpha': alpha})
+        matriz.append({'dia': DIAS_EXTRACT_WEEKDAY[i], 'celdas': celdas})
+
+    return {'matriz': matriz, 'horas': list(range(24))}
+
+
+def _heatmap_recaudacion_por_dia_hora(desde, hasta, sede=None):
+    """
+    nuevo (T11): misma matriz 7x24 que _heatmap_entradas_por_dia_hora, pero
+    con recaudación (Pago.monto de pagos 'aprobado') en vez de cantidad de
+    entradas. Se pidió explícitamente tener los DOS heatmaps, no reemplazar
+    el existente — la idea es, más adelante, agrupar todos los gráficos de
+    BI en una sección propia por app (ver charla T11).
+
+    El eje día/hora sigue siendo el de la FUNCIÓN (reserva__funcion__fecha_hora),
+    igual que el heatmap de entradas, para que ambos sean comparables celda a
+    celda. El filtro de período es por fecha_pago (mismo criterio que
+    _ranking_sedes usa para "recaudación del período").
+    """
+    filtro_sede = {'reserva__funcion__sala__sede': sede} if sede else {}
+    filas = Pago.objects.filter(
+        estado='aprobado',
+        fecha_pago__date__gte=desde,
+        fecha_pago__date__lte=hasta,
+        **filtro_sede,
+    ).annotate(
+        dow=ExtractWeekDay('reserva__funcion__fecha_hora'),
+        hora=ExtractHour('reserva__funcion__fecha_hora'),
+    ).values('dow', 'hora').annotate(recaudacion=Sum('monto'))
+
+    valores = [[0 for _ in range(24)] for _ in range(7)]
+    for fila in filas:
+        dia_idx = fila['dow'] - 1  # ExtractWeekDay: 1=Domingo..7=Sábado
+        hora_idx = fila['hora']
+        valores[dia_idx][hora_idx] = float(fila['recaudacion'] or 0)
+
+    maximo = max((v for fila in valores for v in fila), default=0)
+    matriz = []
+    for i, fila_valores in enumerate(valores):
+        celdas = []
+        for v in fila_valores:
+            alpha = round(v / maximo, 2) if maximo else 0
+            celdas.append({'valor': round(v, 2), 'alpha': alpha})
         matriz.append({'dia': DIAS_EXTRACT_WEEKDAY[i], 'celdas': celdas})
 
     return {'matriz': matriz, 'horas': list(range(24))}

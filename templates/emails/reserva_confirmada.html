@@ -45,6 +45,13 @@
                                                 <td style="color: #666; font-weight: bold;">Película:</td>
                                                 <td style="color: #333;">{{ reserva.funcion.pelicula.titulo }}</td>
                                             </tr>
+                                            <!-- modificado (T11 / Hilo 2 punto 2): sede, además de la sala que ya estaba -->
+                                            {% if sede %}
+                                            <tr>
+                                                <td style="color: #666; font-weight: bold;">Sede:</td>
+                                                <td style="color: #333;">{{ sede.nombre }} — {{ sede.direccion }}</td>
+                                            </tr>
+                                            {% endif %}
                                             <tr>
                                                 <td style="color: #666; font-weight: bold;">Sala:</td>
                                                 <td style="color: #333;">{{ reserva.funcion.sala.nombre }}</td>

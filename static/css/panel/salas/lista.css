@@ -34,3 +34,9 @@
 
 .panelsalas-vacio-card { grid-column: 1 / -1; }
 .panelsalas-vacio { text-align: center; padding: 3rem; color: #999; }
+
+/* nuevo (T12 / Hilo 2 punto 5): duplicar sala en otra sede */
+.panelsalas-duplicar-wrap { margin-top: 0.6rem; }
+.panelsalas-duplicar-toggle { font-size: 0.75rem; color: #666; cursor: pointer; user-select: none; }
+.panelsalas-duplicar-form { display: flex; gap: 0.5rem; margin-top: 0.5rem; }
+.panelsalas-duplicar-form select { flex: 1; padding: 0.3rem; border-radius: 4px; border: 1px solid #ddd; font-size: 0.8rem; }

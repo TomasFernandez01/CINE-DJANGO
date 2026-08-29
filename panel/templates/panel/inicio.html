@@ -584,6 +584,50 @@
     </div>
 </div>
 
+
+<!-- ============================================================ -->
+<!-- nuevo (T11): mismo heatmap pero por RECAUDACIÓN, no por cantidad de
+     entradas. Se agrega como card aparte (no reemplaza el de arriba) —
+     confirmado que se quieren los dos. Reusa exactamente las mismas
+     clases CSS (.heatmap-wrap/.heatmap-tabla/.heatmap-celda) de T6, solo
+     cambia el color para diferenciarlo de un vistazo del de entradas. -->
+<!-- ============================================================ -->
+<div class="card">
+    <div class="card-header">
+        <h3>Franjas horarias pico (recaudación)</h3>
+    </div>
+    <div class="heatmap-wrap">
+        {% if heatmap_recaudacion_matriz %}
+        <table class="heatmap-tabla">
+            <thead>
+                <tr>
+                    <th></th>
+                    {% for h in heatmap_horas %}<th>{{ h }}</th>{% endfor %}
+                </tr>
+            </thead>
+            <tbody>
+                {% for fila in heatmap_recaudacion_matriz %}
+                <tr>
+                    <td class="heatmap-dia">{{ fila.dia }}</td>
+                    {% for celda in fila.celdas %}
+                    <td>
+                        <div class="heatmap-celda"
+                             style="background-color: rgba(40,167,69,{{ celda.alpha }});"
+                             title="{{ fila.dia }} {{ forloop.counter0 }}:00 — ${{ celda.valor }}"></div>
+                    </td>
+                    {% endfor %}
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        {% else %}
+        <div class="card-body" style="text-align:center;color:#999;padding:2rem;">
+            Sin recaudación en este período.
+        </div>
+        {% endif %}
+    </div>
+</div>
+
 <!-- ============================================================ -->
 <!-- modificado (T6 - BI): RANKING COMPARATIVO ENTRE SEDES (solo SuperUser) -->
 <!-- ============================================================ -->

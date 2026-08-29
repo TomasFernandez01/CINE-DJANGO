@@ -140,10 +140,24 @@
     <!-- ===== Columna derecha: horarios ===== -->
     <div class="detalle-horarios">
         {# nuevo (Sedes - tareasnuevas punto 1): título dinámico según la sede elegida #}
-        {% if sede_actual %}
+        {# modificado (T12 / Hilo 2 punto 3): si no hay funciones en la sede elegida, el título ya no dice esa sede — se está mostrando el fallback de todas las sedes #}
+        {% if sede_actual and not sin_funciones_en_mi_sede %}
         <h2>Horarios de {{ sede_actual.nombre }}</h2>
         {% else %}
         <h2>Todos los Horarios</h2>
+        {% endif %}
+
+        {# nuevo (T12 / Hilo 2 punto 3): aviso de fallback + botón para volver a "todas las sedes" de forma explícita #}
+        {% if sin_funciones_en_mi_sede %}
+        <div class="sin-funciones-box">
+            Esta película no tiene funciones en {{ sede_actual.nombre }} por ahora. Te mostramos los horarios de todas las sedes.
+            <form method="post" action="{% url 'sedes:cambiar_sede' %}" style="display:inline;">
+                {% csrf_token %}
+                <input type="hidden" name="next" value="{{ request.path }}">
+                <input type="hidden" name="sede_id" value="">
+                <button type="submit" class="fecha-quitar" style="background:none;border:none;cursor:pointer;text-decoration:underline;">Ver en todas las sedes</button>
+            </form>
+        </div>
         {% endif %}
 
         {% if fechas_disponibles %}

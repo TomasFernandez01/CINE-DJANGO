@@ -23,22 +23,26 @@ try:
 except ImportError:
     QR_DISPONIBLE = False
 
-def get_max_asientos():
+def get_max_asientos(sede=None):
     # modificado (Hilo 1 - Tanda D): ver mismo comentario en get_tiempo_limite() de abajo.
+    # modificado (T11): parámetro opcional `sede`, ver detalle en get_tiempo_limite().
     try:
         from panel.models import ConfiguracionGeneral
-        return ConfiguracionGeneral.obtener().max_asientos_por_reserva
+        return ConfiguracionGeneral.obtener(sede=sede).max_asientos_por_reserva
     except Exception:
         return getattr(settings, 'MAX_ASIENTOS_POR_RESERVA', 6)
 
 
-def get_tiempo_limite():
+def get_tiempo_limite(sede=None):
     # modificado (Hilo 1 - Tanda D): antes leía solo de settings.py. Ahora se
     # prioriza el valor cargado en Panel > Configuración General (editable sin
     # migraciones); si esa fila todavía no existe, cae al valor de settings.py.
+    # modificado (T11): se agrega parámetro opcional `sede` para respetar la
+    # config propia de cada sede (T9) cuando existe. Sin argumento, se
+    # comporta exactamente igual que antes (config global).
     try:
         from panel.models import ConfiguracionGeneral
-        return ConfiguracionGeneral.obtener().tiempo_limite_pago_minutos
+        return ConfiguracionGeneral.obtener(sede=sede).tiempo_limite_pago_minutos
     except Exception:
         return getattr(settings, 'TIEMPO_LIMITE_PAGO_MINUTOS', 15)
 
@@ -59,7 +63,9 @@ def elegir_tipo_entrada(request, funcion_id):
         messages.error(request, 'Esta función no está disponible.')
         return redirect('salas:lista_funciones')
 
-    max_cantidad = get_max_asientos()
+    # modificado (T11): se pasa la sede de la función para respetar su
+    # ConfiguracionGeneral propia (T9) si existe.
+    max_cantidad = get_max_asientos(sede=funcion.sala.sede)
 
     dia_semana_funcion = funcion.fecha_hora.weekday()  
     
@@ -175,7 +181,9 @@ def seleccionar_asientos(request, funcion_id):
         request.session[clave_sesion] = timezone.now().isoformat()
  
     inicio_seleccion_iso = request.session[clave_sesion]
-    tiempo_limite = get_tiempo_limite()
+    # modificado (T11): se pasa la sede de la función para respetar su
+    # ConfiguracionGeneral propia (T9) si existe.
+    tiempo_limite = get_tiempo_limite(sede=funcion.sala.sede)
  
     # Calcular segundos restantes desde que entró a la página
     inicio_dt = datetime.fromisoformat(inicio_seleccion_iso)
@@ -197,11 +205,13 @@ def seleccionar_asientos(request, funcion_id):
     layout = funcion.sala.layout_asientos()
     #max_asientos = get_max_asientos()
     # modificado: si el usuario ya pasó por "elegir-entrada" (paso 2), el máximo de asientos pasa a ser la cantidad que eligió ahí, no el máximo global de configuración. Si todavía no existe ese dato en sesión (por ejemplo, alguien que entra directo a esta URL sin pasar por el paso anterior), se sigue comportando exactamente igual que antes: usa el máximo global. Así no se rompe nada mientras el paso 2 no tenga pantalla todavía.
+    # modificado (T11): se pasa la sede de la función en ambas ramas para
+    # respetar su ConfiguracionGeneral propia (T9) si existe.
     reserva_en_progreso = request.session.get(CLAVE_SESION_RESERVA_EN_PROGRESO)
     if reserva_en_progreso and reserva_en_progreso.get('funcion_id') == funcion_id:
-        max_asientos = reserva_en_progreso.get('cantidad', get_max_asientos())
+        max_asientos = reserva_en_progreso.get('cantidad', get_max_asientos(sede=funcion.sala.sede))
     else:
-        max_asientos = get_max_asientos()
+        max_asientos = get_max_asientos(sede=funcion.sala.sede)
     # Precio real de CADA asiento (ya con el multiplicador de sala y, si corresponde, el de la categoría especial del asiento aplicado) y datos de las categorías especiales, para que el mapa de selección muestre el color/precio real en vez del precio plano de la función.
     precios_por_asiento = {}
     for fila in layout:
@@ -244,8 +254,10 @@ def confirmar_reserva_con_asientos(request, funcion_id):
     
     funcion = get_object_or_404(Funcion, id=funcion_id)
     asientos_seleccionados = request.POST.get('asientos_seleccionados', '')
-    max_asientos = get_max_asientos()
-    tiempo_limite = get_tiempo_limite()
+    # modificado (T11): se pasa la sede de la función para respetar su
+    # ConfiguracionGeneral propia (T9) si existe.
+    max_asientos = get_max_asientos(sede=funcion.sala.sede)
+    tiempo_limite = get_tiempo_limite(sede=funcion.sala.sede)
 
     # ─── Verificar timer de sesión ───────────────────────────────
     # El timer empezó en seleccionar_asientos. Si llegó aquí con tiempo suficiente, usamos los segundos restantes como fecha_limite_pago.
@@ -412,7 +424,9 @@ def detalle_reserva(request, reserva_id):
     reserva = get_object_or_404(Reserva, id=reserva_id, usuario=request.user)
     
     if reserva.cancelar_por_tiempo_expirado():
-        messages.warning(request, f' Esta reserva fue cancelada automáticamente porque expiró el tiempo de pago ({get_tiempo_limite()} minutos).')
+        # modificado (T11): se pasa la sede de la reserva para respetar su
+        # ConfiguracionGeneral propia (T9) si existe.
+        messages.warning(request, f' Esta reserva fue cancelada automáticamente porque expiró el tiempo de pago ({get_tiempo_limite(sede=reserva.funcion.sala.sede)} minutos).')
     
     if reserva.actualizar_estado_si_expiro():
         messages.info(request, 'Esta reserva ha expirado porque la función ya pasó.')

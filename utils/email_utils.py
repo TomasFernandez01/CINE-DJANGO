@@ -15,16 +15,20 @@ logger = logging.getLogger(__name__)
 # settings.py). Ahora se prioriza lo que esté cargado en Panel > Configuración
 # General > Envío de emails; si no hay nada cargado o está en modo "consola",
 # se comporta exactamente igual que antes (conexión default de settings.py).
-def _config_email():
+def _config_email(sede=None):
+    # modificado (T11): parámetro opcional `sede` para que, si esa sede tiene
+    # su propia fila de ConfiguracionGeneral (T9) con su propio servidor de
+    # email, se use esa en vez de siempre la global. Sin argumento (o sin fila
+    # propia de esa sede), se comporta exactamente igual que antes.
     try:
         from panel.models import ConfiguracionGeneral
-        return ConfiguracionGeneral.obtener()
+        return ConfiguracionGeneral.obtener(sede=sede)
     except Exception:
         return None
 
 
-def _obtener_conexion():
-    config = _config_email()
+def _obtener_conexion(sede=None):
+    config = _config_email(sede=sede)
     if not config or config.email_backend != 'smtp' or not config.email_host:
         return None  # None -> Django usa la conexión default de settings.py
     return get_connection(
@@ -37,11 +41,21 @@ def _obtener_conexion():
     )
 
 
-def _obtener_from_email():
-    config = _config_email()
+def _obtener_from_email(sede=None):
+    config = _config_email(sede=sede)
     if config and config.email_from:
         return config.email_from
     return getattr(settings, 'DEFAULT_FROM_EMAIL', 'webmaster@localhost')
+
+
+def _sede_de(reserva):
+    # nuevo (T11 / Hilo 2 punto 2): helper compartido para sacar la sede de
+    # una reserva de forma segura (nunca rompe el envío del email si por
+    # algún motivo faltara el dato).
+    try:
+        return reserva.funcion.sala.sede
+    except Exception:
+        return None
 
 
 def enviar_email_confirmacion_reserva(reserva, request=None):
@@ -53,6 +67,7 @@ def enviar_email_confirmacion_reserva(reserva, request=None):
     # logger.error de abajo ya cubre el mismo registro, sin ensuciar la consola en producción.
     try:
         usuario = reserva.usuario
+        sede = _sede_de(reserva)  # modificado (T11 / Hilo 2 punto 2)
         subject = f'🎬 Reserva Confirmada - {reserva.codigo_reserva}'
 
         # Obtener el dominio del sitio
@@ -62,19 +77,22 @@ def enviar_email_confirmacion_reserva(reserva, request=None):
             domain = settings.SITE_URL if hasattr(settings, 'SITE_URL') else 'http://localhost:8000'
 
         # Renderizar el template HTML
+        # modificado (T11 / Hilo 2 punto 2): se agrega `sede` al contexto para
+        # mostrarla en el email (nombre y dirección), no solo el nombre de sala.
         html_content = render_to_string('emails/reserva_confirmada.html', {
             'usuario': usuario,
             'reserva': reserva,
             'domain': domain,
+            'sede': sede,
         })
 
         # Crear el email
         email = EmailMultiAlternatives(
             subject=subject,
             body=f'Tu reserva {reserva.codigo_reserva} ha sido confirmada...',
-            from_email=_obtener_from_email(),
+            from_email=_obtener_from_email(sede=sede),
             to=[usuario.email],
-            connection=_obtener_conexion()
+            connection=_obtener_conexion(sede=sede)
         )
         email.attach_alternative(html_content, "text/html")
 
@@ -96,6 +114,7 @@ def enviar_email_pago_confirmado(pago, request=None):
     try:
         reserva = pago.reserva
         usuario = reserva.usuario
+        sede = _sede_de(reserva)  # modificado (T11 / Hilo 2 punto 2)
         subject = f'✅ Pago Confirmado - {pago.numero_transaccion}'
         
         # Obtener el dominio del sitio
@@ -105,14 +124,17 @@ def enviar_email_pago_confirmado(pago, request=None):
             domain = settings.SITE_URL if hasattr(settings, 'SITE_URL') else 'http://localhost:8000'
         
         # Renderizar el template HTML
+        # modificado (T11 / Hilo 2 punto 2): se agrega `sede` al contexto.
         html_content = render_to_string('emails/pago_confirmado.html', {
             'usuario': usuario,
             'reserva': reserva,
             'pago': pago,
             'domain': domain,
+            'sede': sede,
         })
         
         # Texto plano como alternativa
+        # modificado (T11 / Hilo 2 punto 2): se agrega la sede al texto plano.
         text_content = f"""
         ¡Pago Exitoso!
         
@@ -124,6 +146,7 @@ def enviar_email_pago_confirmado(pago, request=None):
         Monto: ${pago.monto}
         
         Película: {reserva.funcion.pelicula.titulo}
+        Sede: {sede.nombre if sede else '-'}
         Código de reserva: {reserva.codigo_reserva}
         Fecha: {reserva.funcion.fecha_hora.strftime('%d/%m/%Y')}
         Horario: {reserva.funcion.fecha_hora.strftime('%H:%M')} hs
@@ -135,9 +158,9 @@ def enviar_email_pago_confirmado(pago, request=None):
         email = EmailMultiAlternatives(
             subject=subject,
             body=text_content,
-            from_email=_obtener_from_email(),
+            from_email=_obtener_from_email(sede=sede),
             to=[usuario.email],
-            connection=_obtener_conexion()
+            connection=_obtener_conexion(sede=sede)
         )
         email.attach_alternative(html_content, "text/html")
         
@@ -157,6 +180,7 @@ def enviar_email_recordatorio_funcion(reserva, request=None):
     """
     try:
         usuario = reserva.usuario
+        sede = _sede_de(reserva)  # modificado (T11 / Hilo 2 punto 2)
         subject = f'🔔 Recordatorio: Tu función es mañana - {reserva.funcion.pelicula.titulo}'
         
         # Obtener el dominio del sitio
@@ -166,13 +190,17 @@ def enviar_email_recordatorio_funcion(reserva, request=None):
             domain = settings.SITE_URL if hasattr(settings, 'SITE_URL') else 'http://localhost:8000'
         
         # Renderizar el template HTML
+        # modificado (T11 / Hilo 2 punto 2): se agrega `sede` al contexto.
         html_content = render_to_string('emails/recordatorio.html', {
             'usuario': usuario,
             'reserva': reserva,
             'domain': domain,
+            'sede': sede,
         })
         
         # Texto plano como alternativa
+        # modificado (T11 / Hilo 2 punto 2): se agrega la sede (además de la
+        # sala, que ya estaba) al texto plano.
         text_content = f"""
         ¡No te lo pierdas!
         
@@ -181,6 +209,7 @@ def enviar_email_recordatorio_funcion(reserva, request=None):
         Te recordamos que tu función es MAÑANA:
         
         Película: {reserva.funcion.pelicula.titulo}
+        Sede: {sede.nombre if sede else '-'}
         Fecha: {reserva.funcion.fecha_hora.strftime('%d/%m/%Y')}
         Horario: {reserva.funcion.fecha_hora.strftime('%H:%M')} hs
         Sala: {reserva.funcion.sala.nombre}
@@ -195,9 +224,9 @@ def enviar_email_recordatorio_funcion(reserva, request=None):
         email = EmailMultiAlternatives(
             subject=subject,
             body=text_content,
-            from_email=_obtener_from_email(),
+            from_email=_obtener_from_email(sede=sede),
             to=[usuario.email],
-            connection=_obtener_conexion()
+            connection=_obtener_conexion(sede=sede)
         )
         email.attach_alternative(html_content, "text/html")
         
@@ -217,8 +246,10 @@ def enviar_email_cancelacion_reserva(reserva):
     """
     try:
         usuario = reserva.usuario
+        sede = _sede_de(reserva)  # modificado (T11 / Hilo 2 punto 2)
         subject = f'Reserva Cancelada - {reserva.codigo_reserva}'
         
+        # modificado (T11 / Hilo 2 punto 2): se agrega la sede al texto plano.
         text_content = f"""
         Reserva Cancelada
         
@@ -228,6 +259,7 @@ def enviar_email_cancelacion_reserva(reserva):
         
         Código: {reserva.codigo_reserva}
         Película: {reserva.funcion.pelicula.titulo}
+        Sede: {sede.nombre if sede else '-'}
         Fecha: {reserva.funcion.fecha_hora.strftime('%d/%m/%Y %H:%M')}
         
         Si cancelaste por error, podés crear una nueva reserva desde nuestra web.
@@ -240,9 +272,9 @@ def enviar_email_cancelacion_reserva(reserva):
         email = EmailMultiAlternatives(
             subject=subject,
             body=text_content,
-            from_email=_obtener_from_email(),
+            from_email=_obtener_from_email(sede=sede),
             to=[usuario.email],
-            connection=_obtener_conexion()
+            connection=_obtener_conexion(sede=sede)
         )
         
         # Enviar

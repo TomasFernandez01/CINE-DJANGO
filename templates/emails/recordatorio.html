@@ -59,6 +59,15 @@
                                                     <div style="color: #333; font-size: 20px; font-weight: bold;">{{ reserva.funcion.fecha_hora|date:"H:i" }} hs</div>
                                                 </td>
                                             </tr>
+                                            <!-- modificado (T11 / Hilo 2 punto 2): fila de sede, además de la sala que ya estaba -->
+                                            {% if sede %}
+                                            <tr>
+                                                <td colspan="2" align="center" style="padding-top: 12px;">
+                                                    <div style="color: #856404; font-size: 14px; margin-bottom: 5px;">SEDE</div>
+                                                    <div style="color: #333; font-size: 18px; font-weight: bold;">{{ sede.nombre }} — {{ sede.direccion }}</div>
+                                                </td>
+                                            </tr>
+                                            {% endif %}
                                             <tr>
                                                 <td align="center" style="padding-top: 12px;">
                                                     <div style="color: #856404; font-size: 14px; margin-bottom: 5px;">SALA</div>

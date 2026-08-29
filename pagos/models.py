@@ -4,13 +4,15 @@ from django.utils import timezone
 from django.conf import settings
 import uuid
 
-def get_qr_minutos():
+def get_qr_minutos(sede=None):
     # modificado (Hilo 1 - Tanda D): antes leía solo de settings.py. Ahora se
     # prioriza el valor cargado en Panel > Configuración General (editable sin
     # migraciones); si esa fila todavía no existe, cae al valor de settings.py.
+    # modificado (T11): parámetro opcional `sede` para respetar la config
+    # propia de esa sede (T9) si existe.
     try:
         from panel.models import ConfiguracionGeneral
-        return ConfiguracionGeneral.obtener().qr_minutos_antes_funcion
+        return ConfiguracionGeneral.obtener(sede=sede).qr_minutos_antes_funcion
     except Exception:
         return getattr(settings, 'QR_MINUTOS_ANTES_FUNCION', 120)
 
@@ -118,7 +120,9 @@ class Pago(models.Model):
 
         # Ventana configurable: se puede escanear hasta N minutos antes
         ahora = timezone.now()
-        minutos_antes = get_qr_minutos()
+        # modificado (T11): se pasa la sede de la reserva para respetar su
+        # ConfiguracionGeneral propia (T9) si existe.
+        minutos_antes = get_qr_minutos(sede=self.reserva.funcion.sala.sede)
         tiempo_restante = self.reserva.funcion.fecha_hora - ahora
         segundos_limite = minutos_antes * 60
  

@@ -244,8 +244,11 @@ class Funcion(models.Model):
         """
         if self.precio is not None:
             return self.precio
+        # modificado (T11): se pasa la sede de esta sala para respetar su
+        # ConfiguracionGeneral propia (T9) si existe. Sin fila propia,
+        # obtener() cae solo a la global, igual que antes.
         from panel.models import ConfiguracionGeneral
-        base = ConfiguracionGeneral.obtener().precio_entrada_base
+        base = ConfiguracionGeneral.obtener(sede=self.sede).precio_entrada_base
         return redondear_precio(base * self.sala.multiplicador_precio)
 
     def precio_para_asiento(self, codigo_asiento):

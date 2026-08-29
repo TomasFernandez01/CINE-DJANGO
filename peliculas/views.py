@@ -196,9 +196,19 @@ def detalle_pelicula(request, pelicula_id):
     # (selector de la navbar, session['sede_id']), los horarios de esta
     # película se acotan a esa sede. Mismo criterio que salas/views.py::
     # lista_funciones — sin sede elegida, se sigue mostrando todo.
+    # modificado (T12 / Hilo 2 punto 3): si la sede elegida no tiene NINGUNA
+    # función de esta película, hacemos fallback a mostrar todas las sedes
+    # en vez de una pantalla vacía — con un aviso para que quede claro que
+    # se está mostrando "otras sedes", no la elegida.
     sede_id_sesion = request.session.get('sede_id')
+    sin_funciones_en_mi_sede = False
     if sede_id_sesion:
-        funciones_todas = funciones_todas.filter(sala__sede_id=sede_id_sesion)
+        funciones_en_mi_sede = funciones_todas.filter(sala__sede_id=sede_id_sesion)
+        if funciones_en_mi_sede.exists():
+            funciones_todas = funciones_en_mi_sede
+        else:
+            sin_funciones_en_mi_sede = True
+            # funciones_todas se deja sin filtrar (todas las sedes)
 
     fechas_qs = funciones_todas.annotate(dia=TruncDate('fecha_hora')) \
         .values_list('dia', flat=True).distinct().order_by('dia')
@@ -248,6 +258,8 @@ def detalle_pelicula(request, pelicula_id):
         'puede_calificar': puede_calificar,
         'mi_rating': mi_rating,
         'ratings_list': ratings_list,
+        # nuevo (T12 / Hilo 2 punto 3): fallback "ver en todas las sedes"
+        'sin_funciones_en_mi_sede': sin_funciones_en_mi_sede,
     }
     return render(request, 'peliculas/detalle_pelicula.html', contexto)
 

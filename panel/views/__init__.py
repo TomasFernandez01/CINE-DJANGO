@@ -25,6 +25,7 @@ from .salas import (
     salas_categoria_asignar,
     salas_categoria_quitar,
     salas_crear,
+    salas_duplicar,  # nuevo (T12 / Hilo 2 punto 5)
     salas_editar,
     salas_eliminar,
     salas_lista,

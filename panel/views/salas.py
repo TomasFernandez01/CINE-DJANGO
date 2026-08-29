@@ -10,7 +10,8 @@ from django.shortcuts import render, redirect, get_object_or_404
 from django.utils import timezone
 from django.views.decorators.http import require_POST
 from reservas.models import Reserva
-from salas.models import Sala, Funcion, AsientoBloqueado, CategoriaAsiento
+from salas.models import Sala, SeccionSala, Funcion, AsientoBloqueado, CategoriaAsiento  # modificado (T12 / Hilo 2 punto 5): + SeccionSala
+from sedes.models import Sede  # nuevo (T12 / Hilo 2 punto 5)
 from ..decorators import staff_required, get_sede_activa_panel, get_sede_staff, superuser_required
 from ..forms import (
     SalaForm,
@@ -353,6 +354,53 @@ def salas_categoria_quitar(request, sala_id):
 # ============================================================
 # SALAS - LISTA Y ANALÍTICA
 # ============================================================
+
+# nuevo (T12 / Hilo 2 punto 5): duplicar una sala completa (layout, tipo,
+# multiplicador, secciones) en otra sede. Solo superuser: crear salas ya es
+# una operación exclusiva de SuperUser (ver salas_crear más arriba), duplicar
+# no debería ser menos restrictivo.
+@superuser_required
+@require_POST
+def salas_duplicar(request, sala_id):
+    sala_original = get_object_or_404(Sala, id=sala_id)
+    sede_destino_id = request.POST.get('sede_destino')
+
+    if not sede_destino_id:
+        messages.error(request, 'Elegí una sede destino para duplicar la sala.')
+        return redirect('panel:salas_lista')
+
+    sede_destino = get_object_or_404(Sede, id=sede_destino_id)
+
+    nueva_sala = Sala.objects.create(
+        sede=sede_destino,
+        nombre=sala_original.nombre,
+        tipo=sala_original.tipo,
+        filas=sala_original.filas,
+        columnas=sala_original.columnas,
+        multiplicador_precio=sala_original.multiplicador_precio,
+        activa=sala_original.activa,
+    )
+
+    # Copiar las secciones (si tiene) — se guardan una por una para que
+    # corran las mismas validaciones de SeccionSala.clean() que si se
+    # cargaran a mano, y recalculen la capacidad de nueva_sala al final.
+    for seccion in sala_original.secciones.all():
+        SeccionSala.objects.create(
+            sala=nueva_sala,
+            nombre=seccion.nombre,
+            fila_inicio=seccion.fila_inicio,
+            fila_fin=seccion.fila_fin,
+            columna_inicio=seccion.columna_inicio,
+            columna_fin=seccion.columna_fin,
+        )
+
+    messages.success(
+        request,
+        f'Sala "{sala_original.nombre}" duplicada en {sede_destino.nombre} '
+        f'(sin funciones, sin bloqueos de asiento — solo el layout).'
+    )
+    return redirect('panel:salas_lista')
+
 
 @staff_required
 def salas_lista(request):

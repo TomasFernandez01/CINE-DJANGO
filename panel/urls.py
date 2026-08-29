@@ -26,6 +26,8 @@ urlpatterns = [
     path('salas/crear/',                        views.salas_crear,              name='salas_crear'),
     path('salas/<int:sala_id>/editar/',         views.salas_editar,             name='salas_editar'),
     path('salas/eliminar/',                     views.salas_eliminar,            name='salas_eliminar'),
+    # nuevo (T12 / Hilo 2 punto 5): duplicar sala en otra sede (solo superuser)
+    path('salas/<int:sala_id>/duplicar/',       views.salas_duplicar,            name='salas_duplicar'),
     # mapa-salas
     path('salas/<int:sala_id>/asientos/',       views.salas_asientos,            name='salas_asientos'),
     path('salas/<int:sala_id>/asientos/bloquear/',views.salas_asientos_bloquear,   name='salas_asientos_bloquear'),

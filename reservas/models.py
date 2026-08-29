@@ -6,14 +6,18 @@ from decimal import Decimal
 from salas.models import Funcion
 from django.conf import settings
 
-def get_tiempo_limite():
+def get_tiempo_limite(sede=None):
     # modificado (Hilo 1 - Tanda D): antes leía solo de settings.py. Ahora se
     # prioriza el valor cargado en Panel > Configuración General (editable sin
     # migraciones); si esa fila todavía no existe (ej. antes de correr la
     # migración 0002), cae al valor de settings.py como antes.
+    # modificado (T11): se agrega parámetro opcional `sede` para que, si esa
+    # sede tiene su propia fila de ConfiguracionGeneral (T9), se use ese valor
+    # en vez de siempre caer en la config global. 100% retrocompatible: sin
+    # argumento, se comporta exactamente igual que antes.
     try:
         from panel.models import ConfiguracionGeneral
-        return ConfiguracionGeneral.obtener().tiempo_limite_pago_minutos
+        return ConfiguracionGeneral.obtener(sede=sede).tiempo_limite_pago_minutos
     except Exception:
         return getattr(settings, 'TIEMPO_LIMITE_PAGO_MINUTOS', 15)
 
@@ -219,7 +223,11 @@ class Reserva(models.Model):
         # Si se pasa fecha_limite_pago desde la view (calculada desde inicio de selección) se respeta,
         # si no existe, se calcula desde ahora como fallback
         if not self.pk and not self.fecha_limite_pago:
-            self.fecha_limite_pago = timezone.now() + timedelta(minutes=get_tiempo_limite()) 
+            # modificado (T11): se pasa la sede de la función de esta reserva
+            # para que, si esa sede tiene su propia ConfiguracionGeneral (T9),
+            # se respete su tiempo límite en vez de siempre el global.
+            sede_reserva = self.funcion.sala.sede if self.funcion_id else None
+            self.fecha_limite_pago = timezone.now() + timedelta(minutes=get_tiempo_limite(sede=sede_reserva)) 
         # Sincronizar cantidad_entradas con asientos_seleccionados
         if self.asientos_seleccionados:
             cantidad_seleccionados = len(self.asientos_seleccionados.split(','))
