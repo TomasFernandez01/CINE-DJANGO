@@ -29,7 +29,8 @@ class PeliculaForm(forms.ModelForm):
         model = Pelicula
         fields = [
             'titulo', 'sinopsis', 'duracion', 'genero', 'clasificacion',
-            'director', 'actores', 'año', 'fecha_estreno', 'en_cartelera', 'poster'
+            'director', 'actores', 'año', 'fecha_estreno', 'en_cartelera', 'poster',
+            'trailer_youtube_id',
         ]
         widgets = {
             'titulo':        forms.TextInput(attrs=INPUT_ATTRS),
@@ -43,6 +44,14 @@ class PeliculaForm(forms.ModelForm):
             'fecha_estreno': forms.DateInput(attrs={**INPUT_ATTRS, 'type': 'date'}),
             'en_cartelera':  forms.CheckboxInput(attrs={'class': 'panel-checkbox'}),
             'poster':        forms.ClearableFileInput(attrs={'class': 'panel-file'}),
+            # nuevo (Trailer): solo el ID de YouTube, texto libre por si se
+            # quiere cargar/corregir a mano una película que no vino de TMDB
+            # o que TMDB no tenía tráiler cargado.
+            'trailer_youtube_id': forms.TextInput(attrs={
+                **INPUT_ATTRS,
+                'placeholder': 'ID de YouTube, ej: dQw4w9WgXcQ',
+                'maxlength': 11,
+            }),
         }
         labels = {
             'titulo':        'Título',
@@ -56,6 +65,7 @@ class PeliculaForm(forms.ModelForm):
             'fecha_estreno': 'Fecha de estreno',
             'en_cartelera':  'En cartelera',
             'poster':        'Poster / Imagen',
+            'trailer_youtube_id': 'Tráiler (ID de YouTube)',
         }
 
 

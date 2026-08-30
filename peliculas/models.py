@@ -44,6 +44,22 @@ class Pelicula(models.Model):
     # Imagen - AHORA ACTIVO (requiere Pillow: pip install Pillow)
     poster = models.ImageField(upload_to='posters/', blank=True, null=True)
 
+    # nuevo (Trailer): solo se guarda el ID de YouTube del tráiler (los 11
+    # caracteres que van después de "v=" en la URL, ej: "dQw4w9WgXcQ"), NO el
+    # video en sí. La reproducción se hace embebiendo un <iframe> a
+    # youtube.com/embed/<id> desde el template — el video lo sirve YouTube,
+    # no este servidor, así que no hay ningún archivo pesado que subir ni
+    # guardar. Se completa a mano o automáticamente al importar desde TMDB
+    # (ver utils/tmdb_api.py, que ya trae este dato en el mismo pedido que
+    # el resto de los datos de la película).
+    trailer_youtube_id = models.CharField(
+        max_length=11, blank=True, null=True,
+        help_text="ID de YouTube del tráiler (los 11 caracteres después de "
+                   "\"v=\" en la URL del video, ej: dQw4w9WgXcQ). Se completa "
+                   "solo si la película se importa desde TMDB y tiene tráiler "
+                   "cargado ahí; si no, se puede pegar a mano."
+    )
+
     """De esta forma se muesta con nombres y no como <Pelicula Object>"""
     def __str__(self):
         return f"{self.titulo}"

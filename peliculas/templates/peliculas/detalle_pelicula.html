@@ -20,11 +20,25 @@
 <div class="detalle-top-grid">
     <!-- ===== Columna izquierda: poster ===== -->
     <div class="detalle-poster-col">
-        <div class="detalle-poster">
+        <!-- modificado (Trailer): .detalle-poster ahora envuelve tanto el <img>/placeholder
+             como el botón de play y el contenedor del iframe, para que el iframe pueda
+             "tapar" el poster con position:absolute cuando se activa. El video NO se carga
+             en la carga inicial de la página — recién se arma el <iframe> (con
+             src=youtube.com/embed/...) en JS al hacer click, así una visita normal a esta
+             página no descarga ni un byte de YouTube de más. -->
+        <div class="detalle-poster{% if pelicula.trailer_youtube_id %} detalle-poster-con-trailer{% endif %}"
+             {% if pelicula.trailer_youtube_id %}id="detallePosterTrailer" data-trailer-id="{{ pelicula.trailer_youtube_id }}"{% endif %}>
             {% if pelicula.poster %}
                 <img src="{{ pelicula.poster.url }}" alt="{{ pelicula.titulo }}">
             {% else %}
                 <div class="detalle-poster-placeholder">🎬</div>
+            {% endif %}
+            {% if pelicula.trailer_youtube_id %}
+                <!-- nuevo (Trailer): ícono de play, aparece al hover (y siempre visible en
+                     mobile/touch, ver detalle.css). Al hacer click, rating.js arma recién ahí
+                     el <iframe> del embed de YouTube y lo mete adentro de .detalle-poster,
+                     tapando el poster — así el video no se carga hasta que el usuario lo pide. -->
+                <button type="button" class="detalle-trailer-play-btn" aria-label="Ver tráiler">▶</button>
             {% endif %}
         </div>
     </div>
@@ -226,19 +240,59 @@
          cargaba) a un carrusel horizontal propio con cards de tamaño fijo y flechas de scroll,
          mismo patrón visual que el carrusel de fechas de arriba. Antes las imágenes salían sin
          ningún estilo (tamaño natural del <img>, apiladas una debajo de la otra) precisamente
-         porque las clases usadas no estaban cargadas en este template. -->
+         porque las clases usadas no estaban cargadas en este template.
+         modificado: se prioriza por género (ver peliculas/views.py) y se agrega un badge con
+         el rating promedio en cada card (solo si ya tiene votos), para poder comparar sin
+         entrar a cada película. -->
     <h3 class="tambien-cartelera-titulo">También en cartelera</h3>
     <div class="relacionadas-carrusel-wrap">
         <button type="button" class="fecha-flecha relacionadas-flecha-prev" aria-label="Ver anteriores">‹</button>
         <div class="relacionadas-carrusel">
             {% for otra in tambien_en_cartelera %}
                 <a href="{% url 'peliculas:detalle_pelicula' otra.id %}" class="relacionada-card">
-                    {% if otra.poster %}
-                        <img class="relacionada-card-poster" src="{{ otra.poster.url }}" alt="{{ otra.titulo }}">
-                    {% else %}
-                        <div class="relacionada-card-poster-placeholder">🎬</div>
-                    {% endif %}
+                    <div class="relacionada-card-poster-wrap">
+                        {% if otra.poster %}
+                            <img class="relacionada-card-poster" src="{{ otra.poster.url }}" alt="{{ otra.titulo }}">
+                        {% else %}
+                            <div class="relacionada-card-poster-placeholder">🎬</div>
+                        {% endif %}
+                        {% if otra.total_votos %}
+                            <span class="relacionada-card-badge">★ {{ otra.rating_promedio }}</span>
+                        {% endif %}
+                    </div>
                     <div class="relacionada-card-titulo">{{ otra.titulo }}</div>
+                </a>
+            {% endfor %}
+        </div>
+        <button type="button" class="fecha-flecha relacionadas-flecha-next" aria-label="Ver siguientes">›</button>
+    </div>
+{% endif %}
+
+{% if proximos_estrenos %}
+    <!-- nuevo: segundo carrusel de "Próximos estrenos" (en_cartelera=False + fecha de estreno
+         futura, mismo criterio que ya usa inicio() para su propio carrusel de estrenos).
+         Reutiliza las mismas clases .relacionadas-carrusel-wrap/.relacionada-card de arriba
+         (mismo look, mismas flechas) — relacionadas_carrusel.js ya recorre TODOS los
+         .relacionadas-carrusel-wrap de la página con querySelectorAll, así que este segundo
+         carrusel queda funcionando solo, sin tocar el JS. En vez de un badge de rating (todavía
+         no se estrenó, no puede tener calificaciones) se muestra la fecha de estreno. -->
+    <h3 class="tambien-cartelera-titulo">Próximos estrenos</h3>
+    <div class="relacionadas-carrusel-wrap">
+        <button type="button" class="fecha-flecha relacionadas-flecha-prev" aria-label="Ver anteriores">‹</button>
+        <div class="relacionadas-carrusel">
+            {% for proxima in proximos_estrenos %}
+                <a href="{% url 'peliculas:detalle_pelicula' proxima.id %}" class="relacionada-card">
+                    <div class="relacionada-card-poster-wrap">
+                        {% if proxima.poster %}
+                            <img class="relacionada-card-poster" src="{{ proxima.poster.url }}" alt="{{ proxima.titulo }}">
+                        {% else %}
+                            <div class="relacionada-card-poster-placeholder">🎬</div>
+                        {% endif %}
+                        {% if proxima.fecha_estreno %}
+                            <span class="relacionada-card-badge relacionada-card-badge-estreno">{{ proxima.fecha_estreno|date:"d/m" }}</span>
+                        {% endif %}
+                    </div>
+                    <div class="relacionada-card-titulo">{{ proxima.titulo }}</div>
                 </a>
             {% endfor %}
         </div>
@@ -257,8 +311,10 @@
 {% block extra_js %}
 <!-- nuevo: flechas del carrusel de fechas -->
 <script src="{% static 'js/shared/fechas_carrusel.js' %}"></script>
-<!-- nuevo: flechas del carrusel de "también en cartelera" (mismo patrón, wrapper propio) -->
+<!-- nuevo: flechas de los carruseles de "también en cartelera" / "próximos estrenos" (mismo patrón, wrapper propio, recorre ambos automáticamente) -->
 <script src="{% static 'js/peliculas/relacionadas_carrusel.js' %}"></script>
+<!-- nuevo (Trailer): arma el <iframe> de YouTube recién al hacer click en el botón de play -->
+<script src="{% static 'js/peliculas/trailer.js' %}"></script>
 <!-- modificado: JS del widget de rating, antes estaba inline en este mismo archivo. Ahora
      también incluye el auto-resize del textarea de comentario (ver nota arriba). -->
 <script src="{% static 'js/peliculas/rating.js' %}"></script>

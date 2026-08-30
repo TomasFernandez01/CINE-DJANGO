@@ -3,7 +3,7 @@ from django.contrib.admin.views.decorators import staff_member_required
 from django.contrib import messages
 from django.utils import timezone
 from datetime import datetime  
-from django.db.models import Q
+from django.db.models import Q, Case, When, IntegerField
 from django.http import JsonResponse  
 from django.urls import reverse  
 from django.db.models.functions import TruncDate  
@@ -229,9 +229,34 @@ def detalle_pelicula(request, pelicula_id):
 
     grupos_funciones = agrupar_por_tipo_sala(funciones)
 
-    tambien_en_cartelera = Pelicula.objects.filter(
-        en_cartelera=True
-    ).exclude(id=pelicula.id).order_by('-fecha_estreno')[:8]
+    # modificado (también en cartelera - priorización): antes era solo
+    # `.order_by('-fecha_estreno')`, sin ningún criterio de relevancia (una
+    # comedia de hace 2 meses podía aparecer antes que un thriller recién
+    # estrenado del mismo género que la película actual). Ahora se prioriza
+    # primero por mismo género (si esta película tiene género cargado), y
+    # dentro de cada grupo, por fecha de estreno más reciente. Una sola
+    # query con Case/When (no dos queries separadas ni Python extra).
+    tambien_en_cartelera_qs = Pelicula.objects.filter(en_cartelera=True).exclude(id=pelicula.id)
+    if pelicula.genero:
+        tambien_en_cartelera_qs = tambien_en_cartelera_qs.annotate(
+            _mismo_genero=Case(
+                When(genero=pelicula.genero, then=0),
+                default=1,
+                output_field=IntegerField(),
+            )
+        ).order_by('_mismo_genero', '-fecha_estreno')
+    else:
+        tambien_en_cartelera_qs = tambien_en_cartelera_qs.order_by('-fecha_estreno')
+    tambien_en_cartelera = tambien_en_cartelera_qs[:8]
+
+    # nuevo ("Próximos estrenos" en el detalle): mismo criterio que ya usa
+    # la vista `inicio()` para su carrusel de próximos estrenos
+    # (en_cartelera=False + fecha de estreno futura), acá acotado a 8 y
+    # excluyendo la propia película por las dudas (no debería poder
+    # aparecer: si está en_cartelera=True no entra en este filtro).
+    proximos_estrenos = Pelicula.objects.filter(
+        en_cartelera=False, fecha_estreno__gt=ahora.date()
+    ).exclude(id=pelicula.id).order_by('fecha_estreno')[:8]
 
     # MODIFICACION GEMINI: evaluar si el usuario ha visto la pelicula y puede calificar
     from .models import HistorialVisto, RatingPelicula
@@ -254,6 +279,7 @@ def detalle_pelicula(request, pelicula_id):
         'formatos_disponibles': Sala.TIPO_CHOICES,
         'grupos_funciones': grupos_funciones,
         'tambien_en_cartelera': tambien_en_cartelera,
+        'proximos_estrenos': proximos_estrenos,
         # MODIFICACION GEMINI: pasar rating al contexto
         'puede_calificar': puede_calificar,
         'mi_rating': mi_rating,

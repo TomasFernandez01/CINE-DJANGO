@@ -234,6 +234,9 @@ def peliculas_importar_tmdb(request, tmdb_id):
         'director': data.get('director', ''),
         'actores': data.get('actores', ''),
         'año': data.get('año'),
+        # nuevo (Trailer): viene del mismo pedido a TMDB (ver utils/tmdb_api.py),
+        # el staff lo ve pre-cargado y lo puede corregir/borrar antes de guardar.
+        'trailer_youtube_id': data.get('trailer_youtube_id', ''),
     })
 
     messages.info(request, f'Datos de "{data["titulo"]}" importados desde TMDB. Revisá y guardá para crearla.')

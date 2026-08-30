@@ -130,10 +130,13 @@ class TMDBClient:
         try:
             # Obtener detalles básicos
             url_detalles = f"{self.BASE_URL}/movie/{movie_id}"
+            # modificado (Trailer): se agrega ",videos" al append_to_response para
+            # traer el tráiler en el MISMO pedido que ya se hacía (no es un
+            # request nuevo aparte, no suma latencia extra a la importación).
             params = {
                 'api_key': self.api_key,
                 'language': language,
-                'append_to_response': 'credits,release_dates'
+                'append_to_response': 'credits,release_dates,videos'
             }
             
             response = requests.get(url_detalles, params=params, timeout=10)
@@ -206,7 +209,21 @@ class TMDBClient:
         # URL del poster
         poster_path = data.get('poster_path', '')
         poster_url = f"{self.IMAGE_BASE_URL}{poster_path}" if poster_path else None
-        
+
+        # nuevo (Trailer): se busca el tráiler dentro del mismo payload que ya
+        # trajo este request (gracias al append_to_response='...,videos' de
+        # más arriba). Si en el idioma pedido (es-ES) no hay ningún video
+        # cargado -algo bastante común en TMDB, muchas películas solo tienen
+        # el tráiler en inglés- se hace UN pedido extra puntual a videos en
+        # en-US como fallback. Es una sola llamada más, y solo pasa durante
+        # la importación (acción manual del staff), no en cada visita de un
+        # usuario a la página de la película.
+        trailer_youtube_id = self._extraer_trailer_youtube(data.get('videos', {}))
+        if not trailer_youtube_id:
+            movie_id = data.get('id')
+            if movie_id:
+                trailer_youtube_id = self._buscar_trailer_fallback_en(movie_id)
+
         return {
             'titulo': titulo,
             'sinopsis': sinopsis,
@@ -219,8 +236,54 @@ class TMDBClient:
             'poster_url': poster_url,
             'tmdb_id': data.get('id'),
             'vote_average': data.get('vote_average'),
-            'popularity': data.get('popularity')
+            'popularity': data.get('popularity'),
+            'trailer_youtube_id': trailer_youtube_id,
         }
+
+    def _extraer_trailer_youtube(self, videos_block):
+        """
+        nuevo (Trailer): de la lista de videos de TMDB, elige el mejor
+        candidato a "tráiler para mostrar": prioriza Trailer > Teaser,
+        siempre alojado en YouTube (es lo único que se puede embeber con
+        youtube.com/embed/<id>), prefiriendo el marcado como oficial.
+        Devuelve solo el `key` (el ID de YouTube), o None si no hay nada
+        usable.
+        """
+        resultados = (videos_block or {}).get('results', [])
+        candidatos_youtube = [v for v in resultados if v.get('site') == 'YouTube' and v.get('key')]
+        if not candidatos_youtube:
+            return None
+
+        def _puntaje(video):
+            tipo = video.get('type', '')
+            oficial = video.get('official', False)
+            puntaje_tipo = {'Trailer': 2, 'Teaser': 1}.get(tipo, 0)
+            return (puntaje_tipo, 1 if oficial else 0)
+
+        mejor = max(candidatos_youtube, key=_puntaje)
+        # si ni siquiera es un Trailer/Teaser (puntaje_tipo 0), no vale la pena mostrarlo
+        if _puntaje(mejor)[0] == 0:
+            return None
+        return mejor.get('key')
+
+    def _buscar_trailer_fallback_en(self, movie_id):
+        """
+        nuevo (Trailer): fallback cuando la película no tiene ningún tráiler
+        cargado en el idioma pedido (es-ES) — bastante común en TMDB. Se
+        pide la lista de videos en inglés (en-US), que suele tener más
+        contenido cargado. Solo se llama una vez, cuando hace falta.
+        """
+        try:
+            url_videos = f"{self.BASE_URL}/movie/{movie_id}/videos"
+            response = requests.get(
+                url_videos,
+                params={'api_key': self.api_key, 'language': 'en-US'},
+                timeout=10
+            )
+            response.raise_for_status()
+            return self._extraer_trailer_youtube(response.json())
+        except requests.exceptions.RequestException:
+            return None
     
     def descargar_poster(self, poster_url):
         """

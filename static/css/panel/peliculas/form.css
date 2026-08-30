@@ -22,6 +22,9 @@
 .panelpelisform-poster-img--oculta { display: none; margin-bottom: 1rem; }
 .panelpelisform-poster-help-tmdb { margin-bottom: 1rem; }
 .panelpelisform-poster-help { margin-top: 0.5rem; }
+/* nuevo (Trailer): separación del bloque de ID de YouTube respecto del poster de arriba */
+.panelpelisform-trailer-wrap { margin-top: 1.25rem; }
+.panelpelisform-trailer-wrap label { display: block; margin-bottom: 0.35rem; font-size: 0.85rem; color: #ccc; }
 .panelpelisform-poster-placeholder { aspect-ratio: 2/3; background: #f0f0f0; border-radius: 8px; display: flex; align-items: center; justify-content: center; color: #ccc; font-size: 3rem; margin-bottom: 1rem; }
 
 .panelpelisform-errores-generales { background: #f8d7da; border-left: 4px solid #e74c3c; padding: 1rem; border-radius: 6px; margin-top: 1rem; color: #721c24; }
