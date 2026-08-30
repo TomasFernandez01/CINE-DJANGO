@@ -34,7 +34,7 @@
                         <option value="" {% if not sede_actual %}selected{% endif %}>Todas las sedes</option>
                         {% for sede in sedes_disponibles %}
                         <option value="{{ sede.id }}" {% if sede_actual and sede_actual.id == sede.id %}selected{% endif %}>
-                            📍 {{ sede.nombre }}
+                            {{ sede.nombre }}
                         </option>
                         {% endfor %}
                     </select>

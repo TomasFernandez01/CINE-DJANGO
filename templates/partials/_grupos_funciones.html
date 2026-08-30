@@ -17,14 +17,23 @@ mensaje de "sin funciones").
                 {% if funcion.asientos_disponibles <= 0 %}
                     <span class="horario-btn disp-completa" title="Agotado">{{ funcion.fecha_hora|date:"H:i" }}hs</span>
                 {% else %}
+                    <!-- modificado (UX, punto 13): title con microcopy de
+                         "últimos lugares" cuando la disponibilidad es baja
+                         (mismo umbral que ya define el color rojo, porcentaje
+                         <= 20). El indicador visual (el "!" en la esquina del
+                         botón) lo agrega .horario-btn.disp-baja::after en
+                         shared/horarios.css -- acá solo se agrega el texto
+                         accesible/tooltip, sin tocar el layout del botón. -->
                     {% if user.is_authenticated %}
                         <a href="{% url 'reservas:elegir_tipo_entrada' funcion.id %}"
-                           class="horario-btn {% if porcentaje > 60 %}disp-alta{% elif porcentaje > 20 %}disp-media{% else %}disp-baja{% endif %}">
+                           class="horario-btn {% if porcentaje > 60 %}disp-alta{% elif porcentaje > 20 %}disp-media{% else %}disp-baja{% endif %}"
+                           {% if porcentaje <= 20 %}title="¡Últimos lugares!"{% endif %}>
                             {{ funcion.fecha_hora|date:"H:i" }}hs
                         </a>
                     {% else %}
                         <a href="{% url 'usuarios:login' %}?next={% url 'reservas:elegir_tipo_entrada' funcion.id %}"
-                           class="horario-btn {% if porcentaje > 60 %}disp-alta{% elif porcentaje > 20 %}disp-media{% else %}disp-baja{% endif %}">
+                           class="horario-btn {% if porcentaje > 60 %}disp-alta{% elif porcentaje > 20 %}disp-media{% else %}disp-baja{% endif %}"
+                           {% if porcentaje <= 20 %}title="¡Últimos lugares!"{% endif %}>
                             {{ funcion.fecha_hora|date:"H:i" }}hs
                         </a>
                     {% endif %}
