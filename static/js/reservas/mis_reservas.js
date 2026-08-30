@@ -23,13 +23,19 @@
             segundos -= 1;
             if (segundos <= 0) {
                 clearInterval(intervalo);
-                el.textContent = '⏰ Expirado';
+                // BUGFIX: antes decía '⏰ Expirado' / '⏰ MM:SS', un formato
+                // distinto al que renderiza el server ("Tiempo restante:
+                // MM:SS"), dando el efecto de que el contador "cambiaba de
+                // golpe" apenas corría el primer tick (y reintroducía un
+                // emoji que el resto del panel ya había sacado). Mismo
+                // formato en todo momento, sin salto visual.
+                el.textContent = 'Expirado';
                 huboExpiracion = true;
                 // Un solo reload, con un pequeño margen para que el comando
                 // de cancelación / la vista alcancen a actualizar el estado real.
                 setTimeout(() => location.reload(), 2000);
             } else {
-                el.textContent = `⏰ ${formatoMMSS(segundos)}`;
+                el.textContent = `Tiempo restante: ${formatoMMSS(segundos)}`;
             }
         }, 1000);
     });

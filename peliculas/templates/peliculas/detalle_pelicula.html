@@ -9,131 +9,23 @@
 <link rel="stylesheet" href="{% static 'css/shared/horarios.css' %}">
 <link rel="stylesheet" href="{% static 'css/shared/badges.css' %}">
 <link rel="stylesheet" href="{% static 'css/peliculas/detalle.css' %}">
-<link rel="stylesheet" href="{% static 'css/peliculas/cartelera.css' %}">
 {% endblock %}
 
 {% block contenido %}
-<div class="detalle-layout">
-    <!-- ===== Columna izquierda: poster + datos ===== -->
-    <div class="detalle-izquierda">
+<!-- modificado (rediseño detalle_pelicula - full width): antes .detalle-layout metía TODO
+     (poster + titulo + badges + sinopsis + director/actores + rating) en la columna
+     izquierda de 320px, apretado al lado del poster. Ahora esa grilla de 320px/1fr
+     solo tiene el poster y los horarios; el resto pasa a .detalle-info-completa,
+     un bloque aparte que ocupa el ancho completo de la página. -->
+<div class="detalle-top-grid">
+    <!-- ===== Columna izquierda: poster ===== -->
+    <div class="detalle-poster-col">
         <div class="detalle-poster">
             {% if pelicula.poster %}
                 <img src="{{ pelicula.poster.url }}" alt="{{ pelicula.titulo }}">
             {% else %}
                 <div class="detalle-poster-placeholder">🎬</div>
             {% endif %}
-        </div>
-
-        <h1 class="detalle-titulo">{{ pelicula.titulo }}</h1>
-
-        <div class="detalle-badges">
-            {% if pelicula.clasificacion %}
-                <span class="detalle-badge detalle-badge-clasificacion">{{ pelicula.get_clasificacion_display }}</span>
-            {% endif %}
-            {% if pelicula.genero %}
-                <span class="detalle-badge detalle-badge-genero">{{ pelicula.get_genero_display }}</span>
-            {% endif %}
-            {% if pelicula.duracion %}
-                <span class="detalle-badge detalle-badge-gris">⏱ {{ pelicula.duracion_formato }}</span>
-            {% endif %}
-            {% if pelicula.año %}
-                <span class="detalle-badge detalle-badge-gris">{{ pelicula.año }}</span>
-            {% endif %}
-        </div>
-
-        {% if pelicula.sinopsis %}
-            <div class="detalle-sinopsis">
-                <h3>Sinopsis</h3>
-                <p>{{ pelicula.sinopsis }}</p>
-            </div>
-        {% endif %}
-
-        {% if pelicula.director %}
-            <div class="detalle-info-box">
-                <div class="detalle-info-box-label">Director</div>
-                <div class="detalle-info-box-valor">{{ pelicula.director }}</div>
-            </div>
-        {% endif %}
-
-        {% if pelicula.actores %}
-            <div class="detalle-info-box">
-                <div class="detalle-info-box-label">Actores principales</div>
-                <div class="detalle-info-box-valor">{{ pelicula.actores }}</div>
-            </div>
-        {% endif %}
-
-        <!-- MODIFICACION GEMINI: Calificaciones y Reseñas de Usuarios -->
-        <!-- modificado: bloque migrado de estilos inline a clases (ver static/css/peliculas/detalle.css, sufijo detalle-rating-*) -->
-        <div class="detalle-rating-bloque">
-            <h3>⭐ Calificaciones y Reseñas</h3>
-
-            <div class="detalle-rating-resumen">
-                <span class="detalle-rating-resumen-numero">{{ pelicula.rating_promedio }}</span>
-                <div>
-                    <div class="detalle-rating-resumen-estrellas">
-                        <!-- Estrellas segun promedio -->
-                        {% if pelicula.rating_promedio >= 1 %}★{% else %}☆{% endif %}
-                        {% if pelicula.rating_promedio >= 2 %}★{% else %}☆{% endif %}
-                        {% if pelicula.rating_promedio >= 3 %}★{% else %}☆{% endif %}
-                        {% if pelicula.rating_promedio >= 4 %}★{% else %}☆{% endif %}
-                        {% if pelicula.rating_promedio >= 5 %}★{% else %}☆{% endif %}
-                    </div>
-                    <div class="detalle-rating-resumen-total">{{ pelicula.total_votos }} calificaciones</div>
-                </div>
-            </div>
-
-            {% if puede_calificar %}
-                <form method="post" action="{% url 'peliculas:votar_pelicula' pelicula.id %}" class="detalle-rating-form">
-                    {% csrf_token %}
-                    <h4 class="detalle-rating-form-titulo">{% if mi_rating %}Actualizar tu calificación{% else %}Calificar esta película{% endif %}</h4>
-
-                    <!-- Estrellas interactivas -->
-                    <div class="rating-estrellas detalle-rating-estrellas-input">
-                        {% for i in "12345" %}
-                            <span class="estrella-btn{% if mi_rating and mi_rating.puntuacion >= forloop.counter %} detalle-rating-estrella-activa{% endif %}" data-valor="{{ forloop.counter }}">
-                                {% if mi_rating and mi_rating.puntuacion >= forloop.counter %}★{% else %}☆{% endif %}
-                            </span>
-                        {% endfor %}
-                    </div>
-                    <input type="hidden" name="puntuacion" id="inputPuntuacion" value="{{ mi_rating.puntuacion|default:'' }}" required>
-
-                    <textarea name="comentario" placeholder="Escribí una reseña opcional..." class="detalle-rating-textarea">{{ mi_rating.comentario|default:'' }}</textarea>
-
-                    <button type="submit" class="btn btn-primary detalle-rating-submit-btn">Enviar calificación</button>
-                </form>
-                <!-- modificado: script inline movido a static/js/peliculas/rating.js, cargado en el bloque extra_js al final del archivo -->
-            {% else %}
-                <div class="detalle-rating-bloqueado">
-                    <span>🔒</span> Solo los usuarios que asistieron a ver esta película pueden calificarla.
-                </div>
-            {% endif %}
-
-            <!-- Listado de reseñas -->
-            <div class="detalle-rating-reviews-wrap">
-                <h4 class="detalle-rating-reviews-titulo">Reseñas de la comunidad</h4>
-                {% if ratings_list %}
-                    {% for r in ratings_list %}
-                        <div class="detalle-rating-review-card">
-                            <div class="detalle-rating-review-header">
-                                <strong class="detalle-rating-review-autor">{{ r.usuario.get_full_name|default:r.usuario.username }}</strong>
-                                <span class="detalle-rating-review-estrellas">
-                                    {% if r.puntuacion >= 1 %}★{% else %}☆{% endif %}
-                                    {% if r.puntuacion >= 2 %}★{% else %}☆{% endif %}
-                                    {% if r.puntuacion >= 3 %}★{% else %}☆{% endif %}
-                                    {% if r.puntuacion >= 4 %}★{% else %}☆{% endif %}
-                                    {% if r.puntuacion >= 5 %}★{% else %}☆{% endif %}
-                                </span>
-                            </div>
-                            {% if r.comentario %}
-                                <p class="detalle-rating-review-comentario">{{ r.comentario }}</p>
-                            {% endif %}
-                            <div class="detalle-rating-review-fecha">{{ r.fecha_creacion|date:"d/m/Y H:i" }}</div>
-                        </div>
-                    {% endfor %}
-                {% else %}
-                    <div class="detalle-rating-review-vacio">No hay reseñas todavía.</div>
-                {% endif %}
-            </div>
         </div>
     </div>
 
@@ -204,21 +96,153 @@
     </div>
 </div>
 
-{% if tambien_en_cartelera %}
-    <h3 class="tambien-cartelera-titulo">También en cartelera</h3>
-    <div class="cartelera-grid">
-        {% for otra in tambien_en_cartelera %}
-            <a href="{% url 'peliculas:detalle_pelicula' otra.id %}" class="cartelera-card">
-                {% if otra.poster %}
-                    <img class="cartelera-card-poster" src="{{ otra.poster.url }}" alt="{{ otra.titulo }}">
-                {% else %}
-                    <div class="cartelera-card-poster-placeholder">🎬</div>
-                {% endif %}
-                <div class="cartelera-card-info">
-                    <h4>{{ otra.titulo }}</h4>
+<!-- ===== Bloque de abajo: título, badges, sinopsis, director/actores, rating — a todo el ancho ===== -->
+<div class="detalle-info-completa">
+    <h1 class="detalle-titulo">{{ pelicula.titulo }}</h1>
+
+    <div class="detalle-badges">
+        {% if pelicula.clasificacion %}
+            <span class="detalle-badge detalle-badge-clasificacion">{{ pelicula.get_clasificacion_display }}</span>
+        {% endif %}
+        {% if pelicula.genero %}
+            <span class="detalle-badge detalle-badge-genero">{{ pelicula.get_genero_display }}</span>
+        {% endif %}
+        {% if pelicula.duracion %}
+            <span class="detalle-badge detalle-badge-gris">⏱ {{ pelicula.duracion_formato }}</span>
+        {% endif %}
+        {% if pelicula.año %}
+            <span class="detalle-badge detalle-badge-gris">{{ pelicula.año }}</span>
+        {% endif %}
+    </div>
+
+    {% if pelicula.sinopsis %}
+        <!-- modificado: la sinopsis ahora es un card (misma clase .detalle-info-box que Director/Actores), antes era un bloque de texto suelto -->
+        <div class="detalle-sinopsis detalle-info-box">
+            <h3>Sinopsis</h3>
+            <p>{{ pelicula.sinopsis }}</p>
+        </div>
+    {% endif %}
+
+    {% if pelicula.director or pelicula.actores %}
+        <!-- modificado: Director y Actores ahora van lado a lado en una fila de 2 columnas que ocupa todo el ancho, antes eran dos cards angostos apilados en la columna de 320px -->
+        <div class="detalle-info-row">
+            {% if pelicula.director %}
+                <div class="detalle-info-box">
+                    <div class="detalle-info-box-label">Director</div>
+                    <div class="detalle-info-box-valor">{{ pelicula.director }}</div>
                 </div>
-            </a>
-        {% endfor %}
+            {% endif %}
+
+            {% if pelicula.actores %}
+                <div class="detalle-info-box">
+                    <div class="detalle-info-box-label">Actores principales</div>
+                    <div class="detalle-info-box-valor">{{ pelicula.actores }}</div>
+                </div>
+            {% endif %}
+        </div>
+    {% endif %}
+
+    <!-- MODIFICACION GEMINI: Calificaciones y Reseñas de Usuarios -->
+    <!-- modificado: bloque migrado de estilos inline a clases (ver static/css/peliculas/detalle.css, sufijo detalle-rating-*) -->
+    <div class="detalle-rating-bloque">
+        <h3>⭐ Calificaciones y Reseñas</h3>
+
+        <div class="detalle-rating-resumen">
+            <span class="detalle-rating-resumen-numero">{{ pelicula.rating_promedio }}</span>
+            <div>
+                <div class="detalle-rating-resumen-estrellas">
+                    <!-- Estrellas segun promedio -->
+                    {% if pelicula.rating_promedio >= 1 %}★{% else %}☆{% endif %}
+                    {% if pelicula.rating_promedio >= 2 %}★{% else %}☆{% endif %}
+                    {% if pelicula.rating_promedio >= 3 %}★{% else %}☆{% endif %}
+                    {% if pelicula.rating_promedio >= 4 %}★{% else %}☆{% endif %}
+                    {% if pelicula.rating_promedio >= 5 %}★{% else %}☆{% endif %}
+                </div>
+                <div class="detalle-rating-resumen-total">{{ pelicula.total_votos }} calificaciones</div>
+            </div>
+        </div>
+
+        {% if puede_calificar %}
+            <form method="post" action="{% url 'peliculas:votar_pelicula' pelicula.id %}" class="detalle-rating-form">
+                {% csrf_token %}
+                <h4 class="detalle-rating-form-titulo">{% if mi_rating %}Actualizar tu calificación{% else %}Calificar esta película{% endif %}</h4>
+
+                <!-- Estrellas interactivas -->
+                <div class="rating-estrellas detalle-rating-estrellas-input">
+                    {% for i in "12345" %}
+                        <span class="estrella-btn{% if mi_rating and mi_rating.puntuacion >= forloop.counter %} detalle-rating-estrella-activa{% endif %}" data-valor="{{ forloop.counter }}">
+                            {% if mi_rating and mi_rating.puntuacion >= forloop.counter %}★{% else %}☆{% endif %}
+                        </span>
+                    {% endfor %}
+                </div>
+                <input type="hidden" name="puntuacion" id="inputPuntuacion" value="{{ mi_rating.puntuacion|default:'' }}" required>
+
+                <!-- modificado: textarea "tipo chat" que se agranda a medida que se escribe (como WhatsApp),
+                     en vez de un textbox de altura fija. rows="1" + JS de auto-resize en rating.js
+                     (función ajustarAlturaComentario), con overflow oculto hasta el alto máximo. -->
+                <textarea name="comentario" id="comentarioRating" placeholder="Escribí una reseña opcional..." class="detalle-rating-textarea" rows="1">{{ mi_rating.comentario|default:'' }}</textarea>
+
+                <button type="submit" class="btn btn-primary detalle-rating-submit-btn">Enviar calificación</button>
+            </form>
+            <!-- modificado: script inline movido a static/js/peliculas/rating.js, cargado en el bloque extra_js al final del archivo -->
+        {% else %}
+            <div class="detalle-rating-bloqueado">
+                <span>🔒</span> Solo los usuarios que asistieron a ver esta película pueden calificarla.
+            </div>
+        {% endif %}
+
+        <!-- Listado de reseñas -->
+        <div class="detalle-rating-reviews-wrap">
+            <h4 class="detalle-rating-reviews-titulo">Reseñas de la comunidad</h4>
+            {% if ratings_list %}
+                {% for r in ratings_list %}
+                    <div class="detalle-rating-review-card">
+                        <div class="detalle-rating-review-header">
+                            <strong class="detalle-rating-review-autor">{{ r.usuario.get_full_name|default:r.usuario.username }}</strong>
+                            <span class="detalle-rating-review-estrellas">
+                                {% if r.puntuacion >= 1 %}★{% else %}☆{% endif %}
+                                {% if r.puntuacion >= 2 %}★{% else %}☆{% endif %}
+                                {% if r.puntuacion >= 3 %}★{% else %}☆{% endif %}
+                                {% if r.puntuacion >= 4 %}★{% else %}☆{% endif %}
+                                {% if r.puntuacion >= 5 %}★{% else %}☆{% endif %}
+                            </span>
+                        </div>
+                        {% if r.comentario %}
+                            <p class="detalle-rating-review-comentario">{{ r.comentario }}</p>
+                        {% endif %}
+                        <div class="detalle-rating-review-fecha">{{ r.fecha_creacion|date:"d/m/Y H:i" }}</div>
+                    </div>
+                {% endfor %}
+            {% else %}
+                <div class="detalle-rating-review-vacio">No hay reseñas todavía.</div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+{% if tambien_en_cartelera %}
+    <!-- modificado: "también en cartelera" pasó de .cartelera-grid/.cartelera-card (clases que
+         en realidad viven en static/css/inicio/cartelera.css, un archivo que esta página NUNCA
+         cargaba) a un carrusel horizontal propio con cards de tamaño fijo y flechas de scroll,
+         mismo patrón visual que el carrusel de fechas de arriba. Antes las imágenes salían sin
+         ningún estilo (tamaño natural del <img>, apiladas una debajo de la otra) precisamente
+         porque las clases usadas no estaban cargadas en este template. -->
+    <h3 class="tambien-cartelera-titulo">También en cartelera</h3>
+    <div class="relacionadas-carrusel-wrap">
+        <button type="button" class="fecha-flecha relacionadas-flecha-prev" aria-label="Ver anteriores">‹</button>
+        <div class="relacionadas-carrusel">
+            {% for otra in tambien_en_cartelera %}
+                <a href="{% url 'peliculas:detalle_pelicula' otra.id %}" class="relacionada-card">
+                    {% if otra.poster %}
+                        <img class="relacionada-card-poster" src="{{ otra.poster.url }}" alt="{{ otra.titulo }}">
+                    {% else %}
+                        <div class="relacionada-card-poster-placeholder">🎬</div>
+                    {% endif %}
+                    <div class="relacionada-card-titulo">{{ otra.titulo }}</div>
+                </a>
+            {% endfor %}
+        </div>
+        <button type="button" class="fecha-flecha relacionadas-flecha-next" aria-label="Ver siguientes">›</button>
     </div>
 {% endif %}
 
@@ -233,6 +257,9 @@
 {% block extra_js %}
 <!-- nuevo: flechas del carrusel de fechas -->
 <script src="{% static 'js/shared/fechas_carrusel.js' %}"></script>
-<!-- modificado: JS del widget de rating, antes estaba inline en este mismo archivo -->
+<!-- nuevo: flechas del carrusel de "también en cartelera" (mismo patrón, wrapper propio) -->
+<script src="{% static 'js/peliculas/relacionadas_carrusel.js' %}"></script>
+<!-- modificado: JS del widget de rating, antes estaba inline en este mismo archivo. Ahora
+     también incluye el auto-resize del textarea de comentario (ver nota arriba). -->
 <script src="{% static 'js/peliculas/rating.js' %}"></script>
 {% endblock %}

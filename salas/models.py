@@ -247,8 +247,14 @@ class Funcion(models.Model):
         # modificado (T11): se pasa la sede de esta sala para respetar su
         # ConfiguracionGeneral propia (T9) si existe. Sin fila propia,
         # obtener() cae solo a la global, igual que antes.
+        # BUGFIX (post-T11): Funcion no tiene un campo `sede` propio -- la
+        # sede se llega vía self.sala.sede (FK Sala -> Sede). El `self.sede`
+        # original tiraba AttributeError cada vez que se llamaba
+        # precio_final() (usado en /funciones/, /mis-reservas/, detalle de
+        # película, checkout, etc. -- básicamente en todos lados donde se
+        # muestra un precio), rompiendo esas páginas por completo.
         from panel.models import ConfiguracionGeneral
-        base = ConfiguracionGeneral.obtener(sede=self.sede).precio_entrada_base
+        base = ConfiguracionGeneral.obtener(sede=self.sala.sede).precio_entrada_base
         return redondear_precio(base * self.sala.multiplicador_precio)
 
     def precio_para_asiento(self, codigo_asiento):

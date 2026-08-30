@@ -63,7 +63,7 @@
 /* nuevo: color de disponibilidad real (asientos_disponibles vs sala.capacidad) */
 .horario-btn.disp-alta { background-color: #1e7e34; color: white; }
 .horario-btn.disp-media { background-color: #b8860b; color: white; }
-.horario-btn.disp-baja { background-color: #a52834; color: white; }
+.horario-btn.disp-baja { background-color: #ff0000; color: white; }
 .horario-btn.disp-completa {
     background-color: #333;
     color: #888;

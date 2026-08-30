@@ -23,11 +23,18 @@
 .filtros-select {
     width: 100%;
     padding: 0.75rem;
-    border: 2px solid #3a3a3a;
+    
+    /* border: 2px solid #3a3a3a;
     border-radius: 6px;
     font-size: 1rem;
     transition: border-color 0.2s;
     background-color: #262626;
+    color: #eee; */
+
+    border: 1px solid #000000;
+    font-size: 1rem;
+    transition: border-color 0.2s;
+    background-color: #000000;
     color: #eee;
 }
 
@@ -69,13 +76,21 @@
 .filtros-btn-limpiar {
     flex: 1;
     padding: 0.75rem;
-    background-color: #3a3a3a;
+    /* background-color: #3a3a3a;
     color: white;
     border-radius: 6px;
     text-align: center;
     text-decoration: none;
     font-weight: bold;
-    transition: background-color 0.2s;
+    transition: background-color 0.2s; */
+
+
+    background-color: #000000;
+    color: #ffffff;
+    text-align: center;
+    text-decoration: none;
+    /* font-weight: bold; */
+    transition: background-color 1s;
 }
 
 .filtros-btn-limpiar:hover {

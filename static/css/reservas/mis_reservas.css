@@ -1,5 +1,12 @@
 /* MEJORAS/REDISEÑO GEMINI: Estilos premium para el listado de reservas del cliente */
 
+/* nuevo (rediseño): tipografía propia para el título de película en este
+   listado -- 'Bebas Neue' (condensada, estilo cartel de cine) combina con
+   la referencia visual del proyecto (Cinemark) sin salirse de la paleta
+   dark ya establecida. Se importa acá, scopeada a este archivo, en vez de
+   agregarla a base.html, porque hoy es el único lugar del sitio que la usa. */
+@import url('https://fonts.googleapis.com/css2?family=Bebas+Neue&display=swap');
+
 .reserva-mr-filtros {
     background-color: #1c1c1c;
     padding: 1.25rem 1.5rem;
@@ -63,11 +70,13 @@
 .reserva-mr-card--expirada { border-left-color: #777777; border-left-width: 5px; }
 .reserva-mr-card--cancelada { border-left-color: #999999; border-left-width: 5px; }
 
-/* MODIFICACION GEMINI: El tamaño del poster de la tarjeta de reserva se controla en esta propiedad width */
+/* modificado (rediseño): poster un poco más grande (135px -> 160px), ahora
+   que el card quedó más simple (3 columnas: poster / info / acciones) hay
+   lugar de sobra para que respire más. */
 .reserva-mr-poster {
     flex: 0 0 auto;
     display: block;
-    width: 135px; /* Modificá este valor en píxeles para cambiar el ancho del póster */
+    width: 160px; /* Modificá este valor en píxeles para cambiar el ancho del póster */
     overflow: hidden;
     border-radius: 8px;
 }
@@ -86,7 +95,7 @@
 }
 
 .reserva-mr-poster-placeholder {
-    width: 135px;
+    width: 160px;
     aspect-ratio: 2/3;
     background: linear-gradient(135deg, #2c2c2c 0%, #141414 100%);
     border-radius: 8px;
@@ -98,113 +107,47 @@
     font-weight: bold;
 }
 
-/* Info */
+/* Info (columna del medio) */
+/* modificado (rediseño): esta columna quedó reducida a título + fecha/sede/sala
+   (código, butacas, precio y combos se sacaron del card -- ya están en el
+   comprobante QR / detalle de la reserva). Se centra todo el contenido, como
+   pediste, y se le da más aire vertical ya que no compite con tanta info. */
 .reserva-mr-info {
     flex: 1;
     min-width: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    gap: 0.6rem;
 }
 
 .reserva-mr-titulo {
-    margin: 0 0 0.75rem 0;
+    margin: 0;
     color: #ffffff;
-    font-size: 1.35rem;
-    font-weight: 700;
+    font-family: 'Bebas Neue', 'Segoe UI', Arial, sans-serif;
+    font-size: 2rem;
+    font-weight: 400;
+    letter-spacing: 0.03em;
+    line-height: 1.05;
 }
 
 .reserva-mr-meta-lista {
     display: flex;
     flex-direction: column;
     gap: 0.35rem;
-    margin-bottom: 1rem;
-    font-size: 0.9rem;
+    font-size: 0.95rem;
 }
 
 .reserva-mr-meta-fila {
     color: #cccccc;
+    letter-spacing: 0.01em;
 }
 
 .reserva-mr-meta-fila strong {
     color: #ffffff;
     font-weight: 600;
-}
-
-.reserva-mr-meta-fila--codigo strong {
-    font-family: monospace;
-    letter-spacing: 0.05em;
-    background-color: #141414;
-    padding: 0.15rem 0.5rem;
-    border-radius: 4px;
-    border: 1px solid #333;
-}
-
-.reserva-mr-asientos {
-    margin-bottom: 1rem;
-}
-
-.reserva-mr-asientos-lista {
-    display: flex;
-    gap: 0.4rem;
-    flex-wrap: wrap;
-}
-
-.reserva-mr-asiento-chip {
-    padding: 0.2rem 0.6rem;
-    background-color: #112233;
-    color: #52a3ff;
-    border-radius: 4px;
-    font-size: 0.8rem;
-    font-weight: bold;
-    border: 1px solid #1e3f66;
-}
-
-.reserva-mr-total-fila {
-    display: flex;
-    gap: 1.5rem;
-    align-items: center;
-    flex-wrap: wrap;
-    font-size: 0.95rem;
-    color: #bbbbbb;
-}
-
-.reserva-mr-total-tachado {
-    font-size: 0.85rem;
-    color: #777777;
-    text-decoration: line-through;
-}
-
-.reserva-mr-total-pagado {
-    font-weight: bold;
-    color: #2ecc71;
-    font-size: 1.25rem;
-    margin-left: 0.3rem;
-}
-
-.reserva-mr-total-descuento {
-    display: inline-block;
-    padding: 0.15rem 0.5rem;
-    background: #1e4620;
-    color: #2ecc71;
-    border-radius: 4px;
-    font-size: 0.8rem;
-    font-weight: bold;
-    border: 1px solid #27ae60;
-}
-
-.reserva-mr-total-estimado {
-    font-weight: bold;
-    color: #ffffff;
-    font-size: 1.15rem;
-}
-
-.reserva-mr-combo {
-    font-size: 0.85rem;
-    color: #ff9f43;
-    margin-top: 0.35rem;
-    background-color: #2c1a04;
-    padding: 0.2rem 0.5rem;
-    border-radius: 4px;
-    display: inline-block;
-    border: 1px solid #d35400;
 }
 
 /* Acciones */

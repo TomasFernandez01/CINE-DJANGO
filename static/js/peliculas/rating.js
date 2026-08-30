@@ -36,4 +36,20 @@ document.addEventListener("DOMContentLoaded", function () {
             });
         });
     }
+
+    // nuevo: textarea de comentario "tipo chat" — arranca de una línea (rows="1")
+    // y se agranda sola a medida que se escribe, como el campo de mensajes de
+    // WhatsApp, hasta un tope (ver max-height en .detalle-rating-textarea de
+    // detalle.css); pasado ese tope, scrollea internamente en vez de seguir
+    // creciendo. No es un textbox de tamaño fijo con resize manual como antes.
+    const comentario = document.getElementById("comentarioRating");
+    if (comentario) {
+        function ajustarAlturaComentario() {
+            comentario.style.height = "auto";
+            comentario.style.height = comentario.scrollHeight + "px";
+        }
+        comentario.addEventListener("input", ajustarAlturaComentario);
+        ajustarAlturaComentario(); // por si ya trae texto cargado (editar reseña existente)
+    }
 });
+
