@@ -28,10 +28,12 @@
             <div class="reserva-dr-qr-box">
                 <img src="{{ qr_imagen }}" alt="Código QR" id="qrImage" class="reserva-dr-qr-img" data-codigo="{{ reserva.pago.codigo_qr }}">
             </div>
-            <div class="reserva-dr-qr-codigo">
+            <!-- modificado (T15 - QR oculto): mismo criterio que comprobante_pago.html -->
+            <button type="button" class="reserva-dr-qr-toggle" data-qr-toggle>¿No se puede escanear? Mostrar código</button>
+            <div class="reserva-dr-qr-codigo" data-qr-codigo hidden>
                 {{ reserva.pago.codigo_qr }}
             </div>
-            <p class="reserva-dr-qr-nota">Mostrá este código al ingresar al cine</p>
+            <p class="reserva-dr-qr-nota">Mostrá este QR al ingresar al cine</p>
         </div>
         {% endif %}
 
@@ -265,6 +267,8 @@
 {% if reserva.estado == 'confirmada' and reserva.pago and reserva.pago.codigo_qr %}
 <script src="https://cdn.jsdelivr.net/npm/qrcode@1.5.3/build/qrcode.min.js"></script>
 <script src="{% static 'js/reservas/detalle_reserva_qr.js' %}"></script>
+<!-- nuevo (T15 - QR oculto) -->
+<script src="{% static 'js/shared/qr_toggle.js' %}"></script>
 {% endif %}
 
 {% endblock %}

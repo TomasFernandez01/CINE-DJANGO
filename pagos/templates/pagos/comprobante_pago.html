@@ -204,7 +204,15 @@
             <div class="ticket-qr-box">
                 <img src="{{ qr_imagen }}" alt="Código QR" class="ticket-qr-img">
             </div>
-            <div class="ticket-qr-codigo">
+            <!-- modificado (T15 - QR oculto): el código de texto plano quedaba
+                 tan visible como la imagen del QR, lo cual le sacaba el
+                 sentido de "solo el escáner lo lee". Se oculta detrás de un
+                 toggle en vez de borrarlo del todo — el Verificador QR del
+                 panel tiene un campo de verificación MANUAL (para cuando la
+                 cámara no puede leer el QR), así que el código sigue
+                 necesitando existir en algún lugar accesible por el cliente. -->
+            <button type="button" class="ticket-qr-toggle" data-qr-toggle>¿No se puede escanear? Mostrar código</button>
+            <div class="ticket-qr-codigo" data-qr-codigo hidden>
                 {{ pago.codigo_qr }}
             </div>
         </div>
@@ -252,4 +260,9 @@
     </div>
 
 </div>
+
+{% if pago.codigo_qr %}
+<!-- nuevo (T15 - QR oculto) -->
+<script src="{% static 'js/shared/qr_toggle.js' %}"></script>
+{% endif %}
 {% endblock %}

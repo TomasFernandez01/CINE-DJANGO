@@ -67,6 +67,21 @@
     border-radius: 6px;
 }
 
+/* nuevo (T15 - QR oculto): botón que revela .reserva-dr-qr-codigo (empieza
+   con [hidden] por defecto, ver detalle_reserva.html) */
+.reserva-dr-qr-toggle {
+    display: block;
+    margin: 0.5rem auto 0;
+    background: none;
+    border: none;
+    color: rgba(255, 255, 255, 0.6);
+    font-size: 0.78rem;
+    text-decoration: underline;
+    cursor: pointer;
+    padding: 0.25rem;
+}
+.reserva-dr-qr-toggle:hover { color: rgba(255, 255, 255, 0.9); }
+
 .reserva-dr-qr-nota {
     margin: 0.85rem 0 0 0;
     font-size: 0.85rem;

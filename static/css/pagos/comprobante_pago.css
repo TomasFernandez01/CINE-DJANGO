@@ -101,6 +101,20 @@
     font-family: monospace; font-size: 1rem; letter-spacing: 2px; background: rgba(255,255,255,0.15);
     display: inline-block; padding: 0.5rem 1.5rem; border-radius: 6px;
 }
+/* nuevo (T15 - QR oculto): botón que revela .ticket-qr-codigo (empieza con
+   [hidden] por defecto, ver comprobante_pago.html) */
+.ticket-qr-toggle {
+    display: block;
+    margin: 0.5rem auto 0;
+    background: none;
+    border: none;
+    color: rgba(255,255,255,0.6);
+    font-size: 0.78rem;
+    text-decoration: underline;
+    cursor: pointer;
+    padding: 0.25rem;
+}
+.ticket-qr-toggle:hover { color: rgba(255,255,255,0.9); }
 
 /* ---- Footer del ticket ---- */
 .ticket-footer { background: #1a1a2e; padding: 1rem 2rem; text-align: center; color: rgba(255,255,255,0.6); font-size: 0.8rem; }
