@@ -22,36 +22,21 @@
      encabezados "🎬 Funciones de Hoy", "💳 Últimos Pagos" y "📱 Últimos Escaneos QR", y
      de la etiqueta "✅ Ingresó" (más abajo). Texto plano, sin ícono de reemplazo. -->
 <div class="panelpag-est-encabezado">
-    <h1 class="panelpag-est-titulo"> Estadísticas</h1>
+    <h1 class="panelpag-est-titulo"> Estadísticas de Pagos (hoy)</h1>
     <span class="panelpag-est-actualizado">
         Actualizado: {{ ahora|date:"d/m/Y H:i" }} hs
     </span>
 </div>
-
-<!-- nuevo (Hilo 4 - Claude): filtro de rango de fechas real para ROI de
-     cupones y método de pago (antes esos dos gráficos eran sobre el total
-     histórico fijo, sin poder acotarlos — punto pendiente señalado en el
-     reporte de T6). GET simple (recarga la página), sin AJAX: esta página
-     no tenía JS propio para gráficos interactivos como dashboard.js, así
-     que no se le agregó esa complejidad para un filtro que no la
-     necesita. "Recaudado hoy" / "Total histórico" / QR arriba NO se ven
-     afectados por este filtro a propósito: son cifras de referencia fija
-     (hoy / siempre), no del rango elegido. -->
-{% if rango_error %}
-<div class="panelpag-est-rango-error">{{ rango_error }} Mostrando los últimos 30 días.</div>
-{% endif %}
-<form method="get" class="panelpag-est-rango-form">
-    <label class="panelpag-est-rango-label">
-        Desde
-        <input type="date" name="desde" value="{{ rango_desde }}" class="input">
-    </label>
-    <label class="panelpag-est-rango-label">
-        Hasta
-        <input type="date" name="hasta" value="{{ rango_hasta }}" class="input">
-    </label>
-    <button type="submit" class="btn btn-dark">Filtrar</button>
-    <a href="{% url 'panel:pagos_estadisticas' %}" class="btn btn-ghost">Últimos 30 días</a>
-</form>
+<!-- modificado (T14 - reorg Dashboard): se sacó el filtro de rango de
+     fechas que había acá (Hilo 4) — era exclusivamente para ROI de
+     cupones y método de pago, y esos dos gráficos se mudaron a
+     Dashboard > Operaciones/Promociones (ver panel/views/dashboard.py).
+     Todo lo que queda en esta página (recaudado hoy, total histórico,
+     QR, funciones de hoy, últimos pagos, últimos escaneos) nunca estuvo
+     atado a ese filtro — sigue mostrando lo mismo que mostraba antes. -->
+<div class="panelpag-est-link-dashboard">
+    <a href="{% url 'panel:dashboard_operaciones' %}" class="btn btn-ghost">Ver método de pago y tiempo hasta el pago en Dashboard →</a>
+</div>
 
 <!-- Stats -->
 <div class="stat-grid">
@@ -195,115 +180,5 @@
     </div>
 
 </div>
-
-<!-- nuevo (T6 - BI): ROI de cupones + método de pago más usado -->
-<div class="panelpag-est-2col">
-
-    <!-- ROI de cupones -->
-    <div class="card">
-        <div class="card-header">
-            <!-- modificado (Hilo 4 - Claude): se sacó el emoji 🎟️ (T5 había
-                 limpiado el resto del panel; este quedó afuera porque T6 lo
-                 agregó después). Título ahora aclara "en el rango" ya que
-                 dejó de ser histórico fijo. -->
-            <h3>ROI de cupones (en el rango seleccionado)</h3>
-        </div>
-        {% if roi_cupones %}
-        <div style="overflow-x:auto;">
-            <table class="tabla">
-                <thead>
-                    <tr>
-                        <th>Cupón</th>
-                        <th>Descuento otorgado</th>
-                        <th>Recaudación generada</th>
-                        <th>ROI</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {% for c in roi_cupones %}
-                    <tr>
-                        <td style="font-weight:600;">{{ c.codigo }}</td>
-                        <td style="color:#d93025;">${{ c.descuento_total_otorgado|floatformat:0 }}</td>
-                        <td style="color:#27ae60; font-weight:600;">${{ c.recaudacion_generada|floatformat:0 }}</td>
-                        <td>{% if c.roi_pct is not None %}{{ c.roi_pct }}%{% else %}—{% endif %}</td>
-                    </tr>
-                    {% endfor %}
-                </tbody>
-            </table>
-        </div>
-        {% else %}
-        <div class="card-body panelpag-est-lista-vacia">Sin cupones usados en pagos aprobados todavía.</div>
-        {% endif %}
-    </div>
-
-    <!-- Método de pago más usado -->
-    <div class="card">
-        <div class="card-header">
-            <!-- modificado (Hilo 4 - Claude): se sacó el emoji 💳 (mismo caso
-                 que el título de arriba, agregado por T6 después de T5). -->
-            <h3>Método de pago más usado (en el rango seleccionado)</h3>
-        </div>
-        {% if metodo_pago_labels %}
-        <div style="position: relative; height: 260px; width: 100%; padding: 1rem;">
-            <canvas id="metodoPagoChart"></canvas>
-        </div>
-        {% else %}
-        <div class="card-body panelpag-est-lista-vacia">Sin pagos aprobados todavía.</div>
-        {% endif %}
-    </div>
-
-</div>
-
-<!-- nuevo (T7 - BI): tiempo promedio hasta el pago -->
-<div class="card">
-    <div class="card-header">
-        <h3>Tiempo promedio hasta el pago</h3>
-    </div>
-    {% if tiempo_hasta_pago.cantidad %}
-    <div class="card-body" style="text-align:center; padding:1.5rem;">
-        <div style="font-size:1.8rem; font-weight:700; color:#3498db;">
-            {% if tiempo_hasta_pago.promedio_horas >= 1 %}
-                {{ tiempo_hasta_pago.promedio_horas }} hs
-            {% else %}
-                {{ tiempo_hasta_pago.promedio_minutos }} min
-            {% endif %}
-        </div>
-        <div style="color:#666;">
-            Desde que se crea la reserva hasta que se aprueba el pago
-            (sobre {{ tiempo_hasta_pago.cantidad }} reserva{{ tiempo_hasta_pago.cantidad|pluralize }} confirmada{{ tiempo_hasta_pago.cantidad|pluralize }})
-        </div>
-    </div>
-    {% else %}
-    <div class="card-body panelpag-est-lista-vacia">Sin reservas confirmadas con pago aprobado todavía.</div>
-    {% endif %}
-</div>
-
-{% if metodo_pago_labels %}
-<!-- nuevo (T6 - BI): Chart.js cargado acá mismo (esta página todavía no lo
-     usaba). No toca static/js/panel/dashboard.js: ese archivo es exclusivo
-     de los gráficos AJAX de inicio.html y quedó fuera del alcance de esta
-     tanda (T6 solo puede tocar dashboard.py, pagos.py, inicio.html y
-     pagos/lista.html o pagos/estadisticas.html). -->
-<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-<script>
-    new Chart(document.getElementById('metodoPagoChart').getContext('2d'), {
-        type: 'pie',
-        data: {
-            labels: {{ metodo_pago_labels|safe }},
-            datasets: [{
-                data: {{ metodo_pago_valores|safe }},
-                backgroundColor: ['#3498db', '#e2b96f', '#9b59b6', '#27ae60'],
-                borderColor: '#ffffff',
-                borderWidth: 2,
-            }]
-        },
-        options: {
-            responsive: true,
-            maintainAspectRatio: false,
-            plugins: { legend: { position: 'bottom' } },
-        }
-    });
-</script>
-{% endif %}
 
 {% endblock %}

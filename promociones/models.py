@@ -160,7 +160,28 @@ class Combo(models.Model):
     # modificado (combos múltiples): default 'combo' para que los ítems ya
     # cargados en la base (todos combos armados hasta ahora) no queden sin
     # categoría tras la migración.
-    categoria = models.CharField(max_length=20, choices=CATEGORIA_CHOICES, default='combo')
+    # modificado (T14 — bug real, categoría "nachos" rechazada): T13 había
+    # sacado 'choices' del FORM (ComboForm), pero Django ModelForm SIEMPRE
+    # valida el modelo completo al guardar (_post_clean() llama a
+    # instance.full_clean()), y ahí el campo del MODELO seguía teniendo
+    # choices=CATEGORIA_CHOICES — por eso seguía rechazando cualquier
+    # categoría nueva con "El valor 'nachos' no es una opción válida",
+    # sin importar que el form ya no restringiera nada.
+    #
+    # Se saca 'choices=' de acá (columna real de la base no cambia — sigue
+    # siendo VARCHAR(20), 'choices' nunca fue una restricción de esquema,
+    # así que esto NO requiere migración). CATEGORIA_CHOICES se deja como
+    # está, como lista de "categorías de fábrica" para sugerencias en
+    # ComboForm/pagos.py — ya no está atada a la validación del campo.
+    #
+    # Se confirmó antes de este cambio que nada en el proyecto usa
+    # combo.get_categoria_display() (ese método solo existe si el campo
+    # tiene 'choices') — los templates que muestran la categoría
+    # (elegir_combo.html) ya la muestran como texto plano con |capfirst,
+    # y el dashboard (_combos_por_categoria) ya resuelve la etiqueta con
+    # .get(clave, clave), con fallback al valor crudo — así que remover
+    # 'choices' acá no rompe nada de eso.
+    categoria = models.CharField(max_length=20, default='combo')
     # nuevo (Sedes - Fase 1): mismo criterio que Cupon.sede — vacío = ítem
     # de toda la cadena, con valor = exclusivo de esa sede (ej: un combo
     # promocional que solo existe en una sucursal puntual).

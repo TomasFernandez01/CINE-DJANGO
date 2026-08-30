@@ -59,6 +59,12 @@
     font-size: 0.85rem;
 }
 
+/* nuevo (T14 - reorg Dashboard): link "Ver método de pago..." que quedó
+   en esta página después de mudar esos gráficos a Dashboard. */
+.panelpag-est-link-dashboard {
+    margin-bottom: 1.5rem;
+}
+
 .panelpag-est-col-pelicula {
     font-weight: 600;
 }

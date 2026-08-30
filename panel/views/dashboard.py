@@ -1,44 +1,63 @@
 # modificado (Paso 0 - split de panel/views.py): módulo extraído automáticamente,
 # sin cambios de lógica, solo de ubicación. Ver panel/views/__init__.py.
 
-# modificado: reescritura completa del dashboard. Resumen de lo que cambió:
-#   - Se sacaron 'proximas_funciones', 'ultimas_reservas' y 'ultimos_pagos'
-#     del contexto: ya tienen su propia sección en el Panel (Funciones,
-#     Reservas, Pagos) y no aportaban valor de negocio acá.
-#   - El gráfico de recaudación de "últimos 7 días fijos" se reemplaza por
-#     un gráfico interactivo: el usuario elige fecha desde/hasta y la
-#     agrupación (día/semana/mes/bimestre/trimestre/cuatrimestre/anual), y
-#     el gráfico se redibuja por AJAX (ver dashboard_grafico_ventas) sin
-#     recargar la página. La primera carga ya viene con datos (últimos 30
-#     días agrupados por día) para que no se vea vacío antes de que cargue
-#     el JS.
-#   - El gráfico de combos ahora agrupa por CATEGORÍA (combo/bebida/snack/
-#     pochoclo) en vez de por nombre puntual — respondía a "qué comida se
-#     consume más", que es una pregunta de categoría, no de producto exacto.
-#     Usa el mismo rango de fechas que el gráfico de ventas.
-#   - El gráfico de cupones se sacó (no es una métrica de "cuánto se
-#     vende", es un dato que ya se puede consultar en Panel > Cupones).
-#   - KPIs nuevos con foco en "qué necesita saber el dueño del cine":
-#     ticket promedio, comparación vs. el período anterior (mismo largo de
-#     días, inmediatamente antes), top 5 películas por recaudación (no por
-#     cantidad de funciones — por plata generada), ocupación promedio
-#     aproximada, embudo de reservas (pendiente/confirmada/cancelada/
-#     expirada) y el día de la semana + horario con más reservas
-#     confirmadas.
+# modificado (T14 - reorg Dashboard): este archivo era una sola vista
+# inicio() con TODOS los gráficos de TODAS las apps mezclados en una sola
+# página (~770 líneas de template). Se reparte en 4 sub-secciones —
+# Catálogo / Promociones / Operaciones / Administración — cada una en su
+# propia URL, más una vista de aterrizaje. Ningún cálculo cambia de
+# fórmula: es 100% reubicación de dónde vive cada gráfico, no una reescritura
+# de la lógica de negocio. Los 3 endpoints AJAX (dashboard_grafico_ventas,
+# dashboard_grafico_combos, dashboard_kpis) tampoco cambian de URL/nombre —
+# dashboard_grafico_combos ya no se usa desde ningún template (Consumo por
+# categoría pasó a ser un render estático en Dashboard > Promociones, ver
+# nota ahí abajo) pero se deja andando por compatibilidad, no molesta.
+#
+# Mapeo de gráficos (decidido con Tomás, ver conversación):
+#   Catálogo:       Top 5 películas por recaudación, Calificación vs. recaudación
+#   Promociones:    Consumo por categoría, Ticket con/sin combo, ROI de
+#                   cupones, Cupones más usados, Cupones activos sin uso
+#   Operaciones:    Stats del día + accesos rápidos, KPIs interactivos,
+#                   Ventas del período (interactivo), Embudo de reservas,
+#                   2 heatmaps, Método de pago más usado, Tiempo promedio
+#                   hasta el pago
+#   Administración: Ranking de sedes (SuperUser)
+#
+# Simplificación consciente: en el dashboard viejo, TODO se recalculaba en
+# vivo por AJAX con un único selector de fechas (filtro-fechas + presets).
+# Repartir eso en 4 páginas separadas manteniendo el mismo nivel de
+# interactividad en las 4 hubiera significado cuadruplicar esa maquinaria
+# de JS. Se deja la interactividad completa (AJAX + presets) SOLO en
+# Operaciones, que es donde ya vivía el filtro principal. Catálogo,
+# Promociones y Administración muestran los últimos 30 días fijos (mismo
+# período que usaba el dashboard viejo por default) — Promociones y
+# Operaciones sí conservan el filtro de fecha simple (GET, recarga de
+# página) que ya existía para ROI de cupones / método de pago en
+# pagos/estadisticas.html, ese no se perdió.
 
 from datetime import date, timedelta
+from django.contrib import messages
 from django.db.models import Sum, Count, Avg
 from django.db.models.functions import ExtractHour, ExtractWeekDay
 from django.http import JsonResponse
-from django.shortcuts import render
+from django.shortcuts import render, redirect
 from django.utils import timezone
 from pagos.models import Pago
 from peliculas.models import Pelicula
-from promociones.models import Combo
+from promociones.models import Combo, Cupon, CuponUsado
 from reservas.models import Reserva
 from salas.models import Funcion
 from utils.fechas import generar_periodos
-from ..decorators import staff_required,get_sede_activa_panel
+from ..decorators import staff_required, get_sede_activa_panel
+# modificado (T14): se reusan estos 4 helpers de pagos.py en vez de
+# duplicarlos acá — son módulos hermanos dentro de panel/views/, sin
+# import circular (pagos.py no importa nada de dashboard.py).
+from .pagos import (
+    _parsear_rango_pagos,
+    _roi_cupones,
+    _distribucion_metodo_pago,
+    _tiempo_promedio_hasta_pago,
+)
 
 # ExtractWeekDay de Django: 1=Domingo, 2=Lunes, ..., 7=Sábado (¡ojo! no es
 # igual a date.weekday(), que arranca en Lunes=0).
@@ -46,34 +65,108 @@ DIAS_EXTRACT_WEEKDAY = ['Domingo', 'Lunes', 'Martes', 'Miércoles', 'Jueves', 'V
 
 
 # ============================================================
-# DASHBOARD PRINCIPAL
+# nuevo (T14): ATERRIZAJE DE DASHBOARD — menú de 4 tarjetas
 # ============================================================
 
 @staff_required
 def inicio(request):
+    """
+    modificado (T14): esto ANTES era la página con todos los gráficos.
+    Ahora es solo un menú de 4 tarjetas grandes a las sub-secciones. Se
+    mantiene el nombre de URL 'panel:inicio' (y la ruta '') sin cambios:
+    hay ~10 templates en todo Panel que linkean acá como "volver al
+    inicio" (botón INICIO en salas/sedes/películas/etc.) y el breadcrumb
+    de base_panel.html también apunta acá — cambiar el nombre de URL
+    hubiera significado tocar todos esos templates sin necesidad.
+    """
+    return render(request, 'panel/dashboard/inicio.html', {'seccion_activa': 'dashboard'})
+
+
+@staff_required
+def dashboard_catalogo(request):
+    """nuevo (T14): Top 5 películas por recaudación + Calificación vs.
+    recaudación. Últimos 30 días fijos (sin selector interactivo, ver nota
+    de simplificación arriba del archivo)."""
+    sede_activa = get_sede_activa_panel(request)
+    hasta = timezone.now().date()
+    desde = hasta - timedelta(days=29)
+
+    # nuevo (T14): "Películas en cartelera" vivía en el stat-grid de la
+    # vieja inicio() (mezclado con recaudación/QR/reservas, que son de
+    # Operaciones). Es un dato de Catálogo, así que se muda para acá.
+    stats = {
+        'peliculas_cartelera': Pelicula.objects.filter(en_cartelera=True).count(),
+        'peliculas_total': Pelicula.objects.count(),
+    }
+
+    contexto = {
+        'seccion_activa': 'dashboard',
+        'periodo_desde': desde,
+        'periodo_hasta': hasta,
+        'stats': stats,
+        'top_peliculas': _top_peliculas_por_recaudacion(desde, hasta, sede_activa),
+        'rating_recaudacion_datos': _rating_vs_recaudacion(desde, hasta, sede_activa),
+    }
+    return render(request, 'panel/dashboard/catalogo.html', contexto)
+
+
+@staff_required
+def dashboard_promociones(request):
+    """nuevo (T14): Consumo por categoría, Ticket con/sin combo y ROI de
+    cupones comparten un filtro de fecha simple (GET, mismo patrón que ya
+    usaba pagos/estadisticas.html para esto). Cupones más usados / activos
+    sin uso mantienen su lógica original de ventanas fijas (hoy/semana/mes),
+    independiente del filtro de arriba — así funcionaban en
+    cupones/estadisticas.html, no se les cambió el criterio."""
+    sede_activa = get_sede_activa_panel(request)
+    desde, hasta, error_rango = _parsear_rango_pagos(request)
+    if error_rango:
+        hasta = timezone.now().date()
+        desde = hasta - timedelta(days=29)
+
+    combos = _combos_por_categoria(desde, hasta, sede_activa)
+    atv_combo = _atv_combo_vs_sin_combo(desde, hasta, sede_activa)
+    roi_cupones = _roi_cupones(desde, hasta, sede_activa)
+    cupones_stats = _cupones_stats_ventanas()
+
+    contexto = {
+        'seccion_activa': 'dashboard',
+        'rango_desde': desde.strftime('%Y-%m-%d'),
+        'rango_hasta': hasta.strftime('%Y-%m-%d'),
+        'rango_error': error_rango,
+        'chart_combos_labels': combos['labels'],
+        'chart_combos_valores': combos['valores'],
+        'atv_combo': atv_combo,
+        'roi_cupones': roi_cupones,
+        'cupones_stats': cupones_stats['stats'],
+        'top_cupones': cupones_stats['top_cupones'],
+        'cupones_activos_sin_uso': cupones_stats['cupones_activos_sin_uso'],
+    }
+    return render(request, 'panel/dashboard/promociones.html', contexto)
+
+
+@staff_required
+def dashboard_operaciones(request):
+    """modificado (T14): esto es lo que antes era inicio() completo, menos
+    Top 5 películas / Calificación vs. recaudación (-> Catálogo) y menos
+    Consumo por categoría (-> Promociones). Se le suman Método de pago más
+    usado y Tiempo promedio hasta el pago, que vivían en
+    pagos/estadisticas.html. Mantiene el filtro interactivo (AJAX +
+    presets) para KPIs/Ventas/Embudo/Heatmaps — Método de pago usa su
+    propio filtro simple aparte (mismo que tenía en pagos/estadisticas.html)."""
     ahora = timezone.now()
     hoy = ahora.replace(hour=0, minute=0, second=0, microsecond=0)
     semana = hoy - timedelta(days=7)
 
-    # nuevo (Sedes - Fase 3): filtros base a encadenar en cada query de
-    # esta vista, según la sede activa del staff (fija o elegida). No se
-    # filtra Pelicula: el catálogo sigue siendo compartido entre sedes
-    # (una función de esa película sí pertenece a una sede puntual).
     sede_activa = get_sede_activa_panel(request)
     filtro_funcion = {'sala__sede': sede_activa} if sede_activa else {}
     filtro_reserva = {'funcion__sala__sede': sede_activa} if sede_activa else {}
     filtro_pago = {'reserva__funcion__sala__sede': sede_activa} if sede_activa else {}
-    filtro_cupon_usado = {'reserva__funcion__sala__sede': sede_activa} if sede_activa else {}
 
-    # Tarjetas de resumen
     stats = {
-        'peliculas_cartelera': Pelicula.objects.filter(en_cartelera=True).count(),
-        'peliculas_total': Pelicula.objects.count(),
         'funciones_hoy': Funcion.objects.filter(
-            fecha_hora__gte=hoy,
-            fecha_hora__lt=hoy + timedelta(days=1),
-            disponible=True,
-            **filtro_funcion
+            fecha_hora__gte=hoy, fecha_hora__lt=hoy + timedelta(days=1),
+            disponible=True, **filtro_funcion
         ).count(),
         'funciones_proximas': Funcion.objects.filter(
             fecha_hora__gte=ahora, disponible=True, **filtro_funcion
@@ -94,71 +187,74 @@ def inicio(request):
         ).count(),
     }
 
-    # ----- Período por defecto para los KPIs y el primer render de los
-    # gráficos: últimos 30 días (hoy incluido) -----
     periodo_hasta = hoy.date()
     periodo_desde = periodo_hasta - timedelta(days=29)
-    # modificado (Sedes): se estaba filtrando por sede_activa en las tarjetas
-    # de arriba (stats) pero NO acá — los KPIs y los gráficos mostraban datos
-    # de TODAS las sedes aunque el staff tuviera una sede fija o elegida.
-    # Ahora usan el mismo sede_activa ya resuelto arriba.
     kpis = _calcular_kpis(periodo_desde, periodo_hasta, sede_activa)
 
-    # ----- Datos iniciales de los gráficos (agrupados por día), para que la
-    # página no se vea vacía antes de que cargue el JS. El usuario después
-    # puede cambiar rango/agrupación y ahí entra en juego el AJAX. -----
     periodos_iniciales = generar_periodos(periodo_desde, periodo_hasta, 'dia')
     chart_ventas_labels, chart_ventas_valores = _serie_recaudacion(periodos_iniciales, sede_activa)
     _, chart_entradas_valores = _serie_entradas(periodos_iniciales, sede_activa)
-    combos_iniciales = _combos_por_categoria(periodo_desde, periodo_hasta, sede_activa)
 
-    # modificado (T6 - BI): gráfico nuevo #1, heatmap de entradas vendidas
-    # por día de semana x hora de función, para el mismo período de 30 días
-    # que ya usan los KPIs de arriba.
     heatmap = _heatmap_entradas_por_dia_hora(periodo_desde, periodo_hasta, sede_activa)
-
-    # nuevo (T11): variante del heatmap anterior pero por recaudación
-    # (Pago.monto) en vez de cantidad de entradas — se pidió tenerlos los
-    # DOS, no reemplazar uno por el otro (confirmado por Tomás). Mismo
-    # período y misma matriz 7x24, el template los muestra con un toggle.
     heatmap_recaudacion = _heatmap_recaudacion_por_dia_hora(periodo_desde, periodo_hasta, sede_activa)
 
-    # modificado (T6 - BI): gráfico nuevo #4, ranking comparativo entre
-    # sedes — solo se calcula (y se muestra) para SuperUser.
-    ranking_sedes = _ranking_sedes(periodo_desde, periodo_hasta) if request.user.is_superuser else None
-
-    # modificado (T7 - BI): gráfico nuevo #1 (calificación vs. recaudación
-    # por película) y #2 (ticket promedio con combo vs. sin combo), sobre
-    # el mismo período de 30 días que ya usan los KPIs de arriba.
-    rating_vs_recaudacion = _rating_vs_recaudacion(periodo_desde, periodo_hasta, sede_activa)
-    atv_combo = _atv_combo_vs_sin_combo(periodo_desde, periodo_hasta, sede_activa)
+    # nuevo (T14): Método de pago + tiempo hasta el pago, mudados desde
+    # pagos/estadisticas.html. Filtro de fecha propio (GET simple), no
+    # comparte el filtro interactivo de KPIs/Ventas de arriba — así
+    # funcionaban antes, en pagos/estadisticas.html, no se les cambió el
+    # criterio al mudarlos.
+    desde_mp, hasta_mp, error_rango_mp = _parsear_rango_pagos(request)
+    if error_rango_mp:
+        hasta_mp = periodo_hasta
+        desde_mp = periodo_desde
+    metodo_pago = _distribucion_metodo_pago(desde_mp, hasta_mp, sede_activa)
+    tiempo_hasta_pago = _tiempo_promedio_hasta_pago(sede_activa)
 
     contexto = {
+        'seccion_activa': 'dashboard',
         'stats': stats,
         'kpis': kpis,
-        'seccion_activa': 'inicio',
         'chart_ventas_labels': chart_ventas_labels,
         'chart_ventas_valores': chart_ventas_valores,
         'chart_entradas_valores': chart_entradas_valores,
-        'chart_combos_labels': combos_iniciales['labels'],
-        'chart_combos_valores': combos_iniciales['valores'],
         'periodo_desde_default': periodo_desde.strftime('%Y-%m-%d'),
         'periodo_hasta_default': periodo_hasta.strftime('%Y-%m-%d'),
-        # modificado (T6 - BI)
         'heatmap_matriz': heatmap['matriz'],
         'heatmap_horas': heatmap['horas'],
-        # nuevo (T11): segundo heatmap, por recaudación
         'heatmap_recaudacion_matriz': heatmap_recaudacion['matriz'],
-        'ranking_sedes': ranking_sedes,
-        # modificado (T7 - BI)
-        'rating_recaudacion_datos': rating_vs_recaudacion,
-        'atv_combo': atv_combo,
+        'metodo_pago_labels': metodo_pago['labels'],
+        'metodo_pago_valores': metodo_pago['valores'],
+        'tiempo_hasta_pago': tiempo_hasta_pago,
+        'rango_mp_desde': desde_mp.strftime('%Y-%m-%d'),
+        'rango_mp_hasta': hasta_mp.strftime('%Y-%m-%d'),
+        'rango_mp_error': error_rango_mp,
     }
-    return render(request, 'panel/inicio.html', contexto)
+    return render(request, 'panel/dashboard/operaciones.html', contexto)
+
+
+@staff_required
+def dashboard_administracion(request):
+    """modificado (T14): Ranking de sedes, mudado tal cual desde
+    inicio(). Sigue siendo exclusivo de SuperUser — si un Staff entra acá
+    por URL directa, se lo redirige al aterrizaje de Dashboard con un
+    aviso, en vez de mostrarle una página vacía."""
+    if not request.user.is_superuser:
+        messages.error(request, 'Esta sección es exclusiva de SuperUser.')
+        return redirect('panel:inicio')
+
+    hasta = timezone.now().date()
+    desde = hasta - timedelta(days=29)
+    contexto = {
+        'seccion_activa': 'dashboard',
+        'periodo_desde': desde,
+        'periodo_hasta': hasta,
+        'ranking_sedes': _ranking_sedes(desde, hasta),
+    }
+    return render(request, 'panel/dashboard/administracion.html', contexto)
 
 
 # ============================================================
-# nuevo: endpoints AJAX para los gráficos interactivos
+# endpoints AJAX del dashboard interactivo (solo Operaciones)
 # ============================================================
 
 @staff_required
@@ -169,15 +265,12 @@ def dashboard_grafico_ventas(request):
 
     Devuelve JSON {labels, valores, metrica, total} para redibujar el
     gráfico de ventas/entradas sin recargar la página. Lo consume
-    static/js/panel/dashboard.js.
+    static/js/panel/dashboard_operaciones.js (Dashboard > Operaciones).
     """
     periodos, error = _parsear_periodos(request)
     if error:
         return JsonResponse({'error': error}, status=400)
 
-    # modificado (Sedes): faltaba resolver y aplicar la sede activa acá —
-    # el gráfico mostraba todas las sedes juntas aunque el staff tuviera
-    # una sede fija o elegida en el selector del Panel.
     sede_activa = get_sede_activa_panel(request)
 
     metrica = request.GET.get('metrica', 'recaudacion')
@@ -201,17 +294,16 @@ def dashboard_grafico_combos(request):
     """
     GET ?desde=YYYY-MM-DD&hasta=YYYY-MM-DD
 
-    Devuelve JSON {labels, valores} con el consumo de comida (combos/
-    bebidas/snacks/pochoclo) por categoría en el rango elegido. Usa el
-    mismo selector de fechas que dashboard_grafico_ventas (sin agrupación,
-    acá siempre se agrega todo el rango junto).
+    modificado (T14): ya no se consume desde ningún template — "Consumo
+    por categoría" pasó a renderizarse una sola vez server-side en
+    Dashboard > Promociones (con su propio filtro GET, no AJAX). Se deja
+    este endpoint vivo por si algo externo lo llamaba y por compatibilidad
+    con integraciones, no molesta que quede.
     """
     desde, hasta, error = _parsear_rango(request)
     if error:
         return JsonResponse({'error': error}, status=400)
 
-    # modificado (Sedes): idem dashboard_grafico_ventas — faltaba filtrar
-    # por sede activa.
     sede_activa = get_sede_activa_panel(request)
     return JsonResponse(_combos_por_categoria(desde, hasta, sede_activa))
 
@@ -221,16 +313,13 @@ def dashboard_kpis(request):
     """
     GET ?desde=YYYY-MM-DD&hasta=YYYY-MM-DD
 
-    Devuelve JSON con los mismos KPIs que se calculan en inicio() para el
-    período por defecto, pero recalculados para el rango que haya elegido
-    el usuario en el selector de fechas del dashboard.
+    Devuelve JSON con los KPIs de Dashboard > Operaciones para el rango
+    que haya elegido el usuario en el selector de fechas.
     """
     desde, hasta, error = _parsear_rango(request)
     if error:
         return JsonResponse({'error': error}, status=400)
 
-    # modificado (Sedes): idem dashboard_grafico_ventas — faltaba filtrar
-    # por sede activa.
     sede_activa = get_sede_activa_panel(request)
     return JsonResponse(_calcular_kpis(desde, hasta, sede_activa))
 
@@ -312,6 +401,12 @@ def _combos_por_categoria(desde, hasta, sede=None):
     modificado (Sedes): filtro opcional por sede (vía
     pago__reserva__funcion__sala__sede — un salto más que en los otros
     helpers porque acá se parte de ItemPago, no de Pago/Reserva).
+
+    modificado (T14 - bug categoría libre): 'categoria' del modelo Combo
+    ya no tiene 'choices' (ver promociones/models.py) — sigue siendo texto
+    libre, así que categoria_label.get(clave, clave) ya cubría bien el caso
+    de una categoría nueva sin traducción (fallback al valor crudo), no
+    hizo falta tocar nada acá por ese cambio.
     """
     from pagos.models import ItemPago
     filtro_sede = {'pago__reserva__funcion__sala__sede': sede} if sede else {}
@@ -330,6 +425,69 @@ def _combos_por_categoria(desde, hasta, sede=None):
     return {'labels': labels, 'valores': valores}
 
 
+def _top_peliculas_por_recaudacion(desde, hasta, sede=None):
+    """nuevo (T14): extraído de _calcular_kpis() (antes vivía adentro,
+    mezclado con KPIs financieros/operativos que no le corresponden a
+    Catálogo). Misma fórmula exacta que tenía ahí, sin cambios — top 5 por
+    recaudación (Pago.monto), no por cantidad de funciones."""
+    filtro_sede = {'reserva__funcion__sala__sede': sede} if sede else {}
+    top_qs = Pago.objects.filter(
+        estado='aprobado', fecha_pago__date__gte=desde, fecha_pago__date__lte=hasta,
+        **filtro_sede,
+    ).values('reserva__funcion__pelicula__titulo').annotate(total=Sum('monto')).order_by('-total')[:5]
+    return [
+        {'titulo': t['reserva__funcion__pelicula__titulo'], 'total': float(t['total'])}
+        for t in top_qs
+    ]
+
+
+def _cupones_stats_ventanas():
+    """nuevo (T14): mudado tal cual desde promociones.py::cupones_estadisticas
+    (ese view se retiró, todo su contenido de análisis vive acá ahora).
+    Mismas ventanas fijas (hoy/semana/mes/total) que tenía, sin cambios de
+    fórmula. Nota: al igual que en el original, esto NO filtra por sede —
+    así funcionaba antes (posible punto a revisar en una tanda futura, no
+    se tocó acá para no cambiar comportamiento sin que se pida)."""
+    ahora = timezone.now()
+    hoy = ahora.replace(hour=0, minute=0, second=0, microsecond=0)
+    semana = hoy - timedelta(days=7)
+    mes = hoy - timedelta(days=30)
+
+    usos_hoy = CuponUsado.objects.filter(fecha_uso__gte=hoy)
+    usos_semana = CuponUsado.objects.filter(fecha_uso__gte=semana)
+    usos_mes = CuponUsado.objects.filter(fecha_uso__gte=mes)
+
+    stats = {
+        'usos_hoy': usos_hoy.count(),
+        'usos_semana': usos_semana.count(),
+        'usos_mes': usos_mes.count(),
+        'usos_total': CuponUsado.objects.count(),
+        'descuento_hoy': usos_hoy.aggregate(t=Sum('descuento_aplicado'))['t'] or 0,
+        'descuento_semana': usos_semana.aggregate(t=Sum('descuento_aplicado'))['t'] or 0,
+        'descuento_mes': usos_mes.aggregate(t=Sum('descuento_aplicado'))['t'] or 0,
+        'descuento_total': CuponUsado.objects.aggregate(t=Sum('descuento_aplicado'))['t'] or 0,
+    }
+
+    top_cupones = CuponUsado.objects.values(
+        'cupon__codigo', 'cupon__descripcion'
+    ).annotate(
+        veces_usado=Count('id'),
+        descuento_generado=Sum('descuento_aplicado')
+    ).order_by('-veces_usado')[:10]
+
+    cupones_activos_sin_uso = Cupon.objects.filter(
+        activo=True
+    ).exclude(
+        id__in=usos_mes.values_list('cupon_id', flat=True)
+    ).order_by('-fecha_inicio')[:10]
+
+    return {
+        'stats': stats,
+        'top_cupones': top_cupones,
+        'cupones_activos_sin_uso': cupones_activos_sin_uso,
+    }
+
+
 def _calcular_kpis(desde, hasta, sede=None):
     """
     Calcula los KPIs de negocio para el rango [desde, hasta]:
@@ -337,7 +495,6 @@ def _calcular_kpis(desde, hasta, sede=None):
       - comparativa_pct: variación % de recaudación vs. el período
         inmediatamente anterior, de igual duración (None si no hay datos
         del período anterior para comparar)
-      - top_peliculas: top 5 por recaudación (no por cantidad de funciones)
       - ocupacion_promedio: aproximación en base a
         (entradas pendientes+confirmadas) / capacidad de sala, promediada
         entre las funciones del período. Es una aproximación porque cuenta
@@ -350,6 +507,12 @@ def _calcular_kpis(desde, hasta, sede=None):
     modificado (Sedes): parámetro `sede` opcional (Sede o None). Si viene,
     filtra pagos/reservas/funciones a esa sede antes de agregar. Antes esta
     función no sabía nada de sedes y siempre calculaba sobre TODAS.
+
+    modificado (T14 - reorg Dashboard): 'top_peliculas' se sacó de acá y
+    pasó a su propia función _top_peliculas_por_recaudacion() — pertenece
+    conceptualmente a Catálogo, no a estos KPIs operativos/financieros.
+    Se actualizó también dashboard_operaciones.js para que ya no espere
+    ese campo en la respuesta de dashboard_kpis.
     """
     dias_periodo = (hasta - desde).days + 1
     anterior_hasta = desde - timedelta(days=1)
@@ -380,14 +543,6 @@ def _calcular_kpis(desde, hasta, sede=None):
         )
     else:
         comparativa_pct = None
-
-    top_peliculas_qs = pagos_periodo.values(
-        'reserva__funcion__pelicula__titulo'
-    ).annotate(total=Sum('monto')).order_by('-total')[:5]
-    top_peliculas = [
-        {'titulo': t['reserva__funcion__pelicula__titulo'], 'total': float(t['total'])}
-        for t in top_peliculas_qs
-    ]
 
     # Ocupación promedio aproximada
     funciones_periodo = Funcion.objects.filter(
@@ -430,7 +585,6 @@ def _calcular_kpis(desde, hasta, sede=None):
         'recaudado_periodo': float(recaudado_periodo),
         'ticket_promedio': float(ticket_promedio),
         'comparativa_pct': comparativa_pct,
-        'top_peliculas': top_peliculas,
         'ocupacion_promedio': ocupacion_promedio,
         'embudo': embudo,
         'dia_top': dia_top,
@@ -438,39 +592,23 @@ def _calcular_kpis(desde, hasta, sede=None):
     }
 
 
-# modificado (T6 - BI): dos helpers nuevos, no tocan ni reemplazan nada de
-# lo que ya existía arriba.
 # ============================================================
 # nuevo (T6 - BI): heatmap día x hora + ranking de sedes
 # ============================================================
 
 def _heatmap_entradas_por_dia_hora(desde, hasta, sede=None):
     """
-    Matriz de 7 (día de semana) x 24 (hora) con la cantidad de entradas
-    vendidas (Reserva.cantidad_entradas, reservas confirmadas) para el
-    rango [desde, hasta].
-
-    modificado (T6 - BI): usa el mismo criterio que ya usa
-    _calcular_kpis() para 'dia_top'/'horario_pico' — mismo filtro por
-    fecha_reserva, mismas ExtractWeekDay/ExtractHour tomadas de
-    funcion__fecha_hora (la franja horaria de la FUNCIÓN, no de cuándo se
-    pagó) — pero acá arma la matriz completa de 7x24 en vez de quedarse
-    solo con el máximo. Se usa cantidad de entradas y no recaudación
-    porque Reserva no tiene monto propio (el monto vive en Pago, 1 a 1
-    con la reserva) y este es el mismo dato base que ya usa el resto del
-    dashboard para "horario pico"; ver T6_thomp.md, opción b.
-
-    Devuelve {'matriz': [...], 'horas': [0..23]} donde 'matriz' es una
-    lista de 7 filas (orden = DIAS_EXTRACT_WEEKDAY) y cada fila es
-    {'dia': str, 'celdas': [{'valor': int, 'alpha': float 0-1}, ...24]}.
-    'alpha' ya viene calculado (valor / máximo de toda la matriz) para
-    poder pintar la celda directamente en el template sin lógica extra.
+    Matriz 7 (día de semana) x 24 (hora) de cantidad de entradas vendidas
+    (Reserva.cantidad_entradas, reservas confirmadas), agrupadas por el
+    día/hora de la FUNCIÓN (no de la reserva) — responde "¿qué franjas
+    horarias son las más elegidas?", que es sobre cuándo va la gente al
+    cine, no cuándo compra el ticket.
     """
     filtro_sede = {'funcion__sala__sede': sede} if sede else {}
     filas = Reserva.objects.filter(
         estado='confirmada',
-        fecha_reserva__date__gte=desde,
-        fecha_reserva__date__lte=hasta,
+        funcion__fecha_hora__date__gte=desde,
+        funcion__fecha_hora__date__lte=hasta,
         **filtro_sede,
     ).annotate(
         dow=ExtractWeekDay('funcion__fecha_hora'),
@@ -500,8 +638,7 @@ def _heatmap_recaudacion_por_dia_hora(desde, hasta, sede=None):
     nuevo (T11): misma matriz 7x24 que _heatmap_entradas_por_dia_hora, pero
     con recaudación (Pago.monto de pagos 'aprobado') en vez de cantidad de
     entradas. Se pidió explícitamente tener los DOS heatmaps, no reemplazar
-    el existente — la idea es, más adelante, agrupar todos los gráficos de
-    BI en una sección propia por app (ver charla T11).
+    el existente.
 
     El eje día/hora sigue siendo el de la FUNCIÓN (reserva__funcion__fecha_hora),
     igual que el heatmap de entradas, para que ambos sean comparables celda a
@@ -543,11 +680,11 @@ def _ranking_sedes(desde, hasta):
     hasta]: recaudación total, ocupación promedio y ticket promedio (ATV).
 
     nuevo (T6 - BI): pensado para llamarse solo cuando
-    request.user.is_superuser (ver inicio()) — un Staff con sede fija no
-    debería ver comparativas de otras sedes. Reutiliza el mismo criterio
-    de ocupación aproximada que ya usa _calcular_kpis() (entradas
-    pendientes+confirmadas / capacidad de sala, promediada por función),
-    pero separado por sede en vez de agregado global.
+    request.user.is_superuser (ver dashboard_administracion()) — un Staff
+    con sede fija no debería ver comparativas de otras sedes. Reutiliza el
+    mismo criterio de ocupación aproximada que ya usa _calcular_kpis()
+    (entradas pendientes+confirmadas / capacidad de sala, promediada por
+    función), pero separado por sede en vez de agregado global.
     """
     from sedes.models import Sede
 
@@ -583,10 +720,6 @@ def _ranking_sedes(desde, hasta):
             'recaudacion': float(recaudacion),
             'atv': float(atv),
             'ocupacion_promedio': ocupacion_promedio,
-            # modificado (T7 - Parte B): columna "cantidad de funciones" que
-            # pedía SEDESactualizacion.txt punto 2 y esta tabla todavía no
-            # tenía. Se reutiliza el mismo queryset funciones_sede ya armado
-            # arriba para el cálculo de ocupación, no se agrega query nueva.
             'funciones_count': funciones_sede.count(),
         })
 
@@ -594,8 +727,6 @@ def _ranking_sedes(desde, hasta):
     return ranking
 
 
-# modificado (T7 - BI): dos helpers nuevos, no tocan ni reemplazan nada de
-# lo que ya existía arriba (T6).
 # ============================================================
 # nuevo (T7 - BI): rating vs. recaudación + ATV con/sin combo
 # ============================================================
@@ -612,15 +743,12 @@ def _rating_vs_recaudacion(desde, hasta, sede=None):
     TODO el historial de calificaciones de la película (no se filtra por
     [desde, hasta]), porque una calificación de un usuario no está atada a
     una compra puntual dentro del período, a diferencia de la recaudación
-    que sí es "de ese período" igual que el resto de los KPIs del
-    dashboard. Solo se incluyen películas que tengan AMBOS datos (al menos
-    una calificación Y recaudación > 0 en el período) — si faltara
-    cualquiera de los dos, el punto no aporta a la pregunta "¿correlaciona
-    rating con ventas?" que pide la consigna.
+    que sí es "de ese período". Solo se incluyen películas que tengan
+    AMBOS datos (al menos una calificación Y recaudación > 0 en el
+    período).
 
     Devuelve una lista de dicts {titulo, rating_promedio, recaudacion},
-    ordenada por recaudación descendente (mismo criterio que 'top_peliculas'
-    de _calcular_kpis).
+    ordenada por recaudación descendente.
     """
     filtro_sede = {'reserva__funcion__sala__sede': sede} if sede else {}
     recaudacion_qs = Pago.objects.filter(
@@ -659,11 +787,9 @@ def _atv_combo_vs_sin_combo(desde, hasta, sede=None):
     nuevo (T7): mismo criterio de ATV que ya usa _calcular_kpis()
     (Avg('monto') sobre pagos aprobados) — no se inventa una fórmula
     nueva, solo se separa ese mismo cálculo en dos grupos según si el pago
-    tiene o no items de combo (ItemPago, no el campo legacy Pago.combo —
-    mismo motivo que ya documentó _combos_por_categoria: ese campo solo
-    guarda el primer ítem del pedido).
+    tiene o no items de combo (ItemPago, no el campo legacy Pago.combo).
     """
-    from pagos.models import ItemPago  # import local, mismo patrón que _combos_por_categoria
+    from pagos.models import ItemPago
     filtro_sede = {'reserva__funcion__sala__sede': sede} if sede else {}
     pagos_periodo = Pago.objects.filter(
         estado='aprobado',

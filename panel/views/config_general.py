@@ -4,7 +4,7 @@
 from django.contrib import messages
 from django.shortcuts import render, redirect
 from django.urls import reverse
-from ..decorators import staff_required, get_sede_staff
+from ..decorators import staff_required, get_sede_staff, superuser_required  # modificado (T14)
 from ..models import ConfiguracionGeneral
 from ..forms import (
     ConfiguracionGeneralForm,
@@ -24,7 +24,16 @@ from ..forms import (
 # Si la sede elegida/fija todavía no tiene su propia fila, se le muestran
 # los valores heredados de la global como punto de partida (sin guardar
 # nada todavía); el primer "Guardar" crea la fila propia de esa sede.
-@staff_required
+#
+# modificado (T14 - reorg Administración): se decidió que Configuración
+# General pasa a ser 100% SuperUser (toca precios, tiempos de reserva y
+# credenciales de email — no tiene sentido dejarlo abierto a cada Staff de
+# sede). @staff_required -> @superuser_required. La rama de "Staff
+# restringido a su sede" de acá abajo queda como código muerto: no se
+# borró porque no molesta y si el día de mañana se decide devolverle el
+# acceso a Staff, ya está la lógica lista — pero hoy `get_sede_staff` va a
+# devolver siempre None acá porque solo entra un SuperUser.
+@superuser_required
 def configuracion_general(request):
     """
     Pantalla del panel para editar la configuración general del sistema.

@@ -1,0 +1,18 @@
+{% comment %}
+nuevo (T14 - reorg Dashboard): sub-navegación compartida entre las 4
+páginas de Dashboard. Recibe `dash_seccion` ('catalogo'|'promociones'|
+'operaciones'|'administracion') desde cada template que la incluye.
+{% endcomment %}
+<div class="dash-subnav">
+    <a href="{% url 'panel:inicio' %}">Dashboard</a>
+    <span class="sep">/</span>
+    <a href="{% url 'panel:dashboard_catalogo' %}" class="{% if dash_seccion == 'catalogo' %}activo{% endif %}">Catálogo</a>
+    <span class="sep">·</span>
+    <a href="{% url 'panel:dashboard_promociones' %}" class="{% if dash_seccion == 'promociones' %}activo{% endif %}">Promociones</a>
+    <span class="sep">·</span>
+    <a href="{% url 'panel:dashboard_operaciones' %}" class="{% if dash_seccion == 'operaciones' %}activo{% endif %}">Operaciones</a>
+    {% if request.user.is_superuser %}
+    <span class="sep">·</span>
+    <a href="{% url 'panel:dashboard_administracion' %}" class="{% if dash_seccion == 'administracion' %}activo{% endif %}">Administración</a>
+    {% endif %}
+</div>

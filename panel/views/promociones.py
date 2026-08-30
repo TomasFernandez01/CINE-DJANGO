@@ -433,52 +433,10 @@ def cupones_usados_lista(request):
 # ============================================================
 # ESTADÍSTICAS DE CUPONES
 # ============================================================
-
-@staff_required
-def cupones_estadisticas(request):
-    ahora = timezone.now()
-    hoy = ahora.replace(hour=0, minute=0, second=0, microsecond=0)
-    semana = hoy - timedelta(days=7)
-    mes = hoy - timedelta(days=30)
-
-    usos_hoy = CuponUsado.objects.filter(fecha_uso__gte=hoy)
-    usos_semana = CuponUsado.objects.filter(fecha_uso__gte=semana)
-    usos_mes = CuponUsado.objects.filter(fecha_uso__gte=mes)
-
-    stats = {
-        'usos_hoy': usos_hoy.count(),
-        'usos_semana': usos_semana.count(),
-        'usos_mes': usos_mes.count(),
-        'usos_total': CuponUsado.objects.count(),
-        'descuento_hoy': usos_hoy.aggregate(t=Sum('descuento_aplicado'))['t'] or 0,
-        'descuento_semana': usos_semana.aggregate(t=Sum('descuento_aplicado'))['t'] or 0,
-        'descuento_mes': usos_mes.aggregate(t=Sum('descuento_aplicado'))['t'] or 0,
-        'descuento_total': CuponUsado.objects.aggregate(t=Sum('descuento_aplicado'))['t'] or 0,
-    }
-
-    top_cupones = CuponUsado.objects.values(
-        'cupon__codigo', 'cupon__descripcion'
-    ).annotate(
-        veces_usado=Count('id'),
-        descuento_generado=Sum('descuento_aplicado')
-    ).order_by('-veces_usado')[:10]
-
-    cupones_activos_sin_uso = Cupon.objects.filter(
-        activo=True
-    ).exclude(
-        id__in=usos_mes.values_list('cupon_id', flat=True)
-    ).order_by('-fecha_inicio')[:10]
-
-    ultimos_usos = CuponUsado.objects.select_related(
-        'cupon', 'usuario', 'reserva__funcion__pelicula'
-    ).order_by('-fecha_uso')[:10]
-
-    contexto = {
-        'stats': stats,
-        'top_cupones': top_cupones,
-        'cupones_activos_sin_uso': cupones_activos_sin_uso,
-        'ultimos_usos': ultimos_usos,
-        'seccion_activa': 'cupones',
-    }
-    return render(request, 'panel/promociones/cupones/estadisticas.html', contexto)
+# modificado (T14 - reorg Dashboard): esta vista se retiró. Todo lo que
+# mostraba (stats de usos/descuento, cupones más usados, activos sin uso)
+# se mudó a Dashboard > Promociones (ver
+# panel/views/dashboard.py::_cupones_stats_ventanas y
+# dashboard_promociones). El botón "USOS" de cupones/lista.html ahora
+# apunta directo a esa página en vez de acá.
 

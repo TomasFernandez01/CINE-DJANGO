@@ -1,0 +1,57 @@
+{% extends 'panel/base_panel.html' %}
+{% load static %}
+
+{% block titulo %}Dashboard · Administración — Panel Cine Online{% endblock %}
+
+{% block breadcrumb %}
+<span class="sep">›</span>
+<a href="{% url 'panel:inicio' %}">Dashboard</a>
+<span class="sep">›</span>
+<span class="current">Administración</span>
+{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/panel/dashboard/comun.css' %}">
+{% endblock %}
+
+{% block contenido %}
+{% include 'panel/dashboard/_subnav.html' with dash_seccion='administracion' %}
+
+<p style="color:#888; font-size:0.85rem; margin-bottom:1.5rem;">Últimos 30 días ({{ periodo_desde|date:"d/m" }} — {{ periodo_hasta|date:"d/m" }}). Comparativa entre todas las sedes activas — exclusivo de SuperUser.</p>
+
+<div class="card ranking-sedes-card">
+    <div class="card-header">
+        <h3>Ranking de sedes</h3>
+    </div>
+    {% if ranking_sedes %}
+    <div style="overflow-x:auto;">
+        <table class="tabla" style="width:100%;">
+            <thead>
+                <tr>
+                    <th>Sede</th>
+                    <th>Recaudación</th>
+                    <th>Ocupación promedio</th>
+                    <th>Ticket promedio (ATV)</th>
+                    <th>Funciones</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for r in ranking_sedes %}
+                <tr>
+                    <td style="font-weight:600;">{{ r.sede }}</td>
+                    <td style="color:#27ae60; font-weight:600;">${{ r.recaudacion|floatformat:0 }}</td>
+                    <td>{% if r.ocupacion_promedio is not None %}{{ r.ocupacion_promedio }}%{% else %}—{% endif %}</td>
+                    <td>${{ r.atv|floatformat:0 }}</td>
+                    <td>{{ r.funciones_count }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    {% else %}
+    <div class="card-body" style="text-align:center;color:#999;padding:2rem;">
+        No hay sedes activas para comparar.
+    </div>
+    {% endif %}
+</div>
+{% endblock %}

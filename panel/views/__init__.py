@@ -4,11 +4,15 @@
 # views.nombre_funcion sin ningún cambio).
 
 from .dashboard import (
+    dashboard_administracion,  # nuevo (T14)
+    dashboard_catalogo,        # nuevo (T14)
     dashboard_grafico_combos,
     dashboard_grafico_ventas,
     dashboard_kpis,
+    dashboard_operaciones,     # nuevo (T14)
+    dashboard_promociones,     # nuevo (T14)
     inicio,
-)  # modificado: se suman los 3 endpoints AJAX nuevos del dashboard
+)  # modificado (T14): + 4 sub-secciones nuevas del dashboard reorganizado
 from .peliculas import (
     peliculas_buscar_tmdb,
     peliculas_crear,
@@ -62,7 +66,8 @@ from .promociones import (
     cupones_crear,
     cupones_editar,
     cupones_eliminar,
-    cupones_estadisticas,
+    # modificado (T14): cupones_estadisticas se retiró, ver
+    # panel/views/promociones.py — su contenido vive en Dashboard > Promociones.
     cupones_lista,
     cupones_usados_lista,
     promodia_crear,

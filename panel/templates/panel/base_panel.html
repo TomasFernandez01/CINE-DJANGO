@@ -57,17 +57,20 @@
     </div>
 
     <nav>
-        <!-- modificado (T5 - cero emojis): se vaciaron todos los <span class="icon"> de este
-             <nav> (Dashboard, Películas, Salas, Funciones, Combos, Cupones, Descuentos,
-             Reservas, Pagos, Estadísticas, Cupones Usados, Verificador QR, Configuración
-             General, Usuarios, Sedes, Django Admin). No se tocó la clase "icon" ni la
-             estructura de los <span> porque no hay librería de íconos cargada en el
-             proyecto (se revisó el <head> de este mismo archivo) — si en el futuro se agrega
-             una, estos <span class="icon"> vacíos son el lugar donde va el ícono nuevo. -->
+        <!-- modificado (T14 - reorg sidebar): 5 grupos según lo confirmado con
+             Tomás. "Estadísticas" (pagos_estadisticas) y "Cupones Usados" ya no
+             tienen link propio acá — sus gráficos/tablas de análisis viven en
+             Dashboard, y lo puramente operativo de cada una quedó accesible
+             desde adentro de Pagos y Cupones respectivamente (ver botones en
+             esos templates). "Configuración General" se mudó de Operaciones a
+             Administración y pasó a ser 100% SuperUser (ver panel/views/config_general.py).
+             El botón de "Django Admin" se sacó del todo — sigue andando por URL
+             directa (/admin/), pero ya no tiene entrada en este menú. -->
+
         <!-- Dashboard -->
         <div class="sidebar-section">
             <a href="{% url 'panel:inicio' %}" 
-                class="sidebar-link {% if seccion_activa == 'inicio' %}active{% endif %}">
+                class="sidebar-link {% if seccion_activa == 'dashboard' %}active{% endif %}">
                 <span class="icon"></span> Dashboard
             </a>
         </div>
@@ -123,21 +126,9 @@
                class="sidebar-link {% if seccion_activa == 'pagos' %}active{% endif %}">
                 <span class="icon"></span> Pagos
             </a>
-            <a href="{% url 'panel:pagos_estadisticas' %}"
-               class="sidebar-link {% if seccion_activa == 'estadisticas' %}active{% endif %}">
-                <span class="icon"></span> Estadísticas
-            </a>
-            <a href="{% url 'panel:cupones_usados_lista' %}"
-               class="sidebar-link {% if seccion_activa == 'cupones_usados' %}active{% endif %}">
-                <span class="icon"></span> Cupones Usados
-            </a>
             <a href="{% url 'panel:verificador_qr' %}"
                class="sidebar-link {% if seccion_activa == 'verificador' %}active{% endif %}">
                 <span class="icon"></span> Verificador QR
-            </a>
-            <a href="{% url 'panel:configuracion_general' %}"
-               class="sidebar-link {% if seccion_activa == 'configuracion' %}active{% endif %}">
-                <span class="icon"></span> Configuración General
             </a>
         </div>
 
@@ -151,16 +142,21 @@
                 <span class="icon"></span> Usuarios
                 <span class="badge-admin">Admin</span>
             </a>
-            <!-- nuevo (Sedes - Fase 3) -->
             <a href="{% url 'panel:sedes_lista' %}"
                class="sidebar-link {% if seccion_activa == 'sedes' %}active{% endif %}">
                 <span class="icon"></span> Sedes
                 <span class="badge-admin">Admin</span>
             </a>
-            <a href="{% url 'admin:index' %}" class="sidebar-link" target="_blank">
-                <span class="icon"></span> Django Admin
+            <!-- modificado (T14): Configuración General se mudó acá desde Operaciones,
+                 y pasó a ser 100% SuperUser (ver panel/views/config_general.py) -->
+            <a href="{% url 'panel:configuracion_general' %}"
+               class="sidebar-link {% if seccion_activa == 'configuracion' %}active{% endif %}">
+                <span class="icon"></span> Configuración General
                 <span class="badge-admin">Admin</span>
             </a>
+            <!-- modificado (T14): botón "Django Admin" retirado del sidebar. Sigue
+                 accesible por URL directa (/admin/) para quien la conozca — pedido
+                 explícito: que deje de ser un acceso visible desde el Panel. -->
         </div>
         {% endif %}
     </nav>

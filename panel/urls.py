@@ -6,6 +6,11 @@ app_name = 'panel'
 urlpatterns = [
     # Dashboard 
     path('',                                    views.inicio,                   name='inicio'),
+    # nuevo (T14 - reorg Dashboard): 4 sub-secciones, ver panel/views/dashboard.py
+    path('dashboard/catalogo/',                 views.dashboard_catalogo,       name='dashboard_catalogo'),
+    path('dashboard/promociones/',              views.dashboard_promociones,    name='dashboard_promociones'),
+    path('dashboard/operaciones/',               views.dashboard_operaciones,    name='dashboard_operaciones'),
+    path('dashboard/administracion/',            views.dashboard_administracion, name='dashboard_administracion'),
     # modificado: endpoints AJAX del dashboard interactivo (ver panel/views/dashboard.py)
     path('dashboard/grafico-ventas/',            views.dashboard_grafico_ventas, name='dashboard_grafico_ventas'),
     path('dashboard/grafico-combos/',            views.dashboard_grafico_combos, name='dashboard_grafico_combos'),
@@ -74,7 +79,7 @@ urlpatterns = [
     path('cupones/<int:cupon_id>/editar/',      views.cupones_editar, name='cupones_editar'),
     path('cupones/eliminar/',                   views.cupones_eliminar, name='cupones_eliminar'),
     # ============================================================
-    path('cupones/estadisticas/',               views.cupones_estadisticas, name='cupones_estadisticas'),
+    # modificado (T14): 'cupones/estadisticas/' se retiró — ver panel/views/promociones.py
     # ============================================================
     # ---- Promociones: Promo por Día --------------------------------------------------------------------------------
     path('promociones-dia/',                    views.promodia_lista,  name='promodia_lista'),

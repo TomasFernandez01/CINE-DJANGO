@@ -88,7 +88,17 @@ def pagos_lista(request):
 
 @staff_required
 def pagos_estadisticas(request):
-    """Las estadísticas viven ahora en el panel."""
+    """Las estadísticas viven ahora en el panel.
+
+    modificado (T14 - reorg Dashboard): esta página deja de tener ROI de
+    cupones, método de pago y tiempo hasta el pago — se mudaron a
+    Dashboard > Operaciones/Promociones (ver panel/views/dashboard.py).
+    Se deja acá SOLO lo operativo del día (funciones de hoy, últimos
+    pagos, últimos escaneos, contadores de QR) — esta página ya no tiene
+    entrada propia en el sidebar (absorbida en el grupo Dashboard), pero
+    se llega igual desde el botón "Ver estadísticas" de Pagos y desde el
+    Verificador QR, así que no queda huérfana.
+    """
     ahora = timezone.now()
     hoy = ahora.replace(hour=0, minute=0, second=0, microsecond=0)
 
@@ -97,16 +107,6 @@ def pagos_estadisticas(request):
     sede_activa = get_sede_activa_panel(request)
     filtro_pago_sede = {'reserva__funcion__sala__sede': sede_activa} if sede_activa else {}
     filtro_funcion_sede = {'sala__sede': sede_activa} if sede_activa else {}
-
-    # nuevo (Hilo 4 - Claude): rango de fechas real para ROI de cupones y
-    # método de pago (ver _parsear_rango_pagos arriba). Si viene mal
-    # formado, no se rompe la página entera: se avisa con un mensaje y se
-    # cae al default de 30 días, para que "Estadísticas" nunca quede en
-    # blanco por un querystring roto.
-    desde, hasta, error_rango = _parsear_rango_pagos(request)
-    if error_rango:
-        hasta = ahora.date()
-        desde = hasta - timedelta(days=29)
 
     pagos_hoy = Pago.objects.filter(estado='aprobado', fecha_pago__gte=hoy, **filtro_pago_sede)
     recaudado_hoy = pagos_hoy.aggregate(t=Sum('monto'))['t'] or 0
@@ -166,17 +166,6 @@ def pagos_estadisticas(request):
         'reserva__funcion__sala'
     ).order_by('-fecha_escaneo')[:10]
 
-    # modificado (T6 - BI): gráfico nuevo #2 (ROI de cupones) y #3
-    # (método de pago más usado). Ver helpers al final del archivo.
-    # modificado (Hilo 4 - Claude): ambos ahora reciben desde/hasta, ya no
-    # son sobre el total histórico fijo (salvo que no se haya pasado
-    # ningún parámetro, en cuyo caso el rango es "últimos 30 días" y no
-    # "todo el histórico" — ver nota en _distribucion_metodo_pago).
-    roi_cupones = _roi_cupones(desde, hasta, sede_activa)
-    metodo_pago = _distribucion_metodo_pago(desde, hasta, sede_activa)
-    # modificado (T7 - BI): gráfico nuevo #3 (tiempo promedio hasta el pago).
-    tiempo_hasta_pago = _tiempo_promedio_hasta_pago(sede_activa)
-    
     contexto = {
         'ahora': ahora,
         'recaudado_hoy': recaudado_hoy,
@@ -189,17 +178,6 @@ def pagos_estadisticas(request):
         'ultimos_pagos': ultimos_pagos,
         'ultimos_escaneos': ultimos_escaneos,
         'seccion_activa': 'pagos',
-        # modificado (T6 - BI)
-        'roi_cupones': roi_cupones,
-        'metodo_pago_labels': metodo_pago['labels'],
-        'metodo_pago_valores': metodo_pago['valores'],
-        # modificado (T7 - BI)
-        'tiempo_hasta_pago': tiempo_hasta_pago,
-        # nuevo (Hilo 4 - Claude): para precargar el form de rango y mostrar
-        # el error si el querystring vino mal formado.
-        'rango_desde': desde.strftime('%Y-%m-%d'),
-        'rango_hasta': hasta.strftime('%Y-%m-%d'),
-        'rango_error': error_rango,
     }
     return render(request, 'panel/pagos/estadisticas.html', contexto)
 
@@ -218,11 +196,10 @@ def _roi_cupones(desde, hasta, sede=None):
     en que se usó el cupón, para que el "generó" sea consistente con el
     resto de las métricas de esta página, que también son por fecha_pago).
 
-    nuevo (T6 - BI): cupones_estadisticas() ya vive en
-    panel/views/promociones.py — fuera del alcance de esta tanda, no se
-    toca — y calcula usos/descuentos, pero no compara contra la
-    recaudación generada; eso es lo que agrega este cálculo, en modo
-    lectura sobre CuponUsado/Cupon (ambos de la app promociones).
+    modificado (T14 - reorg Dashboard): la comparación con
+    usos/descuentos totales (antes en promociones.py::cupones_estadisticas)
+    se mudó a panel/views/dashboard.py::_cupones_stats_ventanas() —
+    ambas se muestran juntas ahora en Dashboard > Promociones.
 
     modificado (Hilo 4 - Claude): antes era sobre el total histórico fijo;
     ahora recibe desde/hasta (ver _parsear_rango_pagos en

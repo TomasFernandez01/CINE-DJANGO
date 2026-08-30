@@ -22,7 +22,13 @@
             <button type="submit" form="formCupones" id="btnEliminarSeleccionadas" class="btn btn-danger panelcupon-lista-btn-eliminar" disabled>Eliminar</button>
             <a href="{% url 'panel:inicio' %}" class="btn btn-primary">INICIO</a>
             <a href="{% url 'panel:cupones_crear' %}" class="btn btn-primary">NUEVO</a>
-            <a href="{% url 'panel:cupones_estadisticas' %}"class="btn btn-primary">USOS</a>
+            <!-- modificado (T14): apuntaba a cupones_estadisticas (retirada), ahora va a Dashboard > Promociones -->
+            <a href="{% url 'panel:dashboard_promociones' %}"class="btn btn-primary">USOS</a>
+            <!-- nuevo (T14): "Cupones Usados" salió del sidebar (grupo Operaciones,
+                 quedó reducido a Reservas/Pagos/Verificador QR). Es un listado
+                 operativo, no un gráfico, así que no encaja como sub-sección de
+                 Dashboard — se deja accesible desde acá en vez de perderla. -->
+            <a href="{% url 'panel:cupones_usados_lista' %}" class="btn btn-ghost">HISTORIAL DE USOS</a>
         </div>
     </div>
 
