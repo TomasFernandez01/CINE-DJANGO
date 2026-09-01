@@ -1,6 +1,8 @@
 {% extends 'base.html' %}
 
 {% load static %}
+<!-- modificado (Hilo 2 - Google Sign-In) -->
+{% load socialaccount %}
 {% block titulo %}Registro{% endblock %}
 
 {% block contenido %}
@@ -83,6 +85,24 @@
                 Registrarse
             </button>
         </form>
+
+        <!-- nuevo (Hilo 2 - Google Sign-In): no había ninguna opción de
+             registro social acá antes -- se agrega reutilizando las mismas
+             clases CSS que ya usa login.html (social-login-separator,
+             social-login-botones, btn-social), sin CSS nuevo. En el
+             registro process='signup' en vez de 'login' -- no cambia el
+             flujo real (allauth crea el user igual con cualquiera de los
+             dos si no existe todavía), pero mantiene la semántica de cada
+             página. -->
+        <div class="social-login-separator">O continúa con</div>
+        <div class="social-login-botones">
+            <a href="{% provider_login_url 'google' process='signup' %}" class="btn-social">
+                <svg viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M12.24 10.285V13.4h6.887c-.275 1.565-1.88 4.604-6.887 4.604-4.33 0-7.859-3.579-7.859-8s3.529-8 7.859-8c2.46 0 4.105 1.025 5.047 1.926l2.427-2.334C17.955 2.192 15.34 1 12.24 1 6.033 1 12.24 6.033 1 12.24s5.033 11.24 11.24 11.24c6.478 0 10.793-4.537 10.793-10.978 0-.74-.08-1.3-.176-1.86H12.24z"/>
+                </svg>
+                Google
+            </a>
+        </div>
 
         <div class="usuario-enlace-pie">
             <p>
