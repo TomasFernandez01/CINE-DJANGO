@@ -163,20 +163,18 @@ MEDIA_ROOT = BASE_DIR / 'media'
 # ============================================
 
 # Opción 1: GMAIL (Desarrollo y Producción)
-# Para usar Gmail, necesitás crear una "Contraseña de aplicación"
-# Ir a: https://myaccount.google.com/apppasswords
-
-#EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
-#EMAIL_HOST = 'smtp.gmail.com'
-#EMAIL_PORT = 587
-#EMAIL_USE_TLS = True
-#EMAIL_HOST_USER = 'tu-email@gmail.com'  # Cambiar por tu email
-#EMAIL_HOST_PASSWORD = 'tu-contraseña-app'  # Cambiar por tu contraseña de aplicación
-#DEFAULT_FROM_EMAIL = 'Cine Online <tu-email@gmail.com>'
+EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
+EMAIL_HOST = os.environ.get('EMAIL_HOST')
+EMAIL_PORT = int(os.environ.get('EMAIL_PORT', 587))
+EMAIL_USE_TLS = True
+EMAIL_HOST_USER = os.environ.get('EMAIL_HOST_USER')
+EMAIL_HOST_PASSWORD = os.environ.get('EMAIL_HOST_PASSWORD')
+# El correo que verán los usuarios como remitente
+DEFAULT_FROM_EMAIL = f"DJANGO-CINE <{EMAIL_HOST_USER}>"
 
 # Opción 2: CONSOLE (Solo para desarrollo/testing - imprime en consola)
 # Descomenta esto si querés probar sin configurar email real
-EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
+#EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
 
 # Opción 3: Mailtrap (Recomendado para desarrollo)
 # Registrate gratis en https://mailtrap.io

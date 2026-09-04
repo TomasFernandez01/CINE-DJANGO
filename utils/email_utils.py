@@ -10,6 +10,30 @@ import logging
 logger = logging.getLogger(__name__)
 
 
+# modificado (Hilo 1 - ronda "producción"): aviso sobre el límite de envío
+# de Gmail, pedido explícitamente en delegacion_v3.md.
+#
+# Una cuenta de Gmail normal (no Google Workspace) tiene un límite de
+# ~500 emails salientes por día vía SMTP (500/día para cuentas @gmail.com,
+# 2000/día para Workspace). Si se supera, Gmail empieza a rechazar el
+# envío (típicamente un error 454/550 de smtplib). Ese error ya queda
+# contenido: cada función de este archivo tiene su propio try/except y
+# devuelve False en vez de propagar la excepción (ver más abajo), así que
+# un pico de envíos NUNCA rompe el flujo de compra del usuario -- la
+# reserva/pago se confirma igual, el usuario simplemente no recibe ese
+# mail puntual.
+#
+# Lo que este comentario NO resuelve (documentado para cuando el volumen
+# crezca, fuera del alcance de este hilo): como el fallo se traga
+# silenciosamente, si un día se pisa el límite de Gmail nadie se entera
+# salvo revisando los logs (logger.error de cada función de abajo). Si el
+# volumen de reservas crece y se acerca a ese límite, las dos salidas son
+# (a) pasar la cuenta a Google Workspace (sube el límite a 2000/día) o
+# (b) migrar a un servicio pensado para volumen transaccional (Mailgun,
+# SendGrid, Amazon SES, etc.), que además evita que Gmail marque la cuenta
+# como spam por enviar de forma automatizada.
+
+
 # modificado (Hilo 1 - Tanda D): antes esto usaba directo settings.DEFAULT_FROM_EMAIL
 # y la conexión default de Django (que lee EMAIL_BACKEND/EMAIL_HOST/etc de
 # settings.py). Ahora se prioriza lo que esté cargado en Panel > Configuración
