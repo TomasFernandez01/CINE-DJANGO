@@ -96,12 +96,19 @@
              página. -->
         <div class="social-login-separator">O continúa con</div>
         <div class="social-login-botones">
-            <a href="{% provider_login_url 'google' process='signup' %}" class="btn-social">
-                <svg viewBox="0 0 24 24" fill="currentColor">
-                    <path d="M12.24 10.285V13.4h6.887c-.275 1.565-1.88 4.604-6.887 4.604-4.33 0-7.859-3.579-7.859-8s3.529-8 7.859-8c2.46 0 4.105 1.025 5.047 1.926l2.427-2.334C17.955 2.192 15.34 1 12.24 1 6.033 1 12.24 6.033 1 12.24s5.033 11.24 11.24 11.24c6.478 0 10.793-4.537 10.793-10.978 0-.74-.08-1.3-.176-1.86H12.24z"/>
-                </svg>
-                Google
-            </a>
+            <!-- modificado (última tarea - fix real, no solo estético):
+                 mismo fix que login.html -- de link (GET) a formulario
+                 method=post> para saltar la pantalla intermedia de
+                 confirmación sin estilo que agrega allauth en GET. -->
+            <form method="post" action="{% provider_login_url 'google' process='signup' %}" style="display: contents;">
+                {% csrf_token %}
+                <button type="submit" class="btn-social">
+                    <svg viewBox="0 0 24 24" fill="currentColor">
+                        <path d="M12.24 10.285V13.4h6.887c-.275 1.565-1.88 4.604-6.887 4.604-4.33 0-7.859-3.579-7.859-8s3.529-8 7.859-8c2.46 0 4.105 1.025 5.047 1.926l2.427-2.334C17.955 2.192 15.34 1 12.24 1 6.033 1 12.24 6.033 1 12.24s5.033 11.24 11.24 11.24c6.478 0 10.793-4.537 10.793-10.978 0-.74-.08-1.3-.176-1.86H12.24z"/>
+                    </svg>
+                    Google
+                </button>
+            </form>
         </div>
 
         <div class="usuario-enlace-pie">
