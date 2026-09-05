@@ -169,8 +169,13 @@ EMAIL_PORT = int(os.environ.get('EMAIL_PORT', 587))
 EMAIL_USE_TLS = True
 EMAIL_HOST_USER = os.environ.get('EMAIL_HOST_USER')
 EMAIL_HOST_PASSWORD = os.environ.get('EMAIL_HOST_PASSWORD')
-# El correo que verán los usuarios como remitente
-DEFAULT_FROM_EMAIL = f"DJANGO-CINE <{EMAIL_HOST_USER}>"
+# modificado (revisión final): antes era f"DJANGO-CINE <{EMAIL_HOST_USER}>"
+# directo -- si en algún entorno falta la variable EMAIL_HOST_USER (.env
+# incompleto, compu de otro compañero, Render antes de cargar las env
+# vars), esto quedaba como "DJANGO-CINE <None>", un remitente roto. Ahora
+# cae a un string fijo en ese caso -- no soluciona que falte configurar el
+# email, pero evita el remitente inválido.
+DEFAULT_FROM_EMAIL = f"DJANGO-CINE <{EMAIL_HOST_USER}>" if EMAIL_HOST_USER else 'DJANGO-CINE <noreply@localhost>'
 
 # Opción 2: CONSOLE (Solo para desarrollo/testing - imprime en consola)
 # Descomenta esto si querés probar sin configurar email real

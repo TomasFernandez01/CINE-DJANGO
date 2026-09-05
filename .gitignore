@@ -31,8 +31,6 @@ staticfiles/
 .DS_Store
 Thumbs.db
 
-# utilies
-manage.py
 
 # ARCHIVOS EXTERNOS
 .ias
