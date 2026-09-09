@@ -21,7 +21,16 @@
 .combos-promodia-descripcion { margin: 0; color: #dddddd; font-size: 0.9rem; }
 .combos-promodia-badge { margin-top: 0.75rem; background: rgba(0,0,0,0.4); padding: 0.4rem 0.75rem; border-radius: 4px; display: inline-block; font-size: 0.85rem; border: 1px solid rgba(255,255,255,0.2); }
 .combos-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 1.25rem; }
-.combos-card { background: #1f1f1f; border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.4); overflow: hidden; transition: transform 0.2s, box-shadow 0.2s; border: 1px solid #333; }
+.combos-card { 
+    /* background: #1f1f1f;*/ 
+    background: #000000; 
+    /* border-radius: 12px; */
+    /* box-shadow: 0 4px 12px rgba(0,0,0,0.4);  */
+    box-shadow: 0 4px 12px rgb(255 0 0 / 40%);
+    overflow: hidden; 
+    transition: transform 0.2s, box-shadow 0.2s; 
+    /* border: 1px solid #333;  */
+}
 .combos-card:hover { transform: translateY(-4px); box-shadow: 0 8px 20px rgba(0,0,0,0.6); }
 .combos-card-imagen { width: 100%; height: 180px; object-fit: cover; }
 .combos-card-imagen-placeholder { width: 100%; height: 140px; background: linear-gradient(135deg, #2c2c2c 0%, #141414 100%); display: flex; align-items: center; justify-content: center; font-size: 1rem; color: #888888; font-weight: bold; }

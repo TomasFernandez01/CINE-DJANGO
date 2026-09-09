@@ -5,10 +5,27 @@
    que la cabecera se armara con .funciones-cabecera-contenedor). También
    se sacó .funciones-vacio (amarillo tipo "warning"), reemplazada hace
    tiempo por .pelis-vacio (ver más abajo), que sigue viva y en uso. */
-.funciones-filtro-select { width: 100%; padding: 0.5rem; border: 1px solid #3a3a3a; border-radius: 6px; font-size: 0.9rem; background-color: #262626; color: #eee; }
+.funciones-filtro-select { 
+    width: 100%; 
+    padding: 0.5rem; 
+    border: 1px solid #3a3a3a; 
+    /* border-radius: 6px; */
+    font-size: 0.9rem; 
+    background-color: #000000; 
+    color: #eee; 
+}
 .funciones-filtros-acciones { display: flex; gap: 1rem; }
-.funciones-filtro-btn-limpiar { flex:1; padding: 0.6rem; background-color: #3a3a3a; color: white; border-radius: 6px; text-align: center; text-decoration: none; font-weight: bold; }
-.funciones-resultado-info { color: #aaa; margin-bottom: 1rem; }
+.funciones-filtro-btn-limpiar { 
+    flex:1; 
+    /* padding: 0.6rem;  */
+    background-color: #000000; 
+    color: white; 
+    /* border-radius: 6px; */
+    text-align: center; 
+    text-decoration: none; 
+    /* font-weight: bold; */
+}
+.funciones-resultado-info { color: #aaa; margin: 1rem; }
 
 /* nuevo (limpieza, punto 2): esto vivía como <style> embebido directo en
    lista_funciones.html -- se movió acá, mismo criterio de separación
@@ -19,11 +36,12 @@
     align-items: center;
     flex-wrap: wrap;
     gap: 1.5rem;
-    margin-bottom: 2rem;
-    background-color: #1c1c1c;
-    padding: 1.25rem 1.5rem;
-    border-radius: 8px;
+    /* margin-bottom: 2rem; */
+    background-color: #000000;
+    /* padding: 1.25rem 1.5rem; */
+    /* border-radius: 8px; */
     box-shadow: 0 4px 10px rgba(0,0,0,0.3);
+    margin: 1rem;
 }
 
 .buscador-caja-funciones {
@@ -45,9 +63,9 @@
 .funciones-buscador-input {
     width: 100%;
     padding: 0.6rem 1rem 0.6rem 2.5rem;
-    border: 1px solid #3a3a3a;
-    border-radius: 6px;
-    background-color: #262626;
+    border: 1px solid #000000;
+    /* border-radius: 6px; */
+    background-color: #000000;
     color: #eee;
     font-size: 0.9rem;
     background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23888' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Ccircle cx='11' cy='11' r='7'%3E%3C/circle%3E%3Cline x1='21' y1='21' x2='16.65' y2='16.65'%3E%3C/line%3E%3C/svg%3E");

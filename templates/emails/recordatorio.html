@@ -5,34 +5,39 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Recordatorio de Función</title>
 </head>
-<body style="margin: 0; padding: 0; font-family: Arial, sans-serif; background-color: #f4f4f4;">
-    <table width="100%" cellpadding="0" cellspacing="0" style="background-color: #f4f4f4; padding: 20px;">
+<!-- modificado (restyle - paleta sitio cliente): mismo criterio que los
+     otros 2 templates de email — fondo negro, tarjeta oscura, acento rojo.
+     Sin cambios de contenido ni de contexto, solo visual. -->
+<body style="margin: 0; padding: 0; font-family: 'Segoe UI', Arial, sans-serif; background-color: #000000;">
+    <table width="100%" cellpadding="0" cellspacing="0" style="background-color: #000000; padding: 20px;">
         <tr>
             <td align="center">
-                <table width="600" cellpadding="0" cellspacing="0" style="background-color: #ffffff; border-radius: 8px; overflow: hidden; box-shadow: 0 2px 8px rgba(0,0,0,0.1);">
+                <table width="600" cellpadding="0" cellspacing="0" style="background-color: #141414; border-radius: 8px; overflow: hidden; border: 1px solid #262626;">
                     
                     <!-- Header -->
+                    <!-- modificado: gradiente rosa/rojo pastel -> rojo sólido del sitio -->
                     <tr>
-                        <td style="background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%); padding: 30px; text-align: center;">
+                        <td style="background-color: #e50914; padding: 30px; text-align: center;">
                             <div style="font-size: 60px; margin-bottom: 10px;">🔔</div>
                             <h1 style="color: #ffffff; margin: 0; font-size: 28px;">¡No te lo pierdas!</h1>
-                            <p style="color: rgba(255,255,255,0.9); margin: 10px 0 0 0; font-size: 16px;">Tu función es mañana</p>
+                            <p style="color: rgba(255,255,255,0.85); margin: 10px 0 0 0; font-size: 16px;">Tu función es mañana</p>
                         </td>
                     </tr>
                     
                     <!-- Content -->
                     <tr>
                         <td style="padding: 40px 30px;">
-                            <p style="color: #666; line-height: 1.6; margin: 0 0 30px 0; font-size: 16px;">
-                                Hola <strong>{{ usuario.first_name|default:usuario.username }}</strong>,<br><br>
-                                Te recordamos que tu función es <strong>mañana</strong>. ¡Preparate para disfrutar de una gran película!
+                            <p style="color: #b3b3b3; line-height: 1.6; margin: 0 0 30px 0; font-size: 16px;">
+                                Hola <strong style="color: #e8e8e8;">{{ usuario.first_name|default:usuario.username }}</strong>,<br><br>
+                                Te recordamos que tu función es <strong style="color: #e8e8e8;">mañana</strong>. ¡Preparate para disfrutar de una gran película!
                             </p>
                             
                             <!-- Movie Poster Visual -->
+                            <!-- modificado: gradiente violeta -> rojo sólido, mismo acento que el resto del mail -->
                             <table width="100%" cellpadding="0" cellspacing="0" style="margin-bottom: 30px;">
                                 <tr>
                                     <td align="center">
-                                        <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); padding: 30px; border-radius: 12px; color: white;">
+                                        <div style="background-color: #e50914; padding: 30px; border-radius: 12px; color: white;">
                                             <div style="font-size: 80px; margin-bottom: 10px;">🎬</div>
                                             <h2 style="margin: 0; font-size: 32px;">{{ reserva.funcion.pelicula.titulo }}</h2>
                                         </div>
@@ -41,41 +46,42 @@
                             </table>
                             
                             <!-- Function Details -->
-                            <table width="100%" cellpadding="0" cellspacing="0" style="background-color: #fff3cd; border-radius: 8px; overflow: hidden; margin-bottom: 20px;">
+                            <!-- modificado: amarillo pastel -> ámbar oscuro -->
+                            <table width="100%" cellpadding="0" cellspacing="0" style="background-color: #2e2410; border-radius: 8px; overflow: hidden; margin-bottom: 20px;">
                                 <tr>
                                     <td style="padding: 20px;">
-                                        <h3 style="color: #333; margin: 0 0 15px 0; font-size: 20px; text-align: center;">
+                                        <h3 style="color: #f5f5f5; margin: 0 0 15px 0; font-size: 20px; text-align: center;">
                                             📅 Detalles de tu Función
                                         </h3>
                                         
                                         <table width="100%" cellpadding="12" cellspacing="0">
                                             <tr>
-                                                <td align="center" style="border-bottom: 1px solid rgba(0,0,0,0.1);">
-                                                    <div style="color: #856404; font-size: 14px; margin-bottom: 5px;">FECHA</div>
-                                                    <div style="color: #333; font-size: 20px; font-weight: bold;">{{ reserva.funcion.fecha_hora|date:"d/m/Y" }}</div>
+                                                <td align="center" style="border-bottom: 1px solid rgba(255,255,255,0.08);">
+                                                    <div style="color: #f0c674; font-size: 14px; margin-bottom: 5px;">FECHA</div>
+                                                    <div style="color: #f5f5f5; font-size: 20px; font-weight: bold;">{{ reserva.funcion.fecha_hora|date:"d/m/Y" }}</div>
                                                 </td>
-                                                <td align="center" style="border-bottom: 1px solid rgba(0,0,0,0.1);">
-                                                    <div style="color: #856404; font-size: 14px; margin-bottom: 5px;">HORARIO</div>
-                                                    <div style="color: #333; font-size: 20px; font-weight: bold;">{{ reserva.funcion.fecha_hora|date:"H:i" }} hs</div>
+                                                <td align="center" style="border-bottom: 1px solid rgba(255,255,255,0.08);">
+                                                    <div style="color: #f0c674; font-size: 14px; margin-bottom: 5px;">HORARIO</div>
+                                                    <div style="color: #f5f5f5; font-size: 20px; font-weight: bold;">{{ reserva.funcion.fecha_hora|date:"H:i" }} hs</div>
                                                 </td>
                                             </tr>
                                             <!-- modificado (T11 / Hilo 2 punto 2): fila de sede, además de la sala que ya estaba -->
                                             {% if sede %}
                                             <tr>
                                                 <td colspan="2" align="center" style="padding-top: 12px;">
-                                                    <div style="color: #856404; font-size: 14px; margin-bottom: 5px;">SEDE</div>
-                                                    <div style="color: #333; font-size: 18px; font-weight: bold;">{{ sede.nombre }} — {{ sede.direccion }}</div>
+                                                    <div style="color: #f0c674; font-size: 14px; margin-bottom: 5px;">SEDE</div>
+                                                    <div style="color: #f5f5f5; font-size: 18px; font-weight: bold;">{{ sede.nombre }} — {{ sede.direccion }}</div>
                                                 </td>
                                             </tr>
                                             {% endif %}
                                             <tr>
                                                 <td align="center" style="padding-top: 12px;">
-                                                    <div style="color: #856404; font-size: 14px; margin-bottom: 5px;">SALA</div>
-                                                    <div style="color: #333; font-size: 18px; font-weight: bold;">{{ reserva.funcion.sala.nombre }}</div>
+                                                    <div style="color: #f0c674; font-size: 14px; margin-bottom: 5px;">SALA</div>
+                                                    <div style="color: #f5f5f5; font-size: 18px; font-weight: bold;">{{ reserva.funcion.sala.nombre }}</div>
                                                 </td>
                                                 <td align="center" style="padding-top: 12px;">
-                                                    <div style="color: #856404; font-size: 14px; margin-bottom: 5px;">ENTRADAS</div>
-                                                    <div style="color: #333; font-size: 18px; font-weight: bold;">{{ reserva.cantidad_entradas }}</div>
+                                                    <div style="color: #f0c674; font-size: 14px; margin-bottom: 5px;">ENTRADAS</div>
+                                                    <div style="color: #f5f5f5; font-size: 18px; font-weight: bold;">{{ reserva.cantidad_entradas }}</div>
                                                 </td>
                                             </tr>
                                         </table>
@@ -84,46 +90,47 @@
                             </table>
                             
                             <!-- Reservation Code -->
-                            <table width="100%" cellpadding="0" cellspacing="0" style="background-color: #e7f3ff; border-radius: 8px; overflow: hidden; margin-bottom: 30px;">
+                            <!-- modificado: azul pastel -> azul oscuro -->
+                            <table width="100%" cellpadding="0" cellspacing="0" style="background-color: #10202e; border-radius: 8px; overflow: hidden; margin-bottom: 30px;">
                                 <tr>
                                     <td style="padding: 20px; text-align: center;">
-                                        <p style="color: #004085; margin: 0 0 10px 0; font-size: 14px;">Tu Código de Reserva</p>
-                                        <p style="color: #004085; margin: 0; font-size: 32px; font-weight: bold; font-family: monospace; letter-spacing: 3px;">{{ reserva.codigo_reserva }}</p>
+                                        <p style="color: #7fb8e8; margin: 0 0 10px 0; font-size: 14px;">Tu Código de Reserva</p>
+                                        <p style="color: #cfe6f8; margin: 0; font-size: 32px; font-weight: bold; font-family: monospace; letter-spacing: 3px;">{{ reserva.codigo_reserva }}</p>
                                     </td>
                                 </tr>
                             </table>
                             
                             <!-- Reminders -->
-                            <table width="100%" cellpadding="0" cellspacing="0" style="background-color: #f8f9fa; border-radius: 8px; overflow: hidden; margin-bottom: 20px;">
+                            <table width="100%" cellpadding="0" cellspacing="0" style="background-color: #1f1f1f; border-radius: 8px; overflow: hidden; margin-bottom: 20px;">
                                 <tr>
                                     <td style="padding: 20px;">
-                                        <h3 style="color: #333; margin: 0 0 15px 0; font-size: 18px;">
+                                        <h3 style="color: #f5f5f5; margin: 0 0 15px 0; font-size: 18px;">
                                             💡 Recordatorios Importantes
                                         </h3>
                                         
                                         <table width="100%" cellpadding="8" cellspacing="0">
                                             <tr>
                                                 <td style="vertical-align: top; width: 40px;">
-                                                    <div style="background-color: #667eea; color: white; width: 30px; height: 30px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 18px;">⏰</div>
+                                                    <div style="background-color: #e50914; color: white; width: 30px; height: 30px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 18px;">⏰</div>
                                                 </td>
-                                                <td style="color: #666;">
-                                                    <strong style="color: #333;">Llegá temprano:</strong> Te recomendamos llegar al menos 15 minutos antes del inicio de la función.
-                                                </td>
-                                            </tr>
-                                            <tr>
-                                                <td style="vertical-align: top; width: 40px; padding-top: 15px;">
-                                                    <div style="background-color: #667eea; color: white; width: 30px; height: 30px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 18px;">🎫</div>
-                                                </td>
-                                                <td style="color: #666; padding-top: 15px;">
-                                                    <strong style="color: #333;">Tu código:</strong> Presentá el código <strong>{{ reserva.codigo_reserva }}</strong> en boletería o mostrá este email.
+                                                <td style="color: #b3b3b3;">
+                                                    <strong style="color: #e8e8e8;">Llegá temprano:</strong> Te recomendamos llegar al menos 15 minutos antes del inicio de la función.
                                                 </td>
                                             </tr>
                                             <tr>
                                                 <td style="vertical-align: top; width: 40px; padding-top: 15px;">
-                                                    <div style="background-color: #667eea; color: white; width: 30px; height: 30px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 18px;">🍿</div>
+                                                    <div style="background-color: #e50914; color: white; width: 30px; height: 30px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 18px;">🎫</div>
                                                 </td>
-                                                <td style="color: #666; padding-top: 15px;">
-                                                    <strong style="color: #333;">Snacks:</strong> Podés comprar pochoclos y bebidas en el local antes de ingresar.
+                                                <td style="color: #b3b3b3; padding-top: 15px;">
+                                                    <strong style="color: #e8e8e8;">Tu código:</strong> Presentá el código <strong>{{ reserva.codigo_reserva }}</strong> en boletería o mostrá este email.
+                                                </td>
+                                            </tr>
+                                            <tr>
+                                                <td style="vertical-align: top; width: 40px; padding-top: 15px;">
+                                                    <div style="background-color: #e50914; color: white; width: 30px; height: 30px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 18px;">🍿</div>
+                                                </td>
+                                                <td style="color: #b3b3b3; padding-top: 15px;">
+                                                    <strong style="color: #e8e8e8;">Snacks:</strong> Podés comprar pochoclos y bebidas en el local antes de ingresar.
                                                 </td>
                                             </tr>
                                         </table>
@@ -135,14 +142,14 @@
                             <table width="100%" cellpadding="0" cellspacing="0">
                                 <tr>
                                     <td align="center" style="padding: 20px 0;">
-                                        <a href="{{ domain }}{% url 'reservas:detalle_reserva' reserva.id %}" style="display: inline-block; background-color: #f5576c; color: #ffffff; text-decoration: none; padding: 15px 40px; border-radius: 6px; font-weight: bold; font-size: 16px;">
+                                        <a href="{{ domain }}{% url 'reservas:detalle_reserva' reserva.id %}" style="display: inline-block; background-color: #e50914; color: #ffffff; text-decoration: none; padding: 15px 40px; border-radius: 6px; font-weight: bold; font-size: 16px;">
                                             📱 Ver Mi Reserva
                                         </a>
                                     </td>
                                 </tr>
                             </table>
                             
-                            <p style="color: #999; text-align: center; font-size: 14px; margin: 20px 0 0 0;">
+                            <p style="color: #666666; text-align: center; font-size: 14px; margin: 20px 0 0 0;">
                                 ¡Nos vemos en el cine! 🎬🍿
                             </p>
                         </td>
@@ -150,12 +157,12 @@
                     
                     <!-- Footer -->
                     <tr>
-                        <td style="background-color: #f8f9fa; padding: 20px 30px; text-align: center; border-top: 1px solid #e9ecef;">
-                            <p style="color: #666; margin: 0 0 10px 0; font-size: 14px;">
-                                ¿Necesitás ayuda? Escribinos a <a href="mailto:soporte@cineonline.com" style="color: #f5576c; text-decoration: none;">soporte@cineonline.com</a>
+                        <td style="background-color: #1a1a1a; padding: 20px 30px; text-align: center; border-top: 1px solid #262626;">
+                            <p style="color: #999999; margin: 0 0 10px 0; font-size: 14px;">
+                                ¿Necesitás ayuda? Escribinos a <a href="mailto:soporte@cineonline.com" style="color: #e50914; text-decoration: none;">soporte@cineonline.com</a>
                             </p>
-                            <p style="color: #999; margin: 0; font-size: 12px;">
-                                © 2026 Cine Online. Todos los derechos reservados.
+                            <p style="color: #666666; margin: 0; font-size: 12px;">
+                                © 2026 DJANGO-CINE. Todos los derechos reservados.
                             </p>
                         </td>
                     </tr>

@@ -18,8 +18,9 @@
 .funcion-pelicula-card {
     display: flex;
     gap: 1.5rem;
-    background-color: #1f1f1f;
-    border-radius: 10px;
+    /* background-color: #1f1f1f; */
+    background-color: #000000;
+    /* border-radius: 10px; */
     padding: 1.25rem;
     box-shadow: 0 2px 8px rgba(0,0,0,0.35);
 }
@@ -29,12 +30,12 @@
 .funcion-pelicula-poster {
     flex: 0 0 auto;
     display: block;
-    width: 155px;
+    width: 225px;
 }
 
 .funcion-pelicula-poster img {
     width: 100%;
-    border-radius: 8px;
+    /* border-radius: 8px; */
     aspect-ratio: 2/3;
     object-fit: cover;
     display: block;
@@ -97,7 +98,7 @@
    entre películas, ahora se nota. */
 .funcion-pelicula-desde-badge {
     flex: 0 0 auto;
-    background: linear-gradient(135deg, #1e7e34 0%, #145a24 100%);
+    /* background: linear-gradient(135deg, #1e7e34 0%, #145a24 100%); */
     color: #ffffff;
     font-weight: bold;
     font-size: 0.9rem;

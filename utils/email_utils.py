@@ -5,9 +5,25 @@
 from django.core.mail import EmailMultiAlternatives, get_connection
 from django.template.loader import render_to_string
 from django.conf import settings
+# nuevo (restyle - QR, corregido a CID): base64 para decodificar lo que
+# devuelve generar_qr_imagen(), MIMEImage para adjuntar el QR como imagen
+# inline con Content-ID (ver enviar_email_pago_confirmado más abajo).
+import base64
+from email.mime.image import MIMEImage
 import logging
 
 logger = logging.getLogger(__name__)
+
+# nuevo (restyle - QR en pago confirmado): mismo patrón de import guardado
+# que ya usa pagos/views.py -- si el paquete qrcode no está instalado, el
+# resto del sitio sigue andando (no se rompe nada), simplemente el mail de
+# pago confirmado sale sin la sección de QR (ver `qr_imagen` más abajo).
+try:
+    from utils.qr_generator import generar_qr_imagen
+    QR_DISPONIBLE = True
+except ImportError:
+    QR_DISPONIBLE = False
+    logger.warning("Módulo qrcode no encontrado. Instalar con: pip install qrcode[pil]")
 
 
 # modificado (Hilo 1 - ronda "producción"): aviso sobre el límite de envío
@@ -147,14 +163,44 @@ def enviar_email_pago_confirmado(pago, request=None):
         else:
             domain = settings.SITE_URL if hasattr(settings, 'SITE_URL') else 'http://localhost:8000'
         
+        # nuevo (restyle - QR en pago confirmado): mismo generar_qr_imagen()
+        # que ya usa pagos/views.py para el ticket del sitio -- mismo dato
+        # (pago.codigo_qr), no se inventa nada nuevo.
+        #
+        # corregido: la primera versión pasaba esto como base64 inline
+        # (`<img src="data:image/png;base64,...">`), que funciona bien
+        # dentro del sitio pero NO en Gmail -- es una limitación conocida
+        # y documentada de Gmail (no soporta imágenes data-URI en el
+        # cuerpo del mail, a diferencia de lo que se asumió al principio).
+        # La forma correcta es adjuntar la imagen como "inline" con un
+        # Content-ID y referenciarla desde el HTML como `cid:qr_reserva`
+        # -- eso sí lo soportan Gmail, Outlook y prácticamente todos los
+        # clientes. Por eso acá se decodifica el base64 que ya devuelve
+        # generar_qr_imagen() a bytes crudos, en vez de tocar
+        # utils/qr_generator.py (que lo siguen usando tal cual otras
+        # partes del sitio para mostrar el QR en una página web, donde
+        # base64 sí funciona sin problema).
+        qr_bytes = None
+        if QR_DISPONIBLE and getattr(pago, 'codigo_qr', None):
+            try:
+                qr_data_uri = generar_qr_imagen(pago.codigo_qr)
+                _, qr_b64 = qr_data_uri.split(',', 1)
+                qr_bytes = base64.b64decode(qr_b64)
+            except Exception as e:
+                logger.warning(f'No se pudo generar el QR para el email de pago {pago.numero_transaccion}: {e}')
+
         # Renderizar el template HTML
         # modificado (T11 / Hilo 2 punto 2): se agrega `sede` al contexto.
+        # modificado (restyle - QR, corregido a CID): el template ya no
+        # recibe la imagen en sí, solo un booleano -- el `src="cid:..."`
+        # está fijo en el template, la imagen se adjunta más abajo.
         html_content = render_to_string('emails/pago_confirmado.html', {
             'usuario': usuario,
             'reserva': reserva,
             'pago': pago,
             'domain': domain,
             'sede': sede,
+            'qr_disponible': qr_bytes is not None,
         })
         
         # Texto plano como alternativa
@@ -187,6 +233,18 @@ def enviar_email_pago_confirmado(pago, request=None):
             connection=_obtener_conexion(sede=sede)
         )
         email.attach_alternative(html_content, "text/html")
+
+        # nuevo (restyle - QR, corregido a CID): mixed_subtype = 'related'
+        # es necesario para que Gmail/Outlook traten la imagen como
+        # "inline" (mostrada en el cuerpo) en vez de como un archivo
+        # adjunto aparte -- sin esto, aunque se adjunte con Content-ID,
+        # algunos clientes la muestran como adjunto suelto al final.
+        if qr_bytes:
+            email.mixed_subtype = 'related'
+            qr_mime = MIMEImage(qr_bytes, _subtype='png')
+            qr_mime.add_header('Content-ID', '<qr_reserva>')
+            qr_mime.add_header('Content-Disposition', 'inline', filename='qr.png')
+            email.attach(qr_mime)
         
         # Enviar
         email.send()

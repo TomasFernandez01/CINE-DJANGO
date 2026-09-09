@@ -5,7 +5,8 @@
     display: flex;
     gap: 0.5rem;
     flex-wrap: wrap;
-    margin-bottom: 1.5rem;
+    /* margin-bottom: 1.5rem; */
+    margin: 1rem;
 }
 
 .formato-pill {
@@ -109,12 +110,14 @@
     align-items: center;
     gap: 1.25rem;
     flex-wrap: wrap;
-    margin-bottom: 1.5rem;
+    /* margin-bottom: 1.5rem; */
     padding: 0.6rem 1rem;
-    background-color: #1a1a1a;
-    border-radius: 8px;
-    font-size: 0.8rem;
+    /* background-color: #1a1a1a; */
+    background-color: #000000;
+    /* border-radius: 8px; */
+    /* font-size: 0.8rem; */
     color: #aaa;
+    margin: 1rem;
 }
 
 .disponibilidad-leyenda-titulo {
