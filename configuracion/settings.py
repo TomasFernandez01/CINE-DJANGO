@@ -22,9 +22,26 @@ SECRET_KEY = os.environ.get(
     'SECRET_KEY',
 )
 
-DEBUG = True
+# modificado (Hilo 3 - Deploy): antes era `DEBUG = True` fijo. Ahora se lee
+# de la variable de entorno DEBUG, con default 'False' -- si alguien se
+# olvida de setearla en Render, el sitio NO queda abierto en modo debug por
+# accidente. En desarrollo local, poner DEBUG=True en el .env si se quiere
+# ver el traceback completo de Django.
+DEBUG = os.environ.get('DEBUG', 'False') == 'True'
 
-ALLOWED_HOSTS = []
+# modificado (Hilo 3 - Deploy): antes era `[]` fijo (bloquea cualquier
+# deploy real). Ahora se lee de la variable de entorno ALLOWED_HOSTS, una
+# lista separada por comas (ej. "midominio.onrender.com,www.midominio.com").
+# En local, si no se setea nada, queda una lista vacía -- Django igual deja
+# pasar localhost/127.0.0.1 cuando DEBUG=True, así que no rompe el
+# desarrollo de nadie.
+ALLOWED_HOSTS = [h.strip() for h in os.environ.get('ALLOWED_HOSTS', '').split(',') if h.strip()]
+
+# nuevo (Hilo 3 - Deploy): Django exige el esquema completo (https://) acá
+# desde hace varias versiones, no alcanza con el dominio pelado como en
+# ALLOWED_HOSTS. Mismo criterio: separado por comas en la env var, ej.
+# "https://midominio.onrender.com,https://www.midominio.com".
+CSRF_TRUSTED_ORIGINS = [h.strip() for h in os.environ.get('CSRF_TRUSTED_ORIGINS', '').split(',') if h.strip()]
 
 APPS = [
     'sedes',
@@ -43,7 +60,12 @@ INSTALLED_APPS = [
     'django.contrib.contenttypes',
     'django.contrib.sessions',
     'django.contrib.messages',
+    # modificado (Hilo 3 - Deploy): cloudinary_storage y cloudinary van ANTES
+    # de django.contrib.staticfiles -- es el orden que pide la librería
+    # django-cloudinary-storage para que funcione el storage de media.
+    'cloudinary_storage',
     'django.contrib.staticfiles',
+    'cloudinary',
     # modificado (Hilo 2 - Google Sign-In): django.contrib.sites es requisito
     # de allauth (usa SITE_ID más abajo). Las 4 siguientes son allauth en sí
     # + el provider de Google puntual (no se instalan otros providers).
@@ -56,6 +78,11 @@ INSTALLED_APPS = [
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
+    # nuevo (Hilo 3 - Deploy): sirve los estáticos ya comprimidos/hasheados
+    # en producción (Render no tiene un servidor de estáticos aparte como
+    # Nginx). Tiene que ir justo después de SecurityMiddleware, es el orden
+    # que pide la propia documentación de Whitenoise.
+    'whitenoise.middleware.WhiteNoiseMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
@@ -95,12 +122,28 @@ TEMPLATES = [
 
 WSGI_APPLICATION = 'configuracion.wsgi.application'
 
-DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': BASE_DIR / 'db.sqlite3',
+# modificado (Hilo 3 - Deploy): Render no persiste el filesystem entre
+# deploys, así que SQLite no sirve en producción -- hay que usar el
+# Postgres que da Render. Si existe la variable de entorno DATABASE_URL
+# (Render la inyecta sola al conectar la base), se usa esa. Si no existe
+# (entorno de desarrollo local de cualquiera del equipo), se cae a SQLite
+# como siempre -- nadie tiene que tocar su .env local por este cambio.
+# Requiere dj-database-url, agregado a requirements.txt.
+import dj_database_url  # modificado (Hilo 3 - Deploy)
+
+DATABASE_URL = os.environ.get('DATABASE_URL')
+
+if DATABASE_URL:
+    DATABASES = {
+        'default': dj_database_url.parse(DATABASE_URL, conn_max_age=600)
     }
-}
+else:
+    DATABASES = {
+        'default': {
+            'ENGINE': 'django.db.backends.sqlite3',
+            'NAME': BASE_DIR / 'db.sqlite3',
+        }
+    }
 
 AUTH_PASSWORD_VALIDATORS = [
     {
@@ -130,6 +173,17 @@ STATIC_URL = 'static/'
 # nuevo: se registra la carpeta static/ del proyecto para poder separar CSS/JS de los templates
 STATICFILES_DIRS = [BASE_DIR / 'static']
 
+# nuevo (Hilo 3 - Deploy): carpeta donde `collectstatic` junta TODOS los
+# estáticos del proyecto para producción -- no confundir con
+# STATICFILES_DIRS de arriba (esa es la carpeta de origen del código
+# fuente, esta es la de destino generada). Ya está en .gitignore.
+STATIC_ROOT = BASE_DIR / 'staticfiles'
+
+# nuevo (Hilo 3 - Deploy): storage recomendado por la propia documentación
+# de Whitenoise para producción -- sirve los estáticos comprimidos y con
+# un hash en el nombre de archivo (cache-busting automático al cambiar CSS/JS).
+STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
+
 # para que en los modelos no tenga q especificar ID auto incremental
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
@@ -157,6 +211,24 @@ LOGOUT_REDIRECT_URL = 'peliculas:inicio'
 
 MEDIA_URL = '/media/'
 MEDIA_ROOT = BASE_DIR / 'media'
+
+# modificado (Hilo 3 - Deploy): Render borra el filesystem local en cada
+# redeploy, así que las imágenes subidas (posters de películas, imágenes
+# de combos, etc.) se pierden si se dejan en disco -- por eso se cambia el
+# storage a Cloudinary. MEDIA_ROOT/MEDIA_URL de arriba quedan sin uso real
+# en producción (Cloudinary maneja sus propias URLs), pero no se borran
+# para no romper nada si algún día se vuelve a filesystem local.
+# Esto cambia el storage de TODOS los ImageField/FileField existentes
+# (Pelicula.poster, Combo.imagen) sin tener que tocar los modelos --
+# es puramente config de acá. Requiere django-cloudinary-storage y
+# cloudinary, agregados a requirements.txt.
+CLOUDINARY_STORAGE = {
+    'CLOUD_NAME': os.environ.get('CLOUDINARY_CLOUD_NAME'),
+    'API_KEY': os.environ.get('CLOUDINARY_API_KEY'),
+    'API_SECRET': os.environ.get('CLOUDINARY_API_SECRET'),
+}
+
+DEFAULT_FILE_STORAGE = 'cloudinary_storage.storage.MediaCloudinaryStorage'
 
 # ============================================
 # CONFIGURACIÓN DE EMAIL - Agregar al final de settings.py
