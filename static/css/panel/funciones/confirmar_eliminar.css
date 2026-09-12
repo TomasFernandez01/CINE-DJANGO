@@ -1,0 +1,14 @@
+/* modificado (Hilo 1): separación CSS completa de panel/funciones/confirmar_eliminar.html
+   (13 estilos inline -> 0). Colores respetados tal cual estaban. */
+
+.panelfuncconf-wrapper { max-width: 720px; }
+.panelfuncconf-titulo { font-size: 1.4rem; color: #e74c3c; margin-bottom: 0.5rem; }
+.panelfuncconf-desc { color: #666; margin-bottom: 1.5rem; }
+.panelfuncconf-card { margin-bottom: 1.5rem; }
+.panelfuncconf-tabla-wrap { overflow-x: auto; }
+.panelfuncconf-funcion-nombre { font-weight: 600; }
+.panelfuncconf-funcion-detalle { font-size: 0.8rem; color: #666; font-weight: 400; }
+.panelfuncconf-cantidad { color: #e74c3c; font-weight: 600; }
+.panelfuncconf-cero { color: #999; }
+.panelfuncconf-botones { display: flex; gap: 1rem; }
+.panelfuncconf-btn-eliminar { font-size: 1rem; padding: 0.75rem 2rem; }

@@ -1,0 +1,46 @@
+/* MODIFICACION GEMINI: Rediseño de combos y promos reemplazando el rosa/amarillo por la paleta oficial (Rojo/Gris Oscuro/Blanco) */
+.combos-page { max-width: 900px; margin: 0 auto; }
+.combos-titulo { color: #ffffff; margin-bottom: 0.5rem; }
+.combos-subtitulo { color: #cccccc; margin-bottom: 2rem; }
+.combos-promodia-seccion { margin-bottom: 2rem; }
+.combos-seccion-subtitulo { color: #ffffff; margin-bottom: 1rem; font-size: 1.4rem; }
+.combos-promodia-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 1rem; }
+.combos-promodia-card { 
+    background: linear-gradient(135deg, #1f1f1f 0%, #e50914 180%); 
+    padding: 1.5rem; 
+    border-radius: 12px; 
+    color: white; 
+    border-left: 5px solid #e50914;
+    border-top: 1px solid #333;
+    border-right: 1px solid #333;
+    border-bottom: 1px solid #333;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.4);
+}
+.combos-promodia-nombre { margin: 0 0 0.5rem 0; font-size: 1.3rem; }
+.combos-promodia-tipo { margin: 0 0 0.5rem 0; opacity: 0.95; font-size: 1.1rem; font-weight: bold; color: #ffffff; }
+.combos-promodia-descripcion { margin: 0; color: #dddddd; font-size: 0.9rem; }
+.combos-promodia-badge { margin-top: 0.75rem; background: rgba(0,0,0,0.4); padding: 0.4rem 0.75rem; border-radius: 4px; display: inline-block; font-size: 0.85rem; border: 1px solid rgba(255,255,255,0.2); }
+.combos-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 1.25rem; }
+.combos-card { 
+    /* background: #1f1f1f;*/ 
+    background: #000000; 
+    /* border-radius: 12px; */
+    /* box-shadow: 0 4px 12px rgba(0,0,0,0.4);  */
+    box-shadow: 0 4px 12px rgb(255 0 0 / 40%);
+    overflow: hidden; 
+    transition: transform 0.2s, box-shadow 0.2s; 
+    /* border: 1px solid #333;  */
+}
+.combos-card:hover { transform: translateY(-4px); box-shadow: 0 8px 20px rgba(0,0,0,0.6); }
+.combos-card-imagen { width: 100%; height: 180px; object-fit: cover; }
+.combos-card-imagen-placeholder { width: 100%; height: 140px; background: linear-gradient(135deg, #2c2c2c 0%, #141414 100%); display: flex; align-items: center; justify-content: center; font-size: 1rem; color: #888888; font-weight: bold; }
+.combos-card-info { padding: 1.25rem; }
+.combos-card-nombre { margin: 0 0 0.5rem 0; color: #ffffff; font-size: 1.2rem; }
+.combos-card-descripcion { margin: 0 0 1rem 0; color: #cccccc; font-size: 0.9rem; line-height: 1.5; }
+.combos-card-footer { display: flex; justify-content: space-between; align-items: center; }
+.combos-card-precio { font-size: 1.4rem; font-weight: bold; color: #ffffff; background: rgba(229, 9, 20, 0.15); padding: 0.25rem 0.75rem; border-radius: 6px; border: 1px solid rgba(229, 9, 20, 0.4); }
+.combos-card-btn { padding: 0.5rem 1.2rem; background: #e50914; color: white; border-radius: 6px; text-decoration: none; font-weight: bold; font-size: 0.9rem; transition: background-color 0.2s; }
+.combos-card-btn:hover { background-color: #ff1f2a; }
+.combos-vacio { background: #1f1f1f; padding: 3rem; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.3); text-align: center; border: 1px solid #333; }
+.combos-vacio-texto { font-size: 1.2rem; color: #cccccc; margin: 0; }
+.combos-promodia-badge-hover:hover { transform: translateY(-4px); box-shadow: 0 8px 16px rgba(0,0,0,.4); }

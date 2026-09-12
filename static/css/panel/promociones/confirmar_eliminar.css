@@ -1,0 +1,60 @@
+/* modificado (Panel > Promociones, Hilo 2): CSS extraído de los 3 templates
+   confirmar_eliminar.html (combos, cupones, promodia) — son casi idénticos entre sí,
+   así que comparten este único archivo en vez de 3 CSS duplicados. */
+
+.panelconfelim-wrap {
+    max-width: 680px;
+}
+
+.panelconfelim-titulo {
+    font-size: 1.4rem;
+    color: #e74c3c;
+    margin-bottom: 0.5rem;
+}
+
+.panelconfelim-texto {
+    color: #666;
+    margin-bottom: 1.5rem;
+}
+
+.panelconfelim-card {
+    margin-bottom: 1.5rem;
+}
+
+.panelconfelim-tabla-wrap {
+    overflow-x: auto;
+}
+
+.panelconfelim-col-nombre {
+    font-weight: 600;
+}
+
+.panelconfelim-col-codigo {
+    font-family: monospace;
+    font-weight: 700;
+    color: #1a1a2e;
+}
+
+.panelconfelim-cantidad-warn {
+    color: #e67e22;
+    font-weight: 600;
+}
+
+.panelconfelim-cantidad-warn--danger {
+    color: #e74c3c;
+    font-weight: 600;
+}
+
+.panelconfelim-cantidad-cero {
+    color: #999;
+}
+
+.panelconfelim-botones {
+    display: flex;
+    gap: 1rem;
+}
+
+.panelconfelim-btn-eliminar {
+    font-size: 1rem;
+    padding: 0.75rem 2rem;
+}

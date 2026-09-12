@@ -1,42 +1,117 @@
 {% extends 'base.html' %}
+{% load static %}
 
-{% block titulo %}Funciones Disponibles{% endblock %}
+{% block titulo %}Funciones Disponibles - Cine Online{% endblock %}
+
+{% block extra_css %}
+<!-- MEJORAS/REDISEÑO GEMINI: Hojas de estilo unificadas y compartidas -->
+<link rel="stylesheet" href="{% static 'css/shared/fechas_carrusel.css' %}">
+<link rel="stylesheet" href="{% static 'css/shared/horarios.css' %}">
+<link rel="stylesheet" href="{% static 'css/shared/badges.css' %}">
+<link rel="stylesheet" href="{% static 'css/salas/lista.css' %}">
+<link rel="stylesheet" href="{% static 'css/salas/lista_funciones.css' %}">
+{% endblock %}
 
 {% block contenido %}
-<h1>Funciones Disponibles</h1>
+{% comment %} <h1>Funciones Disponibles</h1> {% endcomment %}
 
-{% if funciones %}
-    <div style="margin-top: 1.5rem;">
-        {% for funcion in funciones %}
-            <div style="background-color: white; padding: 1.5rem; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); margin-bottom: 1rem;">
-                <div style="display: flex; justify-content: space-between; align-items: start; flex-wrap: wrap; gap: 1rem;">
-                    <div style="flex: 1; min-width: 200px;">
-                        <h3 style="color: #333; margin-bottom: 0.5rem;">{{ funcion.pelicula.titulo }}</h3>
-                        <p style="color: #666; margin: 0.25rem 0;">
-                            <strong>Sala:</strong> {{ funcion.sala.nombre }}
-                        </p>
-                        <p style="color: #666; margin: 0.25rem 0;">
-                            <strong>Fecha y Hora:</strong> {{ funcion.fecha_hora|date:"d/m/Y H:i" }}
-                        </p>
-                    </div>
-                    <div style="text-align: right;">
-                        <p style="font-size: 1.5rem; color: #28a745; font-weight: bold; margin: 0;">
-                            ${{ funcion.precio }}
-                        </p>
-                        <p style="color: #666; font-size: 0.9rem; margin: 0.25rem 0;">
-                            {{ funcion.asientos_disponibles }} asientos disponibles
-                        </p>
-                        <a href="{% url 'reservas:crear_reserva' funcion.id %}" style="display: inline-block; margin-top: 0.5rem; padding: 0.5rem 1rem; background-color: #007bff; color: white; border: none; border-radius: 4px; cursor: pointer; font-weight: bold; text-decoration: none;">
-                            Reservar
-                        </a>
-                    </div>
+<!-- MEJORAS/REDISEÑO GEMINI: Buscador vivo y filtros rápidos en una cabecera unificada -->
+<div class="funciones-cabecera-contenedor">
+    <div class="buscador-caja-funciones">
+        <input
+            type="text"
+            id="buscar-funciones"
+            name="buscar"
+            value="{{ busqueda }}"
+            placeholder="Buscá funciones por película, director..."
+            class="funciones-buscador-input"
+            autocomplete="off"
+        >
+    </div>
+    
+    <div class="funciones-filtros-caja-inline">
+        <form method="get" id="form-filtros-funciones">
+            <!-- Campos ocultos para mantener el estado -->
+            <input type="hidden" name="buscar" id="hidden-buscar-funciones" value="{{ busqueda }}">
+            <input type="hidden" name="fecha" id="hidden-fecha-funciones" value="{{ fecha_seleccionada }}">
+
+            <div class="funciones-filtros-grid-inline">
+                <!-- Filtro rápido de fecha (opcional además de la barra superior) -->
+                <div class="funciones-filtro-campo">
+                    <select id="filtro-fecha-rapida" name="fecha_rapida" class="funciones-filtro-select">
+                        <option value="">Cualquier fecha</option>
+                        <option value="hoy" {% if fecha_seleccionada == 'hoy' %}selected{% endif %}>Hoy</option>
+                        <option value="mañana" {% if fecha_seleccionada == 'mañana' %}selected{% endif %}>Mañana</option>
+                        <option value="semana" {% if fecha_seleccionada == 'semana' %}selected{% endif %}>Esta semana</option>
+                    </select>
+                </div>
+
+                <!-- Filtro Sala -->
+                <div class="funciones-filtro-campo">
+                    <select id="filtro-sala" name="sala" class="funciones-filtro-select">
+                        <option value="">Todas las salas</option>
+                        {% for s in salas_disponibles %}
+                            <option value="{{ s.id }}" {% if sala_seleccionada == s.id|stringformat:"s" %}selected{% endif %}>
+                                {{ s.nombre }}
+                            </option>
+                        {% endfor %}
+                    </select>
+                </div>
+
+                <div class="funciones-filtros-acciones funciones-filtros-acciones--inline">
+                    <a href="{% url 'salas:lista_funciones' %}" class="funciones-filtro-btn-limpiar funciones-filtro-btn-limpiar--chico">
+                        Limpiar Filtros
+                    </a>
                 </div>
             </div>
+        </form>
+    </div>
+</div>
+
+<!-- MODIFICACION GEMINI: Carrusel de fechas con formato a la par (ej. Hoy-17, Mar-18, Mié-19, Jue-20) -->
+<div class="fechas-carrusel-wrap">
+    <button type="button" class="fecha-flecha fecha-flecha-prev" aria-label="Días anteriores">‹</button>
+    <div class="fechas-carrusel">
+        {% for f in proximas_fechas %}
+            {% if fecha_seleccionada == f.valor %}
+                <a href="?buscar={{ busqueda }}&sala={{ sala_seleccionada }}"
+                   class="fecha-item fecha-activa">
+                    <span class="fecha-item-diasemana">{{ f.dia_semana }}</span>-<span class="fecha-item-diames">{{ f.dia_mes }}</span>
+                </a>
+            {% else %}
+                <a href="?buscar={{ busqueda }}&sala={{ sala_seleccionada }}&fecha={{ f.valor }}"
+                   class="fecha-item{% if forloop.first and not fecha_seleccionada %} fecha-hoy{% endif %}">
+                    <span class="fecha-item-diasemana">{{ f.dia_semana }}</span>-<span class="fecha-item-diames">{{ f.dia_mes }}</span>
+                </a>
+            {% endif %}
         {% endfor %}
     </div>
-{% else %}
-    <p style="background-color: #fff3cd; padding: 1rem; border-radius: 4px; border-left: 4px solid #ffc107;">
-        No hay funciones disponibles en este momento.
-    </p>
-{% endif %}
+    <button type="button" class="fecha-flecha fecha-flecha-next" aria-label="Días siguientes">›</button>
+</div>
+
+<!-- nuevo (punto 3 - UX): leyenda de qué significa cada color de los botones
+     de horario. Vive acá afuera del contenedor AJAX (#funciones-grid-container)
+     a propósito: no cambia con la búsqueda/filtros, así que no tiene sentido
+     que se vuelva a pintar en cada respuesta AJAX del buscador vivo. Estilos
+     en shared/horarios.css (mismo archivo que ya define los colores
+     disp-alta/media/baja, para no duplicar la paleta en dos lugares). -->
+<div class="disponibilidad-leyenda">
+    <span class="disponibilidad-leyenda-titulo">Disponibilidad:</span>
+    <span class="disponibilidad-leyenda-item"><i class="disponibilidad-dot disp-alta"></i>Alta</span>
+    <span class="disponibilidad-leyenda-item"><i class="disponibilidad-dot disp-media"></i>Media</span>
+    <span class="disponibilidad-leyenda-item"><i class="disponibilidad-dot disp-baja"></i>Últimos lugares</span>
+    <span class="disponibilidad-leyenda-item"><i class="disponibilidad-dot disp-completa"></i>Agotado</span>
+</div>
+
+<!-- MEJORAS/REDISEÑO GEMINI: Contenedor AJAX para las funciones -->
+<div id="funciones-grid-container">
+    {% include 'salas/partials/_lista_funciones_grid.html' %}
+</div>
+
+{% endblock %}
+
+{% block extra_js %}
+<!-- nuevo: buscador vivo AJAX para funciones + flechas del carrusel -->
+<script src="{% static 'js/salas/buscador_funciones_vivo.js' %}"></script>
+<script src="{% static 'js/shared/fechas_carrusel.js' %}"></script>
 {% endblock %}

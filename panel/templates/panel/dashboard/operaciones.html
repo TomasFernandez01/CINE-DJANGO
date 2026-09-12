@@ -1,0 +1,345 @@
+{% extends 'panel/base_panel.html' %}
+{% load static %}
+
+{% block titulo %}Dashboard · Operaciones — Panel Cine Online{% endblock %}
+
+{% block breadcrumb %}
+<span class="sep">›</span>
+<a href="{% url 'panel:inicio' %}">Dashboard</a>
+<span class="sep">›</span>
+<span class="current">Operaciones</span>
+{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/panel/inicio_sede_banner.css' %}">
+<link rel="stylesheet" href="{% static 'css/panel/dashboard/comun.css' %}">
+<link rel="stylesheet" href="{% static 'css/panel/pagos/estadisticas.css' %}">
+{% endblock %}
+
+{% block contenido %}
+{% include 'panel/dashboard/_subnav.html' with dash_seccion='operaciones' %}
+
+{% if panel_sede_activa %}
+<div class="panelinicio-sede-banner"><strong>SEDE = {{ panel_sede_activa.nombre }}</strong></div>
+{% else %}
+<div class="panelinicio-sede-banner panelinicio-sede-banner--todas"><strong>TODAS LAS SEDES</strong></div>
+{% endif %}
+
+<!-- ============================================================ -->
+<!-- STAT CARDS del día -->
+<!-- ============================================================ -->
+<div class="stat-grid">
+    <div class="stat-card gold">
+        <div class="stat-label">Funciones hoy</div>
+        <div class="stat-value">{{ stats.funciones_hoy }}</div>
+        <div class="stat-sub">{{ stats.funciones_proximas }} próximas en total</div>
+    </div>
+    <div class="stat-card red">
+        <div class="stat-label">Reservas pendientes</div>
+        <div class="stat-value">{{ stats.reservas_pendientes }}</div>
+        <div class="stat-sub">esperando pago</div>
+    </div>
+    <div class="stat-card green">
+        <div class="stat-label">Recaudado hoy</div>
+        <div class="stat-value">${{ stats.recaudado_hoy|floatformat:0 }}</div>
+        <div class="stat-sub">{{ stats.reservas_confirmadas_hoy }} confirmada(s)</div>
+    </div>
+    <div class="stat-card purple">
+        <div class="stat-label">QR escaneados hoy</div>
+        <div class="stat-value">{{ stats.qr_escaneados_hoy }}</div>
+        <div class="stat-sub">ingresos registrados</div>
+    </div>
+    <div class="stat-card gold">
+        <div class="stat-label">Recaudado esta semana</div>
+        <div class="stat-value">${{ stats.recaudado_semana|floatformat:0 }}</div>
+        <div class="stat-sub">últimos 7 días</div>
+    </div>
+</div>
+
+<!-- ============================================================ -->
+<!-- ACCESOS RÁPIDOS -->
+<!-- ============================================================ -->
+<div class="quick-actions">
+    <a href="{% url 'panel:verificador_qr' %}" class="quick-link" style="background: linear-gradient(135deg,#1e3c72,#2a5298);">Verificador QR</a>
+    <a href="{% url 'panel:funciones_lista' %}?filtro=hoy" class="quick-link" style="background: linear-gradient(135deg,#F3904F,#3B4371);">Funciones Hoy</a>
+    <a href="{% url 'panel:reservas_lista' %}?estado=pendiente" class="quick-link" style="background: linear-gradient(135deg,#cb2d3e,#ef473a);">Pendientes de Pago</a>
+</div>
+
+<!-- ============================================================ -->
+<!-- FILTRO DE FECHAS + AGRUPACIÓN (alimenta KPIs, ventas, embudo) -->
+<!-- ============================================================ -->
+<div class="filtro-fechas">
+    <div class="campo">
+        <label for="filtroDesde">Desde</label>
+        <input type="date" id="filtroDesde" value="{{ periodo_desde_default }}">
+    </div>
+    <div class="campo">
+        <label for="filtroHasta">Hasta</label>
+        <input type="date" id="filtroHasta" value="{{ periodo_hasta_default }}">
+    </div>
+    <div class="campo">
+        <label for="filtroAgrupacion">Agrupar por</label>
+        <select id="filtroAgrupacion">
+            <option value="dia" selected>Día</option>
+            <option value="semana">Semana</option>
+            <option value="mes">Mes</option>
+            <option value="bimestre">Bimestre</option>
+            <option value="trimestre">Trimestre</option>
+            <option value="cuatrimestre">Cuatrimestre</option>
+            <option value="anual">Anual</option>
+        </select>
+    </div>
+    <div class="campo">
+        <label>Rangos rápidos</label>
+        <div class="presets">
+            <button type="button" class="preset-btn" data-preset="7d">Últimos 7 días</button>
+            <button type="button" class="preset-btn activo" data-preset="30d">Últimos 30 días</button>
+            <button type="button" class="preset-btn" data-preset="mes">Este mes</button>
+            <button type="button" class="preset-btn" data-preset="anio">Este año</button>
+        </div>
+    </div>
+    <button type="button" class="btn-aplicar" id="btnAplicarFiltro">Aplicar</button>
+    <div id="filtroError"></div>
+</div>
+
+<!-- ============================================================ -->
+<!-- KPIs del período elegido -->
+<!-- ============================================================ -->
+<div class="stat-grid">
+    <div class="stat-card blue">
+        <div class="stat-label">Recaudado en el período</div>
+        <div class="stat-value" id="kpiRecaudado">${{ kpis.recaudado_periodo|floatformat:0 }}</div>
+        <div class="stat-sub{% if kpis.comparativa_pct > 0 %} subida{% elif kpis.comparativa_pct < 0 %} bajada{% endif %}" id="kpiComparativa">
+            {% if kpis.comparativa_pct is not None %}
+                {% if kpis.comparativa_pct > 0 %}▲{% elif kpis.comparativa_pct < 0 %}▼{% else %}▬{% endif %}
+                {{ kpis.comparativa_pct }}% vs. período anterior
+            {% else %}
+                Sin datos del período anterior para comparar
+            {% endif %}
+        </div>
+    </div>
+    <div class="stat-card gold">
+        <div class="stat-label">Ticket promedio</div>
+        <div class="stat-value" id="kpiTicket">${{ kpis.ticket_promedio|floatformat:0 }}</div>
+        <div class="stat-sub">por pago aprobado</div>
+    </div>
+    <div class="stat-card green">
+        <div class="stat-label">Ocupación promedio</div>
+        <div class="stat-value" id="kpiOcupacion">{% if kpis.ocupacion_promedio is not None %}{{ kpis.ocupacion_promedio }}%{% else %}—{% endif %}</div>
+        <div class="stat-sub">sobre la capacidad de sala</div>
+    </div>
+    <div class="stat-card purple">
+        <div class="stat-label">Día y horario más elegidos</div>
+        <div class="stat-value" id="kpiDiaHorario" style="font-size:1.4rem;">
+            {% if kpis.dia_top %}{{ kpis.dia_top }}{% else %}—{% endif %}
+        </div>
+        <div class="stat-sub" id="kpiHorarioSub">{% if kpis.horario_pico %}{{ kpis.horario_pico }} hs{% else %}sin datos{% endif %}</div>
+    </div>
+</div>
+
+<!-- ============================================================ -->
+<!-- VENTAS DEL PERÍODO + EMBUDO DE RESERVAS -->
+<!-- ============================================================ -->
+<div class="charts-grid">
+    <div class="chart-card">
+        <div class="chart-title">
+            <span>Ventas del período</span>
+            <div class="metrica-toggle" id="metricaToggle">
+                <button type="button" data-metrica="recaudacion" class="activo">Recaudación ($)</button>
+                <button type="button" data-metrica="entradas">Entradas vendidas</button>
+            </div>
+        </div>
+        <div style="position: relative; height: 260px; width: 100%;">
+            <canvas id="ventasChart"></canvas>
+        </div>
+    </div>
+
+    <div class="card" style="margin-bottom:0;">
+        <div class="card-header">
+            <h3>Embudo de reservas del período</h3>
+        </div>
+        <div class="embudo-lista" id="embudoLista">
+            <div class="embudo-fila">
+                <span>Pendientes</span>
+                <span class="cantidad" data-estado="pendiente">{{ kpis.embudo.pendiente|default:0 }}</span>
+            </div>
+            <div class="embudo-fila">
+                <span>Confirmadas</span>
+                <span class="cantidad" data-estado="confirmada">{{ kpis.embudo.confirmada|default:0 }}</span>
+            </div>
+            <div class="embudo-fila">
+                <span>Canceladas</span>
+                <span class="cantidad" data-estado="cancelada">{{ kpis.embudo.cancelada|default:0 }}</span>
+            </div>
+            <div class="embudo-fila">
+                <span>Expiradas</span>
+                <span class="cantidad" data-estado="expirada">{{ kpis.embudo.expirada|default:0 }}</span>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- ============================================================ -->
+<!-- HEATMAPS: franjas horarias pico (entradas y recaudación) -->
+<!-- ============================================================ -->
+<div class="card">
+    <div class="card-header">
+        <h3>Franjas horarias pico (entradas vendidas)</h3>
+    </div>
+    <div class="heatmap-wrap">
+        {% if heatmap_matriz %}
+        <table class="heatmap-tabla">
+            <thead>
+                <tr>
+                    <th></th>
+                    {% for h in heatmap_horas %}<th>{{ h }}</th>{% endfor %}
+                </tr>
+            </thead>
+            <tbody>
+                {% for fila in heatmap_matriz %}
+                <tr>
+                    <td class="heatmap-dia">{{ fila.dia }}</td>
+                    {% for celda in fila.celdas %}
+                    <td>
+                        <div class="heatmap-celda"
+                             style="background-color: rgba(52,152,219,{{ celda.alpha }});"
+                             title="{{ fila.dia }} {{ forloop.counter0 }}:00 — {{ celda.valor }} entrada{{ celda.valor|pluralize }}"></div>
+                    </td>
+                    {% endfor %}
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        {% else %}
+        <div class="card-body" style="text-align:center;color:#999;padding:2rem;">Sin entradas vendidas en este período.</div>
+        {% endif %}
+    </div>
+</div>
+
+<div class="card">
+    <div class="card-header">
+        <h3>Franjas horarias pico (recaudación)</h3>
+    </div>
+    <div class="heatmap-wrap">
+        {% if heatmap_recaudacion_matriz %}
+        <table class="heatmap-tabla">
+            <thead>
+                <tr>
+                    <th></th>
+                    {% for h in heatmap_horas %}<th>{{ h }}</th>{% endfor %}
+                </tr>
+            </thead>
+            <tbody>
+                {% for fila in heatmap_recaudacion_matriz %}
+                <tr>
+                    <td class="heatmap-dia">{{ fila.dia }}</td>
+                    {% for celda in fila.celdas %}
+                    <td>
+                        <div class="heatmap-celda"
+                             style="background-color: rgba(40,167,69,{{ celda.alpha }});"
+                             title="{{ fila.dia }} {{ forloop.counter0 }}:00 — ${{ celda.valor }}"></div>
+                    </td>
+                    {% endfor %}
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        {% else %}
+        <div class="card-body" style="text-align:center;color:#999;padding:2rem;">Sin recaudación en este período.</div>
+        {% endif %}
+    </div>
+</div>
+
+<!-- ============================================================ -->
+<!-- MÉTODO DE PAGO + TIEMPO HASTA EL PAGO (mudados desde pagos/estadisticas.html) -->
+<!-- ============================================================ -->
+{% if rango_mp_error %}
+<div class="panelpag-est-rango-error">{{ rango_mp_error }} Mostrando los últimos 30 días.</div>
+{% endif %}
+<form method="get" class="panelpag-est-rango-form">
+    <label class="panelpag-est-rango-label">
+        Desde
+        <input type="date" name="desde" value="{{ rango_mp_desde }}" class="input">
+    </label>
+    <label class="panelpag-est-rango-label">
+        Hasta
+        <input type="date" name="hasta" value="{{ rango_mp_hasta }}" class="input">
+    </label>
+    <button type="submit" class="btn btn-dark">Filtrar método de pago</button>
+    <a href="{% url 'panel:dashboard_operaciones' %}" class="btn btn-ghost">Últimos 30 días</a>
+</form>
+
+<div class="charts-grid">
+    <div class="chart-card">
+        <div class="chart-title">Método de pago más usado (en el rango seleccionado)</div>
+        {% if metodo_pago_labels %}
+        <div style="position: relative; height: 260px; width: 100%;">
+            <canvas id="metodoPagoChart"></canvas>
+        </div>
+        {% else %}
+        <div style="text-align:center;color:#999;padding:2rem;">Sin pagos aprobados todavía.</div>
+        {% endif %}
+    </div>
+
+    <div class="card" style="margin-bottom:0;">
+        <div class="card-header">
+            <h3>Tiempo promedio hasta el pago</h3>
+        </div>
+        {% if tiempo_hasta_pago.cantidad %}
+        <div class="card-body" style="text-align:center; padding:1.5rem;">
+            <div style="font-size:1.8rem; font-weight:700; color:#3498db;">
+                {% if tiempo_hasta_pago.promedio_horas >= 1 %}
+                    {{ tiempo_hasta_pago.promedio_horas }} hs
+                {% else %}
+                    {{ tiempo_hasta_pago.promedio_minutos }} min
+                {% endif %}
+            </div>
+            <div style="color:#666;">
+                Desde que se crea la reserva hasta que se aprueba el pago
+                (sobre {{ tiempo_hasta_pago.cantidad }} reserva{{ tiempo_hasta_pago.cantidad|pluralize }} confirmada{{ tiempo_hasta_pago.cantidad|pluralize }})
+            </div>
+        </div>
+        {% else %}
+        <div class="card-body" style="text-align:center;color:#999;padding:2rem;">Sin reservas confirmadas con pago aprobado todavía.</div>
+        {% endif %}
+    </div>
+</div>
+
+<!-- Chart.js + JS del dashboard interactivo -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+    window.DASHBOARD_INICIAL = {
+        ventasLabels: {{ chart_ventas_labels|safe }},
+        ventasValores: {{ chart_ventas_valores|safe }},
+        entradasValores: {{ chart_entradas_valores|safe }},
+    };
+    window.DASHBOARD_URLS = {
+        grafico_ventas: "{% url 'panel:dashboard_grafico_ventas' %}",
+        kpis: "{% url 'panel:dashboard_kpis' %}",
+    };
+</script>
+{% if metodo_pago_labels %}
+<script>
+    (function() {
+        new Chart(document.getElementById('metodoPagoChart').getContext('2d'), {
+            type: 'pie',
+            data: {
+                labels: {{ metodo_pago_labels|safe }},
+                datasets: [{
+                    data: {{ metodo_pago_valores|safe }},
+                    backgroundColor: ['#3498db', '#e2b96f', '#9b59b6', '#27ae60'],
+                    borderColor: '#ffffff',
+                    borderWidth: 2,
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: { legend: { position: 'bottom' } },
+            }
+        });
+    })();
+</script>
+{% endif %}
+<script src="{% static 'js/panel/dashboard_operaciones.js' %}"></script>
+{% endblock %}

@@ -1,142 +1,321 @@
 {% extends 'base.html' %}
+{% load static %}
 
 {% block titulo %}{{ pelicula.titulo }}{% endblock %}
 
+{% block extra_css %}
+<!-- nuevo: detalle rediseñado estilo Cinemark + carrusel de fechas y horarios compartidos + cards de pelicula reutilizadas -->
+<link rel="stylesheet" href="{% static 'css/shared/fechas_carrusel.css' %}">
+<link rel="stylesheet" href="{% static 'css/shared/horarios.css' %}">
+<link rel="stylesheet" href="{% static 'css/shared/badges.css' %}">
+<link rel="stylesheet" href="{% static 'css/peliculas/detalle.css' %}">
+{% endblock %}
+
 {% block contenido %}
-<div style="max-width: 1200px; margin: 0 auto;">
-    <!-- Botón volver -->
-    <a href="{% url 'peliculas:lista_peliculas' %}" style="display: inline-block; margin-bottom: 1rem; padding: 0.5rem 1rem; background-color: #6c757d; color: white; border-radius: 4px; text-decoration: none;">
-        ← Volver a películas
-    </a>
-    
-    <!-- Información de la película -->
-    <div style="background-color: white; padding: 2rem; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); margin-bottom: 2rem;">
-        <div style="display: grid; grid-template-columns: 300px 1fr; gap: 2rem; margin-bottom: 1.5rem;">
-            <!-- Poster -->
-            <div>
-                {% if pelicula.poster %}
-                    <img src="{{ pelicula.poster.url }}" alt="{{ pelicula.titulo }}" style="width: 100%; border-radius: 8px; box-shadow: 0 4px 8px rgba(0,0,0,0.2);">
-                {% else %}
-                    <div style="width: 100%; aspect-ratio: 2/3; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); border-radius: 8px; display: flex; align-items: center; justify-content: center; color: white; font-size: 1.2rem; text-align: center; padding: 1rem;">
-                        🎬<br>{{ pelicula.titulo }}
-                    </div>
-                {% endif %}
-            </div>
-            
-            <!-- Información principal -->
-            <div>
-                <h1 style="color: #333; margin-bottom: 1rem;">{{ pelicula.titulo }}</h1>
-                
-                <div style="display: flex; gap: 0.75rem; margin-bottom: 1.5rem; flex-wrap: wrap;">
-                    {% if pelicula.clasificacion %}
-                        <span style="padding: 0.35rem 0.85rem; background-color: #007bff; color: white; border-radius: 4px; font-weight: bold; font-size: 0.95rem;">
-                            {{ pelicula.get_clasificacion_display }}
-                        </span>
-                    {% endif %}
-                    
-                    {% if pelicula.genero %}
-                        <span style="padding: 0.35rem 0.85rem; background-color: #28a745; color: white; border-radius: 4px; font-size: 0.95rem;">
-                            {{ pelicula.get_genero_display }}
-                        </span>
-                    {% endif %}
-                    
-                    {% if pelicula.duracion %}
-                        <span style="padding: 0.35rem 0.85rem; background-color: #6c757d; color: white; border-radius: 4px; font-size: 0.95rem;">
-                            ⏱ {{ pelicula.duracion_formato }}
-                        </span>
-                    {% endif %}
-                    
-                    {% if pelicula.año %}
-                        <span style="padding: 0.35rem 0.85rem; background-color: #17a2b8; color: white; border-radius: 4px; font-size: 0.95rem;">
-                            📅 {{ pelicula.año }}
-                        </span>
-                    {% endif %}
-                </div>
-                
-                {% if pelicula.sinopsis %}
-                    <div style="margin-bottom: 1.5rem;">
-                        <h3 style="color: #333; margin-bottom: 0.5rem; font-size: 1.2rem;">📖 Sinopsis</h3>
-                        <p style="color: #555; line-height: 1.8; text-align: justify;">{{ pelicula.sinopsis }}</p>
-                    </div>
-                {% endif %}
-                
-                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 1.5rem; margin-top: 1.5rem;">
-                    {% if pelicula.director %}
-                        <div style="background-color: #f8f9fa; padding: 1rem; border-radius: 6px; border-left: 4px solid #007bff;">
-                            <h4 style="color: #333; margin-bottom: 0.5rem; font-size: 0.95rem;">🎬 Director</h4>
-                            <p style="color: #666; margin: 0; font-weight: 500;">{{ pelicula.director }}</p>
-                        </div>
-                    {% endif %}
-                    
-                    {% if pelicula.actores %}
-                        <div style="background-color: #f8f9fa; padding: 1rem; border-radius: 6px; border-left: 4px solid #28a745;">
-                            <h4 style="color: #333; margin-bottom: 0.5rem; font-size: 0.95rem;">🎭 Actores Principales</h4>
-                            <p style="color: #666; margin: 0; font-weight: 500;">{{ pelicula.actores }}</p>
-                        </div>
-                    {% endif %}
-                </div>
-            </div>
+<!-- modificado (rediseño detalle_pelicula - full width): antes .detalle-layout metía TODO
+     (poster + titulo + badges + sinopsis + director/actores + rating) en la columna
+     izquierda de 320px, apretado al lado del poster. Ahora esa grilla de 320px/1fr
+     solo tiene el poster y los horarios; el resto pasa a .detalle-info-completa,
+     un bloque aparte que ocupa el ancho completo de la página. -->
+<div class="detalle-top-grid">
+    <!-- ===== Columna izquierda: poster ===== -->
+    <div class="detalle-poster-col">
+        <!-- modificado (Trailer): .detalle-poster ahora envuelve tanto el <img>/placeholder
+             como el botón de play y el contenedor del iframe, para que el iframe pueda
+             "tapar" el poster con position:absolute cuando se activa. El video NO se carga
+             en la carga inicial de la página — recién se arma el <iframe> (con
+             src=youtube.com/embed/...) en JS al hacer click, así una visita normal a esta
+             página no descarga ni un byte de YouTube de más. -->
+        <div class="detalle-poster{% if pelicula.trailer_youtube_id %} detalle-poster-con-trailer{% endif %}"
+             {% if pelicula.trailer_youtube_id %}id="detallePosterTrailer" data-trailer-id="{{ pelicula.trailer_youtube_id }}"{% endif %}>
+            {% if pelicula.poster %}
+                <img src="{{ pelicula.poster.url }}" alt="{{ pelicula.titulo }}">
+            {% else %}
+                <div class="detalle-poster-placeholder">🎬</div>
+            {% endif %}
+            {% if pelicula.trailer_youtube_id %}
+                <!-- nuevo (Trailer): ícono de play, aparece al hover (y siempre visible en
+                     mobile/touch, ver detalle.css). Al hacer click, rating.js arma recién ahí
+                     el <iframe> del embed de YouTube y lo mete adentro de .detalle-poster,
+                     tapando el poster — así el video no se carga hasta que el usuario lo pide. -->
+                <button type="button" class="detalle-trailer-play-btn" aria-label="Ver tráiler">▶</button>
+            {% endif %}
         </div>
     </div>
-    
-    <!-- Funciones disponibles -->
-    <div style="background-color: white; padding: 2rem; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
-        <h2 style="color: #333; margin-bottom: 1.5rem; font-size: 1.8rem;">🎟️ Funciones Disponibles</h2>
-        
-        {% if funciones %}
-            <div style="display: grid; gap: 1rem;">
-                {% for funcion in funciones %}
-                    <div style="border: 2px solid #e9ecef; padding: 1.5rem; border-radius: 8px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem; transition: all 0.2s;" onmouseover="this.style.borderColor='#007bff'; this.style.boxShadow='0 4px 8px rgba(0,123,255,0.1)'" onmouseout="this.style.borderColor='#e9ecef'; this.style.boxShadow='none'">
-                        <div style="flex: 1; min-width: 200px;">
-                            <p style="margin: 0 0 0.75rem 0; font-size: 1.1rem; font-weight: bold; color: #333;">
-                                📅 {{ funcion.fecha_hora|date:"l, d 'de' F 'de' Y" }}
-                            </p>
-                            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 0.5rem;">
-                                <p style="margin: 0; color: #666;">
-                                    <strong>⏰ Horario:</strong> {{ funcion.fecha_hora|date:"H:i" }} hs
-                                </p>
-                                <p style="margin: 0; color: #666;">
-                                    <strong>🎪 Sala:</strong> {{ funcion.sala.nombre }}
-                                </p>
-                                <p style="margin: 0; color: {% if funcion.asientos_disponibles < 10 %}#dc3545{% else %}#28a745{% endif %};">
-                                    <strong>💺 Disponibles:</strong> {{ funcion.asientos_disponibles }}
-                                </p>
-                            </div>
-                        </div>
-                        
-                        <div style="text-align: right;">
-                            <p style="font-size: 2rem; color: #28a745; font-weight: bold; margin: 0 0 0.75rem 0;">
-                                ${{ funcion.precio }}
-                            </p>
-                            {% if user.is_authenticated %}
-                                <a href="{% url 'reservas:crear_reserva' funcion.id %}" style="display: inline-block; padding: 0.75rem 1.5rem; background-color: #007bff; color: white; border-radius: 6px; text-decoration: none; font-weight: bold; transition: background-color 0.2s;" onmouseover="this.style.backgroundColor='#0056b3'" onmouseout="this.style.backgroundColor='#007bff'">
-                                    🎫 Reservar Ahora
-                                </a>
-                            {% else %}
-                                <a href="{% url 'usuarios:login' %}?next={% url 'reservas:crear_reserva' funcion.id %}" style="display: inline-block; padding: 0.75rem 1.5rem; background-color: #007bff; color: white; border-radius: 6px; text-decoration: none; font-weight: bold; transition: background-color 0.2s;" onmouseover="this.style.backgroundColor='#0056b3'" onmouseout="this.style.backgroundColor='#007bff'">
-                                    🎫 Reservar Ahora
-                                </a>
-                            {% endif %}
-                        </div>
-                    </div>
+
+    <!-- ===== Columna derecha: horarios ===== -->
+    <div class="detalle-horarios">
+        {# nuevo (Sedes - tareasnuevas punto 1): título dinámico según la sede elegida #}
+        {# modificado (T12 / Hilo 2 punto 3): si no hay funciones en la sede elegida, el título ya no dice esa sede — se está mostrando el fallback de todas las sedes #}
+        {% if sede_actual and not sin_funciones_en_mi_sede %}
+        <h2>Horarios de {{ sede_actual.nombre }}</h2>
+        {% else %}
+        <h2>Todos los Horarios</h2>
+        {% endif %}
+
+        {# nuevo (T12 / Hilo 2 punto 3): aviso de fallback + botón para volver a "todas las sedes" de forma explícita #}
+        {% if sin_funciones_en_mi_sede %}
+        <div class="sin-funciones-box">
+            Esta película no tiene funciones en {{ sede_actual.nombre }} por ahora. Te mostramos los horarios de todas las sedes.
+            <form method="post" action="{% url 'sedes:cambiar_sede' %}" style="display:inline;">
+                {% csrf_token %}
+                <input type="hidden" name="next" value="{{ request.path }}">
+                <input type="hidden" name="sede_id" value="">
+                <button type="submit" class="fecha-quitar" style="background:none;border:none;cursor:pointer;text-decoration:underline;">Ver en todas las sedes</button>
+            </form>
+        </div>
+        {% endif %}
+
+        {% if fechas_disponibles %}
+            <!-- nuevo: carrusel de fechas acotado a los dias reales con funcion (no un rango fijo) -->
+            <div class="fechas-carrusel-wrap">
+                <button type="button" class="fecha-flecha fecha-flecha-prev" aria-label="Días anteriores">‹</button>
+                <div class="fechas-carrusel">
+                    {% for f in fechas_disponibles %}
+                        <a href="?formato={{ formato_seleccionado }}&fecha={{ f.valor }}"
+                           class="fecha-item{% if fecha_seleccionada == f.valor %} fecha-activa{% elif not fecha_seleccionada and forloop.first %} fecha-hoy{% endif %}">
+                            <span class="fecha-item-diasemana">{{ f.dia_semana }}</span>
+                            <span class="fecha-item-diames">{{ f.dia_mes }}</span>
+                        </a>
+                    {% endfor %}
+                </div>
+                <button type="button" class="fecha-flecha fecha-flecha-next" aria-label="Días siguientes">›</button>
+                {% if fecha_seleccionada %}
+                    <a href="?formato={{ formato_seleccionado }}" class="fecha-quitar" title="Quitar filtro de día">🗑</a>
+                {% endif %}
+            </div>
+
+            <!-- nuevo: filtro por formato (Sala.tipo, dato real). Sin selector de Idioma: Funcion no tiene ese campo -->
+            <div class="formato-filtros">
+                <a href="?fecha={{ fecha_seleccionada }}" class="formato-pill{% if not formato_seleccionado %} formato-activo{% endif %}">Todos</a>
+                {% for valor, etiqueta in formatos_disponibles %}
+                    <a href="?fecha={{ fecha_seleccionada }}&formato={{ valor }}"
+                       class="formato-pill{% if formato_seleccionado == valor %} formato-activo{% endif %}">{{ etiqueta }}</a>
                 {% endfor %}
             </div>
+
+            {% if grupos_funciones %}
+                {% include 'partials/_grupos_funciones.html' %}
+            {% else %}
+                <div class="sin-funciones-box">
+                    No hay funciones que coincidan con ese filtro.
+                    <a href="?">Ver todos los horarios</a>
+                </div>
+            {% endif %}
         {% else %}
-            <div style="background-color: #fff3cd; padding: 1.5rem; border-radius: 8px; border-left: 4px solid #ffc107;">
-                <p style="margin: 0; color: #856404; font-size: 1.1rem;">
-                    <strong>⚠️ No hay funciones disponibles</strong><br>
-                    <span style="font-size: 0.95rem;">No hay funciones programadas para esta película en este momento. Volvé pronto para ver las próximas fechas.</span>
-                </p>
+            <div class="sin-funciones-box">
+                No hay funciones disponibles para esta película en este momento.
             </div>
         {% endif %}
     </div>
 </div>
 
-<style>
-    @media (max-width: 768px) {
-        div[style*="grid-template-columns: 300px 1fr"] {
-            grid-template-columns: 1fr !important;
-        }
-    }
-</style>
+<!-- ===== Bloque de abajo: título, badges, sinopsis, director/actores, rating — a todo el ancho ===== -->
+<div class="detalle-info-completa">
+    <h1 class="detalle-titulo">{{ pelicula.titulo }}</h1>
+
+    <div class="detalle-badges">
+        {% if pelicula.clasificacion %}
+            <span class="detalle-badge detalle-badge-clasificacion">{{ pelicula.get_clasificacion_display }}</span>
+        {% endif %}
+        {% if pelicula.genero %}
+            <span class="detalle-badge detalle-badge-genero">{{ pelicula.get_genero_display }}</span>
+        {% endif %}
+        {% if pelicula.duracion %}
+            <span class="detalle-badge detalle-badge-gris">⏱ {{ pelicula.duracion_formato }}</span>
+        {% endif %}
+        {% if pelicula.año %}
+            <span class="detalle-badge detalle-badge-gris">{{ pelicula.año }}</span>
+        {% endif %}
+    </div>
+
+    {% if pelicula.sinopsis %}
+        <!-- modificado: la sinopsis ahora es un card (misma clase .detalle-info-box que Director/Actores), antes era un bloque de texto suelto -->
+        <div class="detalle-sinopsis detalle-info-box">
+            <h3>Sinopsis</h3>
+            <p>{{ pelicula.sinopsis }}</p>
+        </div>
+    {% endif %}
+
+    {% if pelicula.director or pelicula.actores %}
+        <!-- modificado: Director y Actores ahora van lado a lado en una fila de 2 columnas que ocupa todo el ancho, antes eran dos cards angostos apilados en la columna de 320px -->
+        <div class="detalle-info-row">
+            {% if pelicula.director %}
+                <div class="detalle-info-box">
+                    <div class="detalle-info-box-label">Director</div>
+                    <div class="detalle-info-box-valor">{{ pelicula.director }}</div>
+                </div>
+            {% endif %}
+
+            {% if pelicula.actores %}
+                <div class="detalle-info-box">
+                    <div class="detalle-info-box-label">Actores principales</div>
+                    <div class="detalle-info-box-valor">{{ pelicula.actores }}</div>
+                </div>
+            {% endif %}
+        </div>
+    {% endif %}
+
+    <!-- MODIFICACION GEMINI: Calificaciones y Reseñas de Usuarios -->
+    <!-- modificado: bloque migrado de estilos inline a clases (ver static/css/peliculas/detalle.css, sufijo detalle-rating-*) -->
+    <div class="detalle-rating-bloque">
+        <h3>⭐ Calificaciones y Reseñas</h3>
+
+        <div class="detalle-rating-resumen">
+            <span class="detalle-rating-resumen-numero">{{ pelicula.rating_promedio }}</span>
+            <div>
+                <div class="detalle-rating-resumen-estrellas">
+                    <!-- Estrellas segun promedio -->
+                    {% if pelicula.rating_promedio >= 1 %}★{% else %}☆{% endif %}
+                    {% if pelicula.rating_promedio >= 2 %}★{% else %}☆{% endif %}
+                    {% if pelicula.rating_promedio >= 3 %}★{% else %}☆{% endif %}
+                    {% if pelicula.rating_promedio >= 4 %}★{% else %}☆{% endif %}
+                    {% if pelicula.rating_promedio >= 5 %}★{% else %}☆{% endif %}
+                </div>
+                <div class="detalle-rating-resumen-total">{{ pelicula.total_votos }} calificaciones</div>
+            </div>
+        </div>
+
+        {% if puede_calificar %}
+            <form method="post" action="{% url 'peliculas:votar_pelicula' pelicula.id %}" class="detalle-rating-form">
+                {% csrf_token %}
+                <h4 class="detalle-rating-form-titulo">{% if mi_rating %}Actualizar tu calificación{% else %}Calificar esta película{% endif %}</h4>
+
+                <!-- Estrellas interactivas -->
+                <div class="rating-estrellas detalle-rating-estrellas-input">
+                    {% for i in "12345" %}
+                        <span class="estrella-btn{% if mi_rating and mi_rating.puntuacion >= forloop.counter %} detalle-rating-estrella-activa{% endif %}" data-valor="{{ forloop.counter }}">
+                            {% if mi_rating and mi_rating.puntuacion >= forloop.counter %}★{% else %}☆{% endif %}
+                        </span>
+                    {% endfor %}
+                </div>
+                <input type="hidden" name="puntuacion" id="inputPuntuacion" value="{{ mi_rating.puntuacion|default:'' }}" required>
+
+                <!-- modificado: textarea "tipo chat" que se agranda a medida que se escribe (como WhatsApp),
+                     en vez de un textbox de altura fija. rows="1" + JS de auto-resize en rating.js
+                     (función ajustarAlturaComentario), con overflow oculto hasta el alto máximo. -->
+                <textarea name="comentario" id="comentarioRating" placeholder="Escribí una reseña opcional..." class="detalle-rating-textarea" rows="1">{{ mi_rating.comentario|default:'' }}</textarea>
+
+                <button type="submit" class="btn btn-primary detalle-rating-submit-btn">Enviar calificación</button>
+            </form>
+            <!-- modificado: script inline movido a static/js/peliculas/rating.js, cargado en el bloque extra_js al final del archivo -->
+        {% else %}
+            <div class="detalle-rating-bloqueado">
+                <span>🔒</span> Solo los usuarios que asistieron a ver esta película pueden calificarla.
+            </div>
+        {% endif %}
+
+        <!-- Listado de reseñas -->
+        <div class="detalle-rating-reviews-wrap">
+            <h4 class="detalle-rating-reviews-titulo">Reseñas de la comunidad</h4>
+            {% if ratings_list %}
+                {% for r in ratings_list %}
+                    <div class="detalle-rating-review-card">
+                        <div class="detalle-rating-review-header">
+                            <strong class="detalle-rating-review-autor">{{ r.usuario.get_full_name|default:r.usuario.username }}</strong>
+                            <span class="detalle-rating-review-estrellas">
+                                {% if r.puntuacion >= 1 %}★{% else %}☆{% endif %}
+                                {% if r.puntuacion >= 2 %}★{% else %}☆{% endif %}
+                                {% if r.puntuacion >= 3 %}★{% else %}☆{% endif %}
+                                {% if r.puntuacion >= 4 %}★{% else %}☆{% endif %}
+                                {% if r.puntuacion >= 5 %}★{% else %}☆{% endif %}
+                            </span>
+                        </div>
+                        {% if r.comentario %}
+                            <p class="detalle-rating-review-comentario">{{ r.comentario }}</p>
+                        {% endif %}
+                        <div class="detalle-rating-review-fecha">{{ r.fecha_creacion|date:"d/m/Y H:i" }}</div>
+                    </div>
+                {% endfor %}
+            {% else %}
+                <div class="detalle-rating-review-vacio">No hay reseñas todavía.</div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+{% if tambien_en_cartelera %}
+    <!-- modificado: "también en cartelera" pasó de .cartelera-grid/.cartelera-card (clases que
+         en realidad viven en static/css/inicio/cartelera.css, un archivo que esta página NUNCA
+         cargaba) a un carrusel horizontal propio con cards de tamaño fijo y flechas de scroll,
+         mismo patrón visual que el carrusel de fechas de arriba. Antes las imágenes salían sin
+         ningún estilo (tamaño natural del <img>, apiladas una debajo de la otra) precisamente
+         porque las clases usadas no estaban cargadas en este template.
+         modificado: se prioriza por género (ver peliculas/views.py) y se agrega un badge con
+         el rating promedio en cada card (solo si ya tiene votos), para poder comparar sin
+         entrar a cada película. -->
+    <h3 class="tambien-cartelera-titulo">También en cartelera</h3>
+    <div class="relacionadas-carrusel-wrap">
+        <button type="button" class="fecha-flecha relacionadas-flecha-prev" aria-label="Ver anteriores">‹</button>
+        <div class="relacionadas-carrusel">
+            {% for otra in tambien_en_cartelera %}
+                <a href="{% url 'peliculas:detalle_pelicula' otra.id %}" class="relacionada-card">
+                    <div class="relacionada-card-poster-wrap">
+                        {% if otra.poster %}
+                            <img class="relacionada-card-poster" src="{{ otra.poster.url }}" alt="{{ otra.titulo }}">
+                        {% else %}
+                            <div class="relacionada-card-poster-placeholder">🎬</div>
+                        {% endif %}
+                        {% if otra.total_votos %}
+                            <span class="relacionada-card-badge">★ {{ otra.rating_promedio }}</span>
+                        {% endif %}
+                    </div>
+                    <div class="relacionada-card-titulo">{{ otra.titulo }}</div>
+                </a>
+            {% endfor %}
+        </div>
+        <button type="button" class="fecha-flecha relacionadas-flecha-next" aria-label="Ver siguientes">›</button>
+    </div>
+{% endif %}
+
+{% if proximos_estrenos %}
+    <!-- nuevo: segundo carrusel de "Próximos estrenos" (en_cartelera=False + fecha de estreno
+         futura, mismo criterio que ya usa inicio() para su propio carrusel de estrenos).
+         Reutiliza las mismas clases .relacionadas-carrusel-wrap/.relacionada-card de arriba
+         (mismo look, mismas flechas) — relacionadas_carrusel.js ya recorre TODOS los
+         .relacionadas-carrusel-wrap de la página con querySelectorAll, así que este segundo
+         carrusel queda funcionando solo, sin tocar el JS. En vez de un badge de rating (todavía
+         no se estrenó, no puede tener calificaciones) se muestra la fecha de estreno. -->
+    <h3 class="tambien-cartelera-titulo">Próximos estrenos</h3>
+    <div class="relacionadas-carrusel-wrap">
+        <button type="button" class="fecha-flecha relacionadas-flecha-prev" aria-label="Ver anteriores">‹</button>
+        <div class="relacionadas-carrusel">
+            {% for proxima in proximos_estrenos %}
+                <a href="{% url 'peliculas:detalle_pelicula' proxima.id %}" class="relacionada-card">
+                    <div class="relacionada-card-poster-wrap">
+                        {% if proxima.poster %}
+                            <img class="relacionada-card-poster" src="{{ proxima.poster.url }}" alt="{{ proxima.titulo }}">
+                        {% else %}
+                            <div class="relacionada-card-poster-placeholder">🎬</div>
+                        {% endif %}
+                        {% if proxima.fecha_estreno %}
+                            <span class="relacionada-card-badge relacionada-card-badge-estreno">{{ proxima.fecha_estreno|date:"d/m" }}</span>
+                        {% endif %}
+                    </div>
+                    <div class="relacionada-card-titulo">{{ proxima.titulo }}</div>
+                </a>
+            {% endfor %}
+        </div>
+        <button type="button" class="fecha-flecha relacionadas-flecha-next" aria-label="Ver siguientes">›</button>
+    </div>
+{% endif %}
+
+<!-- modificado: estilo inline movido a clases .detalle-volver-wrap / .detalle-volver-link -->
+<div class="detalle-volver-wrap">
+    <a href="{% url 'peliculas:lista_peliculas' %}" class="detalle-volver-link">
+        Cartelera
+    </a>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<!-- nuevo: flechas del carrusel de fechas -->
+<script src="{% static 'js/shared/fechas_carrusel.js' %}"></script>
+<!-- nuevo: flechas de los carruseles de "también en cartelera" / "próximos estrenos" (mismo patrón, wrapper propio, recorre ambos automáticamente) -->
+<script src="{% static 'js/peliculas/relacionadas_carrusel.js' %}"></script>
+<!-- nuevo (Trailer): arma el <iframe> de YouTube recién al hacer click en el botón de play -->
+<script src="{% static 'js/peliculas/trailer.js' %}"></script>
+<!-- modificado: JS del widget de rating, antes estaba inline en este mismo archivo. Ahora
+     también incluye el auto-resize del textarea de comentario (ver nota arriba). -->
+<script src="{% static 'js/peliculas/rating.js' %}"></script>
 {% endblock %}

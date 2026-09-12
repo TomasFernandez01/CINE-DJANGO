@@ -1,0 +1,97 @@
+/* nuevo (Sedes - Fase 3): mismo patrón visual que panel/promociones/promodia/lista.css */
+
+.panelsedes-lista-encabezado {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 1rem;
+    margin-bottom: 1.5rem;
+}
+
+.panelsedes-lista-titulo {
+    margin: 0;
+    color: #333;
+}
+
+.panelsedes-lista-subtitulo {
+    margin: 0.25rem 0 0 0;
+    color: #666;
+}
+
+.panelsedes-lista-acciones {
+    display: flex;
+    gap: 0.75rem;
+}
+
+.panelsedes-lista-btn-eliminar[disabled] {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+.panelsedes-lista-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+    gap: 1rem;
+}
+
+.panelsedes-lista-check-label {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    cursor: pointer;
+    margin: 0;
+}
+
+.panelsedes-lista-nombre {
+    margin: 0;
+}
+
+.panelsedes-lista-badge {
+    font-size: 0.75rem;
+    padding: 0.2rem 0.6rem;
+    border-radius: 20px;
+    font-weight: 600;
+}
+
+.panelsedes-lista-badge--activa {
+    background: #d4edda;
+    color: #155724;
+}
+
+.panelsedes-lista-badge--inactiva {
+    background: #f8d7da;
+    color: #721c24;
+}
+
+.panelsedes-lista-direccion {
+    font-size: 0.85rem;
+    color: #666;
+    margin-bottom: 0.3rem;
+}
+
+.panelsedes-lista-telefono {
+    font-size: 0.85rem;
+    color: #666;
+    margin-bottom: 0.3rem;
+}
+
+.panelsedes-lista-salas {
+    font-size: 0.8rem;
+    color: #999;
+    margin-bottom: 0.75rem;
+}
+
+.panelsedes-lista-btn-editar {
+    font-size: 0.8rem;
+}
+
+.panelsedes-lista-vacio-card {
+    grid-column: 1 / -1;
+}
+
+.panelsedes-lista-vacio {
+    text-align: center;
+    padding: 3rem;
+    color: #999;
+}

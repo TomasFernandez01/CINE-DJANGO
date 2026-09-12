@@ -1,0 +1,123 @@
+{% extends 'panel/base_panel.html' %}
+
+{% load static %}
+
+{% block titulo %}Usuarios — Panel{% endblock %}
+
+{% block breadcrumb %}
+<span class="sep">›</span>
+<span class="current">Usuarios</span>
+{% endblock %}
+
+{% block extra_css %}
+<!-- modificado: CSS separado a static/css/panel/usuarios/lista.css (antes todo con style="" inline) -->
+<link rel="stylesheet" href="{% static 'css/panel/usuarios/lista.css' %}">
+{% endblock %}
+
+{% block contenido %}
+<!-- modificado (T5 - cero emojis): se sacaron los emojis del título (👥), "🔒 Solo visible para administradores" y del ícono editar (✏️, botón sin texto — se dejó vacío, no hay librería de íconos cargada), más abajo. -->
+
+<div class="paneluser-lista-encabezado">
+    <div>
+        <h1 class="paneluser-lista-titulo"> Usuarios</h1>
+        <div class="paneluser-lista-solo-admin">
+             Solo visible para administradores
+        </div>
+    </div>
+    <!-- modificado: se saca el link comentado al admin de Django (código muerto), ya se usa panel:usuarios_crear -->
+    <a href="{% url 'panel:usuarios_crear' %}" class="btn btn-success">Crear</a>
+</div>
+
+<!-- Filtros -->
+<div class="card paneluser-lista-filtros-card">
+    <div class="card-body paneluser-lista-filtros-body">
+        <form method="get" class="paneluser-lista-filtros-form">
+            <input type="text" name="q" value="{{ busqueda }}" class="input paneluser-lista-filtro-busqueda"
+                   placeholder="Username, nombre o email...">
+            <select name="tipo" class="select">
+                <option value="">Todos</option>
+                <option value="normales"  {% if tipo == 'normales'  %}selected{% endif %}>Usuarios normales</option>
+                <option value="staff"     {% if tipo == 'staff'     %}selected{% endif %}>Staff</option>
+                <option value="superuser" {% if tipo == 'superuser' %}selected{% endif %}>Superusuarios</option>
+            </select>
+            <button type="submit" class="btn btn-dark">Filtrar</button>
+            <a href="{% url 'panel:usuarios_lista' %}" class="btn btn-ghost">Limpiar</a>
+        </form>
+    </div>
+</div>
+
+<div class="paneluser-lista-contador">
+    {{ total }} usuario(s)
+</div>
+
+<div class="card">
+    {% if usuarios %}
+    <table class="tabla">
+        <thead>
+            <tr>
+                <th>Usuario</th>
+                <th>Nombre</th>
+                <th>Email</th>
+                <th>Rol</th>
+                <th>Reservas</th>
+                <th>Miembro desde</th>
+                <th></th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for u in usuarios %}
+            <tr>
+                <td>
+                    <a href="{% url 'panel:usuarios_detalle' u.id %}" class="paneluser-lista-username">
+                        {{ u.username }}
+                    </a>
+                </td>
+                <td class="paneluser-lista-nombre">
+                    {{ u.get_full_name|default:"—" }}
+                </td>
+                <td class="paneluser-lista-email">
+                    {{ u.email|default:"—" }}
+                </td>
+                <td>
+                    {% if u.is_superuser %}
+                    <span class="paneluser-lista-rol paneluser-lista-rol--super">
+                        Superusuario
+                    </span>
+                    {% elif u.is_staff %}
+                    <span class="paneluser-lista-rol paneluser-lista-rol--staff">
+                        Staff
+                    </span>
+                    {% else %}
+                    <span class="paneluser-lista-rol paneluser-lista-rol--normal">
+                        Usuario
+                    </span>
+                    {% endif %}
+                </td>
+                <td class="paneluser-lista-reservas">
+                    {{ u.reservas.count }}
+                </td>
+                <td class="paneluser-lista-fecha">
+                    {{ u.date_joined|date:"d/m/Y" }}
+                </td>
+                <td>
+                    <div class="paneluser-lista-acciones">
+                        <a href="{% url 'panel:usuarios_detalle' u.id %}"
+                           class="btn btn-ghost paneluser-lista-btn-chico">
+                            Ver
+                        </a>
+                        <!-- modificado: se saca el link comentado al admin de Django (código muerto), ya se usa panel:usuarios_editar -->
+                        <a href="{% url 'panel:usuarios_editar' u.id %}" class="btn btn-ghost paneluser-lista-btn-chico" title="Editar">Editar</a>
+                    </div>
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    {% else %}
+    <div class="card-body paneluser-lista-vacio">
+        No se encontraron usuarios.
+    </div>
+    {% endif %}
+</div>
+
+{% endblock %}

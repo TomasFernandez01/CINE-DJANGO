@@ -1,0 +1,219 @@
+{% extends 'panel/base_panel.html' %}
+{% load static %}
+
+{% block titulo %}Dashboard · Promociones — Panel Cine Online{% endblock %}
+
+{% block breadcrumb %}
+<span class="sep">›</span>
+<a href="{% url 'panel:inicio' %}">Dashboard</a>
+<span class="sep">›</span>
+<span class="current">Promociones</span>
+{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/panel/inicio_sede_banner.css' %}">
+<link rel="stylesheet" href="{% static 'css/panel/dashboard/comun.css' %}">
+<!-- nuevo (T14): reusa las clases .panelpag-est-rango-* del filtro de fecha simple -->
+<link rel="stylesheet" href="{% static 'css/panel/pagos/estadisticas.css' %}">
+{% endblock %}
+
+{% block contenido %}
+{% include 'panel/dashboard/_subnav.html' with dash_seccion='promociones' %}
+
+{% if panel_sede_activa %}
+<div class="panelinicio-sede-banner"><strong>SEDE = {{ panel_sede_activa.nombre }}</strong></div>
+{% else %}
+<div class="panelinicio-sede-banner panelinicio-sede-banner--todas"><strong>TODAS LAS SEDES</strong></div>
+{% endif %}
+
+<!-- ============================================================ -->
+<!-- filtro simple de rango (afecta: consumo por categoría, ATV con/sin
+     combo, ROI de cupones — NO afecta a "más usados"/"activos sin uso",
+     que son ventanas fijas hoy/semana/mes, igual que antes) -->
+<!-- ============================================================ -->
+{% if rango_error %}
+<div class="panelpag-est-rango-error">{{ rango_error }} Mostrando los últimos 30 días.</div>
+{% endif %}
+<form method="get" class="panelpag-est-rango-form" style="margin-bottom:1.5rem;">
+    <label class="panelpag-est-rango-label">
+        Desde
+        <input type="date" name="desde" value="{{ rango_desde }}" class="input">
+    </label>
+    <label class="panelpag-est-rango-label">
+        Hasta
+        <input type="date" name="hasta" value="{{ rango_hasta }}" class="input">
+    </label>
+    <button type="submit" class="btn btn-dark">Filtrar</button>
+    <a href="{% url 'panel:dashboard_promociones' %}" class="btn btn-ghost">Últimos 30 días</a>
+</form>
+
+<!-- ============================================================ -->
+<!-- CONSUMO POR CATEGORÍA + TICKET CON/SIN COMBO -->
+<!-- ============================================================ -->
+<div class="charts-grid">
+    <div class="chart-card">
+        <div class="chart-title">Consumo por categoría</div>
+        {% if chart_combos_labels %}
+        <div style="position: relative; height: 260px; width: 100%;">
+            <canvas id="comboChart"></canvas>
+        </div>
+        {% else %}
+        <div style="text-align:center;color:#999;padding:2rem;">Sin consumo en el período.</div>
+        {% endif %}
+    </div>
+
+    <div class="card" style="margin-bottom:0;">
+        <div class="card-header">
+            <h3>Ticket con/sin combo</h3>
+        </div>
+        <div class="card-body" style="display:flex; flex-direction:column; gap:1.25rem; padding:1.5rem;">
+            <div style="text-align:center;">
+                <div style="font-size:1.6rem; font-weight:700; color:#27ae60;">${{ atv_combo.atv_con_combo|floatformat:0 }}</div>
+                <div style="color:#666; font-size:0.85rem;">Con combo ({{ atv_combo.cantidad_con_combo }} pago{{ atv_combo.cantidad_con_combo|pluralize }})</div>
+            </div>
+            <div style="text-align:center;">
+                <div style="font-size:1.6rem; font-weight:700; color:#7f8c8d;">${{ atv_combo.atv_sin_combo|floatformat:0 }}</div>
+                <div style="color:#666; font-size:0.85rem;">Sin combo ({{ atv_combo.cantidad_sin_combo }} pago{{ atv_combo.cantidad_sin_combo|pluralize }})</div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- ============================================================ -->
+<!-- ROI DE CUPONES -->
+<!-- ============================================================ -->
+<div class="card">
+    <div class="card-header">
+        <h3>ROI de cupones (en el rango seleccionado)</h3>
+    </div>
+    {% if roi_cupones %}
+    <div style="overflow-x:auto;">
+        <table class="tabla" style="width:100%;">
+            <thead>
+                <tr>
+                    <th>Cupón</th>
+                    <th>Descuento otorgado</th>
+                    <th>Recaudación generada</th>
+                    <th>ROI</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for c in roi_cupones %}
+                <tr>
+                    <td style="font-weight:600;">{{ c.codigo }}</td>
+                    <td style="color:#d93025;">${{ c.descuento_total_otorgado|floatformat:0 }}</td>
+                    <td style="color:#27ae60; font-weight:600;">${{ c.recaudacion_generada|floatformat:0 }}</td>
+                    <td>{% if c.roi_pct is not None %}{{ c.roi_pct }}%{% else %}—{% endif %}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    {% else %}
+    <div class="card-body" style="text-align:center;color:#999;padding:2rem;">Sin cupones usados en pagos aprobados todavía.</div>
+    {% endif %}
+</div>
+
+<!-- ============================================================ -->
+<!-- ESTADÍSTICAS DE CUPONES (mudado desde cupones/estadisticas.html) -->
+<!-- ============================================================ -->
+<div class="stat-grid">
+    <div class="stat-card">
+        <div class="stat-label">Usos hoy</div>
+        <p class="stat-value">{{ cupones_stats.usos_hoy }}</p>
+        <div class="stat-sub">${{ cupones_stats.descuento_hoy|floatformat:0 }} en descuentos</div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-label">Usos esta semana</div>
+        <p class="stat-value">{{ cupones_stats.usos_semana }}</p>
+        <div class="stat-sub">${{ cupones_stats.descuento_semana|floatformat:0 }} en descuentos</div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-label">Usos este mes</div>
+        <p class="stat-value">{{ cupones_stats.usos_mes }}</p>
+        <div class="stat-sub">${{ cupones_stats.descuento_mes|floatformat:0 }} en descuentos</div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-label">Usos totales</div>
+        <p class="stat-value">{{ cupones_stats.usos_total }}</p>
+        <div class="stat-sub">${{ cupones_stats.descuento_total|floatformat:0 }} en descuentos, histórico</div>
+    </div>
+</div>
+
+<div class="charts-grid">
+    <div class="card" style="margin-bottom:0;">
+        <div class="card-header">
+            <h3>Cupones más usados</h3>
+        </div>
+        {% if top_cupones %}
+        <table class="tabla" style="width:100%;">
+            <thead>
+                <tr><th>Cupón</th><th>Usos</th><th>Descuento generado</th></tr>
+            </thead>
+            <tbody>
+                {% for c in top_cupones %}
+                <tr>
+                    <td>{{ c.cupon__codigo }}</td>
+                    <td>{{ c.veces_usado }}</td>
+                    <td>${{ c.descuento_generado|floatformat:0 }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        {% else %}
+        <div class="card-body" style="text-align:center;color:#999;padding:2rem;">Sin usos todavía.</div>
+        {% endif %}
+    </div>
+
+    <div class="card" style="margin-bottom:0;">
+        <div class="card-header">
+            <h3>Activos sin uso (últimos 30 días)</h3>
+        </div>
+        {% if cupones_activos_sin_uso %}
+        <table class="tabla" style="width:100%;">
+            <thead>
+                <tr><th>Cupón</th><th>Vigente desde</th></tr>
+            </thead>
+            <tbody>
+                {% for c in cupones_activos_sin_uso %}
+                <tr>
+                    <td>{{ c.codigo }}</td>
+                    <td>{{ c.fecha_inicio|date:"d/m/Y" }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        {% else %}
+        <div class="card-body" style="text-align:center;color:#999;padding:2rem;">Todos los cupones activos tuvieron uso este mes.</div>
+        {% endif %}
+    </div>
+</div>
+
+{% if chart_combos_labels %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+    (function() {
+        var labels = {{ chart_combos_labels|safe }};
+        var valores = {{ chart_combos_valores|safe }};
+        var colores = ['#e2b96f', '#f39c12', '#27ae60', '#2ecc71', '#9b59b6', '#34495e'];
+        new Chart(document.getElementById('comboChart').getContext('2d'), {
+            type: 'doughnut',
+            data: {
+                labels: labels,
+                datasets: [{
+                    data: valores,
+                    backgroundColor: colores.slice(0, labels.length),
+                    borderWidth: 2,
+                    borderColor: '#ffffff'
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: { legend: { position: 'bottom' } },
+            }
+        });
+    })();
+</script>
+{% endif %}
+{% endblock %}

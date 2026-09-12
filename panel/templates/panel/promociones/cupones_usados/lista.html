@@ -1,0 +1,82 @@
+{% extends 'panel/base_panel.html' %}
+
+{% load static %}
+
+{% block titulo %}Cupones Usados — Panel{% endblock %}
+
+{% block breadcrumb %}
+<span class="sep">›</span>
+<span class="current">Cupones Usados</span>
+{% endblock %}
+
+{% block extra_css %}
+<!-- modificado: CSS separado a static/css/panel/promociones/cupones_usados/lista.css (antes todo con style="" inline) -->
+<link rel="stylesheet" href="{% static 'css/panel/promociones/cupones_usados/lista.css' %}">
+{% endblock %}
+
+{% block contenido %}
+<!-- modificado (T5 - cero emojis): se sacaron los emojis del título (📋) y del botón "🎟️ Ver cupones". -->
+
+<div class="panelcuponused-encabezado">
+    <h1 class="panelcuponused-titulo"> Cupones Usados</h1>
+    <div class="panelcuponused-acciones">
+        <a href="{% url 'panel:cupones_lista' %}" class="btn btn-primary"> Ver cupones</a>
+        <a href="{% url 'panel:inicio' %}" class="btn btn-primary">INICIO</a>
+    </div>
+</div>
+
+<div class="card panelcuponused-filtros-card">
+    <div class="card-body panelcuponused-filtros-body">
+        <form method="get" class="panelcuponused-filtros-form">
+            <input type="text" name="q" value="{{ busqueda }}" class="input panelcuponused-filtro-busqueda"
+                   placeholder="Código de cupón o usuario...">
+            <button type="submit" class="btn btn-dark">Filtrar</button>
+            <a href="{% url 'panel:cupones_usados_lista' %}" class="btn btn-ghost">Limpiar</a>
+        </form>
+    </div>
+</div>
+
+<div class="card">
+    {% if historial %}
+    <table class="tabla">
+        <thead>
+            <tr>
+                <th>Cupón</th>
+                <th>Usuario</th>
+                <th>Reserva / Película</th>
+                <th>Descuento aplicado</th>
+                <th>Fecha</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for h in historial %}
+            <tr>
+                <td class="panelcuponused-codigo">{{ h.cupon.codigo }}</td>
+                <td class="panelcuponused-usuario">
+                    {{ h.usuario.get_full_name|default:h.usuario.username }}
+                </td>
+                <td class="panelcuponused-reserva-col">
+                    {% if h.reserva %}
+                    <a href="{% url 'panel:reservas_detalle' h.reserva.id %}" class="panelcuponused-reserva-link">
+                        {{ h.reserva.funcion.pelicula.titulo }}
+                    </a>
+                    {% else %}
+                    <span class="panelcuponused-reserva-eliminada">Reserva eliminada</span>
+                    {% endif %}
+                </td>
+                <td class="panelcuponused-descuento">${{ h.descuento_aplicado|floatformat:0 }}</td>
+                <td class="panelcuponused-fecha">
+                    {{ h.fecha_uso|date:"d/m/Y H:i" }}
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    {% else %}
+    <div class="card-body panelcuponused-vacio">
+        No hay cupones usados todavía.
+    </div>
+    {% endif %}
+</div>
+
+{% endblock %}

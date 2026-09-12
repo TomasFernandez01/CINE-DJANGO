@@ -1,0 +1,119 @@
+/* modificado (Panel > Pagos, Hilo 2): CSS extraído de panel/pagos/lista.html,
+   antes todo con style="" inline. Mismos valores, sin cambios de diseño. */
+
+.panelpag-lista-encabezado {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 1rem;
+    margin-bottom: 1.5rem;
+}
+
+.panelpag-lista-titulo {
+    font-size: 1.4rem;
+    color: #1a1a2e;
+    margin: 0;
+}
+
+.panelpag-lista-filtros-card {
+    margin-bottom: 1.25rem;
+}
+
+.panelpag-lista-filtros-body {
+    padding: 1rem 1.25rem;
+}
+
+.panelpag-lista-filtros-form {
+    display: flex;
+    gap: 0.75rem;
+    flex-wrap: wrap;
+    align-items: center;
+}
+
+.panelpag-lista-filtro-busqueda {
+    flex: 1;
+    min-width: 220px;
+}
+
+.panelpag-lista-resumen {
+    background: white;
+    border-radius: 8px;
+    padding: 0.85rem 1.25rem;
+    margin-bottom: 1rem;
+    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.08);
+    display: flex;
+    gap: 2rem;
+    flex-wrap: wrap;
+    font-size: 0.875rem;
+}
+
+.panelpag-lista-resumen-label {
+    color: #999;
+}
+
+.panelpag-lista-resumen-valor {
+    margin-left: 0.4rem;
+}
+
+.panelpag-lista-resumen-valor--verde {
+    margin-left: 0.4rem;
+    color: #27ae60;
+}
+
+.panelpag-lista-transaccion {
+    font-family: monospace;
+    font-size: 0.8rem;
+    color: #1a1a2e;
+    text-decoration: none;
+    font-weight: 600;
+}
+
+.panelpag-lista-usuario {
+    font-size: 0.875rem;
+    color: #555;
+}
+
+.panelpag-lista-pelicula {
+    font-size: 0.875rem;
+    font-weight: 600;
+}
+
+.panelpag-lista-metodo {
+    color: #666;
+    font-size: 0.875rem;
+}
+
+.panelpag-lista-metodo-digitos {
+    color: #999;
+    font-size: 0.75rem;
+}
+
+.panelpag-lista-monto {
+    font-weight: 700;
+    color: #27ae60;
+}
+
+.panelpag-lista-qr-col {
+    text-align: center;
+}
+
+.panelpag-lista-qr-ok {
+    color: #27ae60;
+}
+
+.panelpag-lista-qr-pendiente {
+    color: #999;
+}
+
+.panelpag-lista-fecha {
+    color: #999;
+    font-size: 0.8rem;
+    white-space: nowrap;
+}
+
+.panelpag-lista-vacio {
+    text-align: center;
+    padding: 3rem;
+    color: #999;
+}

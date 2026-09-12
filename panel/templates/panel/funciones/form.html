@@ -1,0 +1,185 @@
+{% extends 'panel/base_panel.html' %}
+
+{% load static %}
+{% block titulo %}{{ titulo_pagina }} — Panel{% endblock %}
+
+{% block breadcrumb %}
+<span class="sep">›</span>
+<a href="{% url 'panel:funciones_lista' %}">Funciones</a>
+{% if objeto %}
+<span class="sep">›</span>
+<a href="{% url 'panel:funciones_detalle' objeto.id %}">Detalle</a>
+{% endif %}
+<span class="sep">›</span>
+<span class="current">{% if accion == 'crear' %}Agregar{% else %}Editar{% endif %}</span>
+{% endblock %}
+
+<!-- modificado (Hilo 1): separación CSS completa (23 estilos inline -> 0), movidos a
+     static/css/panel/funciones/form.css. Se borró un comment  inline suelto
+     junto al label de precio (código muerto). -->
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/panel/funciones/form.css' %}">
+{% endblock %}
+
+{% block contenido %}
+{% include 'panel/_form_styles.html' %}
+
+<div class="panelfuncform-wrapper">
+    <div class="panelfuncform-header">
+        <h1 class="panelfuncform-titulo">{{ titulo_pagina }}</h1>
+        {% if objeto %}
+            <a href="{% url 'panel:funciones_detalle' objeto.id %}" class="btn btn-ghost">DETALLE</a>
+        {% else %}
+            <a href="{% url 'panel:funciones_lista' %}" class="btn btn-ghost">FUNCIONES</a>
+        {% endif %}
+    </div>
+    <!-- Aviso de validación de solapamiento -->
+    <!-- modificado (T5 - cero emojis): se sacó el ícono ℹ️ de este aviso. -->
+    <div class="panelfuncform-aviso">
+        <strong>Validación automática:</strong> El sistema verificará que la función no se
+        solape con otras en la misma sala (considera duración de la película + 30 min de margen).
+    </div>
+
+    <form method="post" id="formFuncion">
+        {% csrf_token %}
+
+        <div class="card">
+            <div class="card-header"><h3>Datos de la Función</h3></div>
+            <div class="card-body panelfuncform-info-body">
+
+                <!-- Película -->
+                <div>
+                    <label class="form-label">
+                        Película <span class="required">*</span>
+                    </label>
+                    {{ form.pelicula }}
+                    {% if form.pelicula.errors %}
+                    <div class="field-error">{{ form.pelicula.errors.0 }}</div>
+                    {% endif %}
+                    <div class="form-help">Solo se muestran películas en cartelera</div>
+                </div>
+
+                <!-- Sala -->
+                <div>
+                    <label class="form-label">
+                        Sala <span class="required">*</span>
+                    </label>
+                    {{ form.sala }}
+                    {% if form.sala.errors %}
+                    <div class="field-error">{{ form.sala.errors.0 }}</div>
+                    {% endif %}
+                </div>
+
+                <!-- Fecha y hora + precio -->
+                <div class="panelfuncform-fila-2">
+                    <div>
+                        <label class="form-label">
+                            Fecha y Hora <span class="required">*</span>
+                        </label>
+                        {{ form.fecha_hora }}
+                        {% if form.fecha_hora.errors %}
+                        <div class="field-error">{{ form.fecha_hora.errors.0 }}</div>
+                        {% endif %}
+                    </div>
+                    <div>
+                        <label class="form-label">
+                            Precio ($) <span class="panelfuncform-precio-opcional">(opcional)</span>
+                        </label>
+
+                        {{ form.precio }}
+                            <div class="form-help">{{ form.precio.help_text }}</div>
+                        {% if form.precio.errors %}
+                            <div class="field-error">{{ form.precio.errors.0 }}</div>
+                        {% endif %}
+                    </div>
+                </div>
+
+                <!-- Disponible -->
+                <div class="checkbox-row">
+                    {{ form.disponible }}
+                    <label for="{{ form.disponible.id_for_label }}">
+                        Disponible para reservas
+                    </label>
+                </div>
+
+            </div>
+        </div>
+
+        <!-- MODIFICACION GEMINI: Margen de tiempo entre funciones -->
+        <!-- modificado (T5 - cero emojis): se sacó el emoji 📅 de este título. -->
+        <div class="card panelfuncform-cronograma-card panelfuncform-oculto" id="cronogramaCard">
+            <div class="card-header">
+                <h3> Cronograma de la Sala (Mismo día)</h3>
+            </div>
+            <div class="card-body">
+                <p class="panelfuncform-cronograma-ayuda">
+                    A continuación se listan las funciones programadas para el mismo día en esta sala (incluye un margen de 30 min de limpieza al final de cada una):
+                </p>
+                <div id="cronograma-lista" class="panelfuncform-cronograma-lista">
+                    <!-- Se rellena dinámicamente con JS -->
+                </div>
+            </div>
+        </div>
+
+        <!-- Preview de la función -->
+        <div class="card panelfuncform-preview-card" id="previewCard">
+            <div class="card-header"><h3>Vista previa</h3></div>
+            <div class="card-body">
+                <div class="panelfuncform-preview-grid">
+                    <div>
+                        <div class="panelfuncform-preview-label">Película</div>
+                        <div class="panelfuncform-preview-valor" id="prev-pelicula">—</div>
+                    </div>
+                    <div>
+                        <div class="panelfuncform-preview-label">Sala</div>
+                        <div class="panelfuncform-preview-valor" id="prev-sala">—</div>
+                    </div>
+                    <div>
+                        <div class="panelfuncform-preview-label">Fecha</div>
+                        <div class="panelfuncform-preview-valor" id="prev-fecha">—</div>
+                    </div>
+                    <div>
+                        <div class="panelfuncform-preview-label">Precio</div>
+                        <div class="panelfuncform-preview-valor panelfuncform-preview-valor--precio" id="prev-precio">—</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        {% if form.non_field_errors %}
+        <!-- modificado (T5 - cero emojis): se sacó el emoji ⚠️ de cada línea de error. -->
+        <div class="panelfuncform-errores-generales">
+            {% for error in form.non_field_errors %}
+            <p class="panelfuncform-error-linea"> {{ error }}</p>
+            {% endfor %}
+        </div>
+        {% endif %}
+
+        <div class="panelfuncform-botones">
+            <button type="submit" class="btn btn-primary">
+                {% if accion == 'crear' %}GUARDAR{% else %}MODIFICAR{% endif %}
+            </button>
+            <button type="submit" name="guardar_y_agregar_otro" value="1" class="btn btn-primary">CARGAR</button>
+            {% if objeto %}
+                <a href="{% url 'panel:funciones_detalle' objeto.id %}" class="btn btn-primary">CANCELAR</a>
+                {% if accion == 'editar' %}
+                    <button type="submit" form="formEliminarFuncion" class="btn btn-danger">BORRAR</button>
+                {% endif %}
+            {% else %}
+                <a href="{% url 'panel:funciones_lista' %}" class="btn btn-primary">CANCELAR</a>
+            {% endif %}
+        </div>
+    </form>
+    {% if objeto and accion == 'editar' %}
+    <form method="post" action="{% url 'panel:funciones_eliminar' %}" id="formEliminarFuncion">
+        {% csrf_token %}
+        <input type="hidden" name="seleccionadas" value="{{ objeto.id }}">
+    </form>
+    {% endif %}
+</div>
+
+{% endblock %}
+
+{% block extra_js %}
+<script src="{% static 'js/panel/funciones/form.js' %}"></script>
+{% endblock %}

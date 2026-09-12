@@ -1,0 +1,86 @@
+# modificado (Paso 0 - split de panel/views.py en paquete panel/views/):
+# reexporta todas las vistas para que panel/urls.py siga funcionando
+# exactamente igual (sigue haciendo 'from . import views' y llamando
+# views.nombre_funcion sin ningún cambio).
+
+from .dashboard import (
+    dashboard_administracion,  # nuevo (T14)
+    dashboard_catalogo,        # nuevo (T14)
+    dashboard_grafico_combos,
+    dashboard_grafico_ventas,
+    dashboard_kpis,
+    dashboard_operaciones,     # nuevo (T14)
+    dashboard_promociones,     # nuevo (T14)
+    inicio,
+)  # modificado (T14): + 4 sub-secciones nuevas del dashboard reorganizado
+from .peliculas import (
+    peliculas_buscar_tmdb,
+    peliculas_crear,
+    peliculas_detalle,
+    peliculas_editar,
+    peliculas_eliminar,
+    peliculas_importar_tmdb,
+    peliculas_lista,
+)
+from .salas import (
+    salas_asientos,
+    salas_asientos_bloquear,
+    salas_asientos_desbloquear,
+    salas_categoria_asignar,
+    salas_categoria_quitar,
+    salas_crear,
+    salas_duplicar,  # nuevo (T12 / Hilo 2 punto 5)
+    salas_editar,
+    salas_eliminar,
+    salas_lista,
+)
+from .funciones import (
+    funciones_crear,
+    funciones_detalle,
+    funciones_editar,
+    funciones_eliminar,
+    funciones_lista,
+    funciones_margen_tiempo,
+)
+from .reservas import (
+    reservas_detalle,
+    reservas_editar,
+    reservas_lista,
+)
+from .pagos import (
+    pagos_estadisticas,
+    pagos_lista,
+)
+from .usuarios import (
+    usuarios_crear,
+    usuarios_detalle,
+    usuarios_editar,
+    usuarios_lista,
+)
+from .verificador_qr import verificador_qr
+from .promociones import (
+    combos_crear,
+    combos_editar,
+    combos_eliminar,
+    combos_lista,
+    cupones_crear,
+    cupones_editar,
+    cupones_eliminar,
+    # modificado (T14): cupones_estadisticas se retiró, ver
+    # panel/views/promociones.py — su contenido vive en Dashboard > Promociones.
+    cupones_lista,
+    cupones_usados_lista,
+    promodia_crear,
+    promodia_editar,
+    promodia_eliminar,
+    promodia_lista,
+)
+from .config_general import configuracion_general
+# nuevo (Sedes - Fase 3)
+from .sedes import (
+    cambiar_sede_panel,
+    sedes_crear,
+    sedes_editar,
+    sedes_eliminar,
+    sedes_lista,
+)

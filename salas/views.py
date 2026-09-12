@@ -1,11 +1,25 @@
 from django.shortcuts import render
+from django.db.models import Q
 from django.utils import timezone
 from datetime import datetime, timedelta
 from .models import Sala, Funcion
 from peliculas.models import Pelicula
+from utils.fechas import generar_proximos_dias  
+from utils.funciones import agrupar_por_tipo_sala  
 
 def lista_salas(request):
-    salas = Sala.objects.filter(activa=True)
+    
+    salas = Sala.objects.filter(activa=True).prefetch_related('bloqueos_asientos', 'categorias_asientos')
+    # nuevo (Sedes - Fase 2): misma sede elegida en la navbar
+    sede_id_sesion = request.session.get('sede_id')
+    if sede_id_sesion:
+        salas = salas.filter(sede_id=sede_id_sesion)
+    for sala in salas:
+        sala.mapa_layout = sala.layout_asientos()
+        sala.mapa_bloqueados = {
+            b.asiento_codigo for b in sala.bloqueos_asientos.all() if b.funcion_id is None
+        }
+        sala.mapa_categoria = {c.asiento_codigo for c in sala.categorias_asientos.all()}
     contexto = {
         'salas': salas
     }
@@ -17,12 +31,29 @@ def lista_funciones(request):
     funciones = Funcion.objects.filter(
         disponible=True,
         fecha_hora__gt=ahora
-    ).select_related('pelicula', 'sala')
+    ).select_related('pelicula', 'sala__sede')
+
+    # nuevo (Sedes - Fase 2): si el usuario eligió una sede (selector de
+    # la navbar, guardado en session['sede_id'] vía sedes.context_processors),
+    # se filtra la cartelera a esa sede. Sin sede elegida, se sigue
+    # mostrando todo (comportamiento de antes de Sedes).
+    sede_id_sesion = request.session.get('sede_id')
+    if sede_id_sesion:
+        funciones = funciones.filter(sala__sede_id=sede_id_sesion)
     
     # FILTRO por película
     pelicula_id = request.GET.get('pelicula', '')
     if pelicula_id:
         funciones = funciones.filter(pelicula_id=pelicula_id)
+        
+    # MEJORAS/REDISEÑO GEMINI: Filtro de búsqueda en vivo por película
+    buscar_peli = request.GET.get('buscar', '').strip()
+    if buscar_peli:
+        funciones = funciones.filter(
+            Q(pelicula__titulo__icontains=buscar_peli) |
+            Q(pelicula__director__icontains=buscar_peli) |
+            Q(pelicula__actores__icontains=buscar_peli)
+        )
     
     # FILTRO por fecha
     fecha_filtro = request.GET.get('fecha', '')
@@ -59,20 +90,51 @@ def lista_funciones(request):
         funciones = funciones.order_by('precio', 'fecha_hora')
     elif orden == 'pelicula':
         funciones = funciones.order_by('pelicula__titulo', 'fecha_hora')
+    # (tanda 3): se agrupan las funciones por pelicula. se reutiliza helper de detalle_pelicula para agrupar por tipo de sala. El orden 'fecha' respeta el orden de aparicion (la pelicula con la funcion mas proxima aparece primero, porque 'funciones' ya viene ordenado por fecha_hora salvo que se haya elegido otro orden arriba).
+    peliculas_agrupadas = {}
+    orden_aparicion = []
+    for funcion in funciones:
+        pid = funcion.pelicula_id
+        if pid not in peliculas_agrupadas:
+            peliculas_agrupadas[pid] = {'pelicula': funcion.pelicula, 'funciones': []}
+            orden_aparicion.append(pid)
+        peliculas_agrupadas[pid]['funciones'].append(funcion)
+
+    tarjetas_peliculas = []
+    for pid in orden_aparicion:
+        entrada = peliculas_agrupadas[pid]
+        tarjetas_peliculas.append({
+            'pelicula': entrada['pelicula'],
+            'grupos_funciones': agrupar_por_tipo_sala(entrada['funciones']),
+            'precio_desde': min(f.precio_final() for f in entrada['funciones']),
+        })
+
+    if orden == 'precio':
+        # a nivel tarjeta, "por precio" ordena por el precio mas barato de esa pelicula
+        tarjetas_peliculas.sort(key=lambda t: t['precio_desde'])
     
     # Obtener opciones para los filtros
     peliculas_con_funciones = Pelicula.objects.filter(
         funciones__disponible=True,
         funciones__fecha_hora__gt=ahora
-    ).distinct().order_by('titulo')
-    
+    )
     salas_con_funciones = Sala.objects.filter(
         funciones__disponible=True,
         funciones__fecha_hora__gt=ahora
-    ).distinct().order_by('nombre')
+    )
+    # nuevo (Sedes - Fase 2): mismo filtro de sede aplicado a las opciones
+    # de los desplegables, para no ofrecer películas/salas de otra sede
+    # que después no van a devolver resultados al combinarse con el
+    # filtro de arriba.
+    if sede_id_sesion:
+        peliculas_con_funciones = peliculas_con_funciones.filter(funciones__sala__sede_id=sede_id_sesion)
+        salas_con_funciones = salas_con_funciones.filter(sede_id=sede_id_sesion)
+    peliculas_con_funciones = peliculas_con_funciones.distinct().order_by('titulo')
+    salas_con_funciones = salas_con_funciones.distinct().order_by('nombre')
     
     contexto = {
         'funciones': funciones,
+        'tarjetas_peliculas': tarjetas_peliculas,  # nuevo (tanda 3): agrupado por pelicula
         'peliculas_disponibles': peliculas_con_funciones,
         'salas_disponibles': salas_con_funciones,
         'pelicula_seleccionada': pelicula_id,
@@ -80,5 +142,13 @@ def lista_funciones(request):
         'sala_seleccionada': sala_id,
         'orden_seleccionado': orden,
         'total_resultados': funciones.count(),
+        'proximas_fechas': generar_proximos_dias(20),  # nuevo: carrusel de fechas de esta pagina
+        # MEJORAS/REDISEÑO GEMINI: Pasar el texto de búsqueda al contexto
+        'busqueda': buscar_peli,
     }
+    # MEJORAS/REDISEÑO GEMINI: Retornar solo el partial si es AJAX
+    if request.headers.get('x-requested-with') == 'XMLHttpRequest' or request.GET.get('ajax') == 'true':
+        return render(request, 'salas/partials/_lista_funciones_grid.html', contexto)
+        
     return render(request, 'salas/lista_funciones.html', contexto)
+    

@@ -1,78 +1,174 @@
+{% load static %}
 <!DOCTYPE html>
 <html lang="es">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{% block titulo %}Mi Sitio de Películas{% endblock %}</title>
-    <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-        body {
-            font-family: Arial, sans-serif;
-            line-height: 1.6;
-            background-color: #f4f4f4;
-        }
-        nav {
-            background-color: #333;
-            color: white;
-            padding: 1rem;
-        }
-        nav ul {
-            list-style: none;
-            display: flex;
-            gap: 2rem;
-        }
-        nav a {
-            color: white;
-            text-decoration: none;
-            font-weight: bold;
-        }
-        nav a:hover {
-            color: #ddd;
-        }
-        .container {
-            max-width: 1200px;
-            margin: 2rem auto;
-            padding: 0 1rem;
-        }
-        h1 {
-            color: #333;
-            margin-bottom: 1rem;
-        }
-    </style>
+    <link rel="stylesheet" href="{% static 'css/base/general.css' %}">
+    <link rel="stylesheet" href="{% static 'css/base/nav.css' %}">
+    <link rel="stylesheet" href="{% static 'css/base/toast.css' %}">
+    <!-- nuevo: formularios.css y offcanvas.css se cargan acá de forma global porque el offcanvas de login/cuenta ahora vive en base.html y aparece en TODAS las páginas (antes formularios.css solo lo cargaba cada template de usuarios) -->
+    <link rel="stylesheet" href="{% static 'css/usuarios/formularios.css' %}">
+    <link rel="stylesheet" href="{% static 'css/base/offcanvas.css' %}">
+    <!-- modificado: modal de confirmación compartido (reemplaza confirm() de JS en toda la app) -->
+    <link rel="stylesheet" href="{% static 'css/shared/modal_confirmacion.css' %}">
+    <!-- nuevo (Sedes - Fase 2): selector "Elegí tu cine" en la navbar -->
+    <link rel="stylesheet" href="{% static 'css/base/selector_sede.css' %}">
+    {% block extra_css %}{% endblock %}
 </head>
 <body>
     <nav>
         <ul>
-            <li><a href="{% url 'peliculas:inicio' %}">Inicio</a></li>
+            <li><a href="{% url 'peliculas:inicio' %}">DJANGO-CINE</a></li>
             <li><a href="{% url 'peliculas:lista_peliculas' %}">Películas</a></li>
-            <li><a href="{% url 'salas:lista_salas' %}">Salas</a></li>
+            {% comment %} <li><a href="{% url 'salas:lista_salas' %}">Salas</a></li> {% endcomment %}
             <li><a href="{% url 'salas:lista_funciones' %}">Funciones</a></li>
+
+            {# nuevo (Sedes - Fase 2): selector "Elegí tu cine". Autosubmit vía static/js/base/selector_sede.js #}
+            <li class="nav-selector-sede">
+                <form method="post" action="{% url 'sedes:cambiar_sede' %}" id="formSelectorSede">
+                    {% csrf_token %}
+                    <input type="hidden" name="next" value="{{ request.path }}">
+                    <select name="sede_id" id="selectorSede" class="nav-selector-sede-select" aria-label="Elegí tu cine">
+                        <option value="" {% if not sede_actual %}selected{% endif %}>Todas las sedes</option>
+                        {% for sede in sedes_disponibles %}
+                        <option value="{{ sede.id }}" {% if sede_actual and sede_actual.id == sede.id %}selected{% endif %}>
+                            {{ sede.nombre }}
+                        </option>
+                        {% endfor %}
+                    </select>
+                </form>
+            </li>
+            
             {% if user.is_authenticated %}
-                <li><a href="{% url 'reservas:mis_reservas' %}">Mis Reservas</a></li>
-                <li style="margin-left: auto;"><a href="{% url 'usuarios:perfil' %}">{{ user.username }}</a></li>
-                <li><a href="{% url 'usuarios:logout' %}">Cerrar Sesión</a></li>
+                <li>
+                    <a href="{% url 'reservas:mis_reservas' %}">Mis Reservas</a>
+                </li>
+                <li>
+                    <a href="{% url 'promociones:mis_cupones' %}">Mis Cupones</a>
+                </li>
+                <li>
+                    <a href="{% url 'promociones:lista_combos' %}">Combos & Promos</a>
+                </li>
+                <li>
+                    <a href="{% url 'salas:lista_salas' %}">Salas</a>
+                </li> 
+                <li style="margin-left: auto;">
+                    <button type="button" class="nav-avatar-trigger" id="offcanvasAbrir" aria-haspopup="dialog" aria-controls="offcanvasPanel">
+                        <span class="nav-avatar">
+                            <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+                                <path d="M12 12c2.7 0 4.9-2.2 4.9-4.9S14.7 2.2 12 2.2 7.1 4.4 7.1 7.1 9.3 12 12 12Zm0 2.5c-3.3 0-9.8 1.6-9.8 4.9v2.4h19.6v-2.4c0-3.3-6.5-4.9-9.8-4.9Z"/>
+                            </svg>
+                        </span>
+                    </button>
+                </li>
             {% else %}
-                <li style="margin-left: auto;"><a href="{% url 'usuarios:login' %}">Iniciar Sesión</a></li>
-                <li><a href="{% url 'usuarios:registro' %}">Registrarse</a></li>
+                <li style="margin-left: auto;">
+                    <button type="button" class="nav-login-trigger" id="offcanvasAbrir" aria-haspopup="dialog" aria-controls="offcanvasPanel">
+                        Iniciar Sesión
+                    </button>
+                </li>
             {% endif %}
         </ul>
     </nav>
     
-    <div class="container">
-        {% if messages %}
-            {% for message in messages %}
-                <div style="padding: 1rem; margin-bottom: 1rem; border-radius: 4px; {% if message.tags == 'success' %}background-color: #d4edda; color: #155724; border: 1px solid #c3e6cb;{% elif message.tags == 'error' %}background-color: #f8d7da; color: #721c24; border: 1px solid #f5c6cb;{% elif message.tags == 'warning' %}background-color: #fff3cd; color: #856404; border: 1px solid #ffeeba;{% else %}background-color: #d1ecf1; color: #0c5460; border: 1px solid #bee5eb;{% endif %}">
-                    {{ message }}
+    <!-- nuevo: offcanvas de login / cuenta (vanilla, ver static/css/base/offcanvas.css y static/js/base/offcanvas.js). Contenido condicional según si hay sesión. -->
+    <div class="offcanvas-overlay" id="offcanvasOverlay"></div>
+    <aside class="offcanvas-panel" id="offcanvasPanel" role="dialog" aria-modal="true" aria-hidden="true" aria-labelledby="offcanvasTitulo">
+        <div class="offcanvas-header">
+            <h2 id="offcanvasTitulo" class="offcanvas-titulo">
+                {% if user.is_authenticated %}Mi Cuenta{% else %}Iniciar Sesión{% endif %}
+            </h2>
+            <button type="button" class="offcanvas-cerrar" id="offcanvasCerrar" aria-label="Cerrar">×</button>
+        </div>
+        <div class="offcanvas-body">
+            {% if user.is_authenticated %}
+                <div class="offcanvas-perfil">
+                    <span class="offcanvas-perfil-avatar">
+                        <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+                            <path d="M12 12c2.7 0 4.9-2.2 4.9-4.9S14.7 2.2 12 2.2 7.1 4.4 7.1 7.1 9.3 12 12 12Zm0 2.5c-3.3 0-9.8 1.6-9.8 4.9v2.4h19.6v-2.4c0-3.3-6.5-4.9-9.8-4.9Z"/>
+                        </svg>
+                    </span>
+                    <p class="offcanvas-perfil-nombre">{{ user.get_full_name|default:user.username }}</p>
                 </div>
-            {% endfor %}
-        {% endif %}
-        
+                <nav class="offcanvas-perfil-menu">
+                    <a href="{% url 'usuarios:perfil' %}" class="offcanvas-perfil-link">Mi Perfil</a>
+                    <a href="{% url 'usuarios:logout' %}" class="offcanvas-perfil-link offcanvas-perfil-link--salir">Cerrar Sesión</a>
+                </nav>
+            {% else %}
+                <form method="post" action="{% url 'usuarios:login' %}" class="offcanvas-login-form">
+                    {% csrf_token %}
+                    <input type="hidden" name="next" value="{{ request.path }}">
+                    <div class="usuario-campo">
+                        <label for="offcanvas-username" class="usuario-etiqueta">Nombre de usuario</label>
+                        <input type="text" id="offcanvas-username" name="username" required class="form-control" autocomplete="username">
+                    </div>
+                    <div class="usuario-campo">
+                        <label for="offcanvas-password" class="usuario-etiqueta">Contraseña</label>
+                        <input type="password" id="offcanvas-password" name="password" required class="form-control" autocomplete="current-password">
+                    </div>
+                    <button type="submit" class="usuario-boton usuario-boton--primario">Iniciar Sesión</button>
+                </form>
+                <div class="usuario-enlace-pie">
+                    <p>
+                        ¿No tenés cuenta?
+                        <a href="{% url 'usuarios:registro' %}" class="usuario-enlace">Registrate gratis</a>
+                    </p>
+                </div>
+            {% endif %}
+        </div>
+    </aside>
+
+    <!-- modificado: modal de confirmación compartido, único en toda la página. Lo completa/muestra
+         static/js/shared/modal_confirmacion.js vía window.mostrarModalConfirmacion(...) -->
+    <div id="modalConfirmacion" class="modal-confirmacion oculto" role="dialog" aria-modal="true" aria-hidden="true">
+        <div class="modal-confirmacion-fondo" data-modal-cerrar></div>
+        <div class="modal-confirmacion-caja">
+            <h3 id="modalConfirmacionTitulo" class="modal-confirmacion-titulo"></h3>
+            <p id="modalConfirmacionMensaje" class="modal-confirmacion-mensaje"></p>
+            <!-- modificado: contenedores para el modo "resumen" (lista con viñetas +
+                 aviso destacado aparte), en vez de todo mezclado en un solo párrafo de
+                 texto plano. Ver mostrarModalConfirmacion() en modal_confirmacion.js -->
+            <ul id="modalConfirmacionLista" class="modal-confirmacion-lista oculto"></ul>
+            <p id="modalConfirmacionAdvertencia" class="modal-confirmacion-advertencia oculto"></p>
+            <div class="modal-confirmacion-acciones">
+                <button type="button" id="modalConfirmacionCancelar" class="modal-confirmacion-btn modal-confirmacion-btn--cancelar"></button>
+                <button type="button" id="modalConfirmacionConfirmar" class="modal-confirmacion-btn modal-confirmacion-btn--confirmar"></button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Contenedor para notificaciones toast -->
+    <div class="toast-container" id="toastContainer"></div>
+    
+    <div class="container">
         {% block contenido %}
         {% endblock %}
     </div>
+    
+    
+    <script src="{% static 'js/base/toast.js' %}"></script>
+    <!-- nuevo: JS del offcanvas de login/cuenta -->
+    <script src="{% static 'js/base/offcanvas.js' %}"></script>
+    <!-- modificado: JS del modal de confirmación compartido -->
+    <script src="{% static 'js/shared/modal_confirmacion.js' %}"></script>
+    <!-- nuevo (Sedes - Fase 2): autosubmit del selector "Elegí tu cine" -->
+    <script src="{% static 'js/base/selector_sede.js' %}"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            {% if messages %}
+                {% for message in messages %}
+                    toast.show(
+                        "{{ message|escapejs }}", 
+                        "{% if message.tags %}{{ message.tags }}{% else %}info{% endif %}",
+                        5000
+                    );
+                {% endfor %}
+            {% endif %}
+        });
+    </script>
+    
+    {% block extra_js %}{% endblock %}
 </body>
 </html>

@@ -1,0 +1,267 @@
+{% extends 'panel/base_panel.html' %}
+
+{% load static %}
+{% block titulo %}Asientos — {{ sala.nombre }} — Panel{% endblock %}
+
+{% block breadcrumb %}
+<span class="sep">›</span>
+<a href="{% url 'panel:salas_lista' %}">Salas</a>
+<span class="sep">›</span>
+<span class="current">{{ sala.nombre }} · Asientos</span>
+{% endblock %}
+
+<!-- modificado (Hilo 1): separación CSS/JS completa (73 estilos inline -> 0). El <style>
+     que estaba embebido acá (selección múltiple) se movió a asientos.css. La lógica JS
+     (que antes vivía toda inline mezclada con tags de Django) se movió a
+     static/js/panel/salas/asientos.js: la función initMapaAsientos(config) recibe los
+     datos que sí necesitan Django (bloqueos, categorías, ocupados, motivos) armados acá
+     abajo en un bloque chico, y el resto de la lógica vive en el archivo externo. -->
+{% block extra_css %}
+<!-- modificado: faltaba este stylesheet. El panel de acción (bloquear asiento /
+     asignar categoría), armado dinámicamente por asientos.js, usa las clases
+     .panel-select / .panel-input / .form-label — definidas en form_base.css,
+     que esta página nunca cargaba. Por eso se veía como HTML sin estilo
+     ("etiqueta html"), a diferencia de "Bloqueos de esta sala" y "Categorías
+     especiales" (esas sí son contenido estático del template, con .card ya
+     estilado). No se tocó form_base.css, solo se agregó el link acá. -->
+<link rel="stylesheet" href="{% static 'css/panel/form_base.css' %}">
+<link rel="stylesheet" href="{% static 'css/panel/salas/asientos.css' %}">
+{% endblock %}
+
+{% block contenido %}
+<!-- modificado (T5 - cero emojis): se sacaron los emojis de "🖱️ Modo Selección Múltiple", "📋 Bloqueos de esta sala" y "⭐ Categorías especiales", más abajo en este archivo. No se tocó nada de la lógica ni la estructura del mapa de asientos (asientos.js queda fuera de esta tanda). -->
+
+<div class="panelasientos-header">
+    <div>
+        <h1 class="panelasientos-titulo">Asientos — {{ sala.nombre }}</h1>
+        <div class="panelasientos-header-desc">
+            Hacé clic en un asiento para bloquearlo, desbloquearlo o asignarle una categoría especial.
+        </div>
+    </div>
+    <a href="{% url 'panel:salas_lista' %}" class="btn btn-ghost">Salas</a>
+</div>
+
+<!-- Selector de modo -->
+<div class="card panelasientos-modo-card">
+    <div class="card-body panelasientos-modo-body">
+        <label class="form-label panelasientos-modo-label">Modo de bloqueo:</label>
+        <select id="selectorModo" class="select panelasientos-modo-select">
+            <option value="" {% if not funcion_seleccionada %}selected{% endif %}>
+                Permanente (toda la sala, todas las funciones)
+            </option>
+            {% for f in funciones_sala %}
+            <option value="{{ f.id }}" {% if funcion_seleccionada.id == f.id %}selected{% endif %}>
+                Solo función: {{ f.pelicula.titulo }} — {{ f.fecha_hora|date:"d/m H:i" }}
+            </option>
+            {% endfor %}
+        </select>
+        {% if funcion_seleccionada %}
+        <span class="panelasientos-modo-nota">
+            Los bloqueos permanentes también se aplican acá automáticamente.
+        </span>
+        {% endif %}
+    </div>
+</div>
+
+<div class="panelasientos-grid">
+
+    <!-- Mapa de asientos -->
+    {# modificado (Fase 3): esta card pasa a fondo oscuro para que combine con el mapa del cliente. El resto del panel admin (otras cards, tablas) queda igual, solo se re-viste esta. No se tocó nada del JS. #}
+    <div class="card panelasientos-mapa-card">
+        <div class="card-header panelasientos-mapa-header">
+            <h3 class="panelasientos-mapa-header-titulo">Mapa de Asientos</h3>
+            <button type="button" id="btnModoSeleccion" class="btn-modo-seleccion">
+                <span></span> Modo Selección Múltiple
+            </button>
+        </div>
+        <div class="card-header panelasientos-mapa-header panelasientos-mapa-header--leyenda">
+            <div class="panelasientos-leyenda">
+                <span class="panelasientos-leyenda-item">
+                    <span class="panelasientos-leyenda-swatch panelasientos-leyenda-swatch--libre"></span> Libre
+                </span>
+                {% for valor, etiqueta in motivo_choices %}
+                <span class="panelasientos-leyenda-item">
+                    <span class="leyenda-color panelasientos-leyenda-swatch" data-motivo="{{ valor }}"></span> {{ etiqueta }}
+                </span>
+                {% endfor %}
+                <span class="panelasientos-leyenda-item">
+                    <span class="panelasientos-leyenda-swatch panelasientos-leyenda-swatch--categoria"></span>
+                    Categoría especial (color propio, no bloquea)
+                </span>
+                {% if funcion_seleccionada %}
+                <span class="panelasientos-leyenda-item">
+                    <span class="panelasientos-leyenda-swatch panelasientos-leyenda-swatch--vendido"></span> Vendido
+                </span>
+                {% endif %}
+            </div>
+        </div>
+        <div class="card-body panelasientos-mapa-body">
+            {# modificado (Fase 3): pantalla curva estilo Cinemark, igual que en el cliente (antes era una barra rectangular) #}
+            <div class="panelasientos-pantalla-wrap">
+                <div class="panelasientos-pantalla-curva"></div>
+                <div class="panelasientos-pantalla-label">PANTALLA</div>
+            </div>
+            <div id="mapaAsientos" class="panelasientos-mapa">
+                {% for fila in layout %}
+                <div class="panelasientos-fila">
+                    <span class="panelasientos-fila-letra">{{ fila.letra }}</span>
+                    {% for asiento in fila.celdas %}
+                        {% if asiento %}
+                        <button type="button" class="asiento-btn" data-asiento="{{ asiento }}">
+                            {{ asiento }}
+                        </button>
+                        {% else %}
+                        <div class="panelasientos-celda-vacia"></div>
+                        {% endif %}
+                    {% endfor %}
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+
+    <!-- Panel lateral de edición + listado de bloqueos -->
+    <div class="panelasientos-lateral">
+
+        <!-- Panel de acción (aparece al hacer clic) -->
+        <div class="card panelasientos-oculto" id="panelAccion">
+            <div class="card-header"><h3 id="panelAccionTitulo">Asiento</h3></div>
+            <div class="card-body" id="panelAccionBody"></div>
+        </div>
+
+        <div class="card" id="panelVacio">
+            <div class="card-body panelasientos-vacio-chico">
+                Elegí un asiento en el mapa para bloquearlo o desbloquearlo.
+            </div>
+        </div>
+
+        <!-- Listado de todos los bloqueos de la sala -->
+        <div class="card">
+            <div class="card-header"><h3> Bloqueos de esta sala</h3></div>
+            <div class="panelasientos-lista-scroll">
+                {% if todos_los_bloqueos %}
+                <table class="tabla" id="tablaBloqueos">
+                    <thead>
+                        <tr>
+                            <th>Asiento</th>
+                            <th>Motivo</th>
+                            <th>Alcance</th>
+                            <th></th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for b in todos_los_bloqueos %}
+                        <tr data-bloqueo-id="{{ b.id }}" data-asiento="{{ b.asiento_codigo }}">
+                            <td class="panelasientos-td-fuerte">{{ b.asiento_codigo }}</td>
+                            <td class="panelasientos-td-chica">{{ b.get_motivo_display }}</td>
+                            <td class="panelasientos-td-alcance">
+                                {% if b.funcion %}
+                                    {{ b.funcion.pelicula.titulo }}<br>{{ b.funcion.fecha_hora|date:"d/m H:i" }}
+                                {% else %}
+                                    Permanente
+                                {% endif %}
+                            </td>
+                            <td>
+                                <button type="button" class="btn btn-danger btn-desbloquear-fila panelasientos-btn-quitar"
+                                        data-bloqueo-id="{{ b.id }}">
+                                    Quitar
+                                </button>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+                {% else %}
+                <div class="card-body panelasientos-vacio-chico">
+                    No hay asientos bloqueados en esta sala.
+                </div>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- Listado de categorías especiales de esta sala -->
+        <div class="card">
+            <div class="card-header"><h3> Categorías especiales</h3></div>
+            <div class="panelasientos-lista-scroll">
+                {% if todas_las_categorias %}
+                <table class="tabla" id="tablaCategorias">
+                    <thead>
+                        <tr>
+                            <th>Asiento</th>
+                            <th>Categoría</th>
+                            <th>Multiplicador</th>
+                            <th></th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for c in todas_las_categorias %}
+                        <tr data-categoria-id="{{ c.id }}" data-asiento="{{ c.asiento_codigo }}">
+                            <td class="panelasientos-td-fuerte">{{ c.asiento_codigo }}</td>
+                            <td class="panelasientos-td-chica">
+                                <span class="panelasientos-color-swatch-chico" style="background:{{ c.color }};"></span>
+                                {{ c.nombre }}
+                            </td>
+                            <td class="panelasientos-td-chica">x{{ c.multiplicador }}</td>
+                            <td>
+                                <button type="button" class="btn btn-danger btn-quitar-categoria-fila panelasientos-btn-quitar"
+                                        data-categoria-id="{{ c.id }}">
+                                    Quitar
+                                </button>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+                {% else %}
+                <div class="card-body panelasientos-vacio-chico">
+                    No hay categorías especiales asignadas en esta sala.
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+</div>
+
+{% endblock %}
+
+{% block extra_js %}
+<script src="{% static 'js/panel/salas/asientos.js' %}"></script>
+<script>
+    // Únicamente arma el objeto de datos que Django necesita renderizar server-side
+    // (bloqueos, categorías, ocupados, motivos) y se lo pasa a initMapaAsientos(),
+    // que vive en asientos.js. El resto de la lógica no toca tags de Django.
+    initMapaAsientos({
+        SALA_ID: {{ sala.id }},
+        FUNCION_ID: {{ funcion_seleccionada.id|default:"null" }},
+        CSRF_TOKEN: '{{ csrf_token }}',
+        bloqueosPorAsiento: {
+            {% for codigo, b in bloqueos_por_codigo.items %}
+            "{{ codigo }}": {
+                bloqueo_id: {{ b.id }},
+                motivo: "{{ b.motivo }}",
+                motivo_display: "{{ b.get_motivo_display|escapejs }}",
+                nota: "{{ b.nota|escapejs }}",
+                permanente: {% if b.funcion_id %}false{% else %}true{% endif %}
+            },
+            {% endfor %}
+        },
+        categoriasPorAsiento: {
+            {% for codigo, c in categorias_por_codigo.items %}
+            "{{ codigo }}": {
+                categoria_id: {{ c.id }},
+                nombre: "{{ c.nombre|escapejs }}",
+                multiplicador: "{{ c.multiplicador }}",
+                color: "{{ c.color }}"
+            },
+            {% endfor %}
+        },
+        ocupadosPorReserva: new Set([
+            {% for a in asientos_ocupados_reserva %}"{{ a }}",{% endfor %}
+        ]),
+        motivoLabels: {
+            {% for valor, etiqueta in motivo_choices %}"{{ valor }}": "{{ etiqueta|escapejs }}",{% endfor %}
+        },
+    });
+</script>
+{% endblock %}

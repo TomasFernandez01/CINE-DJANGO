@@ -1,0 +1,771 @@
+{% extends 'panel/base_panel.html' %}
+{% load static %}
+
+{% block titulo %}Dashboard — Panel Cine Online{% endblock %}
+
+{% block breadcrumb %}
+<span class="sep">›</span>
+<span class="current">Dashboard</span>
+{% endblock %}
+
+{% block extra_css %}
+<!-- nuevo (Sedes - Fase 3): banner de sede activa, separado del <style> inline heredado del template original -->
+<link rel="stylesheet" href="{% static 'css/panel/inicio_sede_banner.css' %}">
+{% endblock %}
+
+{% block contenido %}
+<!-- MODIFICACION GEMINI: Estilos locales premium para mejorar la estetica del dashboard -->
+<style>
+    /* Estilo premium para stat cards */
+    .stat-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+        gap: 1.25rem;
+        margin-bottom: 2rem;
+    }
+    .stat-card {
+        background: #ffffff;
+        border-radius: 16px;
+        padding: 1.5rem;
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.04);
+        border: 1px solid rgba(0, 0, 0, 0.05);
+        border-top: 4px solid #e0e0e0;
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        position: relative;
+        overflow: hidden;
+    }
+    .stat-card::before {
+        content: '';
+        position: absolute;
+        top: 0; left: 0; right: 0; bottom: 0;
+        background: linear-gradient(180deg, rgba(255,255,255,0.15) 0%, rgba(255,255,255,0) 100%);
+        pointer-events: none;
+    }
+    .stat-card:hover {
+        transform: translateY(-4px);
+        box-shadow: 0 12px 30px rgba(0, 0, 0, 0.08);
+    }
+    .stat-card.blue { border-top-color: #3498db; }
+    .stat-card.gold { border-top-color: #e2b96f; }
+    .stat-card.red { border-top-color: #e74c3c; }
+    .stat-card.green { border-top-color: #27ae60; }
+    .stat-card.purple { border-top-color: #9b59b6; }
+
+    .stat-label {
+        font-size: 0.8rem;
+        font-weight: 600;
+        color: #888888;
+        letter-spacing: 0.5px;
+        text-transform: uppercase;
+        margin-bottom: 0.5rem;
+    }
+    .stat-value {
+        font-size: 2.25rem;
+        font-weight: 700;
+        color: #1a1a2e;
+        margin: 0;
+        line-height: 1.1;
+    }
+    .stat-sub {
+        font-size: 0.85rem;
+        color: #666;
+        margin-top: 0.5rem;
+        display: flex;
+        align-items: center;
+        gap: 4px;
+    }
+    /* nuevo: comparativa % vs periodo anterior, sube/baja de color según signo */
+    .stat-sub.subida { color: #1e8e3e; }
+    .stat-sub.bajada { color: #d93025; }
+
+    /* Accesos rapidos estilizados */
+    .quick-actions {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+        gap: 1rem;
+        margin-bottom: 2rem;
+    }
+    .quick-link {
+        padding: 1.25rem;
+        border-radius: 12px;
+        text-align: center;
+        text-decoration: none;
+        color: white;
+        font-weight: 600;
+        font-size: 0.95rem;
+        transition: all 0.3s ease;
+        box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        gap: 0.5rem;
+    }
+    .quick-link:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 8px 25px rgba(0,0,0,0.2);
+        filter: brightness(1.05);
+    }
+
+    /* nuevo: barra de filtros de fecha/agrupación para los gráficos interactivos */
+    .filtro-fechas {
+        background: white;
+        border-radius: 16px;
+        padding: 1.25rem 1.5rem;
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.04);
+        border: 1px solid rgba(0, 0, 0, 0.05);
+        margin-bottom: 1.5rem;
+        display: flex;
+        flex-wrap: wrap;
+        align-items: flex-end;
+        gap: 1rem;
+    }
+    .filtro-fechas .campo {
+        display: flex;
+        flex-direction: column;
+        gap: 0.3rem;
+    }
+    .filtro-fechas label {
+        font-size: 0.75rem;
+        font-weight: 600;
+        color: #888;
+        text-transform: uppercase;
+        letter-spacing: 0.4px;
+    }
+    .filtro-fechas input[type="date"],
+    .filtro-fechas select {
+        padding: 0.5rem 0.7rem;
+        border: 1px solid #e0e2e8;
+        border-radius: 8px;
+        font-family: inherit;
+        font-size: 0.9rem;
+        color: #1a1a2e;
+    }
+    .filtro-fechas .presets {
+        display: flex;
+        gap: 0.4rem;
+        flex-wrap: wrap;
+    }
+    .filtro-fechas .preset-btn {
+        background: #f0f2f5;
+        border: none;
+        border-radius: 20px;
+        padding: 0.4rem 0.9rem;
+        font-size: 0.8rem;
+        font-weight: 600;
+        color: #444;
+        cursor: pointer;
+        transition: background 0.2s;
+    }
+    .filtro-fechas .preset-btn:hover,
+    .filtro-fechas .preset-btn.activo {
+        background: #e2b96f;
+        color: #1a1a2e;
+    }
+    .filtro-fechas .btn-aplicar {
+        background: #1a1a2e;
+        color: white;
+        border: none;
+        border-radius: 8px;
+        padding: 0.55rem 1.3rem;
+        font-weight: 600;
+        font-size: 0.9rem;
+        cursor: pointer;
+    }
+    .filtro-fechas .btn-aplicar:hover { background: #2a2a45; }
+    #filtroError {
+        color: #d93025;
+        font-size: 0.85rem;
+        margin-top: 0.5rem;
+        display: none;
+    }
+
+    /* Seccion de graficos */
+    .charts-grid {
+        display: grid;
+        grid-template-columns: 2fr 1fr;
+        gap: 1.5rem;
+        margin-bottom: 2rem;
+    }
+    @media (max-width: 992px) {
+        .charts-grid {
+            grid-template-columns: 1fr;
+        }
+    }
+    .chart-card {
+        background: white;
+        border-radius: 16px;
+        padding: 1.5rem;
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.04);
+        border: 1px solid rgba(0, 0, 0, 0.05);
+    }
+    .chart-title {
+        font-size: 1.05rem;
+        font-weight: 600;
+        color: #1a1a2e;
+        margin-bottom: 1.25rem;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 8px;
+    }
+    /* nuevo: toggle recaudación/entradas dentro del título del gráfico de ventas */
+    .metrica-toggle {
+        display: flex;
+        gap: 0.3rem;
+        background: #f0f2f5;
+        border-radius: 20px;
+        padding: 3px;
+    }
+    .metrica-toggle button {
+        border: none;
+        background: transparent;
+        border-radius: 16px;
+        padding: 0.3rem 0.8rem;
+        font-size: 0.75rem;
+        font-weight: 600;
+        color: #666;
+        cursor: pointer;
+    }
+    .metrica-toggle button.activo {
+        background: #1a1a2e;
+        color: white;
+    }
+
+    /* Tablas y tarjetas de datos */
+    .card {
+        background: white;
+        border-radius: 16px;
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.04);
+        border: 1px solid rgba(0, 0, 0, 0.05);
+        overflow: hidden;
+        margin-bottom: 1.5rem;
+    }
+    .card-header {
+        padding: 1.25rem 1.5rem;
+        background: #fafbfe;
+        border-bottom: 1px solid #f0f2f5;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+    }
+    .card-header h3 {
+        font-size: 1.05rem;
+        font-weight: 600;
+        color: #1a1a2e;
+        margin: 0;
+    }
+    .tabla th {
+        background: #fafbfe;
+        color: #666;
+        font-weight: 600;
+        font-size: 0.8rem;
+        padding: 0.9rem 1.25rem;
+        border-bottom: 2px solid #f0f2f5;
+    }
+    .tabla td {
+        padding: 0.9rem 1.25rem;
+        font-size: 0.9rem;
+        border-bottom: 1px solid #f0f2f5;
+    }
+    .tabla tr:hover td {
+        background: #f8fafc;
+    }
+
+    /* nuevo: card del embudo de reservas (pendiente/confirmada/cancelada/expirada) */
+    .embudo-lista {
+        display: flex;
+        flex-direction: column;
+        gap: 0.75rem;
+        padding: 1.5rem;
+    }
+    .embudo-fila {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+    }
+    .embudo-fila .cantidad {
+        font-weight: 700;
+        font-size: 1.1rem;
+        color: #1a1a2e;
+    }
+
+    /* modificado (T6 - BI): heatmap entradas por día x hora de función */
+    .heatmap-wrap { overflow-x: auto; padding: 0.5rem 1.5rem 1.5rem; }
+    .heatmap-tabla { border-collapse: collapse; font-size: 0.72rem; }
+    .heatmap-tabla th {
+        padding: 0.3rem 0.4rem;
+        color: #888;
+        font-weight: 600;
+        text-align: center;
+    }
+    .heatmap-tabla td.heatmap-dia {
+        padding: 0.3rem 0.6rem;
+        color: #666;
+        font-weight: 600;
+        white-space: nowrap;
+        text-align: right;
+    }
+    .heatmap-celda {
+        width: 22px;
+        height: 22px;
+        border-radius: 4px;
+        background-color: #f0f2f5; /* alpha=0 => sin datos */
+    }
+
+    /* modificado (T6 - BI): ranking comparativo entre sedes (solo SuperUser) */
+    .ranking-sedes-card { margin-top: 1.5rem; }
+</style>
+
+<!-- nuevo (Sedes - Fase 3): indicador de qué sede se está viendo -->
+{% if panel_sede_activa %}
+<div class="panelinicio-sede-banner"><strong>SEDE = {{ panel_sede_activa.nombre }}</strong></div>
+{% else %}
+<div class="panelinicio-sede-banner panelinicio-sede-banner--todas"><strong>TODAS LAS SEDES</strong></div>
+{% endif %}
+
+<!-- ============================================================ -->
+<!-- STAT CARDS (sin cambios: son datos de "hoy", no del rango elegido) -->
+<!-- ============================================================ -->
+<div class="stat-grid">
+
+    <div class="stat-card blue">
+        <div class="stat-label">Películas en cartelera</div>
+        <div class="stat-value">{{ stats.peliculas_cartelera }}</div>
+        <div class="stat-sub">de {{ stats.peliculas_total }} en total</div>
+    </div>
+
+    <div class="stat-card gold">
+        <div class="stat-label">Funciones hoy</div>
+        <div class="stat-value">{{ stats.funciones_hoy }}</div>
+        <div class="stat-sub">{{ stats.funciones_proximas }} próximas en total</div>
+    </div>
+
+    <div class="stat-card red">
+        <div class="stat-label">Reservas pendientes</div>
+        <div class="stat-value">{{ stats.reservas_pendientes }}</div>
+        <div class="stat-sub">esperando pago</div>
+    </div>
+
+    <div class="stat-card green">
+        <div class="stat-label">Recaudado hoy</div>
+        <div class="stat-value">${{ stats.recaudado_hoy|floatformat:0 }}</div>
+        <div class="stat-sub">{{ stats.reservas_confirmadas_hoy }} confirmada(s)</div>
+    </div>
+
+    <div class="stat-card purple">
+        <div class="stat-label">QR escaneados hoy</div>
+        <div class="stat-value">{{ stats.qr_escaneados_hoy }}</div>
+        <div class="stat-sub">ingresos registrados</div>
+    </div>
+
+    <div class="stat-card gold">
+        <div class="stat-label">Recaudado esta semana</div>
+        <div class="stat-value">${{ stats.recaudado_semana|floatformat:0 }}</div>
+        <div class="stat-sub">últimos 7 días</div>
+    </div>
+
+</div>
+
+<!-- ============================================================ -->
+<!-- ACCESOS RÁPIDOS                                               -->
+<!-- ============================================================ -->
+<div class="quick-actions">
+    <a href="{% url 'panel:verificador_qr' %}" class="quick-link" style="background: linear-gradient(135deg,#1e3c72,#2a5298);">
+        
+        Verificador QR
+    </a>
+    <a href="{% url 'panel:pagos_estadisticas' %}" class="quick-link" style="background: linear-gradient(135deg,#11998e,#38ef7d);">
+        
+        Estadísticas
+    </a>
+    <a href="{% url 'panel:funciones_lista' %}?filtro=hoy" class="quick-link" style="background: linear-gradient(135deg,#F3904F,#3B4371);">
+        
+        Funciones Hoy
+    </a>
+    <a href="{% url 'panel:reservas_lista' %}?estado=pendiente" class="quick-link" style="background: linear-gradient(135deg,#cb2d3e,#ef473a);">
+        
+        Pendientes de Pago
+    </a>
+</div>
+
+<!-- ============================================================ -->
+<!-- nuevo: FILTRO DE FECHAS + AGRUPACIÓN (alimenta gráficos y KPIs) -->
+<!-- ============================================================ -->
+<div class="filtro-fechas">
+    <div class="campo">
+        <label for="filtroDesde">Desde</label>
+        <input type="date" id="filtroDesde" value="{{ periodo_desde_default }}">
+    </div>
+    <div class="campo">
+        <label for="filtroHasta">Hasta</label>
+        <input type="date" id="filtroHasta" value="{{ periodo_hasta_default }}">
+    </div>
+    <div class="campo">
+        <label for="filtroAgrupacion">Agrupar por</label>
+        <select id="filtroAgrupacion">
+            <option value="dia" selected>Día</option>
+            <option value="semana">Semana</option>
+            <option value="mes">Mes</option>
+            <option value="bimestre">Bimestre</option>
+            <option value="trimestre">Trimestre</option>
+            <option value="cuatrimestre">Cuatrimestre</option>
+            <option value="anual">Anual</option>
+        </select>
+    </div>
+    <div class="campo">
+        <label>Rangos rápidos</label>
+        <div class="presets">
+            <button type="button" class="preset-btn" data-preset="7d">Últimos 7 días</button>
+            <button type="button" class="preset-btn activo" data-preset="30d">Últimos 30 días</button>
+            <button type="button" class="preset-btn" data-preset="mes">Este mes</button>
+            <button type="button" class="preset-btn" data-preset="anio">Este año</button>
+        </div>
+    </div>
+    <button type="button" class="btn-aplicar" id="btnAplicarFiltro">Aplicar</button>
+    <div id="filtroError"></div>
+</div>
+
+<!-- ============================================================ -->
+<!-- nuevo: KPIs de negocio del período elegido                    -->
+<!-- ============================================================ -->
+<div class="stat-grid">
+    <div class="stat-card blue">
+        <div class="stat-label">Recaudado en el período</div>
+        <div class="stat-value" id="kpiRecaudado">${{ kpis.recaudado_periodo|floatformat:0 }}</div>
+        <div class="stat-sub{% if kpis.comparativa_pct > 0 %} subida{% elif kpis.comparativa_pct < 0 %} bajada{% endif %}" id="kpiComparativa">
+            {% if kpis.comparativa_pct is not None %}
+                {% if kpis.comparativa_pct > 0 %}▲{% elif kpis.comparativa_pct < 0 %}▼{% else %}▬{% endif %}
+                {{ kpis.comparativa_pct }}% vs. período anterior
+            {% else %}
+                Sin datos del período anterior para comparar
+            {% endif %}
+        </div>
+    </div>
+    <div class="stat-card gold">
+        <div class="stat-label">Ticket promedio</div>
+        <div class="stat-value" id="kpiTicket">${{ kpis.ticket_promedio|floatformat:0 }}</div>
+        <div class="stat-sub">por pago aprobado</div>
+    </div>
+    <div class="stat-card green">
+        <div class="stat-label">Ocupación promedio</div>
+        <div class="stat-value" id="kpiOcupacion">{% if kpis.ocupacion_promedio is not None %}{{ kpis.ocupacion_promedio }}%{% else %}—{% endif %}</div>
+        <div class="stat-sub">sobre la capacidad de sala</div>
+    </div>
+    <div class="stat-card purple">
+        <div class="stat-label">Día y horario más elegidos</div>
+        <div class="stat-value" id="kpiDiaHorario" style="font-size:1.4rem;">
+            {% if kpis.dia_top %}{{ kpis.dia_top }}{% else %}—{% endif %}
+        </div>
+        <div class="stat-sub" id="kpiHorarioSub">{% if kpis.horario_pico %}{{ kpis.horario_pico }} hs{% else %}sin datos{% endif %}</div>
+    </div>
+</div>
+
+<!-- ============================================================ -->
+<!-- SECCIÓN DE GRÁFICOS (interactivos, según el filtro de arriba) -->
+<!-- ============================================================ -->
+<div class="charts-grid">
+    <!-- Gráfico de Ventas / Entradas -->
+    <div class="chart-card">
+        <div class="chart-title">
+            <span>Ventas del período</span>
+            <div class="metrica-toggle" id="metricaToggle">
+                <button type="button" data-metrica="recaudacion" class="activo">Recaudación ($)</button>
+                <button type="button" data-metrica="entradas">Entradas vendidas</button>
+            </div>
+        </div>
+        <div style="position: relative; height: 260px; width: 100%;">
+            <canvas id="ventasChart"></canvas>
+        </div>
+    </div>
+
+    <!-- Gráfico de consumo de comida por categoría -->
+    <div class="chart-card">
+        <div class="chart-title">Consumo por categoría</div>
+        <div style="position: relative; height: 260px; width: 100%;">
+            <canvas id="comboChart"></canvas>
+        </div>
+    </div>
+</div>
+
+<!-- ============================================================ -->
+<!-- nuevo: TOP PELÍCULAS + EMBUDO DE RESERVAS DEL PERÍODO         -->
+<!-- ============================================================ -->
+<div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(400px, 1fr)); gap:1.5rem; margin-bottom: 1.5rem;">
+
+    <div class="card">
+        <div class="card-header">
+            <h3>Top 5 películas por recaudación</h3>
+        </div>
+        <div style="overflow-x:auto;">
+            <table class="tabla" id="tablaTopPeliculas">
+                <thead>
+                    <tr>
+                        <th>Película</th>
+                        <th>Recaudado</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for p in kpis.top_peliculas %}
+                    <tr>
+                        <td style="font-weight:600;">{{ p.titulo|default:"—" }}</td>
+                        <td style="color:#27ae60; font-weight:600;">${{ p.total|floatformat:0 }}</td>
+                    </tr>
+                    {% empty %}
+                    <tr><td colspan="2" style="padding:2rem;text-align:center;color:#999;">Sin ventas en este período.</td></tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <div class="card">
+        <div class="card-header">
+            <h3>Embudo de reservas del período</h3>
+        </div>
+        <div class="embudo-lista" id="embudoLista">
+            <div class="embudo-fila">
+                <span class="badge badge-confirmada">Confirmadas</span>
+                <span class="cantidad">{{ kpis.embudo.confirmada|default:0 }}</span>
+            </div>
+            <div class="embudo-fila">
+                <span class="badge badge-pendiente">Pendientes</span>
+                <span class="cantidad">{{ kpis.embudo.pendiente|default:0 }}</span>
+            </div>
+            <div class="embudo-fila">
+                <span class="badge badge-cancelada">Canceladas</span>
+                <span class="cantidad">{{ kpis.embudo.cancelada|default:0 }}</span>
+            </div>
+            <div class="embudo-fila">
+                <span class="badge badge-expirada">Expiradas</span>
+                <span class="cantidad">{{ kpis.embudo.expirada|default:0 }}</span>
+            </div>
+        </div>
+    </div>
+
+</div>
+
+<!-- ============================================================ -->
+<!-- modificado (T6 - BI): HEATMAP DE ENTRADAS — DÍA x HORA DE FUNCIÓN  -->
+<!-- ============================================================ -->
+<div class="card">
+    <div class="card-header">
+        <h3>Franjas horarias pico (entradas vendidas)</h3>
+    </div>
+    <div class="heatmap-wrap">
+        {% if heatmap_matriz %}
+        <table class="heatmap-tabla">
+            <thead>
+                <tr>
+                    <th></th>
+                    {% for h in heatmap_horas %}<th>{{ h }}</th>{% endfor %}
+                </tr>
+            </thead>
+            <tbody>
+                {% for fila in heatmap_matriz %}
+                <tr>
+                    <td class="heatmap-dia">{{ fila.dia }}</td>
+                    {% for celda in fila.celdas %}
+                    <td>
+                        <div class="heatmap-celda"
+                             style="background-color: rgba(52,152,219,{{ celda.alpha }});"
+                             title="{{ fila.dia }} {{ forloop.counter0 }}:00 — {{ celda.valor }} entrada(s)"></div>
+                    </td>
+                    {% endfor %}
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        {% else %}
+        <div class="card-body" style="text-align:center;color:#999;padding:2rem;">
+            Sin entradas vendidas en este período.
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+
+<!-- ============================================================ -->
+<!-- nuevo (T11): mismo heatmap pero por RECAUDACIÓN, no por cantidad de
+     entradas. Se agrega como card aparte (no reemplaza el de arriba) —
+     confirmado que se quieren los dos. Reusa exactamente las mismas
+     clases CSS (.heatmap-wrap/.heatmap-tabla/.heatmap-celda) de T6, solo
+     cambia el color para diferenciarlo de un vistazo del de entradas. -->
+<!-- ============================================================ -->
+<div class="card">
+    <div class="card-header">
+        <h3>Franjas horarias pico (recaudación)</h3>
+    </div>
+    <div class="heatmap-wrap">
+        {% if heatmap_recaudacion_matriz %}
+        <table class="heatmap-tabla">
+            <thead>
+                <tr>
+                    <th></th>
+                    {% for h in heatmap_horas %}<th>{{ h }}</th>{% endfor %}
+                </tr>
+            </thead>
+            <tbody>
+                {% for fila in heatmap_recaudacion_matriz %}
+                <tr>
+                    <td class="heatmap-dia">{{ fila.dia }}</td>
+                    {% for celda in fila.celdas %}
+                    <td>
+                        <div class="heatmap-celda"
+                             style="background-color: rgba(40,167,69,{{ celda.alpha }});"
+                             title="{{ fila.dia }} {{ forloop.counter0 }}:00 — ${{ celda.valor }}"></div>
+                    </td>
+                    {% endfor %}
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        {% else %}
+        <div class="card-body" style="text-align:center;color:#999;padding:2rem;">
+            Sin recaudación en este período.
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+<!-- ============================================================ -->
+<!-- modificado (T6 - BI): RANKING COMPARATIVO ENTRE SEDES (solo SuperUser) -->
+<!-- ============================================================ -->
+{% if request.user.is_superuser %}
+<div class="card ranking-sedes-card">
+    <div class="card-header">
+        <h3>Ranking de sedes</h3>
+    </div>
+    {% if ranking_sedes %}
+    <div style="overflow-x:auto;">
+        <table class="tabla">
+            <thead>
+                <tr>
+                    <th>Sede</th>
+                    <th>Recaudación</th>
+                    <th>Ocupación promedio</th>
+                    <th>Ticket promedio (ATV)</th>
+                    <th>Funciones</th>
+                    <!-- modificado (T7 - Parte B): columna "cantidad de funciones" pedida por SEDESactualizacion.txt punto 2 -->
+                </tr>
+            </thead>
+            <tbody>
+                {% for r in ranking_sedes %}
+                <tr>
+                    <td style="font-weight:600;">{{ r.sede }}</td>
+                    <td style="color:#27ae60; font-weight:600;">${{ r.recaudacion|floatformat:0 }}</td>
+                    <td>{% if r.ocupacion_promedio is not None %}{{ r.ocupacion_promedio }}%{% else %}—{% endif %}</td>
+                    <td>${{ r.atv|floatformat:0 }}</td>
+                    <td>{{ r.funciones_count }}</td>
+                    <!-- modificado (T7 - Parte B) -->
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    {% else %}
+    <div class="card-body" style="text-align:center;color:#999;padding:2rem;">
+        No hay sedes activas para comparar.
+    </div>
+    {% endif %}
+</div>
+{% endif %}
+
+<!-- ============================================================ -->
+<!-- nuevo (T7 - BI): CALIFICACIÓN vs. RECAUDACIÓN POR PELÍCULA -->
+<!-- ============================================================ -->
+<div class="card">
+    <div class="card-header">
+        <h3>Calificación vs. recaudación por película</h3>
+    </div>
+    {% if rating_recaudacion_datos %}
+    <div style="position: relative; height: 320px; width: 100%; padding: 1rem;">
+        <canvas id="ratingRecaudacionChart"></canvas>
+    </div>
+    {% else %}
+    <div class="card-body" style="text-align:center;color:#999;padding:2rem;">
+        No hay películas con calificaciones y recaudación en este período todavía.
+    </div>
+    {% endif %}
+</div>
+
+<!-- ============================================================ -->
+<!-- nuevo (T7 - BI): TICKET PROMEDIO CON COMBO vs. SIN COMBO -->
+<!-- ============================================================ -->
+<div class="card">
+    <div class="card-header">
+        <h3>Ticket promedio: con combo vs. sin combo</h3>
+    </div>
+    <div class="card-body" style="display:flex; gap:2rem; justify-content:center; padding:1.5rem; flex-wrap:wrap;">
+        <div style="text-align:center;">
+            <div style="font-size:1.8rem; font-weight:700; color:#27ae60;">${{ atv_combo.atv_con_combo|floatformat:0 }}</div>
+            <div style="color:#666;">Con combo ({{ atv_combo.cantidad_con_combo }} pago{{ atv_combo.cantidad_con_combo|pluralize }})</div>
+        </div>
+        <div style="text-align:center;">
+            <div style="font-size:1.8rem; font-weight:700; color:#7f8c8d;">${{ atv_combo.atv_sin_combo|floatformat:0 }}</div>
+            <div style="color:#666;">Sin combo ({{ atv_combo.cantidad_sin_combo }} pago{{ atv_combo.cantidad_sin_combo|pluralize }})</div>
+        </div>
+    </div>
+</div>
+
+<!-- Chart.js + JS del dashboard interactivo -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+    // nuevo: datos iniciales renderizados por el servidor (panel/views/dashboard.py),
+    // para que los gráficos ya tengan algo dibujado antes de tocar ningún filtro.
+    window.DASHBOARD_INICIAL = {
+        ventasLabels: {{ chart_ventas_labels|safe }},
+        ventasValores: {{ chart_ventas_valores|safe }},
+        entradasValores: {{ chart_entradas_valores|safe }},
+        comboLabels: {{ chart_combos_labels|safe }},
+        comboValores: {{ chart_combos_valores|safe }},
+        // modificado (T7 - BI)
+        ratingRecaudacionDatos: {{ rating_recaudacion_datos|safe }},
+    };
+    window.DASHBOARD_URLS = {
+        grafico_ventas: "{% url 'panel:dashboard_grafico_ventas' %}",
+        grafico_combos: "{% url 'panel:dashboard_grafico_combos' %}",
+        kpis: "{% url 'panel:dashboard_kpis' %}",
+    };
+</script>
+{% if rating_recaudacion_datos %}
+<!-- nuevo (T7 - BI): scatter de calificación vs. recaudación. Se instancia
+     acá mismo (mismo patrón que metodoPagoChart en pagos/estadisticas.html
+     de T6), no se toca static/js/panel/dashboard.js. -->
+<script>
+    (function() {
+        var datos = window.DASHBOARD_INICIAL.ratingRecaudacionDatos;
+        new Chart(document.getElementById('ratingRecaudacionChart').getContext('2d'), {
+            type: 'scatter',
+            data: {
+                datasets: [{
+                    label: 'Películas',
+                    data: datos.map(function(d) { return {x: d.rating_promedio, y: d.recaudacion}; }),
+                    backgroundColor: '#3498db',
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                scales: {
+                    x: { title: { display: true, text: 'Calificación promedio (1-5 ⭐)' }, min: 0, max: 5 },
+                    y: { title: { display: true, text: 'Recaudación ($)' }, beginAtZero: true },
+                },
+                plugins: {
+                    legend: { display: false },
+                    tooltip: {
+                        callbacks: {
+                            label: function(ctx) {
+                                var d = datos[ctx.dataIndex];
+                                return d.titulo + ': ' + d.rating_promedio + '★ — $' + d.recaudacion.toFixed(0);
+                            }
+                        }
+                    },
+                }
+            }
+        });
+    })();
+</script>
+{% endif %}
+<script src="{% static 'js/panel/dashboard.js' %}"></script>
+{% endblock %}

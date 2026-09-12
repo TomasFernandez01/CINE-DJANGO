@@ -1,86 +1,268 @@
 {% extends 'base.html' %}
-
+{% load static %}
 {% block titulo %}Comprobante de Pago{% endblock %}
 
+<!-- modificado (Tanda B pagos): separación CSS completa - se sacaron los ~81 estilos inline y se movieron a static/css/pagos/comprobante_pago.css (el <link> también se movió al bloque extra_css, antes estaba suelto al final del contenido) -->
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/pagos/comprobante_pago.css' %}">
+{% endblock %}
+
 {% block contenido %}
-<div style="max-width: 600px; margin: 0 auto;">
-    <h1 style="text-align: center; color: #28a745;">✅ ¡Pago Exitoso!</h1>
-    
-    <div style="background-color: white; padding: 2rem; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); margin-top: 1.5rem;">
-        
-        <!-- Número de Transacción -->
-        <div style="text-align: center; padding: 1.5rem; background-color: #d4edda; border-radius: 4px; margin-bottom: 1.5rem;">
-            <p style="margin: 0 0 0.5rem 0; color: #155724; font-size: 0.9rem;">Número de Transacción</p>
-            <h2 style="margin: 0; color: #155724; font-size: 1.8rem;">{{ pago.numero_transaccion }}</h2>
+<div class="comprobante-container">
+
+    <h1 class="comprobante-titulo">PAGO REALIZADO</h1>
+
+    <!-- ====================================================== -->
+    <!-- TICKET IMPRIMIBLE                                       -->
+    <!-- ====================================================== -->
+    <div id="ticket" class="ticket-card">
+
+        <!-- Header del ticket -->
+        <div class="ticket-header">
+            <div class="ticket-header-icono">🎬</div>
+            <div class="ticket-header-marca">CINE ONLINE</div>
+            <div class="ticket-header-subtitulo">ENTRADA OFICIAL</div>
         </div>
-        
-        <!-- Información del Pago -->
-        <div style="margin-bottom: 1.5rem;">
-            <h3 style="color: #333; border-bottom: 2px solid #28a745; padding-bottom: 0.5rem; margin-bottom: 1rem;">
-                Detalles del Pago
-            </h3>
-            <p style="margin: 0.5rem 0;"><strong>Fecha y Hora:</strong> {{ pago.fecha_pago|date:"d/m/Y H:i" }}</p>
-            <p style="margin: 0.5rem 0;"><strong>Método de Pago:</strong> {{ pago.get_metodo_pago_display }}</p>
-            {% if pago.ultimos_4_digitos %}
-                <p style="margin: 0.5rem 0;"><strong>Tarjeta terminada en:</strong> **** {{ pago.ultimos_4_digitos }}</p>
+
+        <!-- Línea punteada superior (efecto perforado) -->
+        <div class="ticket-perforado"></div>
+
+        <!-- Contenido principal del ticket -->
+        <div class="ticket-contenido">
+
+            <!-- Película destacada -->
+            <div class="ticket-pelicula-box">
+                <div class="ticket-label-mini">PELÍCULA</div>
+                <div class="ticket-pelicula-titulo">{{ reserva.funcion.pelicula.titulo }}</div>
+            </div>
+
+            <div class="ticket-lugar-mini">
+                {# nuevo (Sedes - tareasnuevas punto 2/4): sede visible en el ticket #}
+                📍 {{ reserva.funcion.sala.sede.nombre }}
+            </div>
+
+            <!-- Grid de detalles -->
+            <div class="ticket-detalles-grid">
+                <div class="ticket-detalle-box-azul">
+                    <div class="ticket-detalle-label">FECHA</div>
+                    <div class="ticket-detalle-valor">{{ reserva.funcion.fecha_hora|date:"d/m/Y" }}</div>
+                </div>
+                <div class="ticket-detalle-box-azul">
+                    <div class="ticket-detalle-label">HORARIO</div>
+                    <div class="ticket-detalle-valor-grande">{{ reserva.funcion.fecha_hora|date:"H:i" }} hs</div>
+                </div>
+                <div class="ticket-detalle-box-verde">
+                    <div class="ticket-detalle-label">SALA</div>
+                    <div class="ticket-detalle-valor">{{ reserva.funcion.sala.nombre }}</div>
+                </div>
+                <div class="ticket-detalle-box-verde">
+                    <div class="ticket-detalle-label">ENTRADAS</div>
+                    <div class="ticket-detalle-valor-grande">{{ reserva.cantidad_entradas }}</div>
+                </div>
+            </div>
+
+            <!-- Asientos si aplica -->
+            {% if reserva.asientos_seleccionados %}
+            <div class="ticket-asientos-box">
+                <div class="ticket-asientos-label">ASIENTOS</div>
+                <div class="ticket-asientos-lista">
+                    {% for asiento in reserva.lista_asientos %}
+                        <span class="ticket-asiento-badge">
+                            {{ asiento }}
+                        </span>
+                    {% endfor %}
+                </div>
+            </div>
             {% endif %}
-            <p style="margin: 0.5rem 0;"><strong>Estado:</strong> 
-                <span style="padding: 0.25rem 0.75rem; background-color: #d4edda; color: #155724; border-radius: 4px; font-weight: bold;">
-                    {{ pago.get_estado_display }}
-                </span>
-            </p>
+
+            <div class="ticket-info-grid-3">
+                <div>
+                    <div class="ticket-info-label">TITULAR</div>
+                    <div class="ticket-info-valor">{{ reserva.usuario.get_full_name|default:reserva.usuario.username }}</div>
+                </div>
+                <div>
+                    <div class="ticket-info-label">EMAIL</div>
+                    <div class="ticket-info-valor">{{ reserva.usuario.email|default:"—" }}</div>
+                </div>
+                <div>
+                    <div class="ticket-info-label">FECHA DE RESERVA</div>
+                    <div class="ticket-info-valor">{{ reserva.fecha_reserva|date:"d/m/Y H:i" }}</div>
+                </div>
+            </div>
+
+            <!-- Código de reserva -->
+            <div class="ticket-codigo-box">
+                <div class="ticket-codigo-label">CÓDIGO DE RESERVA</div>
+                <div class="ticket-codigo-valor">
+                    {{ reserva.codigo_reserva }}
+                </div>
+            </div>
+
+            <!-- Desglose de precios -->
+            <div class="ticket-precios-seccion">
+                <h3 class="ticket-precios-titulo">Detalles</h3>
+                <div class="ticket-precios-lista">
+                    {% if reserva.tiene_precios_mixtos %}
+                        {% for item in reserva.desglose_precios_asientos %}
+                        <div class="ticket-precio-fila">
+                            <span>Asiento {{ item.codigo }}</span>
+                            <span>${{ item.precio }}</span>
+                        </div>
+                        {% endfor %}
+                        <div class="ticket-precio-fila-subtotal">
+                            <span>Subtotal ({{ reserva.cantidad_entradas }} entradas)</span>
+                            <span>${{ pago.monto_original }}</span>
+                        </div>
+                    {% else %}
+                        <div class="ticket-precio-fila">
+                            <span>Subtotal entradas ({{ reserva.cantidad_entradas }} × ${{ reserva.funcion.precio_final }})</span>
+                            <span>${{ pago.monto_original }}</span>
+                        </div>
+                    {% endif %}
+
+                    {% if pago.promo_dia %}
+                    <div class="ticket-precio-fila-descuento-promo">
+                        <span>🎉 {{ pago.promo_dia.nombre }}</span>
+                        <span>-${{ pago.descuento_promo_dia }}</span>
+                    </div>
+                    {% endif %}
+
+                    {% if pago.cupon_usado %}
+                    <div class="ticket-precio-fila-descuento-cupon">
+                        <span>🏷️ Cupón {{ pago.cupon_usado.codigo }}</span>
+                        <span>-${{ pago.descuento_cupon }}</span>
+                    </div>
+                    {% endif %}
+
+                    {% comment %} {% if pago.combo %}
+                    <div class="ticket-precio-fila-combo">
+                        <span>🍿 {% if pago.cantidad_combo > 1 %}{{ pago.cantidad_combo }}x {% endif %}{{ pago.combo.nombre }}</span>
+                        <span>+${{ pago.precio_combo }}</span>
+                    </div>
+                    {% endif %} {% endcomment %}
+                    {# modificado (combos múltiples): se itera pago.items (el detalle real, uno por cada ítem elegido). Si el pago es viejo y no tiene ItemPago cargados, se cae al campo legacy pago.combo/cantidad_combo/precio_combo de toda la vida #}
+                    {% if pago.items.all %}
+                        {% for item in pago.items.all %}
+                        <div class="ticket-precio-fila-combo">
+                            <span>🍿 {% if item.cantidad > 1 %}{{ item.cantidad }}x {% endif %}{{ item.combo.nombre|default:"Ítem eliminado" }}</span>
+                            <span>+${{ item.subtotal }}</span>
+                        </div>
+                        {% endfor %}
+                    {% elif pago.combo %}
+                    <div class="ticket-precio-fila-combo">
+                        <span>🍿 {% if pago.cantidad_combo > 1 %}{{ pago.cantidad_combo }}x {% endif %}{{ pago.combo.nombre }}</span>
+                        <span>+${{ pago.precio_combo }}</span>
+                    </div>
+                    {% endif %}
+
+                    <div class="ticket-precio-total">
+                        <span class="ticket-precio-total-label">Total pagado</span>
+                        <span class="ticket-precio-total-valor">${{ pago.monto }}</span>
+                    </div>
+
+                    {% if pago.tuvo_descuento %}
+                    <div class="ticket-ahorro-box">
+                        💸 Ahorraste ${{ pago.descuento_total }}
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- Info del pago -->
+            <div class="ticket-pago-info-grid">
+                <div>
+                    <div class="ticket-info-label">MÉTODO DE PAGO</div>
+                    <div class="ticket-info-valor">
+                        {{ pago.get_metodo_pago_display }}
+                        {% if pago.ultimos_4_digitos %}
+                            (*{{ pago.ultimos_4_digitos }})
+                        {% endif %}
+                    </div>
+                </div>
+                <div>
+                    <div class="ticket-info-label">TRANSACCIÓN</div>
+                    <div class="ticket-info-valor-transaccion">{{ pago.numero_transaccion }}</div>
+                </div>
+                <div>
+                    <div class="ticket-info-label">FECHA DE PAGO</div>
+                    <div class="ticket-info-valor">{{ pago.fecha_pago|date:"d/m/Y H:i" }}</div>
+                </div>
+                <div>
+                    <div class="ticket-info-label">TOTAL ABONADO</div>
+                    <div class="ticket-info-valor-grande">${{ pago.monto }}</div>
+                </div>
+            </div>
         </div>
-        
-        <!-- Información de la Reserva -->
-        <div style="margin-bottom: 1.5rem;">
-            <h3 style="color: #333; border-bottom: 2px solid #28a745; padding-bottom: 0.5rem; margin-bottom: 1rem;">
-                Detalles de la Reserva
-            </h3>
-            <p style="margin: 0.5rem 0;"><strong>Código de Reserva:</strong> {{ pago.reserva.codigo_reserva }}</p>
-            <p style="margin: 0.5rem 0;"><strong>Película:</strong> {{ pago.reserva.funcion.pelicula.titulo }}</p>
-            <p style="margin: 0.5rem 0;"><strong>Sala:</strong> {{ pago.reserva.funcion.sala.nombre }}</p>
-            <p style="margin: 0.5rem 0;"><strong>Fecha:</strong> {{ pago.reserva.funcion.fecha_hora|date:"l, d de F de Y" }}</p>
-            <p style="margin: 0.5rem 0;"><strong>Horario:</strong> {{ pago.reserva.funcion.fecha_hora|date:"H:i" }} hs</p>
-            <p style="margin: 0.5rem 0;"><strong>Entradas:</strong> {{ pago.reserva.cantidad_entradas }}</p>
+
+        <!-- Línea punteada inferior (efecto perforado) -->
+        <div class="ticket-perforado"></div>
+
+        <!-- Sección QR -->
+        {% if qr_imagen %}
+        <div class="ticket-qr-seccion">
+            <div class="ticket-qr-titulo">PRESENTÁ EL QR AL PERSONAL</div>
+            <div class="ticket-qr-box">
+                <img src="{{ qr_imagen }}" alt="Código QR" class="ticket-qr-img">
+            </div>
+            <!-- modificado (T15 - QR oculto): el código de texto plano quedaba
+                 tan visible como la imagen del QR, lo cual le sacaba el
+                 sentido de "solo el escáner lo lee". Se oculta detrás de un
+                 toggle en vez de borrarlo del todo — el Verificador QR del
+                 panel tiene un campo de verificación MANUAL (para cuando la
+                 cámara no puede leer el QR), así que el código sigue
+                 necesitando existir en algún lugar accesible por el cliente. -->
+            <button type="button" class="ticket-qr-toggle" data-qr-toggle>¿No se puede escanear? Mostrar código</button>
+            <div class="ticket-qr-codigo" data-qr-codigo hidden>
+                {{ pago.codigo_qr }}
+            </div>
         </div>
-        
-        <!-- Monto Total -->
-        <div style="background-color: #e7f3ff; padding: 1.5rem; border-radius: 4px; margin-bottom: 1.5rem;">
-            <p style="margin: 0 0 0.5rem 0; font-size: 0.9rem; color: #666;">Monto Pagado</p>
-            <p style="margin: 0; font-size: 2rem; font-weight: bold; color: #28a745;">
-                ${{ pago.monto }}
-            </p>
-        </div>
-        
-        <!-- Mensaje de Confirmación -->
-        <div style="background-color: #d1ecf1; padding: 1rem; border-radius: 4px; border-left: 4px solid #0c5460; margin-bottom: 1.5rem;">
-            <p style="margin: 0; color: #0c5460;">
-                <strong>✅ Reserva Confirmada</strong><br>
-                Tu reserva ha sido confirmada y pagada. Presentá el código {{ pago.reserva.codigo_reserva }} en boletería.
-            </p>
-        </div>
-        
-        <!-- Botones -->
-        <div style="margin-top: 1.5rem; display: flex; gap: 1rem; flex-wrap: wrap;">
-            <a href="{% url 'reservas:mis_reservas' %}" style="flex: 1; min-width: 150px; padding: 0.75rem; background-color: #007bff; color: white; border-radius: 4px; text-decoration: none; text-align: center; font-weight: bold;">
-                Mis Reservas
-            </a>
-            <button onclick="window.print()" style="flex: 1; min-width: 150px; padding: 0.75rem; background-color: #28a745; color: white; border: none; border-radius: 4px; font-weight: bold; cursor: pointer;">
-                Imprimir Comprobante
-            </button>
-            <a href="{% url 'peliculas:inicio' %}" style="flex: 1; min-width: 150px; padding: 0.75rem; background-color: #6c757d; color: white; border-radius: 4px; text-decoration: none; text-align: center; font-weight: bold;">
-                Volver al Inicio
-            </a>
+        {% endif %}
+
+        <!-- Footer del ticket -->
+        <div class="ticket-footer">
+            <div class="ticket-footer-linea">Llegá al menos <strong class="ticket-footer-destacado">30 minutos antes</strong> de la función</div>
+            <div>Las entradas no son reembolsables · Conservá este comprobante</div>
+
+            {% comment %} {% if pago.combo %}
+            <div class="ticket-footer-combo">🍿 Retirá tu <strong class="ticket-footer-destacado">{{ pago.combo.nombre }}</strong> en el mostrador de combos</div>
+            {% endif %} {% endcomment %}
+
+            {# modificado (combos múltiples): mismo criterio — items reales primero, fallback a pago.combo legacy #}
+            {% if pago.items.all %}
+            <div class="ticket-footer-combo">🍿 Retirá tu pedido en el mostrador de combos</div>
+            {% elif pago.combo %}
+            <div class="ticket-footer-combo">🍿 Retirá tu <strong class="ticket-footer-destacado">{{ pago.combo.nombre }}</strong> en el mostrador de combos</div>
+            {% endif %}
         </div>
     </div>
+
+    <!-- ====================================================== -->
+    <!-- BLOQUES EXTERNOS (NO SE IMPRIMEN)                       -->
+    <!-- ====================================================== -->
+
+    <!-- Botones de acción -->
+    <div class="no-print comprobante-acciones">
+        <button onclick="window.print()" class="comprobante-btn-imprimir">
+            🖨️ Imprimir
+        </button>
+        <a href="{% url 'reservas:mis_reservas' %}" class="comprobante-btn-reservas">
+            🎫 Reservas
+        </a>
+        <a href="{% url 'peliculas:lista_peliculas' %}" class="comprobante-btn-peliculas">
+            🎬 Películas
+        </a>
+    </div>
+
+    <!-- Agradecimiento -->
+    <div class="no-print comprobante-agradecimiento">
+        <div class="comprobante-agradecimiento-titulo">¡Gracias por tu compra!</div>
+        <div class="comprobante-agradecimiento-subtitulo">¡Disfrutá la película! 🍿🎬</div>
+    </div>
+
 </div>
 
-<style>
-    @media print {
-        nav, button, a[href] {
-            display: none !important;
-        }
-    }
-</style>
-
+{% if pago.codigo_qr %}
+<!-- nuevo (T15 - QR oculto) -->
+<script src="{% static 'js/shared/qr_toggle.js' %}"></script>
+{% endif %}
 {% endblock %}

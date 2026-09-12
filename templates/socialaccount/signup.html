@@ -1,0 +1,53 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block titulo %}Completar registro{% endblock %}
+
+{# nuevo (Hilo 2 - última tarea, estilos de allauth): override de
+   socialaccount/signup.html. Con SOCIALACCOUNT_AUTO_SIGNUP=True (ver
+   settings.py) esta pantalla normalmente NO aparece -- allauth crea el
+   User solo. Solo se muestra si Google no devolvió algún dato necesario
+   (ej. el email) y allauth necesita pedirlo a mano. Se renderiza el
+   `form` que ya arma allauth de forma genérica (no se conocen de
+   antemano los campos exactos), con las mismas clases que
+   usuarios/registro.html. #}
+
+{% block contenido %}
+<div class="auth-formulario" style="max-width: 480px; margin: 3rem auto;">
+    <h2 class="usuario-titulo--centrado">Un último paso</h2>
+    <p style="text-align: center; color: #9aa0a6; margin-bottom: 1.5rem;">
+        Google no nos compartió todos los datos que necesitamos. Completá lo
+        que falta para terminar de crear tu cuenta.
+    </p>
+
+    <form method="post">
+        {% csrf_token %}
+
+        {% if form.non_field_errors %}
+            <div class="usuario-alerta usuario-alerta--error">
+                {% for error in form.non_field_errors %}
+                    <p>{{ error }}</p>
+                {% endfor %}
+            </div>
+        {% endif %}
+
+        {% for field in form %}
+            <div class="usuario-campo">
+                <label for="{{ field.id_for_label }}" class="usuario-etiqueta">
+                    {{ field.label }}
+                </label>
+                {{ field }}
+                {% if field.help_text %}
+                    <small style="color:#9aa0a6;">{{ field.help_text }}</small>
+                {% endif %}
+                {% for error in field.errors %}
+                    <div class="usuario-error">{{ error }}</div>
+                {% endfor %}
+            </div>
+        {% endfor %}
+
+        <button type="submit" class="usuario-boton usuario-boton--primario">
+            Continuar
+        </button>
+    </form>
+</div>
+{% endblock %}

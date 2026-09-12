@@ -44,6 +44,22 @@ class Pelicula(models.Model):
     # Imagen - AHORA ACTIVO (requiere Pillow: pip install Pillow)
     poster = models.ImageField(upload_to='posters/', blank=True, null=True)
 
+    # nuevo (Trailer): solo se guarda el ID de YouTube del tráiler (los 11
+    # caracteres que van después de "v=" en la URL, ej: "dQw4w9WgXcQ"), NO el
+    # video en sí. La reproducción se hace embebiendo un <iframe> a
+    # youtube.com/embed/<id> desde el template — el video lo sirve YouTube,
+    # no este servidor, así que no hay ningún archivo pesado que subir ni
+    # guardar. Se completa a mano o automáticamente al importar desde TMDB
+    # (ver utils/tmdb_api.py, que ya trae este dato en el mismo pedido que
+    # el resto de los datos de la película).
+    trailer_youtube_id = models.CharField(
+        max_length=11, blank=True, null=True,
+        help_text="ID de YouTube del tráiler (los 11 caracteres después de "
+                   "\"v=\" en la URL del video, ej: dQw4w9WgXcQ). Se completa "
+                   "solo si la película se importa desde TMDB y tiene tráiler "
+                   "cargado ahí; si no, se puede pegar a mano."
+    )
+
     """De esta forma se muesta con nombres y no como <Pelicula Object>"""
     def __str__(self):
         return f"{self.titulo}"
@@ -59,8 +75,56 @@ class Pelicula(models.Model):
             return f"{minutos}min"
         return "No especificada"
 
+    # MODIFICACION GEMINI: Métodos para obtener el rating promedio y total de votos
+    def rating_promedio(self):
+        ratings = self.ratings.all()
+        if ratings.exists():
+            from django.db.models import Avg
+            return round(ratings.aggregate(Avg('puntuacion'))['puntuacion__avg'] or 0, 1)
+        return 0.0
+
+    def total_votos(self):
+        return self.ratings.count()
+
     """Correspondiente al admin de django, organiza los datos"""
     class Meta:
         verbose_name = "Pelicula"
         verbose_name_plural = "Peliculas"
         ordering = ['-en_cartelera', 'titulo']
+
+
+# MODIFICACION GEMINI: Registro de historial de peliculas vistas por el usuario
+class HistorialVisto(models.Model):
+    usuario = models.ForeignKey('auth.User', on_delete=models.CASCADE, related_name='historial_vistas')
+    pelicula = models.ForeignKey(Pelicula, on_delete=models.CASCADE, related_name='vistas')
+    fecha_visto = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        verbose_name = "Película Vista"
+        verbose_name_plural = "Películas Vistas"
+        unique_together = ('usuario', 'pelicula')
+        ordering = ['-fecha_visto']
+
+    def __str__(self):
+        return f"{self.usuario.username} vio {self.pelicula.titulo}"
+
+
+# MODIFICACION GEMINI: Calificaciones de peliculas por parte de los usuarios
+class RatingPelicula(models.Model):
+    usuario = models.ForeignKey('auth.User', on_delete=models.CASCADE, related_name='ratings')
+    pelicula = models.ForeignKey(Pelicula, on_delete=models.CASCADE, related_name='ratings')
+    puntuacion = models.PositiveIntegerField(
+        choices=[(i, f"{i} Estrella{'s' if i > 1 else ''}") for i in range(1, 6)],
+        help_text="Puntuación de 1 a 5 estrellas"
+    )
+    comentario = models.TextField(blank=True, null=True, help_text="Comentario opcional")
+    fecha_creacion = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        verbose_name = "Calificación de Película"
+        verbose_name_plural = "Calificaciones de Películas"
+        unique_together = ('usuario', 'pelicula')
+        ordering = ['-fecha_creacion']
+
+    def __str__(self):
+        return f"{self.usuario.username} - {self.pelicula.titulo}: {self.puntuacion}⭐"

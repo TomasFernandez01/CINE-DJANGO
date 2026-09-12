@@ -1,0 +1,89 @@
+{% extends 'panel/base_panel.html' %}
+{% load static %}
+
+{% block titulo %}Confirmar eliminación — Panel{% endblock %}
+
+{% block breadcrumb %}
+<span class="sep">›</span>
+<a href="{% url 'panel:funciones_lista' %}">Funciones</a>
+<span class="sep">›</span>
+<span class="current">Confirmar eliminación</span>
+{% endblock %}
+
+<!-- modificado (Hilo 1): separación CSS completa (13 estilos inline -> 0), movidos a
+     static/css/panel/funciones/confirmar_eliminar.css. -->
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/panel/funciones/confirmar_eliminar.css' %}">
+{% endblock %}
+
+{% block contenido %}
+
+<!-- modificado (T5 - cero emojis): se sacaron los emojis del título (⚠️) y del botón
+     "🗑️ Sí, eliminar definitivamente" (más abajo). Texto plano, sin ícono. -->
+<div class="panelfuncconf-wrapper">
+
+    <h1 class="panelfuncconf-titulo"> Confirmar eliminación</h1>
+    <p class="panelfuncconf-desc">
+        Esta acción no se puede deshacer. Al borrar una función, también se borran
+        <strong>en cascada</strong> todas sus reservas y los pagos asociados a esas reservas.
+    </p>
+
+    <div class="card panelfuncconf-card">
+        <div class="card-header"><h3>Se eliminará lo siguiente</h3></div>
+        <div class="panelfuncconf-tabla-wrap">
+            <table class="tabla">
+                <thead>
+                    <tr>
+                        <th>Función</th>
+                        <th>Reservas que se borran</th>
+                        <th>Pagos que se borran</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for item in resumen %}
+                    <tr>
+                        <td class="panelfuncconf-funcion-nombre">
+                            {{ item.funcion.pelicula.titulo }}
+                            <div class="panelfuncconf-funcion-detalle">
+                                {{ item.funcion.sala.nombre }} — {{ item.funcion.fecha_hora|date:"d/m/Y H:i" }} hs
+                            </div>
+                        </td>
+                        <td>
+                            {% if item.total_reservas %}
+                            <span class="panelfuncconf-cantidad">{{ item.total_reservas }}</span>
+                            {% else %}
+                            <span class="panelfuncconf-cero">0</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            {% if item.total_pagos %}
+                            <span class="panelfuncconf-cantidad">{{ item.total_pagos }}</span>
+                            {% else %}
+                            <span class="panelfuncconf-cero">0</span>
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <form method="post" action="{% url 'panel:funciones_eliminar' %}">
+        {% csrf_token %}
+        {% for id in ids %}
+        <input type="hidden" name="seleccionadas" value="{{ id }}">
+        {% endfor %}
+        <input type="hidden" name="confirmado" value="1">
+
+        <div class="panelfuncconf-botones">
+            <button type="submit" class="btn btn-danger panelfuncconf-btn-eliminar">
+                 Sí, eliminar definitivamente
+            </button>
+            <a href="{% url 'panel:funciones_lista' %}" class="btn btn-ghost">Cancelar</a>
+        </div>
+    </form>
+
+</div>
+
+{% endblock %}

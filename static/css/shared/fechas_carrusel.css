@@ -1,0 +1,134 @@
+/* nuevo: carrusel de fechas compartido entre peliculas y salas (antes duplicado / vivía solo en peliculas).
+   Incluye flechas de scroll horizontal y boton de papelera para quitar el filtro por dia. */
+
+.fechas-carrusel-wrap {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    /* margin-bottom: 2rem; */
+}
+
+.fecha-flecha {
+    flex: 0 0 auto;
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    border: 1px solid #3a3a3a;
+    background-color: #1f1f1f;
+    color: #eee;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    font-size: 1.1rem;
+    transition: border-color 0.2s, background-color 0.2s;
+}
+
+.fecha-flecha:hover {
+    border-color: #e50914;
+    background-color: #2a2a2a;
+}
+
+.fecha-flecha:disabled {
+    opacity: 0.35;
+    cursor: default;
+}
+
+.fecha-flecha:disabled:hover {
+    border-color: #3a3a3a;
+    background-color: #1f1f1f;
+}
+
+/* nuevo: boton de papelera para quitar el filtro de dia activo (solo aparece si hay uno seleccionado) */
+.fecha-quitar {
+    flex: 0 0 auto;
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    border: 1px solid #e50914;
+    background-color: rgba(229,9,20,0.12);
+    color: #ff5c5c;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    font-size: 1rem;
+    text-decoration: none;
+    transition: background-color 0.2s;
+}
+
+.fecha-quitar:hover {
+    background-color: rgba(229,9,20,0.28);
+}
+
+.fechas-carrusel {
+    display: flex;
+    /* gap: 0.75rem; */
+    overflow-x: hidden;
+    scroll-behavior: smooth;
+    padding-bottom: 0.25rem;
+    scrollbar-width: thin;
+}
+
+.fecha-item {
+    flex: 0 0 auto;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.25rem;
+    padding: 0.5rem 0.9rem;
+    background-color: #000000;
+    border: 1px solid #000000;
+    /* border-radius: 20px; */
+    text-decoration: none;
+    color: #eee;
+    /* font-size: 0.85rem; */
+    white-space: nowrap;
+    transition: border-color 0.5s, background-color 0.5s;
+}
+
+.fecha-item:hover {
+    border-color: #e50914;
+}
+
+/* modificado (visual, punto 10): antes ".fecha-hoy" (el ítem "hoy" del
+   carrusel, marcado así SOLO cuando no hay ningún filtro de fecha
+   explícito) usaba el mismo rojo sólido que ".fecha-activa" (el día que
+   el usuario realmente eligió) -- daba a entender que "hoy" estaba
+   filtrado/seleccionado, cuando en realidad sin fecha_seleccionada la
+   vista muestra TODOS los días, no solo hoy. Ahora "hoy" se distingue con
+   un borde + una etiqueta chica "HOY", sin fill sólido, para no
+   confundirlo con una selección real. Si el usuario hace click en "hoy" y
+   pasa a ser el filtro activo, toma directamente el estilo de
+   .fecha-activa (blanco sólido) vía el {% if fecha_seleccionada == f.valor %}
+   del template -- ahí sí es una selección real. */
+.fecha-item.fecha-hoy {
+    border-color: #e50914;
+    box-shadow: inset 0 -3px 0 #e50914;
+}
+
+.fecha-item.fecha-hoy .fecha-item-diasemana::after {
+    content: ' · HOY';
+    color: #ff5c5c;
+    font-weight: 900;
+}
+
+/* MODIFICACION GEMINI: Día seleccionado activo */
+.fecha-item.fecha-activa {
+    background-color: #ffffff;
+    color: #1a1a1a;
+    border-color: #ffffff;
+    font-weight: bold;
+}
+
+.fecha-item-diasemana {
+    display: inline;
+    font-size: 0.85rem;
+    font-weight: 700;
+    text-transform: uppercase;
+}
+
+.fecha-item-diames {
+    display: inline;
+    font-size: 0.85rem;
+}

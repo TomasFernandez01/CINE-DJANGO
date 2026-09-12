@@ -1,0 +1,94 @@
+{% extends 'panel/base_panel.html' %}
+
+{% load static %}
+
+{% block titulo %}{{ titulo_pagina }} — Panel{% endblock %}
+
+{% block breadcrumb %}
+<span class="sep">›</span>
+<a href="{% url 'panel:promodia_lista' %}">Promociones por Día</a>
+<span class="sep">›</span>
+<span class="current">{% if accion == 'crear' %}Agregar{% else %}Editar{% endif %}</span>
+{% endblock %}
+
+{% block extra_css %}
+<!-- modificado: CSS compartido entre los 3 form.html (combos/cupones/promodia) -->
+<link rel="stylesheet" href="{% static 'css/panel/promociones/form.css' %}">
+{% endblock %}
+
+{% block contenido %}
+<!-- modificado (T5 - cero emojis): se sacó el emoji 📆 del encabezado "Datos de la Promoción". -->
+{% include 'panel/_form_styles.html' %}
+
+<div class="panelpromoform-wrap">
+
+    <div class="panelpromoform-encabezado">
+        <h1 class="panelpromoform-titulo">{{ titulo_pagina }}</h1>
+        <a href="{% url 'panel:promodia_lista' %}" class="btn btn-ghost">ATRAS</a>
+    </div>
+
+    <form method="post">
+        {% csrf_token %}
+        <div class="card">
+            <div class="card-header"><h3> Datos de la Promoción</h3></div>
+            <div class="card-body panelpromoform-card-body-stack">
+
+                <div>
+                    <label class="form-label">Nombre <span class="required">*</span></label>
+                    {{ form.nombre }}
+                    {% if form.nombre.errors %}<div class="field-error">{{ form.nombre.errors.0 }}</div>{% endif %}
+                </div>
+
+                <div class="panelpromoform-2col">
+                    <div>
+                        <label class="form-label">Día de la semana <span class="required">*</span></label>
+                        {{ form.dia_semana }}
+                        {% if form.dia_semana.errors %}<div class="field-error">{{ form.dia_semana.errors.0 }}</div>{% endif %}
+                    </div>
+                    <div>
+                        <label class="form-label">Tipo <span class="required">*</span></label>
+                        {{ form.tipo }}
+                        {% if form.tipo.errors %}<div class="field-error">{{ form.tipo.errors.0 }}</div>{% endif %}
+                    </div>
+                </div>
+
+                <div>
+                    <label class="form-label">% de descuento</label>
+                    {{ form.porcentaje_descuento }}
+                    <div class="form-help">{{ form.porcentaje_descuento.help_text }}</div>
+                    {% if form.porcentaje_descuento.errors %}<div class="field-error">{{ form.porcentaje_descuento.errors.0 }}</div>{% endif %}
+                </div>
+
+                <div>
+                    <label class="form-label">Descripción</label>
+                    {{ form.descripcion }}
+                </div>
+
+                <div class="checkbox-row">
+                    {{ form.activo }}
+                    <label for="{{ form.activo.id_for_label }}">Promoción activa</label>
+                </div>
+
+            </div>
+        </div>
+        <div class="panelpromoform-botones">
+
+            <button type="submit" class="btn btn-primary">{% if accion == 'crear' %}GUARDAR{% else %}MODIFICAR{% endif %}</button>
+
+            <button type="submit" name="guardar_y_agregar_otro" value="1" class="btn btn-primary">CARGAR</button>
+
+            <a href="{% url 'panel:promodia_lista' %}" class="btn btn-primary">Cancelar</a>
+            {% if objeto and accion == 'editar' %}
+            <button type="submit" form="formEliminarPromo" class="btn btn-danger">BORRAR</button>
+            {% endif %}
+        </div>
+    </form>
+    {% if objeto and accion == 'editar' %}
+    <form method="post" action="{% url 'panel:promodia_eliminar' %}" id="formEliminarPromo">
+        {% csrf_token %}
+        <input type="hidden" name="seleccionadas" value="{{ objeto.id }}">
+    </form>
+    {% endif %}
+</div>
+
+{% endblock %}

@@ -1,0 +1,67 @@
+{% extends 'panel/base_panel.html' %}
+
+{% load static %}
+{% block titulo %}Promociones por Día — Panel{% endblock %}
+
+{% block breadcrumb %}
+<span class="sep">›</span>
+<span class="current">Promociones por Día</span>
+{% endblock %}
+
+{% block extra_css %}
+<!-- modificado: CSS separado a static/css/panel/promociones/promodia/lista.css (antes todo con style="" inline) -->
+<link rel="stylesheet" href="{% static 'css/panel/promociones/promodia/lista.css' %}">
+{% endblock %}
+
+{% block contenido %}
+<!-- modificado (T5 - cero emojis): se sacaron los emojis del título (📅) y del badge de tipo de promo (🎬 2x1 🎬 / 💸, más abajo). -->
+
+<div class="panelpromodia-lista-encabezado">
+        
+    <div>
+            <h1 class="panelpromodia-lista-titulo"> Promociones por Día</h1><p class="panelpromodia-lista-subtitulo">2x1, descuentos especiales y promos según el día de la semana</p>
+        </div>
+
+        <div class="panelpromodia-lista-acciones">
+            <button type="submit" form="formPromodia" id="btnEliminarSeleccionadas"class="btn btn-danger panelpromodia-lista-btn-eliminar" disabled>Eliminar</button>
+            <a href="{% url 'panel:promodia_crear' %}" class="btn btn-primary">NUEVA</a>
+            <a href="{% url 'panel:inicio' %}" class="btn btn-primary">INICIO</a>
+        </div>
+
+    </div>
+
+<!-- modificado: data-eliminar-modal activa el flujo por modal de
+     static/js/panel/shared/eliminar_modal.js en vez de navegar a
+     confirmar_eliminar.html. Si JS falla, el form sigue apuntando a la
+     misma action de siempre (fallback intacto). -->
+<form method="post" action="{% url 'panel:promodia_eliminar' %}" id="formPromodia" data-eliminar-modal>
+    {% csrf_token %}
+<div class="panelpromodia-lista-grid">
+    {% for p in promociones %}
+    <div class="card">
+        <div class="card-header">
+            <label class="panelpromodia-lista-check-label">
+                <input type="checkbox" name="seleccionadas" value="{{ p.id }}"class="chk-promo panel-checkbox">
+                <h3 class="panelpromodia-lista-dia">{{ p.get_dia_semana_display }}</h3>
+            </label>
+            <!-- modificado: se saca el <h3> duplicado que había quedado comentado acá (código muerto) -->
+            <span class="panelpromodia-lista-badge {% if p.activo %}panelpromodia-lista-badge--activo{% else %}panelpromodia-lista-badge--inactivo{% endif %}">{% if p.activo %}Activa{% else %}Inactiva{% endif %}</span>
+        </div>
+
+        <div class="card-body">
+            <div class="panelpromodia-lista-nombre">{{ p.nombre }}</div>
+            <div class="panelpromodia-lista-tipo">
+                {% if p.tipo == '2x1' %} 2x1 {% else %}{{ p.porcentaje_descuento }}% {% endif %}
+            </div>
+            {% if p.descripcion %}<p class="panelpromodia-lista-descripcion">{{ p.descripcion }}</p>{% endif %}
+            <a href="{% url 'panel:promodia_editar' p.id %}" class="btn btn-ghost panelpromodia-lista-btn-editar">EDITAR</a>
+        </div>
+    </div>
+    {% empty %}
+    <div class="card panelpromodia-lista-vacio-card"><div class="card-body panelpromodia-lista-vacio">No hay promociones por día registradas.</div></div>
+    {% endfor %}
+</div>
+</form>
+
+<script src="{% static 'js/panel/promociones/promodia/lista.js' %}"></script>
+{% endblock %}

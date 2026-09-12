@@ -1,0 +1,26 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block titulo %}Cuenta inactiva{% endblock %}
+
+{# nuevo (Hilo 2 - última tarea, estilos de allauth): override de
+   account/account_inactive.html. Aparece si alguien con is_active=False
+   (usuario desactivado desde el panel/admin) intenta entrar con Google. #}
+
+{% block contenido %}
+<div class="auth-formulario" style="max-width: 480px; margin: 3rem auto;">
+    <h2 class="usuario-titulo--centrado">Tu cuenta está inactiva</h2>
+
+    <div class="usuario-alerta usuario-alerta--error">
+        Esta cuenta fue desactivada. Si creés que es un error, contactá a la
+        administración del cine.
+    </div>
+
+    <div class="usuario-enlace-pie">
+        <p>
+            <a href="{% url 'peliculas:inicio' %}" class="usuario-enlace">
+                Volver al inicio
+            </a>
+        </p>
+    </div>
+</div>
+{% endblock %}

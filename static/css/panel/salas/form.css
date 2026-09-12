@@ -1,0 +1,44 @@
+/* modificado (Hilo 1): separación CSS completa de panel/salas/form.html
+   (29 estilos inline -> 0). Colores respetados tal cual estaban. */
+
+.panelsalasform-wrapper { max-width: 680px; }
+.panelsalasform-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem; }
+.panelsalasform-titulo { font-size: 1.4rem; color: #1a1a2e; margin: 0; }
+
+.panelsalasform-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; align-items: start; }
+.panelsalasform-full { grid-column: 1 / -1; }
+.panelsalasform-info-body { display: flex; flex-direction: column; gap: 1.1rem; }
+.panelsalasform-fila-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
+
+/* nuevo (Sedes - Fase 3): sede fija (staff restringido, no elige) */
+.panelsalasform-sede-fija {
+    padding: 0.6rem 0.8rem;
+    background-color: #f0f0f5;
+    border: 1px solid #d5d5e0;
+    border-radius: 6px;
+    font-weight: 600;
+    color: #1a1a2e;
+}
+
+.panelsalasform-secciones-header { display: flex; justify-content: space-between; align-items: center; }
+.panelsalasform-btn-agregar { font-size: 0.8rem; }
+.panelsalasform-secciones-ayuda { font-size: 0.8rem; color: #666; margin-top: 0; margin-bottom: 1rem; }
+.panelsalasform-tabla-wrap { overflow-x: auto; }
+.panelsalasform-tabla-oculta { display: none; }
+.panelsalasform-celda-centro { text-align: center; }
+.panelsalasform-delete-label { cursor: pointer; font-size: 0.75rem; display: flex; flex-direction: column; align-items: center; gap: 2px; }
+.panelsalasform-fila-error { color: #e74c3c; font-size: 0.78rem; padding-top: 0; }
+
+.panelsalasform-capacidad-body { text-align: center; }
+.panelsalasform-capacidad-valor { font-size: 3rem; font-weight: 800; color: #1a1a2e; }
+.panelsalasform-capacidad-detalle { color: #666; font-size: 0.9rem; margin-top: 0.25rem; }
+
+.panelsalasform-errores-generales { background: #f8d7da; border-left: 4px solid #e74c3c; padding: 0.75rem 1rem; border-radius: 6px; margin-bottom: 1rem; color: #721c24; }
+.panelsalasform-errores-generales--top { margin-bottom: 0; margin-top: 1rem; padding: 1rem; }
+.panelsalasform-error-linea { margin: 0; }
+
+.panelsalasform-botones { display: flex; gap: 1rem; margin-top: 1.5rem; flex-wrap: wrap; }
+
+/* botón "Quitar" en filas de sección agregadas dinámicamente por JS
+   (antes tenía font-size/padding inline armados en el string de form.js) */
+.btn-quitar-nueva { font-size: 0.7rem; padding: 0.25rem 0.6rem; }

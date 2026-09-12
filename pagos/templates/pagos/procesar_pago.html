@@ -1,153 +1,202 @@
 {% extends 'base.html' %}
-
+{% load static %}
 {% block titulo %}Procesar Pago{% endblock %}
 
+<!-- modificado (Tanda B pagos): separación CSS/JS completa - se sacaron los ~65 estilos inline y se movieron a static/css/pagos/procesar_pago.css, y el <script> se movió a static/js/pagos/procesar_pago.js (cargado en extra_js) -->
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/pagos/procesar_pago.css' %}">
+{% endblock %}
+
 {% block contenido %}
-<div style="max-width: 600px; margin: 0 auto;">
-    <h1 style="text-align: center;">Procesar Pago</h1>
-    
-    <!-- Resumen de la Reserva -->
-    <div style="background-color: white; padding: 1.5rem; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); margin-top: 1.5rem; margin-bottom: 1.5rem;">
-        <h3 style="color: #333; margin-bottom: 1rem; border-bottom: 2px solid #007bff; padding-bottom: 0.5rem;">
-            Resumen de la Reserva
-        </h3>
-        <p style="margin: 0.5rem 0;"><strong>Código:</strong> {{ reserva.codigo_reserva }}</p>
-        <p style="margin: 0.5rem 0;"><strong>Película:</strong> {{ reserva.funcion.pelicula.titulo }}</p>
-        <p style="margin: 0.5rem 0;"><strong>Fecha y Hora:</strong> {{ reserva.funcion.fecha_hora|date:"d/m/Y H:i" }}</p>
-        <p style="margin: 0.5rem 0;"><strong>Sala:</strong> {{ reserva.funcion.sala.nombre }}</p>
-        <p style="margin: 0.5rem 0;"><strong>Entradas:</strong> {{ reserva.cantidad_entradas }}</p>
-        
-        <div style="margin-top: 1rem; padding: 1rem; background-color: #e7f3ff; border-radius: 4px;">
-            <p style="margin: 0; font-size: 1.5rem; font-weight: bold; color: #333;">
-                Total a Pagar: ${{ reserva.total }}
-            </p>
+
+<div class="pago-container">
+    <h1 class="pago-titulo">💳 Procesar Pago</h1>
+
+    {# ============================================================ #}
+    {# AVISO PAGO SIMULADO                                          #}
+    {# ============================================================ #}
+    <div class="pago-aviso-simulado">
+        <div class="pago-aviso-simulado-icono">🧪</div>
+        <div class="pago-aviso-simulado-texto">
+            <div class="pago-aviso-simulado-titulo">ENTORNO DE DEMOSTRACIÓN — PAGO SIMULADO</div>
+            <div class="pago-aviso-simulado-desc">No se realizará ningún cobro real. Podés usar cualquier número de tarjeta.</div>
         </div>
     </div>
-    
-    <!-- Formulario de Pago -->
-    <div style="background-color: white; padding: 2rem; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
-        <h3 style="color: #333; margin-bottom: 1.5rem;">Método de Pago</h3>
-        
-        <form method="post" id="pagoForm">
-            {% csrf_token %}
-            
-            <!-- Selección de Método -->
-            <div style="margin-bottom: 1.5rem;">
-                <label style="display: block; margin-bottom: 1rem; font-weight: bold;">
-                    Seleccionar método de pago:
-                </label>
-                
-                <div style="display: flex; flex-direction: column; gap: 1rem;">
-                    <label style="display: flex; align-items: center; padding: 1rem; border: 2px solid #ddd; border-radius: 4px; cursor: pointer; transition: all 0.2s;" onclick="this.querySelector('input').checked = true; actualizarFormulario()">
-                        <input type="radio" name="metodo_pago" value="efectivo" required style="margin-right: 1rem;">
+
+    {# ============================================================ #}
+    {# CONTADOR REGRESIVO                                           #}
+    {# ============================================================ #}
+    {% if reserva.tiempo_restante_pago %}
+    <div id="countdownContainer" class="pago-countdown">
+        <div class="pago-countdown-label">Completá el pago antes de que expire el tiempo:</div>
+        <div id="countdown" class="pago-countdown-numero" data-tiempo="{{ reserva.tiempo_restante_pago }}">
+            {{ reserva.tiempo_restante_formato }}
+        </div>
+        <div class="pago-countdown-footer">La reserva se cancelará automáticamente si no completás el pago</div>
+    </div>
+    {% endif %}
+
+    <div id="layoutPago" class="pago-layout">
+
+        {# ──────────────── COLUMNA IZQUIERDA: método de pago ──────────────── #}
+        <div class="pago-metodo-panel">
+            <h2 class="pago-metodo-titulo">Método de Pago</h2>
+
+            <form method="post" id="pagoForm">
+                {% csrf_token %}
+
+                <div class="pago-metodos-lista">
+                    <label class="metodo-pago-card" onclick="selectMetodo('tarjeta_debito', this)">
+                        <input type="radio" name="metodo_pago" value="tarjeta_debito" required>
                         <div>
-                            <strong>💵 Efectivo</strong>
-                            <p style="margin: 0.25rem 0 0 0; font-size: 0.9rem; color: #666;">Pagar en boletería</p>
+                            <strong class="pago-metodo-nombre">💳 Tarjeta de Débito</strong>
+                            <p class="pago-metodo-desc">Simulado — cualquier número funciona</p>
                         </div>
                     </label>
-                    
-                    <label style="display: flex; align-items: center; padding: 1rem; border: 2px solid #ddd; border-radius: 4px; cursor: pointer; transition: all 0.2s;" onclick="this.querySelector('input').checked = true; actualizarFormulario()">
-                        <input type="radio" name="metodo_pago" value="tarjeta_debito" style="margin-right: 1rem;">
+                    <label class="metodo-pago-card" onclick="selectMetodo('tarjeta_credito', this)">
+                        <input type="radio" name="metodo_pago" value="tarjeta_credito" required>
                         <div>
-                            <strong>💳 Tarjeta de Débito</strong>
-                            <p style="margin: 0.25rem 0 0 0; font-size: 0.9rem; color: #666;">Visa, Mastercard</p>
+                            <strong class="pago-metodo-nombre">💳 Tarjeta de Crédito</strong>
+                            <p class="pago-metodo-desc">Simulado — cualquier número funciona</p>
                         </div>
                     </label>
-                    
-                    <label style="display: flex; align-items: center; padding: 1rem; border: 2px solid #ddd; border-radius: 4px; cursor: pointer; transition: all 0.2s;" onclick="this.querySelector('input').checked = true; actualizarFormulario()">
-                        <input type="radio" name="metodo_pago" value="tarjeta_credito" style="margin-right: 1rem;">
+                    <label class="metodo-pago-card" onclick="selectMetodo('transferencia', this)">
+                        <input type="radio" name="metodo_pago" value="transferencia" required>
                         <div>
-                            <strong>💳 Tarjeta de Crédito</strong>
-                            <p style="margin: 0.25rem 0 0 0; font-size: 0.9rem; color: #666;">Visa, Mastercard, Amex</p>
-                        </div>
-                    </label>
-                    
-                    <label style="display: flex; align-items: center; padding: 1rem; border: 2px solid #ddd; border-radius: 4px; cursor: pointer; transition: all 0.2s;" onclick="this.querySelector('input').checked = true; actualizarFormulario()">
-                        <input type="radio" name="metodo_pago" value="transferencia" style="margin-right: 1rem;">
-                        <div>
-                            <strong>🏦 Transferencia Bancaria</strong>
-                            <p style="margin: 0.25rem 0 0 0; font-size: 0.9rem; color: #666;">Débito inmediato</p>
+                            <strong class="pago-metodo-nombre">🏦 Transferencia</strong>
+                            <p class="pago-metodo-desc">Transferencia bancaria (simulada)</p>
                         </div>
                     </label>
                 </div>
-            </div>
-            
-            <!-- Campos de Tarjeta (aparecen solo si se elige tarjeta) -->
-            <div id="camposTarjeta" style="display: none; margin-bottom: 1.5rem; padding: 1rem; background-color: #f8f9fa; border-radius: 4px;">
-                <p style="margin: 0 0 1rem 0; font-size: 0.9rem; color: #666;">
-                    <strong>ℹ️ Simulación:</strong> Ingresá cualquier número de tarjeta (solo para demo)
-                </p>
-                
-                <div style="margin-bottom: 1rem;">
-                    <label for="numero_tarjeta" style="display: block; margin-bottom: 0.5rem; font-weight: bold;">
-                        Número de Tarjeta:
-                    </label>
-                    <input 
-                        type="text" 
-                        id="numero_tarjeta" 
-                        name="numero_tarjeta" 
-                        placeholder="1234 5678 9012 3456"
-                        maxlength="16"
-                        style="width: 100%; padding: 0.5rem; border: 1px solid #ddd; border-radius: 4px; font-size: 1rem;"
-                    >
+
+                {# Campos de tarjeta (se muestran solo si es tarjeta) #}
+                <div id="datosTarjeta" class="pago-datos-tarjeta">
+                    <div class="pago-datos-tarjeta-aviso">
+                        <span class="pago-datos-tarjeta-aviso-icono">🧪</span>
+                        <span class="pago-datos-tarjeta-aviso-texto"><strong>Modo simulación:</strong> usá cualquier número.</span>
+                    </div>
+                    <h3 class="pago-datos-tarjeta-titulo">Datos de la Tarjeta</h3>
+                    <div class="pago-campo">
+                        <label class="pago-campo-label">Nombre del Titular:</label>
+                        <input type="text" id="nombre_titular" name="nombre_titular" placeholder="Como aparece en la tarjeta"
+                            class="pago-campo-input">
+                    </div>
+                    <div class="pago-campo">
+                        <label class="pago-campo-label">Número de Tarjeta:</label>
+                        <input type="text" id="numero_tarjeta" name="numero_tarjeta" placeholder="1234 5678 9012 3456" maxlength="19"
+                            class="pago-campo-input">
+                    </div>
+                    <div class="pago-campo-grid">
+                        <div>
+                            <label class="pago-campo-label">Vencimiento:</label>
+                            <input type="text" id="vencimiento" name="vencimiento" placeholder="MM/AA" maxlength="5"
+                                class="pago-campo-input">
+                        </div>
+                        <div>
+                            <label class="pago-campo-label">CVV:</label>
+                            <input type="text" id="cvv" name="cvv" placeholder="123" maxlength="4"
+                                class="pago-campo-input">
+                        </div>
+                    </div>
+                </div>
+
+                <div class="pago-acciones">
+                    <button type="submit" id="submitBtn" class="pago-btn-confirmar">
+                        Confirmar
+                    </button>
+                    <a href="{% url 'reservas:mis_reservas' %}" class="pago-btn-cancelar">
+                        Cancelar
+                    </a>
+                </div>
+            </form>
+        </div>
+
+        {# ──────────────── COLUMNA DERECHA: RESUMEN (sticky) ──────────────── #}
+        <div id="sidebarResumenPago" class="pago-resumen-sidebar">
+            <div class="pago-resumen-card">
+                <div class="pago-resumen-header">RESUMEN DE TU RESERVA</div>
+
+                <div class="pago-resumen-seccion">
+                    <div class="pago-resumen-label">Película</div>
+                    <div class="pago-resumen-valor">{{ reserva.funcion.pelicula.titulo }}</div>
+                    <div class="pago-resumen-detalle">
+                        {# nuevo (Sedes - tareasnuevas punto 4): sede visible antes de confirmar el pago #}
+                        📍 {{ reserva.funcion.sala.sede.nombre }} — {{ reserva.funcion.sala.nombre }} · {{ reserva.funcion.fecha_hora|date:"d/m/Y" }} · {{ reserva.funcion.fecha_hora|date:"H:i" }} hs
+                    </div>
+                </div>
+
+                <div class="pago-resumen-seccion">
+                    <div class="pago-resumen-label">Entradas</div>
+                    <div class="pago-resumen-valor">{{ reserva.cantidad_entradas }}</div>
+                    {% if reserva.asientos_seleccionados %}
+                    <div class="pago-resumen-detalle">Asientos: {{ reserva.asientos_formateados }}</div>
+                    {% endif %}
+                    <div class="pago-resumen-codigo-linea">
+                        Código de reserva: <span class="pago-resumen-codigo">{{ reserva.codigo_reserva }}</span>
+                    </div>
+                </div>
+
+                <div class="pago-resumen-seccion">
+                    {% if reserva.tiene_precios_mixtos %}
+                        {% for item in reserva.desglose_precios_asientos %}
+                        <div class="pago-resumen-fila">
+                            <span>Asiento {{ item.codigo }}</span><span>${{ item.precio }}</span>
+                        </div>
+                        {% endfor %}
+                    {% else %}
+                        <div class="pago-resumen-fila">
+                            <span>Precio por entrada</span><span>${{ reserva.funcion.precio_final }}</span>
+                        </div>
+                    {% endif %}
+                </div>
+
+                {% if mostrar_bloque_promos %}
+                <div class="pago-resumen-seccion">
+                    <div class="pago-resumen-label">Promociones aplicadas</div>
+                    {% if promo_dia %}
+                    <div class="pago-resumen-fila-descuento">
+                        <span>🎉 {{ promo_dia.nombre }}</span><span>-${{ descuento_promo_dia }}</span>
+                    </div>
+                    {% endif %}
+                    {% if cupon_obj %}
+                    <div class="pago-resumen-fila-descuento">
+                        <span>Cupón {{ cupon_obj.codigo }}</span><span>-${{ descuento_cupon }}</span>
+                    </div>
+                    {% endif %}
+
+                    {% comment %} {% if combo_obj %}
+                    <div class="pago-resumen-fila-combo">
+                        <span>🍿 {% if cantidad_combo > 1 %}{{ cantidad_combo }}x {% endif %}{{ combo_obj.nombre }}</span><span>+${{ precio_combo }}</span>
+                    </div>
+                    {% endif %} {% endcomment %}
+                    {# modificado (combos múltiples): antes un solo combo_obj/cantidad_combo/precio_combo, ahora se itera items_detalle (uno por cada ítem elegido) #}
+                    {% for item in items_detalle %}
+                    <div class="pago-resumen-fila-combo">
+                        <span>🍿 {% if item.cantidad > 1 %}{{ item.cantidad }}x {% endif %}{{ item.combo_obj.nombre }}</span><span>+${{ item.subtotal }}</span>
+                    </div>
+                    {% endfor %}
+                </div>
+                {% endif %}
+
+                <div class="pago-resumen-total">
+                    <span class="pago-resumen-total-label">Total</span>
+                    <span class="pago-resumen-total-valor">${{ monto_final }}</span>
                 </div>
             </div>
-            
-            <!-- Aviso -->
-            <div style="background-color: #e7f3ff; padding: 1rem; border-radius: 4px; margin-bottom: 1.5rem;">
-                <p style="margin: 0; font-size: 0.9rem; color: #004085;">
-                    <strong>ℹ️ Simulación de Pago</strong><br>
-                    Este es un pago simulado para demostración. No se procesará ningún cargo real.
-                </p>
-            </div>
-            
-            <!-- Botones -->
-            <div style="display: flex; gap: 1rem;">
-                <button type="submit" style="flex: 1; padding: 0.75rem; background-color: #28a745; color: white; border: none; border-radius: 4px; font-weight: bold; cursor: pointer; font-size: 1rem;">
-                    💳 Confirmar Pago
-                </button>
-                <a href="{% url 'reservas:mis_reservas' %}" style="flex: 1; padding: 0.75rem; background-color: #6c757d; color: white; border-radius: 4px; text-align: center; text-decoration: none; font-weight: bold; font-size: 1rem; display: flex; align-items: center; justify-content: center;">
-                    Cancelar
-                </a>
-            </div>
-        </form>
+        </div>
     </div>
 </div>
 
-<script>
-    function actualizarFormulario() {
-        const metodoSeleccionado = document.querySelector('input[name="metodo_pago"]:checked');
-        const camposTarjeta = document.getElementById('camposTarjeta');
-        const numeroTarjeta = document.getElementById('numero_tarjeta');
-        
-        if (metodoSeleccionado) {
-            // Resaltar opción seleccionada
-            document.querySelectorAll('input[name="metodo_pago"]').forEach(radio => {
-                const label = radio.closest('label');
-                if (radio.checked) {
-                    label.style.borderColor = '#007bff';
-                    label.style.backgroundColor = '#e7f3ff';
-                } else {
-                    label.style.borderColor = '#ddd';
-                    label.style.backgroundColor = 'white';
-                }
-            });
-            
-            // Mostrar campos de tarjeta si es necesario
-            if (metodoSeleccionado.value === 'tarjeta_debito' || metodoSeleccionado.value === 'tarjeta_credito') {
-                camposTarjeta.style.display = 'block';
-                numeroTarjeta.required = true;
-            } else {
-                camposTarjeta.style.display = 'none';
-                numeroTarjeta.required = false;
-            }
-        }
-    }
-    
-    // Actualizar cuando cambie la selección
-    document.querySelectorAll('input[name="metodo_pago"]').forEach(radio => {
-        radio.addEventListener('change', actualizarFormulario);
-    });
-</script>
+{% endblock %}
 
+{% block extra_js %}
+<script src="{% static 'js/pagos/procesar_pago.js' %}"></script>
+{% if reserva.tiempo_restante_pago %}
+<script>
+    // modificado: el tiempo restante se pasa por data-tiempo en el HTML (ver #countdown),
+    // la URL de redirección por expiración necesita el url de Django así que
+    // se define acá como variable global que usa procesar_pago.js
+    window.PAGO_URL_MIS_RESERVAS = "{% url 'reservas:mis_reservas' %}";
+</script>
+{% endif %}
 {% endblock %}

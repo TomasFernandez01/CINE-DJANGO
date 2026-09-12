@@ -1,0 +1,20 @@
+/* nuevo: badges de info de película (clasificación/género/duración/año), compartidas
+   entre detalle_pelicula.html y lista_funciones.html (antes vivían solo en css/peliculas/detalle.css) */
+
+.detalle-badges {
+    display: flex;
+    gap: 0.5rem;
+    flex-wrap: wrap;
+    margin-bottom: 1.25rem;
+}
+
+.detalle-badge {
+    padding: 0.25rem 0.75rem;
+    border-radius: 20px;
+    font-size: 0.85rem;
+    font-weight: bold;
+}
+
+.detalle-badge-clasificacion { background-color: #e50914; color: white; }
+.detalle-badge-genero { background-color: #2a2a3d; color: #8ab4ff; }
+.detalle-badge-gris { background-color: #2c2c2c; color: #ccc; }

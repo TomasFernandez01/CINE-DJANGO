@@ -1,0 +1,43 @@
+{% extends 'panel/base_panel.html' %}
+{% load static %}
+
+{% block titulo %}Dashboard — Panel Cine Online{% endblock %}
+
+{% block breadcrumb %}
+<span class="sep">›</span>
+<span class="current">Dashboard</span>
+{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/panel/dashboard/inicio.css' %}">
+{% endblock %}
+
+{% block contenido %}
+<!-- nuevo (T14 - reorg Dashboard): esto reemplaza a la vieja página única
+     de Dashboard con TODOS los gráficos mezclados. Ahora es solo un menú
+     de 4 tarjetas — cada gráfico vive en la sub-sección de la app a la
+     que pertenece (ver panel/views/dashboard.py para el detalle de qué
+     gráfico fue a cada una). -->
+<p class="dash-inicio-intro">Elegí qué querés analizar. Cada sección tiene los gráficos de esa parte del sistema, para no mezclar todo en una sola pantalla.</p>
+
+<div class="dash-inicio-grid">
+    <a href="{% url 'panel:dashboard_catalogo' %}" class="dash-inicio-card dash-inicio-card--catalogo">
+        <span class="dash-inicio-card-titulo">Catálogo</span>
+        <span class="dash-inicio-card-desc">Top películas por recaudación, calificación vs. recaudación</span>
+    </a>
+    <a href="{% url 'panel:dashboard_promociones' %}" class="dash-inicio-card dash-inicio-card--promociones">
+        <span class="dash-inicio-card-titulo">Promociones</span>
+        <span class="dash-inicio-card-desc">Consumo de combos, ticket con/sin combo, ROI y uso de cupones</span>
+    </a>
+    <a href="{% url 'panel:dashboard_operaciones' %}" class="dash-inicio-card dash-inicio-card--operaciones">
+        <span class="dash-inicio-card-titulo">Operaciones</span>
+        <span class="dash-inicio-card-desc">KPIs del período, ventas, embudo de reservas, franjas horarias pico, método de pago</span>
+    </a>
+    {% if request.user.is_superuser %}
+    <a href="{% url 'panel:dashboard_administracion' %}" class="dash-inicio-card dash-inicio-card--administracion">
+        <span class="dash-inicio-card-titulo">Administración</span>
+        <span class="dash-inicio-card-desc">Ranking comparativo entre todas las sedes</span>
+    </a>
+    {% endif %}
+</div>
+{% endblock %}

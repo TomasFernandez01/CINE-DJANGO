@@ -1,0 +1,76 @@
+{% extends 'panel/base_panel.html' %}
+
+{% load static %}
+
+{% block titulo %}Confirmar eliminación — Panel{% endblock %}
+
+{% block breadcrumb %}
+<span class="sep">›</span>
+<a href="{% url 'panel:combos_lista' %}">Combos</a>
+<span class="sep">›</span>
+<span class="current">Confirmar eliminación</span>
+{% endblock %}
+
+{% block extra_css %}
+<!-- modificado: CSS compartido entre los 3 confirmar_eliminar (combos/cupones/promodia) -->
+<link rel="stylesheet" href="{% static 'css/panel/promociones/confirmar_eliminar.css' %}">
+{% endblock %}
+
+{% block contenido %}
+<!-- modificado (T5 - cero emojis): se sacaron los emojis del título (⚠️) y del botón "🗑️ Sí, eliminar definitivamente" (más abajo). -->
+
+<div class="panelconfelim-wrap">
+
+    <h1 class="panelconfelim-titulo"> Confirmar eliminación</h1>
+    <p class="panelconfelim-texto">
+        Esta acción no se puede deshacer. A diferencia de otras entidades del panel, borrar un
+        combo <strong>no borra pagos en cascada</strong>: los pagos históricos que usaron este
+        combo se conservan, solo quedan sin la referencia al combo (dejan de mostrarlo).
+    </p>
+
+    <div class="card panelconfelim-card">
+        <div class="card-header"><h3>Se eliminará lo siguiente</h3></div>
+        <div class="panelconfelim-tabla-wrap">
+            <table class="tabla">
+                <thead>
+                    <tr>
+                        <th>Combo</th>
+                        <th>Pagos que quedarán sin este combo (no se borran)</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for item in resumen %}
+                    <tr>
+                        <td class="panelconfelim-col-nombre">{{ item.combo.nombre }}</td>
+                        <td>
+                            {% if item.total_pagos %}
+                            <span class="panelconfelim-cantidad-warn">{{ item.total_pagos }}</span>
+                            {% else %}
+                            <span class="panelconfelim-cantidad-cero">0</span>
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <form method="post" action="{% url 'panel:combos_eliminar' %}">
+        {% csrf_token %}
+        {% for id in ids %}
+        <input type="hidden" name="seleccionadas" value="{{ id }}">
+        {% endfor %}
+        <input type="hidden" name="confirmado" value="1">
+
+        <div class="panelconfelim-botones">
+            <button type="submit" class="btn btn-danger panelconfelim-btn-eliminar">
+                 Sí, eliminar definitivamente
+            </button>
+            <a href="{% url 'panel:combos_lista' %}" class="btn btn-ghost">Cancelar</a>
+        </div>
+    </form>
+
+</div>
+
+{% endblock %}

@@ -1,0 +1,116 @@
+{% extends 'panel/base_panel.html' %}
+
+{% load static %}
+
+{% block titulo %}Reservas — Panel{% endblock %}
+
+{% block breadcrumb %}
+<span class="sep">›</span>
+<span class="current">Reservas</span>
+{% endblock %}
+
+{% block extra_css %}
+<!-- modificado: CSS separado a static/css/panel/reservas/lista.css (antes todo con style="" inline) -->
+<link rel="stylesheet" href="{% static 'css/panel/reservas/lista.css' %}">
+{% endblock %}
+
+{% block contenido %}
+<!-- modificado (T5 - cero emojis): se sacó el emoji 🎫 del título. -->
+
+<div class="panelres-lista-encabezado">
+    <h1 class="panelres-lista-titulo"> Reservas</h1>
+    <div class="panelres-lista-contador">
+        Mostrando {{ reservas|length }} de {{ total }}
+    </div>
+</div>
+
+<!-- Filtros -->
+<div class="card panelres-lista-filtros-card">
+    <div class="card-body panelres-lista-filtros-body">
+        <form method="get" class="panelres-lista-filtros-form">
+            <input type="text" name="q" value="{{ busqueda }}" class="input panelres-lista-filtro-busqueda"
+                   placeholder="Código, usuario o película...">
+            <select name="estado" class="select">
+                <option value="">Todos los estados</option>
+                {% for val, label in estados %}
+                <option value="{{ val }}" {% if estado == val %}selected{% endif %}>
+                    {{ label }}
+                </option>
+                {% endfor %}
+            </select>
+            <button type="submit" class="btn btn-dark">Filtrar</button>
+            <a href="{% url 'panel:reservas_lista' %}" class="btn btn-ghost">Limpiar</a>
+        </form>
+    </div>
+</div>
+
+<!-- Tabla -->
+<div class="card">
+    {% if reservas %}
+    <table class="tabla">
+        <thead>
+            <tr>
+                <th>Código</th>
+                <th>Usuario</th>
+                <th>Película</th>
+                <th>Función</th>
+                <th>Asientos</th>
+                <th>Total</th>
+                <th>Estado</th>
+                <th>Fecha</th>
+                <th></th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for r in reservas %}
+            <tr>
+                <td>
+                    <a href="{% url 'panel:reservas_detalle' r.id %}" class="panelres-lista-codigo">
+                        {{ r.codigo_reserva }}
+                    </a>
+                </td>
+                <td class="panelres-lista-usuario">
+                    {{ r.usuario.get_full_name|default:r.usuario.username }}
+                </td>
+                <td class="panelres-lista-pelicula">
+                    {{ r.funcion.pelicula.titulo }}
+                </td>
+                <td class="panelres-lista-funcion">
+                    {{ r.funcion.fecha_hora|date:"d/m/Y H:i" }}
+                </td>
+                <td class="panelres-lista-asientos">
+                    {% if r.asientos_seleccionados %}
+                        {{ r.asientos_formateados }}
+                    {% else %}
+                        {{ r.cantidad_entradas }} entrada(s)
+                    {% endif %}
+                </td>
+                <td class="panelres-lista-total">
+                    ${{ r.total|floatformat:0 }}
+                </td>
+                <td>
+                    <span class="badge badge-{{ r.estado }}">
+                        {{ r.get_estado_display }}
+                    </span>
+                </td>
+                <td class="panelres-lista-fecha">
+                    {{ r.fecha_reserva|date:"d/m H:i" }}
+                </td>
+                <td>
+                    <a href="{% url 'panel:reservas_detalle' r.id %}"
+                       class="btn btn-ghost panelres-lista-btn-ver">
+                        Ver
+                    </a>
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    {% else %}
+    <div class="card-body panelres-lista-vacio">
+        No se encontraron reservas con esos filtros.
+    </div>
+    {% endif %}
+</div>
+
+{% endblock %}

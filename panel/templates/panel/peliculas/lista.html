@@ -1,0 +1,193 @@
+{% extends 'panel/base_panel.html' %}
+
+{% load static %}
+{% block titulo %}Películas — Panel{% endblock %}
+
+{% block breadcrumb %}
+<span class="sep">></span>
+<span class="current">Películas</span>
+{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/panel/peliculas/lista.css' %}">
+{% endblock %}
+
+{% block contenido %}
+
+<!-- MODIFICACION GEMINI: Encabezado del módulo con acciones filtradas por rol (SuperUser vs Staff) -->
+<div class="panelpelis-header">
+    <h1 class="panelpelis-titulo">Películas</h1>
+    <div class="panelpelis-header-acciones">
+        <a href="{% url 'panel:inicio' %}" class="btn btn-primary">INICIO</a>
+        {% if es_super %}
+            <button type="submit" form="formPeliculas" id="btnEliminarSeleccionadas" class="btn btn-danger" disabled>Eliminar</button>
+            <a href="{% url 'panel:peliculas_crear' %}" class="btn btn-primary">NUEVA</a>
+            <a href="{% url 'panel:peliculas_buscar_tmdb' %}" class="btn btn-primary">TMDB</a>
+        {% endif %}
+    </div>
+</div>
+
+<!-- Filtros de búsqueda -->
+<div class="card panelpelis-filtros-card">
+    <div class="card-body panelpelis-filtros-body">
+        <form method="get" class="panelpelis-filtros-form">
+            <input type="text" name="q" value="{{ busqueda }}" class="input panelpelis-filtro-input"
+                   placeholder="Título...">
+            <select name="cartelera" class="select">
+                <option value="">Todas</option>
+                <option value="si" {% if en_cartelera == 'si' %}selected{% endif %}>En cartelera</option>
+                <option value="no" {% if en_cartelera == 'no' %}selected{% endif %}>Fuera de cartelera</option>
+            </select>
+            <button type="submit" class="btn btn-dark">Filtrar</button>
+            <a href="{% url 'panel:peliculas_lista' %}" class="btn btn-ghost">Limpiar</a>
+        </form>
+    </div>
+</div>
+
+<!-- Contador de resultados -->
+<div class="panelpelis-resultado-contador">
+    {{ total }} película(s) encontrada(s)
+</div>
+
+<form method="post" action="{% url 'panel:peliculas_eliminar' %}" id="formPeliculas" data-eliminar-modal>
+    {% csrf_token %}
+    {% if peliculas %}
+    <div class="panelpelis-grid">
+        {% for p in peliculas %}
+        <div class="card panelpelis-card">
+            <!-- Poster -->
+            <div class="panelpelis-card-poster">
+                {% if p.poster %}
+                    <img src="{{ p.poster.url }}" alt="{{ p.titulo }}" class="panelpelis-card-poster-img">
+                {% else %}
+                    <div class="panelpelis-card-poster-placeholder">[POSTER]</div>
+                {% endif %}
+
+                {% if es_super %}
+                <label class="panelpelis-card-checkbox-label">
+                    <input type="checkbox" name="seleccionadas" value="{{ p.id }}" class="chk-pelicula panel-checkbox">
+                </label>
+                {% endif %}
+
+                <span class="panelpelis-card-badge {% if p.en_cartelera %}panelpelis-card-badge--activa{% else %}panelpelis-card-badge--inactiva{% endif %}">
+                    {% if p.en_cartelera %}En cartelera{% else %}Inactiva{% endif %}
+                </span>
+            </div>
+
+            <!-- Info -->
+            <div class="panelpelis-card-info">
+                <div class="panelpelis-card-nombre" title="{{ p.titulo }}">{{ p.titulo }}</div>
+                <div class="panelpelis-card-dato">
+                    {% if p.genero %}{{ p.get_genero_display }}{% endif %}
+                    {% if p.año %} · {{ p.año }}{% endif %}
+                    {% if p.duracion %} · {{ p.duracion_formato }}{% endif %}
+                </div>
+                <!-- modificado (Hilo 4 - Claude): el badge de T2 era texto plano
+                     (panelpelis-card-dato) porque esa tanda no tenía permitido tocar
+                     CSS. Ahora tiene su propio estilo de color, sin tocar
+                     panelpelis-card-badge (esa sigue reservada al estado global
+                     "En cartelera" sobre el poster, para no romper ese diseño). -->
+<!-- modificado (T2): badge de visibilidad por sede para Staff con sede fija.
+                     Reutiliza la clase panelpelis-card-dato (ya existente, sin CSS nuevo:
+                     esta tanda no tiene permitido tocar archivos .css) porque
+                     panelpelis-card-badge está reservada/posicionada para el estado
+                     de "En cartelera" sobre el poster y superponerla acá rompería el
+                     diseño. No se filtra el listado: el Staff sigue viendo todo el
+                     catálogo, solo se le indica si hay funciones en SU sede. -->
+                     {% if not es_super and sede_staff %}
+                     <div class="panelpelis-card-dato">
+                <span class="panelpelis-badge-sede {% if p.tiene_funciones_en_mi_sede %}panelpelis-badge-sede--si{% else %}panelpelis-badge-sede--no{% endif %}">
+                    {% if p.tiene_funciones_en_mi_sede %}
+                        En cartelera en tu sede ({{ sede_staff.nombre }})
+                    {% else %}
+                        Sin funciones en tu sede ({{ sede_staff.nombre }})
+                    {% endif %}
+                </span>
+                </div>
+                {% endif %}
+                <div class="panelpelis-card-acciones">
+                    <a href="{% url 'panel:peliculas_detalle' p.id %}" class="btn btn-dark panelpelis-card-btn-ver">VER</a>
+                    <a href="{% url 'panel:peliculas_editar' p.id %}" class="btn btn-ghost panelpelis-card-btn-editar" title="Editar película">EDITAR</a>
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+    {% else %}
+    <div class="card">
+        <div class="card-body panelpelis-vacio">
+            No se encontraron películas con esos filtros.
+        </div>
+    </div>
+    {% endif %}
+</form>
+
+{% if page_obj.has_other_pages %}
+<div class="panelpelis-paginacion">
+    {% if page_obj.has_previous %}
+        <a href="?page=1{% if busqueda %}&q={{ busqueda }}{% endif %}{% if en_cartelera %}&cartelera={{ en_cartelera }}{% endif %}" class="btn btn-ghost panelpelis-paginacion-btn">Primero</a>
+        <a href="?page={{ page_obj.previous_page_number }}{% if busqueda %}&q={{ busqueda }}{% endif %}{% if en_cartelera %}&cartelera={{ en_cartelera }}{% endif %}" class="btn btn-ghost panelpelis-paginacion-btn">Anterior</a>
+    {% endif %}
+
+    <span class="panelpelis-paginacion-info">
+        Página {{ page_obj.number }} de {{ page_obj.paginator.num_pages }}
+    </span>
+
+    {% if page_obj.has_next %}
+        <a href="?page={{ page_obj.next_page_number }}{% if busqueda %}&q={{ busqueda }}{% endif %}{% if en_cartelera %}&cartelera={{ en_cartelera }}{% endif %}" class="btn btn-ghost panelpelis-paginacion-btn">Siguiente</a>
+        <a href="?page={{ page_obj.paginator.num_pages }}{% if busqueda %}&q={{ busqueda }}{% endif %}{% if en_cartelera %}&cartelera={{ en_cartelera }}{% endif %}" class="btn btn-ghost panelpelis-paginacion-btn">Último</a>
+    {% endif %}
+</div>
+{% endif %}
+
+<!-- MODIFICACION GEMINI: Dashboard Analítico de Películas (Estadísticas y Rankings de Catálogo) -->
+<!-- modificado (paleta panel): este bloque tenía la paleta oscura roja/negra
+     del sitio público (Cinemark-style), invasiva dentro del panel administrativo,
+     que usa fondo claro + acento dorado (--accent: #e2b96f, ver base_panel.css).
+     Se reemplazan los colores fijos por los del panel, sin tocar estructura ni JS. -->
+<div class="card" style="margin-top: 3rem; padding: 1.5rem;">
+    <h3 style="color: #1a1a2e; margin-bottom: 1.25rem; font-size: 1.3rem; border-bottom: 3px solid #e2b96f; padding-bottom: 0.5rem;">Analítica del Catálogo de Películas</h3>
+    
+    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 1.5rem;">
+        <!-- Top 5 Películas Más Reservadas -->
+        <div style="background: #f7f8fa; padding: 1.25rem; border-radius: 8px; border: 1px solid #e2e4e8;">
+            <h4 style="color: #c9973a; margin-top: 0; margin-bottom: 1rem; font-size: 1.05rem;">Top 5 Películas Más Reservadas</h4>
+            {% if top_peliculas_stats %}
+                <ul style="list-style: none; padding: 0; margin: 0;">
+                    {% for p in top_peliculas_stats %}
+                        <li style="display: flex; justify-content: space-between; align-items: center; padding: 0.6rem 0; border-bottom: 1px solid #e2e4e8; font-size: 0.9rem; color: #333;">
+                            <span><strong>{{ forloop.counter }}.</strong> {{ p.titulo }}</span>
+                            <span style="color: #777;">{{ p.total_reservas_confirmadas }} reservas (${{ p.recaudacion_estimada|default:0 }})</span>
+                        </li>
+                    {% endfor %}
+                </ul>
+            {% else %}
+                <p style="color: #999; font-size: 0.9rem; margin: 0;">Sin datos de reservas registradas aún.</p>
+            {% endif %}
+        </div>
+
+        <!-- Distribución por Géneros -->
+        <div style="background: #f7f8fa; padding: 1.25rem; border-radius: 8px; border: 1px solid #e2e4e8;">
+            <h4 style="color: #c9973a; margin-top: 0; margin-bottom: 1rem; font-size: 1.05rem;">Distribución por Géneros</h4>
+            {% if generos_stats %}
+                <div style="display: flex; flex-wrap: wrap; gap: 0.5rem;">
+                    {% for g in generos_stats %}
+                        {% if g.genero %}
+                            <span style="background: #ffffff; color: #333; padding: 0.3rem 0.7rem; border-radius: 6px; font-size: 0.85rem; border: 1px solid #e2e4e8;">
+                                {{ g.genero|title }}: <strong>{{ g.total }}</strong>
+                            </span>
+                        {% endif %}
+                    {% endfor %}
+                </div>
+            {% else %}
+                <p style="color: #999; font-size: 0.9rem; margin: 0;">Sin películas cargadas en el catálogo.</p>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+{% endblock %}
+
+{% block extra_js %}
+<script src="{% static 'js/panel/peliculas/lista.js' %}"></script>
+{% endblock %}

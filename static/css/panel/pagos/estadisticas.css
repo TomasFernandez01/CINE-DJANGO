@@ -1,0 +1,168 @@
+/* modificado (Panel > Pagos, Hilo 2): CSS extraído de panel/pagos/estadisticas.html,
+   antes todo con style="" inline. Mismos valores, sin cambios de diseño.
+   Quedan 2 excepciones inline A PROPÓSITO (documentadas en el template): el ancho de la
+   barra de ocupación y el color del porcentaje varían por fila según el dato real
+   (item.ocupacion_pct), no son un valor fijo que se pueda poner en una clase CSS. */
+
+.panelpag-est-encabezado {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 1rem;
+    margin-bottom: 1.5rem;
+}
+
+.panelpag-est-titulo {
+    font-size: 1.4rem;
+    color: #1a1a2e;
+    margin: 0;
+}
+
+.panelpag-est-actualizado {
+    font-size: 0.85rem;
+    color: #666;
+}
+
+.panelpag-est-funciones-card {
+    margin-bottom: 1.5rem;
+}
+
+/* nuevo (Hilo 4 - Claude): form de filtro de rango de fechas (desde/hasta)
+   para ROI de cupones y método de pago. */
+.panelpag-est-rango-form {
+    display: flex;
+    align-items: flex-end;
+    gap: 1rem;
+    flex-wrap: wrap;
+    margin-bottom: 1.5rem;
+    background: white;
+    border-radius: var(--radius);
+    box-shadow: var(--shadow);
+    padding: 1rem 1.25rem;
+}
+.panelpag-est-rango-label {
+    display: flex;
+    flex-direction: column;
+    gap: 0.3rem;
+    font-size: 0.8rem;
+    font-weight: 600;
+    color: #444;
+}
+.panelpag-est-rango-error {
+    background: #f8d7da;
+    border-left: 4px solid #e74c3c;
+    padding: 0.75rem 1rem;
+    border-radius: 6px;
+    margin-bottom: 1rem;
+    color: #721c24;
+    font-size: 0.85rem;
+}
+
+/* nuevo (T14 - reorg Dashboard): link "Ver método de pago..." que quedó
+   en esta página después de mudar esos gráficos a Dashboard. */
+.panelpag-est-link-dashboard {
+    margin-bottom: 1.5rem;
+}
+
+.panelpag-est-col-pelicula {
+    font-weight: 600;
+}
+
+.panelpag-est-col-sala {
+    color: #666;
+}
+
+.panelpag-est-col-horario {
+    font-weight: 600;
+}
+
+.panelpag-est-col-ocupacion {
+    min-width: 180px;
+}
+
+.panelpag-est-ocupacion-wrap {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+}
+
+.panelpag-est-ocupacion-barra-wrap {
+    flex: 1;
+}
+
+.panelpag-est-ocupacion-pct {
+    font-size: 0.85rem;
+    font-weight: 600;
+    white-space: nowrap;
+}
+
+.panelpag-est-col-qr {
+    text-align: center;
+    font-weight: 700;
+}
+
+.panelpag-est-col-qr-sub {
+    color: #999;
+    font-weight: 400;
+    font-size: 0.8rem;
+}
+
+.panelpag-est-tabla-vacio {
+    text-align: center;
+    color: #999;
+    padding: 2rem;
+}
+
+.panelpag-est-2col {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1.5rem;
+}
+
+.panelpag-est-link-chico {
+    font-size: 0.75rem;
+}
+
+.panelpag-est-item {
+    padding: 0.75rem 1.25rem;
+    border-bottom: 1px solid #f0f0f0;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.panelpag-est-item-titulo {
+    font-weight: 600;
+    font-size: 0.875rem;
+}
+
+.panelpag-est-item-sub {
+    font-size: 0.75rem;
+    color: #999;
+}
+
+.panelpag-est-item-monto {
+    font-weight: 700;
+    color: #27ae60;
+}
+
+.panelpag-est-item-derecha {
+    text-align: right;
+}
+
+.panelpag-est-item-ingreso {
+    color: #27ae60;
+    font-weight: 600;
+    font-size: 0.8rem;
+}
+
+.panelpag-est-item-hora {
+    color: #999;
+    font-size: 0.75rem;
+}
+
+.panelpag-est-lista-vacia {
+    text-align: center;
+    color: #999;
+}

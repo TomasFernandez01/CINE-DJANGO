@@ -1,0 +1,144 @@
+/* nuevo (tanda 3): card de "película + sus funciones" en lista_funciones.html, estilo
+   Cinemark (poster a la izquierda, horarios agrupados por tipo de sala a la derecha) */
+
+/* nuevo (visual, punto 5): tipografía propia para el título de la película en
+   esta card -- 'Poppins' semibold, más presencia que la fuente base del sitio
+   sin ser tan condensada/afiche como la que usamos en Mis Reservas (acá la
+   card es más densa: badges + sinopsis + horarios, título alineado a la
+   izquierda, no centrado). Importada acá, scopeada a este archivo, mismo
+   criterio que ya usamos para la tipografía de Mis Reservas. */
+@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@600;700&display=swap');
+
+.funciones-lista {
+    display: flex;
+    flex-direction: column;
+    gap: 1.25rem;
+}
+
+.funcion-pelicula-card {
+    display: flex;
+    gap: 1.5rem;
+    /* background-color: #1f1f1f; */
+    background-color: #000000;
+    /* border-radius: 10px; */
+    padding: 1.25rem;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.35);
+}
+
+/* modificado (visual, punto 4): poster un poco más grande (130px -> 155px),
+   mismo criterio que ya aplicamos en Mis Reservas. */
+.funcion-pelicula-poster {
+    flex: 0 0 auto;
+    display: block;
+    width: 225px;
+}
+
+.funcion-pelicula-poster img {
+    width: 100%;
+    /* border-radius: 8px; */
+    aspect-ratio: 2/3;
+    object-fit: cover;
+    display: block;
+}
+
+.funcion-pelicula-poster-placeholder {
+    width: 155px;
+    aspect-ratio: 2/3;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-size: 2.5rem;
+}
+
+.funcion-pelicula-info {
+    flex: 1;
+    min-width: 0;
+}
+
+/* modificado (visual, punto 6): antes .funcion-pelicula-encabezado era una
+   fila (título a la izquierda, "desde $X" a la derecha, ambos compitiendo
+   por espacio y jerarquía). Ahora el título ocupa su propia fila con más
+   aire, separado del badge de precio (que se armó como su propio elemento
+   más abajo, con más peso visual). Reemplaza también el style="" inline
+   que tenía este bloque (border-bottom, padding, margin). */
+.funcion-pelicula-encabezado {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    flex-wrap: wrap;
+    gap: 0.75rem;
+    border-bottom: 1px solid #333;
+    padding-bottom: 0.6rem;
+    margin-bottom: 0.75rem;
+}
+
+.funcion-pelicula-titulo {
+    margin: 0;
+    font-family: 'Poppins', 'Segoe UI', Arial, sans-serif;
+    font-size: 1.5rem;
+    font-weight: 600;
+    letter-spacing: 0.01em;
+    line-height: 1.2;
+}
+
+.funcion-pelicula-titulo a {
+    color: #f5f5f5;
+    text-decoration: none;
+}
+
+.funcion-pelicula-titulo a:hover {
+    color: #ff5c5c;
+}
+
+/* nuevo (visual, punto 6): badge de precio con más jerarquía que el texto
+   gris de antes -- es el dato que más le importa al usuario para decidir
+   entre películas, ahora se nota. */
+.funcion-pelicula-desde-badge {
+    flex: 0 0 auto;
+    /* background: linear-gradient(135deg, #1e7e34 0%, #145a24 100%); */
+    color: #ffffff;
+    font-weight: bold;
+    font-size: 0.9rem;
+    padding: 0.4rem 0.85rem;
+    border-radius: 20px;
+    white-space: nowrap;
+}
+
+.funcion-pelicula-badges {
+    margin-bottom: 0.75rem;
+}
+
+.funcion-pelicula-sinopsis {
+    color: #cccccc;
+    font-size: 0.9rem;
+    line-height: 1.5;
+    margin: 0 0 1.25rem 0;
+}
+
+@media (max-width: 600px) {
+    .funcion-pelicula-card {
+        flex-direction: column;
+    }
+    .funcion-pelicula-poster,
+    .funcion-pelicula-poster-placeholder {
+        width: 100px;
+    }
+    .funcion-pelicula-titulo {
+        font-size: 1.25rem;
+    }
+    /* nuevo (visual, punto 8): en mobile la card se apila (poster arriba,
+       info abajo con el ancho completo de la pantalla) y la sinopsis
+       completa empuja mucho la fila de horarios hacia abajo -- se recorta
+       a 3 líneas con elipsis en vez de mostrarla entera. En desktop
+       (fuera de este media query) se sigue viendo completa, como antes. */
+    .funcion-pelicula-sinopsis {
+        display: -webkit-box;
+        -webkit-line-clamp: 3;
+        -webkit-box-orient: vertical;
+        overflow: hidden;
+        margin-bottom: 1rem;
+    }
+}

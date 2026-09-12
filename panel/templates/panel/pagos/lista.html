@@ -1,0 +1,127 @@
+{% extends 'panel/base_panel.html' %}
+
+{% load static %}
+
+{% block titulo %}Pagos — Panel{% endblock %}
+
+{% block breadcrumb %}
+<span class="sep">›</span>
+<span class="current">Pagos</span>
+{% endblock %}
+
+{% block extra_css %}
+<!-- modificado: CSS separado a static/css/panel/pagos/lista.css (antes todo con style="" inline) -->
+<link rel="stylesheet" href="{% static 'css/panel/pagos/lista.css' %}">
+{% endblock %}
+
+{% block contenido %}
+
+<!-- modificado (T5 - cero emojis): se sacaron los emojis del título (💳), del botón
+     "📊 Ver estadísticas" y de los íconos de estado QR "✅"/"⏳" de la tabla (más abajo;
+     esos <span> quedan vacíos, el estado lo sigue marcando el title="..." y la clase
+     qr-ok/qr-pendiente). -->
+<div class="panelpag-lista-encabezado">
+    <h1 class="panelpag-lista-titulo"> Pagos</h1>
+    <a href="{% url 'panel:pagos_estadisticas' %}" class="btn btn-success">
+         Ver estadísticas
+    </a>
+</div>
+
+<!-- Filtros -->
+<div class="card panelpag-lista-filtros-card">
+    <div class="card-body panelpag-lista-filtros-body">
+        <form method="get" class="panelpag-lista-filtros-form">
+            <input type="text" name="q" value="{{ busqueda }}" class="input panelpag-lista-filtro-busqueda"
+                   placeholder="Transacción, usuario o código reserva...">
+            <select name="estado" class="select">
+                <option value="">Todos los estados</option>
+                <option value="aprobado"   {% if estado == 'aprobado'   %}selected{% endif %}>Aprobado</option>
+                <option value="pendiente"  {% if estado == 'pendiente'  %}selected{% endif %}>Pendiente</option>
+                <option value="rechazado"  {% if estado == 'rechazado'  %}selected{% endif %}>Rechazado</option>
+            </select>
+            <button type="submit" class="btn btn-dark">Filtrar</button>
+            <a href="{% url 'panel:pagos_lista' %}" class="btn btn-ghost">Limpiar</a>
+        </form>
+    </div>
+</div>
+
+<!-- Resumen del filtro -->
+{% if total > 0 %}
+<div class="panelpag-lista-resumen">
+    <div>
+        <span class="panelpag-lista-resumen-label">Resultados:</span>
+        <strong class="panelpag-lista-resumen-valor">{{ total }}</strong>
+    </div>
+    <div>
+        <span class="panelpag-lista-resumen-label">Subtotal:</span>
+        <strong class="panelpag-lista-resumen-valor--verde">
+            ${{ total_filtrado|floatformat:0 }}
+        </strong>
+    </div>
+</div>
+{% endif %}
+
+<!-- Tabla -->
+<div class="card">
+    {% if pagos %}
+    <table class="tabla">
+        <thead>
+            <tr>
+                <th>Transacción</th>
+                <th>Usuario</th>
+                <th>Película</th>
+                <th>Método</th>
+                <th>Monto</th>
+                <th>Estado</th>
+                <th>QR</th>
+                <th>Fecha</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for pago in pagos %}
+            <tr>
+                <td>
+                    <a href="{% url 'panel:reservas_detalle' pago.reserva.id %}" class="panelpag-lista-transaccion">
+                        {{ pago.numero_transaccion }}
+                    </a>
+                </td>
+                <td class="panelpag-lista-usuario">
+                    {{ pago.reserva.usuario.get_full_name|default:pago.reserva.usuario.username }}
+                </td>
+                <td class="panelpag-lista-pelicula">
+                    {{ pago.reserva.funcion.pelicula.titulo }}
+                </td>
+                <td class="panelpag-lista-metodo">
+                    {{ pago.get_metodo_pago_display }}
+                    {% if pago.ultimos_4_digitos %}
+                    <span class="panelpag-lista-metodo-digitos">(*{{ pago.ultimos_4_digitos }})</span>
+                    {% endif %}
+                </td>
+                <td class="panelpag-lista-monto">
+                    ${{ pago.monto|floatformat:0 }}
+                </td>
+                <td>
+                    <span class="badge badge-{{ pago.estado }}">{{ pago.get_estado_display }}</span>
+                </td>
+                <td class="panelpag-lista-qr-col">
+                    {% if pago.qr_escaneado %}
+                        <span class="panelpag-lista-qr-ok" title="Escaneado {{ pago.fecha_escaneo|date:'H:i' }}"></span>
+                    {% elif pago.codigo_qr %}
+                        <span class="panelpag-lista-qr-pendiente" title="Sin escanear"></span>
+                    {% else %}—{% endif %}
+                </td>
+                <td class="panelpag-lista-fecha">
+                    {{ pago.fecha_pago|date:"d/m H:i" }}
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    {% else %}
+    <div class="card-body panelpag-lista-vacio">
+        No se encontraron pagos con esos filtros.
+    </div>
+    {% endif %}
+</div>
+
+{% endblock %}

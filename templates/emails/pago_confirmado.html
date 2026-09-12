@@ -1,0 +1,248 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pago Confirmado</title>
+</head>
+<!-- modificado (restyle - paleta sitio cliente): mismo criterio que
+     reserva_confirmada.html — fondo negro, tarjeta oscura, acento rojo. -->
+<body style="margin: 0; padding: 0; font-family: 'Segoe UI', Arial, sans-serif; background-color: #000000;">
+    <table width="100%" cellpadding="0" cellspacing="0" style="background-color: #000000; padding: 20px;">
+        <tr>
+            <td align="center">
+                <table width="600" cellpadding="0" cellspacing="0" style="background-color: #141414; border-radius: 8px; overflow: hidden; border: 1px solid #262626;">
+                    
+                    <!-- Header -->
+                    <!-- modificado: gradiente verde -> rojo sólido del sitio. El check ✅ se mantiene como ícono de éxito. -->
+                    <tr>
+                        <td style="background-color: #e50914; padding: 30px; text-align: center;">
+                            <div style="background-color: rgba(255,255,255,0.15); border-radius: 50%; width: 80px; height: 80px; margin: 0 auto 15px; display: flex; align-items: center; justify-content: center;">
+                                <span style="font-size: 50px;">✅</span>
+                            </div>
+                            <h1 style="color: #ffffff; margin: 0; font-size: 28px;">¡Pago Exitoso!</h1>
+                            <p style="color: rgba(255,255,255,0.85); margin: 10px 0 0 0; font-size: 16px;">Tu entrada está confirmada</p>
+                        </td>
+                    </tr>
+                    
+                    <!-- Content -->
+                    <tr>
+                        <td style="padding: 40px 30px;">
+                            <p style="color: #b3b3b3; line-height: 1.6; margin: 0 0 30px 0; font-size: 16px;">
+                                Hola <strong style="color: #e8e8e8;">{{ usuario.first_name|default:usuario.username }}</strong>,<br><br>
+                                ¡Excelente! Tu pago se procesó correctamente y tu entrada está confirmada. Te esperamos en el cine.
+                            </p>
+                            
+                            <!-- Transaction Info -->
+                            <!-- modificado: verde pastel -> verde oscuro, mismo tono de acento que el resto de los montos -->
+                            <table width="100%" cellpadding="0" cellspacing="0" style="background-color: #12271a; border-radius: 8px; overflow: hidden; margin-bottom: 20px;">
+                                <tr>
+                                    <td style="padding: 20px; text-align: center;">
+                                        <p style="color: #6fcf97; margin: 0 0 5px 0; font-size: 14px;">Número de Transacción</p>
+                                        <p style="color: #2ecc71; margin: 0; font-size: 24px; font-weight: bold; font-family: monospace;">{{ pago.numero_transaccion }}</p>
+                                    </td>
+                                </tr>
+                            </table>
+                            
+                            <!-- Payment Details -->
+                            <table width="100%" cellpadding="0" cellspacing="0" style="background-color: #1f1f1f; border-radius: 8px; overflow: hidden; margin-bottom: 20px;">
+                                <tr>
+                                    <td style="padding: 20px;">
+                                        <h3 style="color: #f5f5f5; margin: 0 0 15px 0; font-size: 18px; border-bottom: 2px solid #e50914; padding-bottom: 10px;">
+                                            💳 Información del Pago
+                                        </h3>
+                                        
+                                        <table width="100%" cellpadding="8" cellspacing="0">
+                                            <tr>
+                                                <td style="color: #999999; font-weight: bold; width: 40%;">Método de Pago:</td>
+                                                <td style="color: #e8e8e8;">{{ pago.get_metodo_pago_display }}</td>
+                                            </tr>
+                                            {% if pago.ultimos_4_digitos %}
+                                            <tr>
+                                                <td style="color: #999999; font-weight: bold;">Tarjeta:</td>
+                                                <td style="color: #e8e8e8;">**** **** **** {{ pago.ultimos_4_digitos }}</td>
+                                            </tr>
+                                            {% endif %}
+                                            <tr>
+                                                <td style="color: #999999; font-weight: bold;">Fecha:</td>
+                                                <td style="color: #e8e8e8;">{{ pago.fecha_pago|date:"d/m/Y H:i" }}</td>
+                                            </tr>
+                                            <tr>
+                                                <td style="color: #999999; font-weight: bold; font-size: 18px;">Monto Pagado:</td>
+                                                <td style="color: #2ecc71; font-size: 24px; font-weight: bold;">${{ pago.monto }}</td>
+                                            </tr>
+                                        </table>
+                                    </td>
+                                </tr>
+                            </table>
+
+                            <!-- nuevo (restyle - combos/comida): mismo criterio que
+                                 pagos/templates/pagos/comprobante_pago.html — se itera
+                                 pago.items.all (detalle real, uno por ítem elegido) y,
+                                 si el pago es viejo y no tiene ItemPago cargados, se cae
+                                 al campo legacy pago.combo/cantidad_combo/precio_combo.
+                                 No se muestra la sección si no hay nada que mostrar. -->
+                            {% if pago.items.all %}
+                            <table width="100%" cellpadding="0" cellspacing="0" style="background-color: #1f1f1f; border-radius: 8px; overflow: hidden; margin-bottom: 20px;">
+                                <tr>
+                                    <td style="padding: 20px;">
+                                        <h3 style="color: #f5f5f5; margin: 0 0 15px 0; font-size: 18px; border-bottom: 2px solid #e50914; padding-bottom: 10px;">
+                                            🍿 Combos / Comida
+                                        </h3>
+                                        <table width="100%" cellpadding="8" cellspacing="0">
+                                            {% for item in pago.items.all %}
+                                            <tr>
+                                                <td style="color: #e8e8e8;">{% if item.cantidad > 1 %}{{ item.cantidad }}x {% endif %}{{ item.combo.nombre|default:"Ítem eliminado" }}</td>
+                                                <td style="color: #e8e8e8; text-align: right;">${{ item.subtotal }}</td>
+                                            </tr>
+                                            {% endfor %}
+                                        </table>
+                                    </td>
+                                </tr>
+                            </table>
+                            {% elif pago.combo %}
+                            <table width="100%" cellpadding="0" cellspacing="0" style="background-color: #1f1f1f; border-radius: 8px; overflow: hidden; margin-bottom: 20px;">
+                                <tr>
+                                    <td style="padding: 20px;">
+                                        <h3 style="color: #f5f5f5; margin: 0 0 15px 0; font-size: 18px; border-bottom: 2px solid #e50914; padding-bottom: 10px;">
+                                            🍿 Combo
+                                        </h3>
+                                        <table width="100%" cellpadding="8" cellspacing="0">
+                                            <tr>
+                                                <td style="color: #e8e8e8;">{% if pago.cantidad_combo > 1 %}{{ pago.cantidad_combo }}x {% endif %}{{ pago.combo.nombre }}</td>
+                                                <td style="color: #e8e8e8; text-align: right;">${{ pago.precio_combo }}</td>
+                                            </tr>
+                                        </table>
+                                    </td>
+                                </tr>
+                            </table>
+                            {% endif %}
+                            
+                            <!-- Movie Details -->
+                            <!-- modificado: azul pastel -> azul oscuro, mismo acento que el sitio usa para info secundaria -->
+                            <table width="100%" cellpadding="0" cellspacing="0" style="background-color: #10202e; border-radius: 8px; overflow: hidden; margin-bottom: 30px;">
+                                <tr>
+                                    <td style="padding: 20px;">
+                                        <h3 style="color: #f5f5f5; margin: 0 0 15px 0; font-size: 18px; border-bottom: 2px solid #3498db; padding-bottom: 10px;">
+                                            🎬 Tu Función
+                                        </h3>
+                                        
+                                        <table width="100%" cellpadding="8" cellspacing="0">
+                                            <tr>
+                                                <td style="color: #999999; font-weight: bold; width: 40%;">Código de Reserva:</td>
+                                                <td style="color: #f5f5f5; font-weight: bold; font-size: 18px;">{{ reserva.codigo_reserva }}</td>
+                                            </tr>
+                                            <tr>
+                                                <td style="color: #999999; font-weight: bold;">Película:</td>
+                                                <td style="color: #e8e8e8; font-size: 18px;">{{ reserva.funcion.pelicula.titulo }}</td>
+                                            </tr>
+                                            <!-- modificado (T11 / Hilo 2 punto 2): sede, además de la sala que ya estaba -->
+                                            {% if sede %}
+                                            <tr>
+                                                <td style="color: #999999; font-weight: bold;">Sede:</td>
+                                                <td style="color: #e8e8e8;">{{ sede.nombre }} — {{ sede.direccion }}</td>
+                                            </tr>
+                                            {% endif %}
+                                            <tr>
+                                                <td style="color: #999999; font-weight: bold;">Sala:</td>
+                                                <td style="color: #e8e8e8;">{{ reserva.funcion.sala.nombre }}</td>
+                                            </tr>
+                                            <tr>
+                                                <td style="color: #999999; font-weight: bold;">Fecha:</td>
+                                                <td style="color: #e8e8e8;">{{ reserva.funcion.fecha_hora|date:"l, d 'de' F 'de' Y" }}</td>
+                                            </tr>
+                                            <tr>
+                                                <td style="color: #999999; font-weight: bold;">Horario:</td>
+                                                <td style="color: #e8e8e8; font-size: 18px; font-weight: bold;">{{ reserva.funcion.fecha_hora|date:"H:i" }} hs</td>
+                                            </tr>
+                                            <tr>
+                                                <td style="color: #999999; font-weight: bold;">Entradas:</td>
+                                                <td style="color: #e8e8e8;">{{ reserva.cantidad_entradas }}</td>
+                                            </tr>
+                                        </table>
+                                    </td>
+                                </tr>
+                            </table>
+
+                            <!-- nuevo (restyle - QR): mismo criterio que
+                                 pagos/templates/pagos/comprobante_pago.html (sección
+                                 "PRESENTÁ EL QR AL PERSONAL").
+                                 modificado (corregido a CID): la primera versión pasaba
+                                 el QR como base64 inline (src="data:image/png;base64,...",
+                                 lo que devuelve generar_qr_imagen() directo) -- funciona
+                                 en la página web del sitio, pero Gmail NO soporta
+                                 imágenes data-URI en el cuerpo del mail (limitación
+                                 conocida y documentada de Gmail, no un bug de acá).
+                                 Ahora la imagen se adjunta como "inline" con Content-ID
+                                 desde utils/email_utils.py (se decodifica el mismo
+                                 base64 a bytes crudos ahí) y acá solo se referencia como
+                                 cid:qr_reserva -- eso sí lo muestra Gmail, Outlook y el
+                                 resto de los clientes sin problema. -->
+                            {% if qr_disponible %}
+                            <table width="100%" cellpadding="0" cellspacing="0" style="background-color: #1f1f1f; border-radius: 8px; overflow: hidden; margin-bottom: 30px;">
+                                <tr>
+                                    <td style="padding: 25px; text-align: center;">
+                                        <h3 style="color: #f5f5f5; margin: 0 0 15px 0; font-size: 18px;">
+                                            📲 Presentá este QR al ingresar
+                                        </h3>
+                                        <div style="background-color: #ffffff; display: inline-block; padding: 12px; border-radius: 8px;">
+                                            <img src="cid:qr_reserva" alt="Código QR de tu entrada" width="180" height="180" style="display: block; width: 180px; height: 180px;">
+                                        </div>
+                                        <p style="color: #999999; margin: 15px 0 0 0; font-size: 13px;">
+                                            Si no se ve la imagen, mostrá el código <strong style="color: #e8e8e8;">{{ reserva.codigo_reserva }}</strong> en boletería.
+                                        </p>
+                                    </td>
+                                </tr>
+                            </table>
+                            {% endif %}
+                            
+                            <!-- Important Info -->
+                            <table width="100%" cellpadding="0" cellspacing="0" style="background-color: #10202e; border-radius: 6px; margin-bottom: 20px;">
+                                <tr>
+                                    <td style="padding: 15px; border-left: 4px solid #3498db;">
+                                        <p style="color: #7fb8e8; margin: 0 0 10px 0; font-size: 16px; font-weight: bold;">
+                                            ℹ️ Información Importante
+                                        </p>
+                                        <ul style="color: #b3d4ec; margin: 0; padding-left: 20px; font-size: 14px;">
+                                            <li style="margin-bottom: 5px;">Presentá este email, el QR de arriba o el código <strong>{{ reserva.codigo_reserva }}</strong> en boletería</li>
+                                            <li style="margin-bottom: 5px;">Llegá al menos <strong>15 minutos antes</strong> de la función</li>
+                                            <li style="margin-bottom: 5px;">Las entradas <strong>no son reembolsables</strong></li>
+                                        </ul>
+                                    </td>
+                                </tr>
+                            </table>
+                            
+                            <!-- Call to Action -->
+                            <table width="100%" cellpadding="0" cellspacing="0">
+                                <tr>
+                                    <td align="center" style="padding: 10px 0;">
+                                        <!-- modificado: azul/gris -> rojo del sitio + gris oscuro para el botón secundario -->
+                                        <a href="{{ domain }}{% url 'pagos:comprobante_pago' pago.id %}" style="display: inline-block; background-color: #e50914; color: #ffffff; text-decoration: none; padding: 15px 40px; border-radius: 6px; font-weight: bold; font-size: 16px; margin-right: 10px;">
+                                            📄 Ver Comprobante
+                                        </a>
+                                        <a href="{{ domain }}{% url 'reservas:mis_reservas' %}" style="display: inline-block; background-color: #2a2a2a; color: #ffffff; text-decoration: none; padding: 15px 40px; border-radius: 6px; font-weight: bold; font-size: 16px;">
+                                            🎫 Mis Reservas
+                                        </a>
+                                    </td>
+                                </tr>
+                            </table>
+                        </td>
+                    </tr>
+                    
+                    <!-- Footer -->
+                    <tr>
+                        <td style="background-color: #1a1a1a; padding: 20px 30px; text-align: center; border-top: 1px solid #262626;">
+                            <p style="color: #999999; margin: 0 0 10px 0; font-size: 14px;">
+                                ¿Necesitás ayuda? Escribinos a <a href="mailto:soporte@cineonline.com" style="color: #e50914; text-decoration: none;">soporte@cineonline.com</a>
+                            </p>
+                            <p style="color: #666666; margin: 0; font-size: 12px;">
+                                © 2026 DJANGO-CINE. Todos los derechos reservados.
+                            </p>
+                        </td>
+                    </tr>
+                </table>
+            </td>
+        </tr>
+    </table>
+</body>
+</html>

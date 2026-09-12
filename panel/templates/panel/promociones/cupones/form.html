@@ -1,0 +1,118 @@
+{% extends 'panel/base_panel.html' %}
+
+{% load static %}
+
+{% block titulo %}{{ titulo_pagina }} — Panel{% endblock %}
+
+{% block breadcrumb %}
+<span class="sep">›</span>
+<a href="{% url 'panel:cupones_lista' %}">Cupones</a>
+<span class="sep">›</span>
+<span class="current">{% if accion == 'crear' %}Agregar{% else %}Editar{% endif %}</span>
+{% endblock %}
+
+{% block extra_css %}
+<!-- modificado: CSS compartido entre los 3 form.html (combos/cupones/promodia) -->
+<link rel="stylesheet" href="{% static 'css/panel/promociones/form.css' %}">
+{% endblock %}
+
+{% block contenido %}
+<!-- modificado (T5 - cero emojis): se sacó el emoji 🎟️ del encabezado "Datos del Cupón". -->
+{% include 'panel/_form_styles.html' %}
+
+<div class="panelpromoform-wrap panelpromoform-wrap--ancho">
+
+    <div class="panelpromoform-encabezado">
+        <h1 class="panelpromoform-titulo">{{ titulo_pagina }}</h1>
+        <a href="{% url 'panel:cupones_lista' %}" class="btn btn-ghost">ATRAS</a>
+    </div>
+
+    <form method="post">
+        {% csrf_token %}
+        <div class="card">
+            <div class="card-header"><h3> Datos del Cupón</h3></div>
+            <div class="card-body panelpromoform-card-body-stack">
+
+                <div class="panelpromoform-2col">
+                    <div>
+                        <label class="form-label">Código <span class="required">*</span></label>
+                        {{ form.codigo }}
+                        {% if form.codigo.errors %}<div class="field-error">{{ form.codigo.errors.0 }}</div>{% endif %}
+                    </div>
+                    <div>
+                        <label class="form-label">Tipo <span class="required">*</span></label>
+                        {{ form.tipo }}
+                        {% if form.tipo.errors %}<div class="field-error">{{ form.tipo.errors.0 }}</div>{% endif %}
+                    </div>
+                </div>
+
+                <div>
+                    <label class="form-label">Descripción <span class="required">*</span></label>
+                    {{ form.descripcion }}
+                    {% if form.descripcion.errors %}<div class="field-error">{{ form.descripcion.errors.0 }}</div>{% endif %}
+                </div>
+
+                <div class="panelpromoform-2col">
+                    <div>
+                        <label class="form-label">Valor <span class="required">*</span></label>
+                        {{ form.valor }}
+                        <div class="form-help">{{ form.valor.help_text }}</div>
+                        {% if form.valor.errors %}<div class="field-error">{{ form.valor.errors.0 }}</div>{% endif %}
+                    </div>
+                    <div>
+                        <label class="form-label">Monto mínimo</label>
+                        {{ form.monto_minimo }}
+                        {% if form.monto_minimo.errors %}<div class="field-error">{{ form.monto_minimo.errors.0 }}</div>{% endif %}
+                    </div>
+                </div>
+
+                <div class="panelpromoform-2col">
+                    <div>
+                        <label class="form-label">Fecha de inicio <span class="required">*</span></label>
+                        {{ form.fecha_inicio }}
+                        {% if form.fecha_inicio.errors %}<div class="field-error">{{ form.fecha_inicio.errors.0 }}</div>{% endif %}
+                    </div>
+                    <div>
+                        <label class="form-label">Fecha de fin <span class="required">*</span></label>
+                        {{ form.fecha_fin }}
+                        {% if form.fecha_fin.errors %}<div class="field-error">{{ form.fecha_fin.errors.0 }}</div>{% endif %}
+                    </div>
+                </div>
+
+                <div>
+                    <label class="form-label">Usos máximos</label>
+                    {{ form.usos_maximos }}
+                    <div class="form-help">{{ form.usos_maximos.help_text }}</div>
+                </div>
+
+                <div class="checkbox-row">
+                    {{ form.solo_primera_compra }}
+                    <label for="{{ form.solo_primera_compra.id_for_label }}">Solo para primera compra</label>
+                </div>
+
+                <div class="checkbox-row">
+                    {{ form.activo }}
+                    <label for="{{ form.activo.id_for_label }}">Cupón activo</label>
+                </div>
+
+            </div>
+        </div>
+
+        <div class="panelpromoform-botones">
+            <button type="submit" class="btn btn-primary">{% if accion == 'crear' %}GUARDAR{% else %}MODIFICAR{% endif %}</button>
+            <button type="submit" name="guardar_y_agregar_otro" value="1" class="btn btn-primary">CARGAR</button>
+            <a href="{% url 'panel:cupones_lista' %}" class="btn btn-primary">Cancelar</a>
+            {% if objeto and accion == 'editar' %}
+            <button type="submit" form="formEliminarCupon" class="btn btn-danger">BORRAR</button>
+            {% endif %}
+        </div>
+    </form>
+    {% if objeto and accion == 'editar' %}
+    <form method="post" action="{% url 'panel:cupones_eliminar' %}" id="formEliminarCupon">
+        {% csrf_token %}
+        <input type="hidden" name="seleccionadas" value="{{ objeto.id }}">
+    </form>
+    {% endif %}
+</div>
+
+{% endblock %}

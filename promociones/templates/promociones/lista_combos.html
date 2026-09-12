@@ -1,0 +1,78 @@
+{% extends 'base.html' %}
+{% load static %}
+<!-- modificado: etiquetado descriptivo (Tanda A promociones) - clases promociones-estilo-N reemplazadas por nombres semánticos combos-* -->
+
+{% block titulo %}Combos y Promociones{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/promociones/lista_combos.css' %}">
+{% endblock %}
+
+{% block contenido %}
+<!-- MODIFICACION GEMINI: Listado de combos y promos sin emojis y con diseño alineado (estilos en static/css/promociones/lista_combos.css) -->
+<div class="combos-page">
+    <h1 class="combos-titulo">Combos y Promociones</h1>
+    <p class="combos-subtitulo">Aprovechá nuestras ofertas al reservar tus entradas</p>
+
+    <!-- Promos del día -->
+    {% if promos_hoy %}
+    <div class="combos-promodia-seccion">
+        <h2 class="combos-seccion-subtitulo">Promociones del Día</h2>
+        <div class="combos-promodia-grid">
+            {% for promo in promos_hoy %}
+            <div class="combos-promodia-card">
+                <h3 class="combos-promodia-nombre">{{ promo.nombre }}</h3>
+                <p class="combos-promodia-tipo">
+                    {% if promo.tipo == '2x1' %}2x1 — Pagás una entrada, llevás dos
+                    {% elif promo.tipo == 'descuento' %}{{ promo.porcentaje_descuento }}% de descuento
+                    {% endif %}
+                </p>
+                {% if promo.descripcion %}
+                <p class="combos-promodia-descripcion">{{ promo.descripcion }}</p>
+                {% endif %}
+                <div class="combos-promodia-badge combos-promodia-badge-hover">
+                    Válido hoy — {{ promo.get_dia_semana_display }}
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- Combos -->
+    {% if combos %}
+    <div>
+        <h2 class="combos-seccion-subtitulo">Nuestros Combos</h2>
+        <div class="combos-grid">
+            {% for combo in combos %}
+            <div class="combos-card">
+                {% if combo.imagen %}
+                <img src="{{ combo.imagen.url }}" alt="{{ combo.nombre }}" class="combos-card-imagen">
+                {% else %}
+                <div class="combos-card-imagen-placeholder">
+                    [COMBO]
+                </div>
+                {% endif %}
+                <div class="combos-card-info">
+                    <h3 class="combos-card-nombre">{{ combo.nombre }}</h3>
+                    <p class="combos-card-descripcion">{{ combo.descripcion }}</p>
+                    <div class="combos-card-footer">
+                        <span class="combos-card-precio">${{ combo.precio }}</span>
+                        <a href="{% url 'salas:lista_funciones' %}" class="combos-card-btn">
+                            Reservar
+                        </a>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+    {% endif %}
+
+    {% if not combos and not promos_hoy %}
+    <div class="combos-vacio">
+        <p class="combos-vacio-texto">No hay promociones disponibles en este momento.</p>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}

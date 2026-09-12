@@ -1,0 +1,123 @@
+{% extends 'panel/base_panel.html' %}
+
+{% load static %}
+{% block titulo %}Funciones — Panel{% endblock %}
+
+{% block breadcrumb %}
+<span class="sep">›</span>
+<span class="current">Funciones</span>
+{% endblock %}
+
+<!-- modificado (Hilo 1): separación CSS completa (26 estilos inline -> 0), movidos a
+     static/css/panel/funciones/lista.css. Se sacó el buscador reactivo estilo Netflix
+     (pedido explícito de instruccion_1.md: "en funciones no lo necesitamos") - tanto
+     el input como el bloque de JS que lo alimentaba en lista.js. También se borró un
+     <a>INICIO</a> que estaba comentado (código muerto). -->
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/panel/funciones/lista.css' %}">
+{% endblock %}
+
+{% block contenido %}
+
+<div class="panelfunc-header">
+    <h1 class="panelfunc-titulo">FUNCIONES</h1>
+    <div class="panelfunc-header-acciones">
+        <button type="submit" form="formFunciones" id="btnEliminarSeleccionadas" class="btn btn-danger" disabled>Eliminar</button>
+        <a href="{% url 'panel:salas_lista' %}" class="btn btn-primary">Salas</a>
+        <a href="{% url 'panel:funciones_crear' %}" class="btn btn-primary">Nueva</a>
+    </div>
+</div>
+
+<!-- modificado: data-eliminar-modal activa el flujo por modal de
+     static/js/panel/shared/eliminar_modal.js en vez de navegar a
+     confirmar_eliminar.html. Si JS falla, el form sigue apuntando a la
+     misma action de siempre (fallback intacto). -->
+<form method="post" action="{% url 'panel:funciones_eliminar' %}" id="formFunciones" data-eliminar-modal>
+    {% csrf_token %}
+<!-- Filtros por tipo -->
+<div class="panelfunc-filtros">
+    {% for valor, label in filtros_tabs %}
+    <a href="?filtro={{ valor }}" class="panelfunc-filtro-tab {% if filtro == valor %}panelfunc-filtro-tab--activo{% endif %}">{{ label }}</a>
+    {% endfor %}
+</div>
+
+<!-- Contador -->
+<div class="panelfunc-contador"><span id="contadorFunciones">{{ total }}</span> función(es)</div>
+<!-- Tabla -->
+<div class="card">
+    {% if funciones %}
+    <table class="tabla">
+        <thead>
+            <tr>
+                <th class="panelfunc-th-checkbox"><input type="checkbox" id="chkTodasFunciones" class="panel-checkbox"></th>
+                <th>Película</th>
+                <th>Sala</th>
+                <th>Fecha y Hora</th>
+                <th>Precio</th>
+                <th>Ocupación</th>
+                <th>Estado</th>
+                <th></th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for f in funciones %}
+            {% with disp=f.asientos_disponibles cap=f.sala.capacidad %}
+            {% if cap > 0 %}
+                {% widthratio disp cap 100 as pct_disp %}
+                {% widthratio f.asientos_disponibles|add:0 cap 100 as pct_libre %}
+            {% endif %}
+            <tr>
+                <td>
+                    <input type="checkbox" name="seleccionadas" value="{{ f.id }}" class="chk-funcion panel-checkbox">
+                </td>
+                <td>
+                    <div class="panelfunc-pelicula-nombre">{{ f.pelicula.titulo }}</div>
+                </td>
+                <td class="panelfunc-sala">{{ f.sala.nombre }}</td>
+                <td class="panelfunc-fecha">
+                    {{ f.fecha_hora|date:"d/m/Y" }}<span class="panelfunc-hora">{{ f.fecha_hora|date:"H:i" }} hs</span>
+                </td>
+                <td class="panelfunc-precio">
+                    ${{ f.precio_final }}
+                    {% if f.precio is None %}<span class="panelfunc-precio-auto">(auto)</span>{% endif %}
+                </td>
+                <td class="panelfunc-ocupacion-td">
+                    {% with vendidos=cap|add:"-"|add:disp|add:"0" %}
+                    <div class="panelfunc-ocupacion-texto">
+                        <span class="panelfunc-ocupacion-disp">{{ disp }}</span>
+                        <span class="panelfunc-ocupacion-cap">/ {{ cap }} libres</span>
+                    </div>
+                    {% endwith %}
+                    <div class="ocupacion-bar">
+                        {% if cap > 0 %}
+                        {% widthratio disp cap 100 as pct %}
+                        <div class="ocupacion-fill {% if pct < 30 %}lleno{% elif pct < 60 %}medio{% endif %}" style="width:{{ pct }}%;"></div>
+                        {% endif %}
+                    </div>
+                </td>
+                <td>
+                    <span class="panelfunc-estado-badge {% if f.disponible %}panelfunc-estado-badge--disponible{% else %}panelfunc-estado-badge--no-disponible{% endif %}">
+                        {% if f.disponible %}Disponible{% else %}No disponible{% endif %}
+                    </span>
+                </td>
+                <td>
+                    <a href="{% url 'panel:funciones_detalle' f.id %}" class="btn btn-ghost panelfunc-btn-ver">Ver detalle</a>
+                </td>
+            </tr>
+            {% endwith %}
+            {% endfor %}
+        </tbody>
+    </table>
+    {% else %}
+    <div class="card-body panelfunc-vacio">
+        No hay funciones en esta categoría.
+    </div>
+    {% endif %}
+</div>
+</form>
+
+{% endblock %}
+
+{% block extra_js %}
+<script src="{% static 'js/panel/funciones/lista.js' %}"></script>
+{% endblock %}

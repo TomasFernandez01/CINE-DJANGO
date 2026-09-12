@@ -1,0 +1,44 @@
+{% comment %}
+nuevo (tanda 3): partial compartido para pintar "grupos_funciones" (lista de
+{tipo, etiqueta, funciones} armada por utils.funciones.agrupar_por_tipo_sala).
+Lo usan peliculas/detalle_pelicula.html y salas/lista_funciones.html, así no
+se repite el mismo bloque de botones de horario en los dos templates.
+
+Requiere en el contexto: grupos_funciones (y usa "user" del contexto global).
+Si no hay ningún grupo, no imprime nada (cada template decide su propio
+mensaje de "sin funciones").
+{% endcomment %}
+{% for grupo in grupos_funciones %}
+    <div class="grupo-funciones">
+        <div class="grupo-funciones-titulo">{{ grupo.etiqueta }}</div>
+        <div class="horarios-fila">
+            {% for funcion in grupo.funciones %}
+                {% widthratio funcion.asientos_disponibles funcion.sala.capacidad 100 as porcentaje %}
+                {% if funcion.asientos_disponibles <= 0 %}
+                    <span class="horario-btn disp-completa" title="Agotado">{{ funcion.fecha_hora|date:"H:i" }}hs</span>
+                {% else %}
+                    <!-- modificado (UX, punto 13): title con microcopy de
+                         "últimos lugares" cuando la disponibilidad es baja
+                         (mismo umbral que ya define el color rojo, porcentaje
+                         <= 20). El indicador visual (el "!" en la esquina del
+                         botón) lo agrega .horario-btn.disp-baja::after en
+                         shared/horarios.css -- acá solo se agrega el texto
+                         accesible/tooltip, sin tocar el layout del botón. -->
+                    {% if user.is_authenticated %}
+                        <a href="{% url 'reservas:elegir_tipo_entrada' funcion.id %}"
+                           class="horario-btn {% if porcentaje > 60 %}disp-alta{% elif porcentaje > 20 %}disp-media{% else %}disp-baja{% endif %}"
+                           {% if porcentaje <= 20 %}title="¡Últimos lugares!"{% endif %}>
+                            {{ funcion.fecha_hora|date:"H:i" }}hs
+                        </a>
+                    {% else %}
+                        <a href="{% url 'usuarios:login' %}?next={% url 'reservas:elegir_tipo_entrada' funcion.id %}"
+                           class="horario-btn {% if porcentaje > 60 %}disp-alta{% elif porcentaje > 20 %}disp-media{% else %}disp-baja{% endif %}"
+                           {% if porcentaje <= 20 %}title="¡Últimos lugares!"{% endif %}>
+                            {{ funcion.fecha_hora|date:"H:i" }}hs
+                        </a>
+                    {% endif %}
+                {% endif %}
+            {% endfor %}
+        </div>
+    </div>
+{% endfor %}

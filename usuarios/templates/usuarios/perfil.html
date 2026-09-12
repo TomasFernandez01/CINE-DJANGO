@@ -1,81 +1,291 @@
 {% extends 'base.html' %}
+{% load static %}
 
 {% block titulo %}Mi Perfil{% endblock %}
 
+{% block extra_css %}
+<!-- MODIFICACION DE GEMINI -->
+<link rel="stylesheet" href="{% static 'css/usuarios/perfil.css' %}">
+<!-- FIN MODIFICACION DE GEMINI -->
+{% endblock %}
+
 {% block contenido %}
-<div style="max-width: 800px; margin: 0 auto;">
-    <h1>Mi Perfil</h1>
+<!-- MODIFICACION DE GEMINI -->
+<div class="perfil-contenedor" data-total-reservas="{{ total_reservas }}">
+    <h1 class="perfil-titulo">Mi Perfil</h1>
     
-    <div style="background-color: white; padding: 2rem; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); margin-top: 1.5rem;">
-        <div style="display: flex; justify-content: space-between; align-items: start; margin-bottom: 2rem; border-bottom: 2px solid #007bff; padding-bottom: 1rem;">
-            <h2 style="margin: 0; color: #333;">Información Personal</h2>
-            <a href="{% url 'usuarios:editar_perfil' %}" style="padding: 0.5rem 1rem; background-color: #007bff; color: white; border-radius: 4px; text-decoration: none; font-weight: bold;">
-                Editar Perfil
-            </a>
+    <div class="perfil-dashboard">
+        <!-- Columna izquierda: Sidebar -->
+        <div class="perfil-sidebar">
+            <div class="perfil-avatar-wrapper">
+                <svg class="perfil-avatar-img" viewBox="0 0 24 24" fill="currentColor" style="color: #ccc; padding: 15px;">
+                    <path d="M12 12c2.7 0 4.9-2.2 4.9-4.9S14.7 2.2 12 2.2 7.1 4.4 7.1 7.1 9.3 12 12 12Zm0 2.5c-3.3 0-9.8 1.6-9.8 4.9v2.4h19.6v-2.4c0-3.3-6.5-4.9-9.8-4.9Z"/>
+                </svg>
+                <div class="perfil-avatar-overlay">Cambiar</div>
+            </div>
+            
+            <div class="perfil-user-info">
+                <h3 class="perfil-user-name">{{ usuario.get_full_name|default:usuario.username }}</h3>
+                <p class="perfil-user-username">@{{ usuario.username }}</p>
+            </div>
+            
+            <!-- Club Cine Card (Membresía) -->
+            <div class="perfil-tier-card">
+                <div class="perfil-tier-header">
+                    <span class="perfil-tier-title">Club Cine</span>
+                    <span id="tier-badge" class="perfil-tier-badge">Cargando...</span>
+                </div>
+                <p class="perfil-tier-info">Suma reservas para subir de nivel y obtener cupones de descuento.</p>
+                <div class="perfil-progreso-barra-bg">
+                    <div id="tier-progress" class="perfil-progreso-barra"></div>
+                </div>
+                <span id="tier-progress-text" class="perfil-progreso-texto"></span>
+            </div>
+            
+            <!-- Pestañas (Tabs) -->
+            <div class="perfil-tab-btn-list">
+                <button class="perfil-tab-btn activa" data-tab="info">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+                        <circle cx="12" cy="7" r="4"></circle>
+                    </svg>
+                    Información Personal
+                </button>
+                <button class="perfil-tab-btn" data-tab="editar">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
+                        <path d="M18.5 2.5a2.121 2.121 0 1 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
+                    </svg>
+                    Editar Perfil
+                </button>
+                <button class="perfil-tab-btn" data-tab="seguridad">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
+                        <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
+                    </svg>
+                    Seguridad
+                </button>
+                <!-- nuevo: pestaña de historial de películas vistas (modelo HistorialVisto, ya existía pero no se mostraba en ningún lado) -->
+                <button class="perfil-tab-btn" data-tab="historial">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <circle cx="12" cy="12" r="10"></circle>
+                        <polyline points="12 6 12 12 16 14"></polyline>
+                    </svg>
+                    Historial
+                </button>
+                {% if user.is_staff or user.is_superuser %}
+                <a href="{% url 'panel:inicio' %}" class="perfil-tab-btn">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <rect x="3" y="3" width="7" height="9"></rect>
+                        <rect x="14" y="3" width="7" height="5"></rect>
+                        <rect x="14" y="12" width="7" height="9"></rect>
+                        <rect x="3" y="16" width="7" height="5"></rect>
+                    </svg>
+                    Ir al Panel Staff
+                </a>
+                {% endif %}
+            </div>
         </div>
         
-        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 2rem;">
-            <div>
-                <div style="margin-bottom: 1.5rem;">
-                    <p style="margin: 0 0 0.25rem 0; color: #666; font-size: 0.9rem;">Nombre de usuario</p>
-                    <p style="margin: 0; font-size: 1.1rem; font-weight: bold;">{{ usuario.username }}</p>
+        <!-- Columna derecha: Paneles de Contenido -->
+        <div class="perfil-content-panel">
+            
+            <!-- Pestaña 1: Info -->
+            <div id="tab-info" class="perfil-tab-seccion activa">
+                <h2 class="perfil-encabezado-titulo">Información Personal</h2>
+                
+                <div class="perfil-datos-grid">
+                    <div>
+                        <div class="perfil-dato">
+                            <p class="perfil-dato-etiqueta">Nombre de usuario</p>
+                            <p class="perfil-dato-valor">{{ usuario.username }}</p>
+                        </div>
+                        <div class="perfil-dato">
+                            <p class="perfil-dato-etiqueta">Nombre completo</p>
+                            <p class="perfil-dato-valor">{{ usuario.get_full_name|default:"No especificado" }}</p>
+                        </div>
+                        <div class="perfil-dato">
+                            <p class="perfil-dato-etiqueta">Email</p>
+                            <p class="perfil-dato-valor">{{ usuario.email|default:"No especificado" }}</p>
+                        </div>
+                    </div>
+                    <div>
+                        <div class="perfil-dato">
+                            <p class="perfil-dato-etiqueta">Teléfono</p>
+                            <p class="perfil-dato-valor">{{ usuario.perfil.telefono|default:"No especificado" }}</p>
+                        </div>
+                        <div class="perfil-dato">
+                            <p class="perfil-dato-etiqueta">Fecha de nacimiento</p>
+                            <p class="perfil-dato-valor">{{ usuario.perfil.fecha_nacimiento|date:"d/m/Y"|default:"No especificado" }}</p>
+                        </div>
+                        <div class="perfil-dato">
+                            <p class="perfil-dato-etiqueta">Dirección</p>
+                            <p class="perfil-dato-valor">{{ usuario.perfil.direccion|default:"No especificado" }}</p>
+                        </div>
+                    </div>
                 </div>
                 
-                <div style="margin-bottom: 1.5rem;">
-                    <p style="margin: 0 0 0.25rem 0; color: #666; font-size: 0.9rem;">Nombre completo</p>
-                    <p style="margin: 0; font-size: 1.1rem; font-weight: bold;">
-                        {{ usuario.get_full_name|default:"No especificado" }}
-                    </p>
-                </div>
-                
-                <div style="margin-bottom: 1.5rem;">
-                    <p style="margin: 0 0 0.25rem 0; color: #666; font-size: 0.9rem;">Email</p>
-                    <p style="margin: 0; font-size: 1.1rem; font-weight: bold;">{{ usuario.email|default:"No especificado" }}</p>
+                <!-- Estadísticas en Widgets -->
+                <h3 class="perfil-subtitulo-stats">Estadísticas de Actividad</h3>
+                <div class="perfil-widgets-grid">
+                    <div class="perfil-widget-card">
+                        <div class="perfil-widget-val">{{ total_reservas }}</div>
+                        <div class="perfil-widget-label">Reservas Totales</div>
+                    </div>
+                    <div class="perfil-widget-card">
+                        <div class="perfil-widget-val">{{ reservas_activas }}</div>
+                        <div class="perfil-widget-label">Confirmadas</div>
+                    </div>
+                    <div class="perfil-widget-card">
+                        <div class="perfil-widget-val">{{ reservas_pendientes }}</div>
+                        <div class="perfil-widget-label">Pendientes</div>
+                    </div>
                 </div>
             </div>
             
-            <div>
-                <div style="margin-bottom: 1.5rem;">
-                    <p style="margin: 0 0 0.25rem 0; color: #666; font-size: 0.9rem;">Teléfono</p>
-                    <p style="margin: 0; font-size: 1.1rem; font-weight: bold;">{{ usuario.perfil.telefono|default:"No especificado" }}</p>
-                </div>
+            <!-- Pestaña 2: Editar Perfil -->
+            <div id="tab-editar" class="perfil-tab-seccion">
+                <h2 class="perfil-encabezado-titulo">Editar Perfil</h2>
                 
-                <div style="margin-bottom: 1.5rem;">
-                    <p style="margin: 0 0 0.25rem 0; color: #666; font-size: 0.9rem;">Fecha de nacimiento</p>
-                    <p style="margin: 0; font-size: 1.1rem; font-weight: bold;">
-                        {{ usuario.perfil.fecha_nacimiento|date:"d/m/Y"|default:"No especificado" }}
-                    </p>
-                </div>
-                
-                <div style="margin-bottom: 1.5rem;">
-                    <p style="margin: 0 0 0.25rem 0; color: #666; font-size: 0.9rem;">Dirección</p>
-                    <p style="margin: 0; font-size: 1.1rem; font-weight: bold;">{{ usuario.perfil.direccion|default:"No especificado" }}</p>
-                </div>
+                <form method="post" action="{% url 'usuarios:editar_perfil' %}">
+                    {% csrf_token %}
+                    {% for field in form %}
+                        <div class="usuario-campo">
+                            <label for="{{ field.id_for_label }}" class="usuario-etiqueta">
+                                {{ field.label }}
+                                {% if field.field.required %}<span class="usuario-requerido">*</span>{% endif %}
+                            </label>
+                            <div class="input-icono-wrapper">
+                                <span class="input-icono">
+                                    {% if field.name == 'first_name' or field.name == 'last_name' %}
+                                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
+                                    {% elif field.name == 'email' %}
+                                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"></path><polyline points="22,6 12,13 2,6"></polyline></svg>
+                                    {% elif field.name == 'telefono' %}
+                                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.5 19.5 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"></path></svg>
+                                    {% elif field.name == 'fecha_nacimiento' %}
+                                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg>
+                                    {% else %}
+                                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path><circle cx="12" cy="10" r="3"></circle></svg>
+                                    {% endif %}
+                                </span>
+                                {{ field }}
+                            </div>
+                            {% if field.errors %}
+                                <div class="usuario-error">{{ field.errors }}</div>
+                            {% endif %}
+                            {% if field.help_text %}
+                                <small class="usuario-ayuda">{{ field.help_text }}</small>
+                            {% endif %}
+                        </div>
+                    {% endfor %}
+                    <div class="usuario-acciones">
+                        <button type="submit" class="usuario-boton usuario-boton--exito">
+                            Guardar Cambios
+                        </button>
+                    </div>
+                </form>
             </div>
-        </div>
-        
-        <div style="margin-top: 2rem; padding-top: 2rem; border-top: 1px solid #ddd;">
-            <h3 style="color: #333; margin-bottom: 1rem;">Seguridad</h3>
-            <a href="{% url 'usuarios:cambiar_password' %}" style="display: inline-block; padding: 0.5rem 1rem; background-color: #6c757d; color: white; border-radius: 4px; text-decoration: none; font-weight: bold;">
-                Cambiar Contraseña
-            </a>
-        </div>
-        
-        <div style="margin-top: 2rem; padding-top: 2rem; border-top: 1px solid #ddd;">
-            <h3 style="color: #333; margin-bottom: 1rem;">Estadísticas</h3>
-            <p style="color: #666; margin: 0.5rem 0;">
-                <strong>Miembro desde:</strong> {{ usuario.date_joined|date:"F Y" }}
-            </p>
-            <p style="color: #666; margin: 0.5rem 0;">
-                <strong>Total de reservas:</strong> {{ total_reservas }}
-            </p>
-            <p style="color: #666; margin: 0.5rem 0;">
-                <strong>Reservas confirmadas:</strong> {{ reservas_activas }}
-            </p>
-            <p style="color: #666; margin: 0.5rem 0;">
-                <strong>Reservas pendientes:</strong> {{ reservas_pendientes }}
-            </p>
+            
+            <!-- Pestaña 3: Seguridad (Cambiar Contraseña) -->
+            <div id="tab-seguridad" class="perfil-tab-seccion">
+                <h2 class="perfil-encabezado-titulo">Seguridad</h2>
+                
+                <form method="post" action="{% url 'usuarios:cambiar_password' %}">
+                    {% csrf_token %}
+                    {% for field in password_form %}
+                        <div class="usuario-campo">
+                            <label for="{{ field.id_for_label }}" class="usuario-etiqueta">
+                                {{ field.label }}
+                            </label>
+                            <div class="contraseña-contenedor">
+                                <input
+                                    type="password"
+                                    id="{{ field.id_for_label }}"
+                                    name="{{ field.name }}"
+                                    class="form-control"
+                                    {% if field.field.required %}required{% endif %}
+                                >
+                                <button type="button" class="ojo-toggle toggle-password-campo" aria-label="Mostrar contraseña">
+                                    <svg class="ojo-abierto" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="20" height="20">
+                                        <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
+                                        <circle cx="12" cy="12" r="3"></circle>
+                                    </svg>
+                                    <svg class="ojo-cerrado" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="20" height="20" style="display: none;">
+                                        <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"></path>
+                                        <line x1="1" y1="1" x2="23" y2="23"></line>
+                                    </svg>
+                                </button>
+                            </div>
+                            {% if field.errors %}
+                                <div class="usuario-error">{{ field.errors }}</div>
+                            {% endif %}
+                            {% if field.name == 'new_password1' %}
+                                <div class="password-strength-container">
+                                    <div class="password-strength-bar-bg">
+                                        <div id="strength-bar" class="password-strength-bar"></div>
+                                    </div>
+                                    <span id="strength-text" class="password-strength-text">Escribe una contraseña</span>
+                                </div>
+                            {% endif %}
+                        </div>
+                    {% endfor %}
+                    
+                    <div class="usuario-alerta usuario-alerta--info">
+                        <p class="usuario-consejo">
+                            <strong>Consejos de seguridad:</strong><br>
+                            • Usa al menos 8 caracteres<br>
+                            • Combina letras, números y símbolos<br>
+                            • No uses información personal obvia
+                        </p>
+                    </div>
+                    
+                    <div class="usuario-acciones">
+                        <button type="submit" class="usuario-boton usuario-boton--exito">
+                            Cambiar Contraseña
+                        </button>
+                    </div>
+                </form>
+            </div>
+
+            <!-- nuevo: Pestaña 4: Historial de películas vistas -->
+            <div id="tab-historial" class="perfil-tab-seccion">
+                <h2 class="perfil-encabezado-titulo">Historial de Películas Vistas</h2>
+
+                {% if historial %}
+                    <div class="perfil-historial-lista">
+                        {% for entrada in historial %}
+                            <a href="{% url 'peliculas:detalle_pelicula' entrada.pelicula.id %}" class="perfil-historial-item">
+                                {% if entrada.pelicula.poster %}
+                                    <img src="{{ entrada.pelicula.poster.url }}" alt="{{ entrada.pelicula.titulo }}" class="perfil-historial-poster">
+                                {% endif %}
+                                <div class="perfil-historial-info">
+                                    <span class="perfil-historial-titulo">{{ entrada.pelicula.titulo }}</span>
+                                    <span class="perfil-historial-fecha">Vista el {{ entrada.fecha_visto|date:"d/m/Y" }}</span>
+                                </div>
+                            </a>
+                        {% endfor %}
+                    </div>
+                {% else %}
+                    <p class="perfil-historial-vacio">
+                        Todavía no viste ninguna película. Cuando confirmes el pago de una reserva, aparecerá acá.
+                    </p>
+                {% endif %}
+            </div>
+
         </div>
     </div>
 </div>
+<!-- FIN MODIFICACION DE GEMINI -->
+{% endblock %}
+
+{% block extra_js %}
+<!-- MODIFICACION DE GEMINI -->
+<!-- modificado: el <script> inline que estaba acá se separó en 3 archivos:
+     perfil.js (tabs + progreso Club Cine, especifico de esta pagina),
+     password_toggle.js y password_strength.js (compartidos con login/registro/cambiar_password) -->
+<script src="{% static 'js/usuarios/perfil.js' %}"></script>
+<script src="{% static 'js/usuarios/password_toggle.js' %}"></script>
+<script src="{% static 'js/usuarios/password_strength.js' %}"></script>
+<!-- FIN MODIFICACION DE GEMINI -->
 {% endblock %}

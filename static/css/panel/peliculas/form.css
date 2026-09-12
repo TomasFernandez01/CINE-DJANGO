@@ -1,0 +1,62 @@
+/* modificado (Hilo 1): separación CSS completa de panel/peliculas/form.html
+   (22 estilos inline -> 0). Colores y layout respetados tal cual estaban. */
+
+.panelpelisform-wrapper { max-width: 900px; }
+
+.panelpelisform-header { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem; margin-bottom: 1.5rem; }
+.panelpelisform-titulo { font-size: 1.4rem; color: #1a1a2e; margin: 0; }
+.panelpelisform-subtitulo { margin: 0.25rem 0 0; color: #666; font-size: 0.875rem; }
+.panelpelisform-link-tmdb { color: #3498db; font-weight: 600; }
+
+.panelpelisform-grid { display: grid; grid-template-columns: 1fr 280px; gap: 1.5rem; align-items: start; }
+.panelpelisform-col-principal { display: flex; flex-direction: column; gap: 1rem; }
+.panelpelisform-info-body { display: flex; flex-direction: column; gap: 1rem; }
+
+.panelpelisform-fila-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 1rem; }
+.panelpelisform-fila-2-1 { display: grid; grid-template-columns: 2fr 1fr; gap: 1rem; }
+.panelpelisform-fila-cartelera { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; align-items: end; }
+
+.panelpelisform-poster-preview-wrap { margin-bottom: 1rem; text-align: center; }
+.panelpelisform-poster-preview-wrap--tmdb { margin-bottom: 0.5rem; }
+.panelpelisform-poster-img { max-width: 100%; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.15); }
+.panelpelisform-poster-img--oculta { display: none; margin-bottom: 1rem; }
+.panelpelisform-poster-help-tmdb { margin-bottom: 1rem; }
+.panelpelisform-poster-help { margin-top: 0.5rem; }
+/* nuevo (Trailer): separación del bloque de ID de YouTube respecto del poster de arriba */
+.panelpelisform-trailer-wrap { margin-top: 1.25rem; }
+.panelpelisform-trailer-wrap label { display: block; margin-bottom: 0.35rem; font-size: 0.85rem; color: #ccc; }
+.panelpelisform-poster-placeholder { aspect-ratio: 2/3; background: #f0f0f0; border-radius: 8px; display: flex; align-items: center; justify-content: center; color: #ccc; font-size: 3rem; margin-bottom: 1rem; }
+
+.panelpelisform-errores-generales { background: #f8d7da; border-left: 4px solid #e74c3c; padding: 1rem; border-radius: 6px; margin-top: 1rem; color: #721c24; }
+.panelpelisform-error-linea { margin: 0; }
+
+.panelpelisform-botones { display: flex; gap: 1rem; margin-top: 1.5rem; flex-wrap: wrap; }
+
+/* nuevo (Hilo 4 - Claude): badge de solo lectura "En cartelera (global)" que
+   ve Staff en vez del checkbox editable (ver form.html y el TODO resuelto en
+   peliculas_editar). Mismos colores que panelpelis-card-badge--activa/
+   --inactiva de lista.css, pero definido acá directo (sin depender de que
+   lista.css esté cargado en esta página) y sin position:absolute (ahí el
+   badge flota sobre un poster; acá va dentro del flujo normal del form). */
+.panelpelisform-badge-estatico {
+    display: inline-block;
+    padding: 0.35rem 0.8rem;
+    border-radius: 4px;
+    font-size: 0.8rem;
+    font-weight: 700;
+    color: white;
+}
+.panelpelisform-badge-estatico.panelpelis-card-badge--activa { background: #27ae60; }
+.panelpelisform-badge-estatico.panelpelis-card-badge--inactiva { background: #6c757d; }
+
+/* modificado (T10): aviso de "Rol Staff" en el header del form, antes con
+   style="" inline */
+.panelpelisform-aviso-staff {
+    background: rgba(229, 9, 20, 0.15);
+    border-left: 4px solid #e50914;
+    padding: 0.75rem 1rem;
+    border-radius: 4px;
+    margin-top: 0.5rem;
+    color: #ffffff;
+    font-size: 0.9rem;
+}

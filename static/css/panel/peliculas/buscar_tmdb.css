@@ -1,0 +1,49 @@
+/* modificado (Hilo 1): separación CSS completa de panel/peliculas/buscar_tmdb.html
+   (26 estilos inline -> 0). Colores respetados tal cual estaban. Los onfocus/onblur
+   y onmouseover/onmouseout inline se pasaron a :focus/:hover puro en CSS. */
+
+.panelpelistmdb-wrapper { max-width: 1100px; }
+
+.panelpelistmdb-header { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem; margin-bottom: 1.5rem; }
+.panelpelistmdb-titulo { font-size: 1.4rem; color: #1a1a2e; margin: 0; }
+.panelpelistmdb-subtitulo { margin: 0.25rem 0 0; color: #666; font-size: 0.875rem; }
+.panelpelistmdb-header-acciones { display: flex; gap: 0.5rem; }
+
+.panelpelistmdb-aviso-no-disponible {
+    background: #fff3cd; border-left: 4px solid #f39c12; padding: 1rem 1.25rem;
+    border-radius: 8px; color: #856404; margin-bottom: 1.5rem;
+}
+
+.panelpelistmdb-buscador-card { margin-bottom: 1.5rem; }
+.panelpelistmdb-buscador-body { padding: 1.25rem; }
+.panelpelistmdb-buscador-form { display: flex; gap: 0.75rem; }
+.panelpelistmdb-buscador-input {
+    flex: 1; padding: 0.75rem 1rem; border: 1.5px solid #e0e0e0;
+    border-radius: 8px; font-size: 1rem; transition: border-color 0.2s;
+}
+.panelpelistmdb-buscador-input:focus { outline: none; border-color: #1a1a2e; }
+.panelpelistmdb-buscador-btn { padding: 0.75rem 1.5rem; font-size: 1rem; }
+
+.panelpelistmdb-resultado-contador { font-size: 0.85rem; color: #666; margin-bottom: 1rem; }
+
+.panelpelistmdb-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 1rem; }
+.panelpelistmdb-card { overflow: hidden; transition: transform 0.2s, box-shadow 0.2s; }
+.panelpelistmdb-card:hover { transform: translateY(-4px); box-shadow: 0 8px 20px rgba(0,0,0,0.15); }
+
+.panelpelistmdb-card-poster { aspect-ratio: 2/3; overflow: hidden; background: #1a1a2e; }
+.panelpelistmdb-card-poster-img { width: 100%; height: 100%; object-fit: cover; }
+.panelpelistmdb-card-poster-placeholder { width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; color: rgba(255,255,255,0.2); font-size: 3rem; }
+
+.panelpelistmdb-card-info { padding: 0.85rem; }
+.panelpelistmdb-card-nombre { font-weight: 700; color: #1a1a2e; font-size: 0.9rem; margin-bottom: 0.3rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.panelpelistmdb-card-fecha { font-size: 0.75rem; color: #999; margin-bottom: 0.5rem; }
+.panelpelistmdb-card-overview {
+    font-size: 0.75rem; color: #777; margin: 0 0 0.75rem; line-height: 1.4;
+    overflow: hidden; display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical;
+}
+.panelpelistmdb-card-btn-importar { width: 100%; text-align: center; font-size: 0.8rem; }
+
+.panelpelistmdb-sin-resultados { text-align: center; padding: 3rem; color: #999; }
+.panelpelistmdb-sin-resultados-icono { font-size: 2.5rem; margin-bottom: 0.75rem; }
+.panelpelistmdb-sin-resultados-titulo { font-size: 1.1rem; }
+.panelpelistmdb-sin-resultados-sub { font-size: 0.875rem; margin-top: 0.5rem; }

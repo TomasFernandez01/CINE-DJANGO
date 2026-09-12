@@ -1,0 +1,120 @@
+{% extends 'panel/base_panel.html' %}
+{% load static %}
+
+{% block titulo %}Dashboard · Catálogo — Panel Cine Online{% endblock %}
+
+{% block breadcrumb %}
+<span class="sep">›</span>
+<a href="{% url 'panel:inicio' %}">Dashboard</a>
+<span class="sep">›</span>
+<span class="current">Catálogo</span>
+{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/panel/inicio_sede_banner.css' %}">
+<link rel="stylesheet" href="{% static 'css/panel/dashboard/comun.css' %}">
+{% endblock %}
+
+{% block contenido %}
+{% include 'panel/dashboard/_subnav.html' with dash_seccion='catalogo' %}
+
+{% if panel_sede_activa %}
+<div class="panelinicio-sede-banner"><strong>SEDE = {{ panel_sede_activa.nombre }}</strong></div>
+{% else %}
+<div class="panelinicio-sede-banner panelinicio-sede-banner--todas"><strong>TODAS LAS SEDES</strong></div>
+{% endif %}
+
+<p style="color:#888; font-size:0.85rem; margin-bottom:1.5rem;">Últimos 30 días ({{ periodo_desde|date:"d/m" }} — {{ periodo_hasta|date:"d/m" }}).</p>
+
+<div class="stat-grid">
+    <div class="stat-card blue">
+        <div class="stat-label">Películas en cartelera</div>
+        <div class="stat-value">{{ stats.peliculas_cartelera }}</div>
+        <div class="stat-sub">de {{ stats.peliculas_total }} en total</div>
+    </div>
+</div>
+
+<!-- ============================================================ -->
+<!-- TOP 5 PELÍCULAS POR RECAUDACIÓN -->
+<!-- ============================================================ -->
+<div class="card">
+    <div class="card-header">
+        <h3>Top 5 películas por recaudación</h3>
+    </div>
+    {% if top_peliculas %}
+    <table class="tabla" style="width:100%;">
+        <thead>
+            <tr><th>Película</th><th>Recaudación</th></tr>
+        </thead>
+        <tbody>
+            {% for p in top_peliculas %}
+            <tr>
+                <td>{{ p.titulo }}</td>
+                <td>${{ p.total|floatformat:0 }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    {% else %}
+    <div class="card-body" style="text-align:center;color:#999;padding:2rem;">
+        Sin recaudación en este período.
+    </div>
+    {% endif %}
+</div>
+
+<!-- ============================================================ -->
+<!-- CALIFICACIÓN vs. RECAUDACIÓN POR PELÍCULA -->
+<!-- ============================================================ -->
+<div class="card">
+    <div class="card-header">
+        <h3>Calificación vs. recaudación por película</h3>
+    </div>
+    {% if rating_recaudacion_datos %}
+    <div style="position: relative; height: 320px; width: 100%; padding: 1rem;">
+        <canvas id="ratingRecaudacionChart"></canvas>
+    </div>
+    {% else %}
+    <div class="card-body" style="text-align:center;color:#999;padding:2rem;">
+        No hay películas con calificaciones y recaudación en este período todavía.
+    </div>
+    {% endif %}
+</div>
+
+{% if rating_recaudacion_datos %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+    (function() {
+        var datos = {{ rating_recaudacion_datos|safe }};
+        new Chart(document.getElementById('ratingRecaudacionChart').getContext('2d'), {
+            type: 'scatter',
+            data: {
+                datasets: [{
+                    label: 'Películas',
+                    data: datos.map(function(d) { return {x: d.rating_promedio, y: d.recaudacion}; }),
+                    backgroundColor: '#3498db',
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                scales: {
+                    x: { title: { display: true, text: 'Calificación promedio (1-5 ⭐)' }, min: 0, max: 5 },
+                    y: { title: { display: true, text: 'Recaudación ($)' }, beginAtZero: true },
+                },
+                plugins: {
+                    legend: { display: false },
+                    tooltip: {
+                        callbacks: {
+                            label: function(ctx) {
+                                var d = datos[ctx.dataIndex];
+                                return d.titulo + ': ' + d.rating_promedio + '★ — $' + d.recaudacion.toFixed(0);
+                            }
+                        }
+                    },
+                }
+            }
+        });
+    })();
+</script>
+{% endif %}
+{% endblock %}

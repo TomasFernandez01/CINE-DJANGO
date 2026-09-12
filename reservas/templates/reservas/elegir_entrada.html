@@ -1,0 +1,127 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block titulo %}Elegí tu entrada{% endblock %}
+
+{% block contenido %}
+<link rel="stylesheet" href="{% static 'css/reservas/elegir_entrada.css' %}">
+<div id="elegirEntradaData" data-precio-unitario="{{ funcion.precio_final }}" data-max-cantidad="{{ max_cantidad }}"></div>
+
+{{ promos_dia_activas_json|json_script:"promos-dia-activas-data" }}
+
+<div class="reserva-ee-wrapper">
+    <h1 class="reserva-ee-titulo">🎟️ Elegí tu entrada</h1>
+
+    <form method="post" id="formEntrada">
+        {% csrf_token %}
+        <input type="hidden" name="cantidad" id="inputCantidad" value="1">
+
+        <div id="layoutEntrada" class="reserva-ee-layout">
+
+            {# ──────────────── COLUMNA IZQUIERDA ──────────────── #}
+            <div>
+                {# Cupón #}
+                <label class="tarjeta-tipo-entrada" data-valor="cupon">
+                    <div class="tarjeta-tipo-entrada-header">
+                        <input type="radio" name="tipo_entrada" value="cupon">
+                        <span class="tarjeta-tipo-entrada-titulo">🏷️ Tengo un cupón</span>
+                    </div>
+                    <input type="text" name="cupon_codigo" id="inputCupon" placeholder="Ingresá tu código (ej: DESC25)"
+                           maxlength="20" class="reserva-ee-input-cupon">
+                </label>
+
+                {# Entrada general #}
+                <label class="tarjeta-tipo-entrada seleccionada" data-valor="general">
+                    <div class="tarjeta-tipo-entrada-header">
+                        <input type="radio" name="tipo_entrada" value="general" checked>
+                        <span class="tarjeta-tipo-entrada-titulo">🎫 Entrada General</span>
+                    </div>
+                    <div class="reserva-ee-tarjeta-detalle">
+                        ${{ funcion.precio_final }} por entrada
+                    </div>
+                </label>
+
+                {# Promociones del día — una tarjeta por CADA promo activa ese día #}
+                {# modificado (fix): antes solo se mostraba una (promo_dia_activa), #}
+                {# ahora se listan todas las que estén activas para ese día de la semana #}
+                {% for promo in promos_dia_activas %}
+                <label class="tarjeta-tipo-entrada" data-valor="promo_dia_{{ promo.id }}">
+                    <div class="tarjeta-tipo-entrada-header">
+                        <input type="radio" name="tipo_entrada" value="promo_dia_{{ promo.id }}">
+                        <span class="tarjeta-tipo-entrada-titulo">
+                            {% if promo.tipo == '2x1' %}🎉{% else %}🏷️{% endif %} {{ promo.nombre }}
+                        </span>
+                    </div>
+                    <div class="reserva-ee-tarjeta-detalle">
+                        {% if promo.tipo == '2x1' %}
+                            Pagás una entrada, llevás dos — requiere cantidad par
+                        {% else %}
+                            {{ promo.porcentaje_descuento }}% de descuento sobre el total
+                        {% endif %}
+                        {% if promo.descripcion %}<br>{{ promo.descripcion }}{% endif %}
+                    </div>
+                </label>
+                {% endfor %}
+
+                {# Cantidad #}
+                {# modificado (punto 1b de revisión): oculta hasta que se toque una tarjeta, igual que en elegir_combo.html #}
+                <div id="cajaCantidadEntrada" class="reserva-ee-cantidad-box reserva-ee-hidden">
+                    <div class="reserva-ee-cantidad-label">¿Cuántas entradas?</div>
+                    <div class="reserva-ee-cantidad-controles">
+                        <button type="button" id="btnMenos" class="reserva-ee-btn-cantidad">−</button>
+                        <span id="cantidadVisible" class="reserva-ee-cantidad-valor">1</span>
+                        <button type="button" id="btnMas" class="reserva-ee-btn-cantidad">+</button>
+                        <span class="reserva-ee-cantidad-max">(máx. {{ max_cantidad }})</span>
+                    </div>
+                    <div id="avisoCantidadPar" class="reserva-ee-aviso-par">
+                        La promoción 2x1 requiere una cantidad par de entradas.
+                    </div>
+                </div>
+            </div>
+
+            {# ──────────────── COLUMNA DERECHA: RESUMEN ──────────────── #}
+            <div id="sidebarResumenEntrada" class="reserva-ee-sidebar">
+                <div class="reserva-ee-resumen-card">
+                    <div class="reserva-ee-resumen-titulo">RESUMEN</div>
+
+                    <div class="reserva-ee-resumen-pelicula">
+                        {% if funcion.pelicula.poster %}
+                        <img src="{{ funcion.pelicula.poster.url }}" alt="{{ funcion.pelicula.titulo }}" class="reserva-ee-resumen-poster">
+                        {% endif %}
+                        <div>
+                            <div class="reserva-ee-resumen-label">Película</div>
+                            <div class="reserva-ee-resumen-valor">{{ funcion.pelicula.titulo }}</div>
+                        </div>
+                    </div>
+
+                    <div class="reserva-ee-resumen-sala">
+                        <div class="reserva-ee-resumen-label">Sala y horario</div>
+                        <div class="reserva-ee-resumen-valor">{{ funcion.sala.nombre }}</div>
+                        <div class="reserva-ee-resumen-sala-fecha">
+                            {{ funcion.fecha_hora|date:"d/m/Y" }} · {{ funcion.fecha_hora|date:"H:i" }} hs
+                        </div>
+                    </div>
+
+                    <div class="reserva-ee-resumen-entradas">
+                        <div class="reserva-ee-resumen-label">Entradas</div>
+                        <div id="resumenEntradasTexto" class="reserva-ee-resumen-valor">1 · entrada general</div>
+                    </div>
+
+                    <div class="reserva-ee-resumen-total-fila">
+                        <span class="reserva-ee-resumen-total-label">Total estimado</span>
+                        <span id="resumenTotal" class="reserva-ee-resumen-total-valor">$0</span>
+                    </div>
+                </div>
+
+                <button type="submit" class="reserva-ee-btn-continuar">
+                    CONTINUAR
+                </button>
+                <a href="{% url 'peliculas:detalle_pelicula' funcion.pelicula.id %}" class="reserva-ee-btn-cancelar">
+                    Cancelar
+                </a>
+            </div>
+        </div>
+    </form>
+</div>
+
+<script src="{% static 'js/reservas/elegir_entrada.js' %}"></script>
+{% endblock %}

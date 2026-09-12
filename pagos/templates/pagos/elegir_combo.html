@@ -1,0 +1,132 @@
+{% extends 'base.html' %}
+
+{% load static %}
+{% block titulo %}Elegí tu combo{% endblock %}
+
+<!-- modificado (Tanda B pagos): <link> y <script> movidos a extra_css/extra_js para prolijidad de bloques (ya estaban en archivos externos, esto no cambia comportamiento) -->
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/pagos/elegir_combo.css' %}">
+{% endblock %}
+
+{% block contenido %}
+
+{% comment %} <link rel="stylesheet" href="{% static 'css/pagos/elegir_combo.css' %}"> {% endcomment %}
+<div id="elegirComboData" data-total-entradas="{{ total_entradas }}"></div>
+{{ items_json|json_script:"items-data" }}
+
+<div class="pago-ec-wrapper">
+    {# ──────────────── CONTADOR REGRESIVO ──────────────── #}
+    {% if reserva.tiempo_restante_pago %}
+    <div id="countdownContainer" class="pago-ec-countdown">
+        <div class="pago-ec-countdown-label">Completá esta compra antes de que expire el tiempo:</div>
+        <div id="countdown" class="pago-ec-countdown-numero" data-tiempo="{{ reserva.tiempo_restante_pago }}">
+            {{ reserva.tiempo_restante_formato }}
+        </div>
+        <div class="pago-ec-countdown-footer">La reserva se cancelará automáticamente si no completás el pago</div>
+    </div>
+    {% endif %}
+
+    <h1 class="pago-ec-titulo">🍿 Elegí para acompañar</h1>
+
+    <form method="post" id="formCombo">
+        {% csrf_token %}
+        <input type="hidden" name="items_json" id="inputItemsJson" value="[]">
+
+        <div class="pago-ec-layout">
+
+            {# ──────────────── COLUMNA IZQUIERDA: items por categoría ──────────────── #}
+            <div>
+                {% for categoria_clave, items in items_por_categoria.items %}
+                    {% if items %}
+                    <div class="pago-ec-categoria-titulo">{{ categoria_clave|capfirst }}s</div>
+                    {% for item in items %}
+                    <div class="pago-ec-item-card" data-item-id="{{ item.id }}">
+                        {% if item.imagen %}
+                        <img src="{{ item.imagen.url }}" alt="{{ item.nombre }}" class="pago-ec-item-imagen">
+                        {% else %}
+                        <div class="pago-ec-item-imagen-placeholder">🍿</div>
+                        {% endif %}
+                        <div class="pago-ec-item-info">
+                            <div class="pago-ec-item-nombre">{{ item.nombre }}</div>
+                            <div class="pago-ec-item-descripcion">{{ item.descripcion }}</div>
+                        </div>
+                        <div class="pago-ec-item-precio">${{ item.precio }}</div>
+                        <div class="pago-ec-item-stepper">
+                            <button type="button" class="pago-ec-item-btn pago-ec-item-btn--menos">−</button>
+                            <span class="pago-ec-item-cantidad">0</span>
+                            <button type="button" class="pago-ec-item-btn pago-ec-item-btn--mas">+</button>
+                        </div>
+                    </div>
+                    {% endfor %}
+                    {% endif %}
+                {% endfor %}
+
+                {% if not items_por_categoria.combo and not items_por_categoria.bebida and not items_por_categoria.snack and not items_por_categoria.pochoclo %}
+                <div class="pago-ec-vacio">No hay combos, bebidas ni snacks disponibles por el momento.</div>
+                {% endif %}
+            </div>
+
+            {# ──────────────── COLUMNA DERECHA: RESUMEN ──────────────── #}
+            <div class="pago-ec-sidebar">
+                <div class="pago-ec-resumen-card">
+                    <div class="pago-ec-resumen-titulo">RESUMEN</div>
+
+                    <div class="pago-ec-resumen-bloque">
+                        <div class="pago-ec-resumen-label">Película</div>
+                        <div class="pago-ec-resumen-valor">{{ reserva.funcion.pelicula.titulo }}</div>
+                        <div class="pago-ec-resumen-sub">
+                            {{ reserva.funcion.sala.nombre }} · {{ reserva.funcion.fecha_hora|date:"d/m/Y H:i" }} hs
+                        </div>
+                    </div>
+
+                    <div class="pago-ec-resumen-bloque">
+                        <div class="pago-ec-resumen-label">Entradas</div>
+                        <div class="pago-ec-resumen-valor">
+                            {{ reserva.cantidad_entradas }} · {{ reserva.asientos_formateados }}
+                        </div>
+                    </div>
+
+                    <div class="pago-ec-resumen-fila">
+                        <span>Subtotal entradas</span>
+                        <span>${{ total_entradas }}</span>
+                    </div>
+
+                    <div id="resumenItemsLista" class="pago-ec-resumen-items-lista">
+                        <div class="pago-ec-resumen-vacio">Ningún ítem elegido</div>
+                    </div>
+                    <div class="pago-ec-resumen-fila">
+                        <span>Subtotal combos/bebidas/snacks</span>
+                        <span id="resumenItemsTotal">$0</span>
+                    </div>
+
+                    <div class="pago-ec-resumen-total-fila">
+                        <span class="pago-ec-resumen-total-label">Total estimado</span>
+                        <span id="resumenTotal" class="pago-ec-resumen-total-valor">${{ total_entradas }}</span>
+                    </div>
+                    <div class="pago-ec-resumen-nota">
+                        No incluye descuentos de cupón/promoción — se aplican en el paso de pago.
+                    </div>
+                </div>
+
+                <button type="submit" class="pago-ec-btn-continuar">
+                    CONTINUAR
+                </button>
+            </div>
+        </div>
+    </form>
+</div>
+
+{% comment %} <script src="{% static 'js/pagos/elegir_combo.js' %}"></script> {% endcomment %}
+{% endblock %}
+
+{% block extra_js %}
+{% if reserva.tiempo_restante_pago %}
+<script>
+    // nuevo: URL de redirección cuando expira el tiempo en este paso.
+    // Mismo destino que usa seleccionar_asientos.js al expirar (volver a
+    // funciones), ya que la reserva queda cancelada del lado del servidor.
+    window.ELEGIR_COMBO_URL_FUNCIONES = "{% url 'salas:lista_funciones' %}";
+</script>
+{% endif %}
+<script src="{% static 'js/pagos/elegir_combo.js' %}"></script>
+{% endblock %}

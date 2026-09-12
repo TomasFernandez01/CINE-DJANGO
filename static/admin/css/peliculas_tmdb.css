@@ -1,0 +1,13 @@
+.object-tools {
+    display: flex;
+    gap: 10px;
+}
+ 
+.tmdb-search-btn {
+    background-color: #01b4e4 !important;
+    color: white !important;
+}
+ 
+.tmdb-search-btn:hover {
+    background-color: #0099c7 !important;
+}

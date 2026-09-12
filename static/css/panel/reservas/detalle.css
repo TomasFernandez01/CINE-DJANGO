@@ -1,0 +1,229 @@
+/* modificado (Panel > Reservas, Hilo 2): CSS extraído de panel/reservas/detalle.html,
+   antes todo con style="" inline (61 instancias). Mismos valores, sin cambios de diseño. */
+
+.paneldet-encabezado {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 1rem;
+    margin-bottom: 1.5rem;
+}
+
+.paneldet-encabezado-titulo {
+    font-size: 1.4rem;
+    color: #1a1a2e;
+    margin: 0;
+    font-family: monospace;
+}
+
+.paneldet-encabezado-badge-wrap {
+    margin-top: 0.35rem;
+}
+
+.paneldet-badge-lg {
+    font-size: 0.85rem;
+}
+
+.paneldet-grid-2col {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1.5rem;
+}
+
+.paneldet-columna {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+
+/* stack vertical genérico, usado adentro de las cards */
+.paneldet-stack {
+    display: flex;
+    flex-direction: column;
+    gap: 0.85rem;
+}
+
+/* fila label:valor (140px fijo + resto) */
+.paneldet-fila {
+    display: grid;
+    grid-template-columns: 140px 1fr;
+    gap: 0.5rem;
+}
+
+.paneldet-fila--top {
+    align-items: start;
+}
+
+.paneldet-fila-label {
+    font-size: 0.75rem;
+    color: #999;
+    text-transform: uppercase;
+}
+
+.paneldet-fila-label--pad2 { padding-top: 2px; }
+.paneldet-fila-label--pad4 { padding-top: 4px; }
+
+.paneldet-valor-bold {
+    font-weight: 600;
+}
+
+.paneldet-valor-sub {
+    font-size: 0.8rem;
+    color: #999;
+}
+
+.paneldet-asientos-wrap {
+    display: flex;
+    gap: 0.4rem;
+    flex-wrap: wrap;
+}
+
+.paneldet-asiento-chip {
+    background: #1a1a2e;
+    color: white;
+    padding: 0.2rem 0.55rem;
+    border-radius: 4px;
+    font-size: 0.8rem;
+    font-weight: 700;
+}
+
+.paneldet-fila-total {
+    border-top: 1px solid #f0f0f0;
+    padding-top: 0.85rem;
+    display: grid;
+    grid-template-columns: 140px 1fr;
+    gap: 0.5rem;
+}
+
+.paneldet-total-valor {
+    font-size: 1.4rem;
+    font-weight: 700;
+    color: #27ae60;
+}
+
+.paneldet-valor-gris {
+    color: #666;
+}
+
+.paneldet-links-rapidos {
+    display: flex;
+    gap: 0.75rem;
+    flex-wrap: wrap;
+}
+
+.paneldet-link-chico {
+    font-size: 0.85rem;
+}
+
+/* --- Pago --- */
+
+.paneldet-transaccion-box {
+    background: #d4edda;
+    padding: 0.85rem;
+    border-radius: 8px;
+    text-align: center;
+}
+
+.paneldet-transaccion-label {
+    font-size: 0.75rem;
+    color: #155724;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+}
+
+.paneldet-transaccion-valor {
+    font-size: 1.2rem;
+    font-weight: 700;
+    color: #155724;
+    font-family: monospace;
+}
+
+.paneldet-pago-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 0.75rem;
+}
+
+.paneldet-pago-label {
+    font-size: 0.75rem;
+    color: #999;
+    margin-bottom: 0.2rem;
+}
+
+.paneldet-pago-monto {
+    font-size: 1.3rem;
+    font-weight: 700;
+    color: #27ae60;
+}
+
+.paneldet-qr-seccion {
+    border-top: 1px solid #f0f0f0;
+    padding-top: 0.85rem;
+}
+
+.paneldet-qr-seccion-titulo {
+    font-size: 0.75rem;
+    color: #999;
+    text-transform: uppercase;
+    margin-bottom: 0.5rem;
+}
+
+.paneldet-qr-codigo {
+    font-family: monospace;
+    font-size: 0.85rem;
+    background: #f8f9fa;
+    padding: 0.5rem 0.75rem;
+    border-radius: 6px;
+    margin-bottom: 0.5rem;
+}
+
+.paneldet-qr-estado-wrap {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.paneldet-qr-badge {
+    padding: 0.3rem 0.75rem;
+    border-radius: 20px;
+    font-size: 0.8rem;
+    font-weight: 600;
+}
+
+.paneldet-qr-badge--ok {
+    background: #d4edda;
+    color: #155724;
+}
+
+.paneldet-qr-badge--pendiente {
+    background: #fff3cd;
+    color: #856404;
+}
+
+.paneldet-qr-fecha {
+    color: #999;
+    font-size: 0.8rem;
+}
+
+.paneldet-qr-no-generado {
+    color: #999;
+    font-size: 0.85rem;
+}
+
+.paneldet-pago-vacio {
+    text-align: center;
+    padding: 2rem;
+    color: #999;
+}
+
+.paneldet-pago-vacio-icon {
+    font-size: 2rem;
+    margin-bottom: 0.5rem;
+}
+
+.paneldet-pago-vacio-nota {
+    margin-top: 0.5rem;
+    font-size: 0.85rem;
+    color: #f39c12;
+}

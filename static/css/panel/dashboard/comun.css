@@ -1,0 +1,315 @@
+/* nuevo (T14 - reorg Dashboard): extraído del <style> inline que tenía
+   panel/templates/panel/inicio.html (el dashboard viejo, una sola página
+   con todo). Mismos valores, sin cambios — solo se separó a su propio
+   archivo para que las 4 sub-páginas nuevas (catalogo/promociones/
+   operaciones/administracion) lo compartan sin repetir ~250 líneas de
+   <style> en cada una. */
+
+.stat-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 1.25rem;
+    margin-bottom: 2rem;
+}
+.stat-card {
+    background: #ffffff;
+    border-radius: 16px;
+    padding: 1.5rem;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.04);
+    border: 1px solid rgba(0, 0, 0, 0.05);
+    border-top: 4px solid #e0e0e0;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    position: relative;
+    overflow: hidden;
+}
+.stat-card::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background: linear-gradient(180deg, rgba(255,255,255,0.15) 0%, rgba(255,255,255,0) 100%);
+    pointer-events: none;
+}
+.stat-card:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 12px 30px rgba(0, 0, 0, 0.08);
+}
+.stat-card.blue { border-top-color: #3498db; }
+.stat-card.gold { border-top-color: #e2b96f; }
+.stat-card.red { border-top-color: #e74c3c; }
+.stat-card.green { border-top-color: #27ae60; }
+.stat-card.purple { border-top-color: #9b59b6; }
+.stat-label {
+    font-size: 0.85rem;
+    color: #888;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-bottom: 0.5rem;
+}
+.stat-value {
+    font-size: 2.25rem;
+    font-weight: 700;
+    color: #1a1a2e;
+    margin: 0;
+    line-height: 1.1;
+}
+.stat-sub {
+    font-size: 0.85rem;
+    color: #666;
+    margin-top: 0.5rem;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+}
+.stat-sub.subida { color: #1e8e3e; }
+.stat-sub.bajada { color: #d93025; }
+
+/* Accesos rápidos estilizados */
+.quick-actions {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+    gap: 1rem;
+    margin-bottom: 2rem;
+}
+.quick-link {
+    padding: 1.25rem;
+    border-radius: 12px;
+    text-align: center;
+    text-decoration: none;
+    color: white;
+    font-weight: 600;
+    font-size: 0.95rem;
+    transition: all 0.3s ease;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+}
+.quick-link:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 8px 25px rgba(0,0,0,0.2);
+    filter: brightness(1.05);
+}
+
+/* barra de filtros de fecha/agrupación para los gráficos interactivos (Operaciones) */
+.filtro-fechas {
+    background: white;
+    border-radius: 16px;
+    padding: 1.25rem 1.5rem;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.04);
+    border: 1px solid rgba(0, 0, 0, 0.05);
+    margin-bottom: 1.5rem;
+    display: flex;
+    flex-wrap: wrap;
+    align-items: flex-end;
+    gap: 1rem;
+}
+.filtro-fechas .campo {
+    display: flex;
+    flex-direction: column;
+    gap: 0.3rem;
+}
+.filtro-fechas label {
+    font-size: 0.75rem;
+    font-weight: 600;
+    color: #888;
+    text-transform: uppercase;
+    letter-spacing: 0.4px;
+}
+.filtro-fechas input[type="date"],
+.filtro-fechas select {
+    padding: 0.5rem 0.7rem;
+    border: 1px solid #e0e2e8;
+    border-radius: 8px;
+    font-family: inherit;
+    font-size: 0.9rem;
+    color: #1a1a2e;
+}
+.filtro-fechas .presets {
+    display: flex;
+    gap: 0.4rem;
+    flex-wrap: wrap;
+}
+.filtro-fechas .preset-btn {
+    background: #f0f2f5;
+    border: none;
+    border-radius: 20px;
+    padding: 0.4rem 0.9rem;
+    font-size: 0.8rem;
+    font-weight: 600;
+    color: #444;
+    cursor: pointer;
+    transition: background 0.2s;
+}
+.filtro-fechas .preset-btn:hover,
+.filtro-fechas .preset-btn.activo {
+    background: #e2b96f;
+    color: #1a1a2e;
+}
+.filtro-fechas .btn-aplicar {
+    background: #1a1a2e;
+    color: white;
+    border: none;
+    border-radius: 8px;
+    padding: 0.55rem 1.3rem;
+    font-weight: 600;
+    font-size: 0.9rem;
+    cursor: pointer;
+}
+.filtro-fechas .btn-aplicar:hover { background: #2a2a45; }
+#filtroError {
+    color: #d93025;
+    font-size: 0.85rem;
+    margin-top: 0.5rem;
+    display: none;
+}
+
+/* Sección de gráficos */
+.charts-grid {
+    display: grid;
+    grid-template-columns: 2fr 1fr;
+    gap: 1.5rem;
+    margin-bottom: 2rem;
+}
+@media (max-width: 992px) {
+    .charts-grid {
+        grid-template-columns: 1fr;
+    }
+}
+.chart-card {
+    background: white;
+    border-radius: 16px;
+    padding: 1.5rem;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.04);
+    border: 1px solid rgba(0, 0, 0, 0.05);
+}
+.chart-title {
+    font-size: 1.05rem;
+    font-weight: 600;
+    color: #1a1a2e;
+    margin-bottom: 1.25rem;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+}
+.metrica-toggle {
+    display: flex;
+    gap: 0.3rem;
+    background: #f0f2f5;
+    border-radius: 20px;
+    padding: 3px;
+}
+.metrica-toggle button {
+    border: none;
+    background: transparent;
+    border-radius: 16px;
+    padding: 0.3rem 0.8rem;
+    font-size: 0.75rem;
+    font-weight: 600;
+    color: #666;
+    cursor: pointer;
+}
+.metrica-toggle button.activo {
+    background: #1a1a2e;
+    color: white;
+}
+
+/* Tablas y tarjetas de datos */
+.card {
+    background: white;
+    border-radius: 16px;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.04);
+    border: 1px solid rgba(0, 0, 0, 0.05);
+    overflow: hidden;
+    margin-bottom: 1.5rem;
+}
+.card-header {
+    padding: 1.25rem 1.5rem;
+    background: #fafbfe;
+    border-bottom: 1px solid #f0f2f5;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+.card-header h3 {
+    font-size: 1.05rem;
+    font-weight: 600;
+    color: #1a1a2e;
+    margin: 0;
+}
+.tabla th {
+    background: #fafbfe;
+    color: #666;
+    font-weight: 600;
+    font-size: 0.8rem;
+    padding: 0.9rem 1.25rem;
+    border-bottom: 2px solid #f0f2f5;
+}
+.tabla td {
+    padding: 0.9rem 1.25rem;
+    font-size: 0.9rem;
+    border-bottom: 1px solid #f0f2f5;
+}
+.tabla tr:hover td {
+    background: #f8fafc;
+}
+
+/* card del embudo de reservas (Operaciones) */
+.embudo-lista {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+    padding: 1.5rem;
+}
+.embudo-fila {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+.embudo-fila .cantidad {
+    font-weight: 700;
+    font-size: 1.1rem;
+    color: #1a1a2e;
+}
+
+/* heatmaps entradas/recaudación por día x hora (Operaciones) */
+.heatmap-wrap { overflow-x: auto; padding: 0.5rem 1.5rem 1.5rem; }
+.heatmap-tabla { border-collapse: collapse; font-size: 0.72rem; }
+.heatmap-tabla th {
+    padding: 0.3rem 0.4rem;
+    color: #888;
+    font-weight: 600;
+    text-align: center;
+}
+.heatmap-tabla td.heatmap-dia {
+    padding: 0.3rem 0.6rem;
+    color: #666;
+    font-weight: 600;
+    white-space: nowrap;
+    text-align: right;
+}
+.heatmap-celda {
+    width: 22px;
+    height: 22px;
+    border-radius: 4px;
+    background-color: #f0f2f5; /* alpha=0 => sin datos */
+}
+
+/* ranking comparativo entre sedes (Administración, solo SuperUser) */
+.ranking-sedes-card { margin-top: 1.5rem; }
+
+/* nuevo (T14): breadcrumb/volver dentro de cada sub-página de Dashboard */
+.dash-subnav {
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+    margin-bottom: 1.25rem;
+    font-size: 0.85rem;
+}
+.dash-subnav a { color: #666; text-decoration: none; }
+.dash-subnav a:hover { text-decoration: underline; }
+.dash-subnav .activo { color: #1a1a2e; font-weight: 700; }
+.dash-subnav .sep { color: #ccc; }

@@ -1,0 +1,427 @@
+/* modificado (Fase 4): en pantallas angostas el resumen pasa
+           de columna fija al costado a bloque normal abajo del mapa */
+        @media (max-width: 860px) {
+            #layoutAsientos { grid-template-columns: 1fr !important; }
+            #sidebarResumen { position: static !important; }
+        }
+
+/* ── Animaciones ─────────────────────────────────── */
+    @keyframes pulso {
+        0%, 100% { transform: scale(1); }
+        50%       { transform: scale(1.06); }
+    }
+
+    @keyframes pulsoRapido {
+        0%, 100% { transform: scale(1);    opacity: 1; }
+        50%       { transform: scale(1.08); opacity: 0.7; }
+    }
+
+    @keyframes sacudida {
+        0%  { transform: translateX(0); }
+        20% { transform: translateX(-6px); }
+        40% { transform: translateX(6px); }
+        60% { transform: translateX(-4px); }
+        80% { transform: translateX(4px); }
+        100%{ transform: translateX(0); }
+    }
+
+    /* ── Responsive ──────────────────────────────────── */
+    @media (max-width: 768px) {
+        .asiento {
+            width:  32px !important;
+            height: 32px !important;
+            font-size: 9px !important;
+        }
+    }
+
+/* modificado: se agregan las clases descriptivas que faltaban (antes casi
+   todo el layout de seleccionar_asientos.html estaba con style="" inline).
+   Se mantiene arriba lo que ya existía en este archivo (animaciones + responsive). */
+
+/* modificado: media query que antes vivía en un <style> inline en el propio
+   template (ids #layoutAsientos/#sidebarResumen -> ahora clases) */
+@media (max-width: 860px) {
+    .reserva-sa-layout { grid-template-columns: 1fr !important; }
+    .reserva-sa-sidebar { position: static !important; }
+}
+
+.reserva-sa-wrapper {
+    max-width: 1000px;
+    margin: 0 auto;
+    background-color: #0f0f0f;
+    padding: 1.5rem;
+    border-radius: 12px;
+    color: #f2f2f2;
+}
+
+.reserva-sa-titulo {
+    text-align: center;
+    margin-bottom: 1rem;
+    color: #ffffff;
+}
+
+.reserva-sa-layout {
+    display: grid;
+    grid-template-columns: 1fr 320px;
+    gap: 1.5rem;
+    align-items: start;
+}
+
+.reserva-sa-leyenda {
+    background-color: #1a1a1a;
+    padding: 1rem;
+    border-radius: 8px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.4);
+    margin-bottom: 1.5rem;
+    border: 1px solid #2a2a2a;
+}
+
+.reserva-sa-leyenda-lista {
+    display: flex;
+    justify-content: center;
+    gap: 2rem;
+    flex-wrap: wrap;
+    color: #e0e0e0;
+}
+
+.reserva-sa-leyenda-item {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.reserva-sa-leyenda-swatch {
+    width: 28px;
+    height: 28px;
+    border-radius: 4px;
+}
+
+.reserva-sa-leyenda-swatch--disponible {
+    background-color: #ffffff;
+    border: 1px solid #cccccc;
+}
+
+.reserva-sa-leyenda-swatch--no-disponible {
+    background-color: #4a4a4a;
+    border: 1px solid #5a5a5a;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #bbbbbb;
+    font-size: 13px;
+    font-weight: bold;
+}
+
+.reserva-sa-leyenda-swatch--categoria {
+    background-color: #f1c40f;
+    border: 1px solid #c29d0b;
+}
+
+.reserva-sa-leyenda-swatch--seleccionado {
+    background-color: #e63946;
+    border-radius: 50%;
+    border: 1px solid #b3202c;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #fff;
+    font-size: 13px;
+}
+
+.reserva-sa-pantalla-wrap {
+    text-align: center;
+    margin-bottom: 2rem;
+}
+
+.reserva-sa-pantalla-curva {
+    width: 70%;
+    max-width: 620px;
+    height: 22px;
+    margin: 0 auto;
+    border-radius: 50%;
+    background: radial-gradient(ellipse at center, #6b6b6b 0%, #2a2a2a 75%, transparent 100%);
+    box-shadow: 0 8px 20px rgba(255, 255, 255, 0.06);
+}
+
+.reserva-sa-pantalla-label {
+    color: #9a9a9a;
+    letter-spacing: 0.3em;
+    font-size: 0.8rem;
+    font-weight: bold;
+    margin-top: 0.6rem;
+}
+
+.reserva-sa-mapa {
+    background-color: #0f0f0f;
+    padding: 2rem;
+    border-radius: 8px;
+    margin-bottom: 1.5rem;
+    overflow-x: auto;
+}
+
+.reserva-sa-mapa-inner {
+    display: inline-block;
+    min-width: 100%;
+}
+
+.reserva-sa-fila {
+    display: flex;
+    justify-content: center;
+    gap: 8px;
+    margin-bottom: 8px;
+    align-items: center;
+}
+
+.reserva-sa-fila-letra {
+    width: 30px;
+    text-align: center;
+    font-weight: bold;
+    color: #d9a441;
+}
+
+.reserva-sa-pasillo {
+    width: 40px;
+    height: 40px;
+}
+
+/* Botones de asiento — base + estados. El color/forma al hacer click y el
+   hover siguen siendo pintados dinámicamente por seleccionar_asientos.js
+   (necesitan JS: cambian según qué asientos van eligiendo en vivo), acá
+   solo se resuelve el estado inicial que antes era style="" inline. */
+.asiento {
+    width: 40px;
+    height: 40px;
+    border: 1px solid;
+    border-radius: 6px;
+    font-size: 11px;
+    font-weight: bold;
+    transition: all 0.2s;
+}
+
+.asiento.ocupado {
+    background-color: #4a4a4a;
+    border-color: #5a5a5a;
+    color: #bbbbbb;
+    cursor: not-allowed;
+}
+
+.asiento.disponible {
+    background-color: #ffffff;
+    border-color: #cccccc;
+    color: #111111;
+    cursor: pointer;
+}
+
+.reserva-sa-sidebar {
+    position: sticky;
+    top: 1rem;
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+
+.reserva-sa-resumen-card {
+    background-color: #1a1a1a;
+    border-radius: 8px;
+    border: 1px solid #2a2a2a;
+    padding: 1.25rem;
+}
+
+.reserva-sa-resumen-titulo {
+    font-weight: bold;
+    letter-spacing: 0.05em;
+    color: #ffffff;
+    margin-bottom: 1rem;
+}
+
+.reserva-sa-resumen-pelicula {
+    display: flex;
+    gap: 0.75rem;
+    align-items: flex-start;
+    margin-bottom: 1rem;
+    padding-bottom: 1rem;
+    border-bottom: 1px solid #2a2a2a;
+}
+
+.reserva-sa-resumen-poster {
+    width: 52px;
+    height: 76px;
+    object-fit: cover;
+    border-radius: 6px;
+    flex-shrink: 0;
+}
+
+.reserva-sa-resumen-label {
+    color: #999999;
+    font-size: 0.75rem;
+    margin-bottom: 0.15rem;
+}
+
+.reserva-sa-resumen-valor {
+    color: #ffffff;
+    font-weight: bold;
+}
+
+.reserva-sa-resumen-tipo-sala {
+    color: #999999;
+    font-size: 0.8rem;
+    margin-top: 0.15rem;
+}
+
+.reserva-sa-resumen-sala {
+    margin-bottom: 1rem;
+    padding-bottom: 1rem;
+    border-bottom: 1px solid #2a2a2a;
+}
+
+.reserva-sa-resumen-sala-fecha {
+    color: #cccccc;
+    font-size: 0.85rem;
+    margin-top: 0.15rem;
+}
+
+.reserva-sa-resumen-disponibles {
+    font-size: 0.78rem;
+    margin-top: 0.3rem;
+}
+
+.reserva-sa-resumen-disponibles--alta { color: #3ddc84; }
+.reserva-sa-resumen-disponibles--media { color: #fd7e14; }
+.reserva-sa-resumen-disponibles--baja { color: #ff4d4d; }
+
+.reserva-sa-resumen-categoria-nota {
+    font-size: 0.75rem;
+    color: #bbbbbb;
+    margin-bottom: 1rem;
+    padding-bottom: 1rem;
+    border-bottom: 1px solid #2a2a2a;
+}
+
+.reserva-sa-resumen-categoria-fila {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.reserva-sa-resumen-categoria-swatch {
+    width: 12px;
+    height: 12px;
+    border-radius: 3px;
+    display: inline-block;
+    flex-shrink: 0;
+    background-color: #f1c40f;
+}
+
+.reserva-sa-resumen-butacas {
+    margin-bottom: 1rem;
+}
+
+.reserva-sa-hidden {
+    display: none;
+}
+
+.reserva-sa-nota-categorias {
+    margin-top: 0.5rem;
+    font-size: 0.78rem;
+    color: #e6a23c;
+}
+
+.reserva-sa-resumen-total-fila {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding-top: 1rem;
+    border-top: 1px solid #2a2a2a;
+}
+
+.reserva-sa-resumen-total-label {
+    color: #ffffff;
+    font-weight: bold;
+}
+
+.reserva-sa-resumen-total-valor {
+    font-size: 1.4rem;
+    font-weight: bold;
+    color: #3ddc84;
+}
+
+.reserva-sa-form-acciones {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+}
+
+.reserva-sa-btn-confirmar {
+    padding: 1rem;
+    background-color: #28a745;
+    color: white;
+    border: none;
+    border-radius: 6px;
+    font-weight: bold;
+    font-size: 1.1rem;
+    cursor: not-allowed;
+    opacity: 0.5;
+    transition: opacity 0.2s, background-color 0.2s;
+}
+
+.reserva-sa-btn-cancelar {
+    padding: 0.85rem;
+    background-color: transparent;
+    color: #ffffff;
+    border: 1px solid #555555;
+    border-radius: 6px;
+    font-weight: bold;
+    font-size: 1rem;
+    text-align: center;
+    text-decoration: none;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.reserva-sa-aviso {
+    background-color: #2a2410;
+    padding: 0.85rem;
+    border-radius: 6px;
+    border-left: 4px solid #ffc107;
+}
+
+.reserva-sa-aviso p {
+    margin: 0;
+    color: #e6c977;
+    font-size: 0.78rem;
+    line-height: 1.4;
+}
+
+/* modificado (punto 5 de revisión): banner de countdown reactivado —
+   antes estaba con style="" inline dentro del {% comment %} que lo tenía
+   deshabilitado; ahora que se activa, se separa como el resto. */
+.reserva-sa-countdown-banner {
+    background: linear-gradient(135deg, #ff6b6b 0%, #ff8e53 100%);
+    padding: 1rem 1.5rem;
+    border-radius: 8px;
+    margin-bottom: 1.5rem;
+    text-align: center;
+    color: white;
+    box-shadow: 0 4px 12px rgba(255, 107, 107, 0.35);
+    transition: background 0.5s;
+}
+
+.reserva-sa-countdown-banner-label {
+    font-size: 0.85rem;
+    margin-bottom: 0.35rem;
+    opacity: 0.95;
+}
+
+.reserva-sa-countdown-banner-valor {
+    font-size: 2.2rem;
+    font-weight: bold;
+    font-family: 'Courier New', monospace;
+    letter-spacing: 0.15em;
+}
+
+.reserva-sa-countdown-banner-nota {
+    font-size: 0.78rem;
+    margin-top: 0.3rem;
+    opacity: 0.88;
+}

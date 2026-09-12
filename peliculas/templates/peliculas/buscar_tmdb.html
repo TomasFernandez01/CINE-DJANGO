@@ -1,0 +1,121 @@
+{% extends 'admin/base_site.html' %}
+
+{% block title %}Buscar Películas en TMDB{% endblock %}
+
+{% block content %}
+<div style="max-width: 1200px; margin: 0 auto; padding: 20px;">
+    <h1 style="color: #333; margin-bottom: 20px;">🎬 Buscar Películas en TMDB</h1>
+    
+    <div style="background-color: #e7f3ff; padding: 15px; border-radius: 6px; border-left: 4px solid #007bff; margin-bottom: 20px;">
+        <p style="margin: 0; color: #004085;">
+            <strong>ℹ️ Información:</strong> Esta herramienta te permite buscar películas en The Movie Database (TMDB) 
+            e importar automáticamente sus datos (título, sinopsis, director, actores, año, género, duración).
+            Los posters deberás subirlos manualmente desde el admin.
+        </p>
+    </div>
+    
+    <!-- Formulario de búsqueda -->
+    <form method="get" style="margin-bottom: 30px;">
+        <div style="display: flex; gap: 10px;">
+            <input 
+                type="text" 
+                name="q" 
+                value="{{ query }}" 
+                placeholder="Buscar película... (ej: Inception, Pulp Fiction)"
+                style="flex: 1; padding: 12px; border: 2px solid #ddd; border-radius: 6px; font-size: 16px;"
+                autofocus
+                required
+            >
+            <button 
+                type="submit" 
+                style="padding: 12px 30px; background-color: #007bff; color: white; border: none; border-radius: 6px; font-weight: bold; cursor: pointer; font-size: 16px;">
+                🔍 Buscar
+            </button>
+        </div>
+    </form>
+    
+    <!-- Resultados -->
+    {% if resultados %}
+        <h2 style="color: #333; margin-bottom: 20px;">Resultados ({{ resultados|length }})</h2>
+        
+        <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 20px;">
+            {% for pelicula in resultados %}
+                <div style="background-color: white; border-radius: 8px; overflow: hidden; box-shadow: 0 2px 8px rgba(0,0,0,0.1); transition: transform 0.2s;" onmouseover="this.style.transform='translateY(-4px)'" onmouseout="this.style.transform='translateY(0)'">
+                    <!-- Poster -->
+                    {% if pelicula.poster_path %}
+                        <img 
+                            src="https://image.tmdb.org/t/p/w300{{ pelicula.poster_path }}" 
+                            alt="{{ pelicula.title }}"
+                            style="width: 100%; aspect-ratio: 2/3; object-fit: cover;"
+                        >
+                    {% else %}
+                        <div style="width: 100%; aspect-ratio: 2/3; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); display: flex; align-items: center; justify-content: center; color: white; font-size: 60px;">
+                            🎬
+                        </div>
+                    {% endif %}
+                    
+                    <!-- Info -->
+                    <div style="padding: 15px;">
+                        <h3 style="margin: 0 0 5px 0; font-size: 16px; color: #333;">
+                            {{ pelicula.title }}
+                        </h3>
+                        
+                        {% if pelicula.release_date %}
+                            <p style="margin: 0 0 10px 0; color: #666; font-size: 14px;">
+                                📅 {{ pelicula.release_date|slice:":4" }}
+                            </p>
+                        {% endif %}
+                        
+                        {% if pelicula.overview %}
+                            <p style="margin: 0 0 15px 0; font-size: 13px; color: #777; line-height: 1.4; height: 80px; overflow: hidden; text-overflow: ellipsis; display: -webkit-box; -webkit-line-clamp: 4; -webkit-box-orient: vertical;">
+                                {{ pelicula.overview }}
+                            </p>
+                        {% endif %}
+                        
+                        <a 
+                            href="{% url 'peliculas:importar_tmdb' pelicula.id %}" 
+                            style="display: block; text-align: center; padding: 10px; background-color: #28a745; color: white; text-decoration: none; border-radius: 4px; font-weight: bold; font-size: 14px;"
+                            onclick="return confirm('¿Importar película: {{ pelicula.title }}?')"
+                        >
+                            ➕ Importar
+                        </a>
+                    </div>
+                </div>
+            {% endfor %}
+        </div>
+        
+    {% elif query %}
+        <div style="background-color: #fff3cd; padding: 20px; border-radius: 6px; border-left: 4px solid #ffc107; text-align: center;">
+            <p style="margin: 0; color: #856404; font-size: 16px;">
+                ❌ No se encontraron resultados para "<strong>{{ query }}</strong>"
+            </p>
+            <p style="margin: 10px 0 0 0; color: #856404; font-size: 14px;">
+                Intentá con otro nombre o en inglés
+            </p>
+        </div>
+    {% endif %}
+    
+    <!-- Links de navegación -->
+    <div style="margin-top: 30px; padding-top: 20px; border-top: 1px solid #ddd;">
+        <a href="{% url 'admin:peliculas_pelicula_changelist' %}" style="color: #007bff; text-decoration: none; font-weight: bold;">
+            ← Volver al listado de películas
+        </a>
+        <span style="margin: 0 10px; color: #ccc;">|</span>
+        <a href="{% url 'admin:peliculas_pelicula_add' %}" style="color: #007bff; text-decoration: none; font-weight: bold;">
+            ➕ Agregar película manualmente
+        </a>
+    </div>
+</div>
+
+<style>
+    /* Override admin styles for better presentation */
+    .module {
+        border: none !important;
+        border-radius: 0 !important;
+    }
+    
+    #content {
+        padding: 0 !important;
+    }
+</style>
+{% endblock %}

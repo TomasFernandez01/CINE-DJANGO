@@ -1,0 +1,148 @@
+/* modificado: clases salas-estilo-1..9 renombradas a nombres descriptivos */
+/* modificado (limpieza, punto 1): se sacaron .funciones-filtros-box,
+   .funciones-filtro-label y .funciones-filtro-btn-aplicar -- no las usaba
+   ningún template (quedaron de una versión anterior del filtro, antes de
+   que la cabecera se armara con .funciones-cabecera-contenedor). También
+   se sacó .funciones-vacio (amarillo tipo "warning"), reemplazada hace
+   tiempo por .pelis-vacio (ver más abajo), que sigue viva y en uso. */
+.funciones-filtro-select { 
+    width: 100%; 
+    padding: 0.5rem; 
+    border: 1px solid #3a3a3a; 
+    /* border-radius: 6px; */
+    font-size: 0.9rem; 
+    background-color: #000000; 
+    color: #eee; 
+}
+.funciones-filtros-acciones { display: flex; gap: 1rem; }
+.funciones-filtro-btn-limpiar { 
+    flex:1; 
+    /* padding: 0.6rem;  */
+    background-color: #000000; 
+    color: white; 
+    /* border-radius: 6px; */
+    text-align: center; 
+    text-decoration: none; 
+    /* font-weight: bold; */
+}
+.funciones-resultado-info { color: #aaa; margin: 1rem; }
+
+/* nuevo (limpieza, punto 2): esto vivía como <style> embebido directo en
+   lista_funciones.html -- se movió acá, mismo criterio de separación
+   CSS/JS/HTML que ya se usa en el resto del proyecto. */
+.funciones-cabecera-contenedor {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 1.5rem;
+    /* margin-bottom: 2rem; */
+    background-color: #000000;
+    /* padding: 1.25rem 1.5rem; */
+    /* border-radius: 8px; */
+    box-shadow: 0 4px 10px rgba(0,0,0,0.3);
+    margin: 1rem;
+}
+
+.buscador-caja-funciones {
+    flex: 1;
+    min-width: 280px;
+}
+
+/* nuevo (visual, punto 9): ícono de lupa dentro del buscador -- SVG inline
+   como background-image (data URI), no una fuente de íconos ni un emoji,
+   para no sumar una dependencia nueva solo por esto. */
+/* BUGFIX (detectado al auditar clases huérfanas): el input de búsqueda
+   usaba class="filtros-input", pero ese estilo vive en
+   static/css/peliculas/filtros.css, que esta página NUNCA carga (solo lo
+   carga peliculas/lista_pelis.html) -- el buscador de Funciones estaba
+   sin ningún estilo propio, quedaba con el input por default del
+   navegador. En vez de importar un CSS de otra app para esta página, se
+   le da su propio estilo completo acá (self-contained, mismo criterio de
+   "cada app con su CSS" que ya usa el proyecto). */
+.funciones-buscador-input {
+    width: 100%;
+    padding: 0.6rem 1rem 0.6rem 2.5rem;
+    border: 1px solid #000000;
+    /* border-radius: 6px; */
+    background-color: #000000;
+    color: #eee;
+    font-size: 0.9rem;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23888' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Ccircle cx='11' cy='11' r='7'%3E%3C/circle%3E%3Cline x1='21' y1='21' x2='16.65' y2='16.65'%3E%3C/line%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: 0.85rem center;
+    background-size: 1rem;
+}
+
+.funciones-buscador-input:focus {
+    outline: none;
+    border-color: #e50914;
+}
+
+.funciones-filtros-caja-inline {
+    margin: 0;
+}
+
+.funciones-filtros-grid-inline {
+    display: flex;
+    gap: 1rem;
+    align-items: center;
+    flex-wrap: wrap;
+}
+
+/* BUGFIX (detectado al auditar clases huérfanas): .funciones-filtro-campo
+   envuelve cada <select> de filtro (fecha rápida / sala) pero no tenía
+   NINGUNA definición en ningún CSS del proyecto -- no hacía nada. El
+   layout general seguía viéndose "aceptable" solo porque
+   .funciones-filtros-grid-inline ya es flex con gap, pero cada campo no
+   tenía un ancho mínimo propio y podía angostarse demasiado en pantallas
+   medianas. */
+.funciones-filtro-campo {
+    flex: 1;
+    min-width: 150px;
+}
+
+/* nuevo (limpieza, punto 1): reemplaza los style="" inline que tenía
+   "Limpiar Filtros" en la cabecera (margin: 0; padding/font-size chicos). */
+.funciones-filtros-acciones--inline {
+    margin: 0;
+}
+
+.funciones-filtro-btn-limpiar--chico {
+    padding: 0.5rem 1rem;
+    font-size: 0.9rem;
+}
+
+/* nuevo (UX, punto 12): estado vacío con un ícono propio (SVG, sin
+   emoji) en vez del texto plano de antes -- mismo ícono de "claqueta"
+   en el color de acento de la marca, a tono con el resto del sitio.
+   .pelis-vacio-icono (font-size: 4rem para un emoji) se sacó: ya no
+   hace falta, el ícono ahora es este SVG con tamaño propio. */
+.pelis-vacio {
+    background-color: #1f1f1f;
+    padding: 4rem 2rem;
+    border-radius: 12px;
+    text-align: center;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.4);
+    border: 1px solid #333;
+    margin: 2rem 0;
+}
+
+.pelis-vacio-icono-svg {
+    width: 56px;
+    height: 56px;
+    margin: 0 auto 1rem auto;
+    color: #555;
+}
+
+.pelis-vacio-texto-principal {
+    color: #ffffff;
+    font-size: 1.4rem;
+    font-weight: bold;
+    margin-bottom: 0.5rem;
+}
+
+.pelis-vacio-texto-secundario {
+    color: #aaaaaa;
+    font-size: 1rem;
+}

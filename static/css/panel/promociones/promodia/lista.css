@@ -1,0 +1,98 @@
+/* modificado (Panel > Promociones > Promo por Día, Hilo 2): CSS extraído de
+   promodia/lista.html, antes todo con style="" inline. Mismos valores, sin cambios de diseño. */
+
+.panelpromodia-lista-encabezado {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 1rem;
+    margin-bottom: 1.5rem;
+}
+
+.panelpromodia-lista-titulo {
+    margin: 0;
+    color: #333;
+}
+
+.panelpromodia-lista-subtitulo {
+    margin: 0.25rem 0 0 0;
+    color: #666;
+}
+
+.panelpromodia-lista-acciones {
+    display: flex;
+    gap: 0.75rem;
+}
+
+.panelpromodia-lista-btn-eliminar[disabled] {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+.panelpromodia-lista-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+    gap: 1rem;
+}
+
+.panelpromodia-lista-check-label {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    cursor: pointer;
+    margin: 0;
+}
+
+.panelpromodia-lista-dia {
+    margin: 0;
+}
+
+.panelpromodia-lista-badge {
+    font-size: 0.75rem;
+    padding: 0.2rem 0.6rem;
+    border-radius: 20px;
+    font-weight: 600;
+}
+
+.panelpromodia-lista-badge--activo {
+    background: #d4edda;
+    color: #155724;
+}
+
+.panelpromodia-lista-badge--inactivo {
+    background: #f8d7da;
+    color: #721c24;
+}
+
+.panelpromodia-lista-nombre {
+    font-weight: 700;
+    color: #1a1a2e;
+    margin-bottom: 0.4rem;
+}
+
+.panelpromodia-lista-tipo {
+    font-size: 0.85rem;
+    color: #666;
+    margin-bottom: 0.75rem;
+}
+
+.panelpromodia-lista-descripcion {
+    font-size: 0.8rem;
+    color: #999;
+    margin: 0 0 1rem;
+}
+
+.panelpromodia-lista-btn-editar {
+    font-size: 0.8rem;
+}
+
+.panelpromodia-lista-vacio-card {
+    grid-column: 1 / -1;
+}
+
+.panelpromodia-lista-vacio {
+    text-align: center;
+    padding: 3rem;
+    color: #999;
+}

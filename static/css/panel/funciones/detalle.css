@@ -1,0 +1,44 @@
+/* modificado (Hilo 1): separación CSS completa de panel/funciones/detalle.html
+   (32 estilos inline -> 0). Colores respetados tal cual estaban. */
+
+.panelfuncdet-header { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem; margin-bottom: 1.5rem; }
+.panelfuncdet-titulo { font-size: 1.4rem; color: #1a1a2e; margin: 0; }
+.panelfuncdet-subtitulo { color: #666; font-size: 0.9rem; margin-top: 0.25rem; }
+.panelfuncdet-header-acciones { display: flex; gap: 0.5rem; }
+
+.panelfuncdet-stats { margin-bottom: 1.5rem; }
+.panelfuncdet-ocupacion-bar { margin-top: 0.5rem; }
+
+.panelfuncdet-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; }
+
+.panelfuncdet-leyenda { display: flex; gap: 0.75rem; font-size: 0.75rem; align-items: center; }
+.panelfuncdet-leyenda-item { display: flex; align-items: center; gap: 4px; }
+.panelfuncdet-leyenda-swatch { width: 12px; height: 12px; border-radius: 2px; display: inline-block; }
+.panelfuncdet-leyenda-swatch--libre { background: #27ae60; }
+.panelfuncdet-leyenda-swatch--ocupado { background: #e74c3c; }
+
+.panelfuncdet-mapa-body { overflow-x: auto; }
+.panelfuncdet-pantalla-wrap { text-align: center; margin-bottom: 1rem; }
+.panelfuncdet-pantalla {
+    background: linear-gradient(to bottom, #333, #555); color: white; padding: 0.3rem 3rem;
+    border-radius: 4px 4px 0 0; font-size: 0.7rem; letter-spacing: 2px; display: inline-block;
+}
+.panelfuncdet-mapa { display: flex; flex-direction: column; gap: 4px; align-items: center; }
+.panelfuncdet-fila { display: flex; gap: 4px; align-items: center; }
+.panelfuncdet-fila-letra { width: 18px; font-size: 0.65rem; color: #999; text-align: center; font-weight: 600; }
+.panelfuncdet-asiento {
+    width: 22px; height: 18px; border-radius: 3px; font-size: 7px;
+    display: flex; align-items: center; justify-content: center; font-weight: 700; color: white;
+}
+.panelfuncdet-asiento--libre { background: #27ae60; }
+.panelfuncdet-asiento--ocupado { background: #e74c3c; }
+.panelfuncdet-celda-vacia { width: 22px; height: 18px; }
+
+.panelfuncdet-reservas-scroll { max-height: 420px; overflow-y: auto; }
+.panelfuncdet-codigo-link { font-family: monospace; font-size: 0.8rem; color: #1a1a2e; text-decoration: none; font-weight: 600; }
+.panelfuncdet-usuario { font-size: 0.85rem; color: #666; }
+.panelfuncdet-asientos-td { font-size: 0.8rem; }
+.panelfuncdet-qr-td { text-align: center; }
+.panelfuncdet-qr-ok { color: #27ae60; }
+.panelfuncdet-qr-pendiente { color: #999; }
+.panelfuncdet-vacio { text-align: center; color: #999; }

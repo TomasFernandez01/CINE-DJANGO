@@ -1,0 +1,202 @@
+{% extends 'panel/base_panel.html' %}
+{% load static %}
+
+{% block titulo %}{{ pelicula.titulo }} — Panel{% endblock %}
+
+{% block breadcrumb %}
+<span class="sep">›</span>
+<a href="{% url 'panel:peliculas_lista' %}">Películas</a>
+<span class="sep">›</span>
+<span class="current">{{ pelicula.titulo }}</span>
+{% endblock %}
+
+<!-- modificado (Hilo 1): separación CSS completa (42 estilos inline -> 0), movidos a
+     static/css/panel/peliculas/detalle.css. Confirmado acá: el rating (⭐ Calificaciones
+     y Reseñas) SÍ se muestra en el panel, tal como pedía instruccion_1 verificar. -->
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/panel/peliculas/detalle.css' %}">
+{% endblock %}
+
+{% block contenido %}
+
+<!-- modificado (T5 - cero emojis): se sacaron los emojis del botón "🌐 WEB" (acá abajo),
+     del placeholder de poster sin imagen (🎬), del badge "✅ En cartelera / ⛔ Fuera de
+     cartelera" y del título "⭐ Calificaciones y Reseñas de Usuarios" (más abajo en este
+     archivo). No se tocaron los ★/☆ del widget de puntuación (son el contenido real del
+     rating de 5 estrellas, no un emoji decorativo) ni el comentario de Hilo 1 más arriba. -->
+<div class="paneldetpelis-header">
+    <h1 class="paneldetpelis-titulo">{{ pelicula.titulo }}</h1>
+    <div class="paneldetpelis-header-acciones">
+        <a href="{% url 'peliculas:detalle_pelicula' pelicula.id %}" class="btn btn-primary" target="_blank">🌐 WEB</a>
+        <a href="{% url 'panel:peliculas_editar' pelicula.id %}" class="btn btn-primary">EDITAR</a>
+        <a href="{% url 'panel:peliculas_lista' %}" class="btn btn-danger">
+            ATRAS
+        </a>
+    </div>
+</div>
+
+<div class="paneldetpelis-grid">
+
+    <!-- Poster -->
+    <div>
+        <div class="paneldetpelis-poster">
+            {% if pelicula.poster %}
+                <img src="{{ pelicula.poster.url }}" alt="{{ pelicula.titulo }}" class="paneldetpelis-poster-img">
+            {% else %}
+                <div class="paneldetpelis-poster-placeholder">
+                    🎬
+                </div>
+            {% endif %}
+        </div>
+
+        <!-- Estado -->
+        <div class="paneldetpelis-estado-wrap">
+            <span class="paneldetpelis-estado-badge {% if pelicula.en_cartelera %}paneldetpelis-estado-badge--activa{% else %}paneldetpelis-estado-badge--inactiva{% endif %}">
+                {% if pelicula.en_cartelera %} En cartelera{% else %} Fuera de cartelera{% endif %}
+            </span>
+        </div>
+    </div>
+
+    <!-- Datos -->
+    <div class="paneldetpelis-col-datos">
+
+        <!-- Info general -->
+        <div class="card">
+            <div class="card-header"><h3>Información General</h3></div>
+            <div class="card-body">
+                <div class="paneldetpelis-info-grid">
+                    <div>
+                        <div class="paneldetpelis-info-label">GÉNERO</div>
+                        <div class="paneldetpelis-info-valor">{{ pelicula.get_genero_display|default:"—" }}</div>
+                    </div>
+                    <div>
+                        <div class="paneldetpelis-info-label">CLASIFICACIÓN</div>
+                        <div class="paneldetpelis-info-valor">{{ pelicula.get_clasificacion_display }}</div>
+                    </div>
+                    <div>
+                        <div class="paneldetpelis-info-label">DURACIÓN</div>
+                        <div class="paneldetpelis-info-valor">{{ pelicula.duracion_formato }}</div>
+                    </div>
+                    <div>
+                        <div class="paneldetpelis-info-label">AÑO</div>
+                        <div class="paneldetpelis-info-valor">{{ pelicula.año|default:"—" }}</div>
+                    </div>
+                    <div>
+                        <div class="paneldetpelis-info-label">DIRECTOR</div>
+                        <div class="paneldetpelis-info-valor">{{ pelicula.director|default:"—" }}</div>
+                    </div>
+                    <div>
+                        <div class="paneldetpelis-info-label">ACTORES</div>
+                        <div class="paneldetpelis-info-valor paneldetpelis-info-valor--chica">{{ pelicula.actores|default:"—" }}</div>
+                    </div>
+                </div>
+                {% if pelicula.sinopsis %}
+                <div class="paneldetpelis-sinopsis-wrap">
+                    <div class="paneldetpelis-info-label">SINOPSIS</div>
+                    <p class="paneldetpelis-sinopsis-texto">
+                        {{ pelicula.sinopsis }}
+                    </p>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- Funciones próximas -->
+        <div class="card">
+            <div class="card-header">
+                <h3>Próximas Funciones ({{ funciones.count }})</h3>
+            </div>
+            {% if funciones %}
+            <!-- modificado (T2): columna Sede agregada a la tabla. Esta vista muestra
+                 funciones de TODAS las sedes para la película (no se filtra acá, ver
+                 panel/views/peliculas.py::peliculas_detalle), así que sin esta columna
+                 no había forma de distinguir a qué sede pertenece cada función. -->
+            <table class="tabla">
+                <thead>
+                    <tr>
+                        <th>Fecha y Hora</th>
+                        <th>Sala</th>
+                        <th>Sede</th>
+                        <th>Precio</th>
+                        <th>Disponibles</th>
+                        <th></th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for f in funciones %}
+                    <tr>
+                        <td class="paneldetpelis-func-fecha">{{ f.fecha_hora|date:"d/m/Y H:i" }}</td>
+                        <td class="paneldetpelis-func-sala">{{ f.sala.nombre }}</td>
+                        <td class="paneldetpelis-func-sala">{{ f.sala.sede.nombre }}</td>{# modificado (T2) #}
+                        <td class="paneldetpelis-func-precio">
+                            ${{ f.precio_final }}
+                            {% if f.precio is None %}<span class="paneldetpelis-func-precio-auto">(auto)</span>{% endif %}
+                        </td>
+                        <td>
+                            <span class="paneldetpelis-func-disponibles {% if f.asientos_disponibles > 10 %}paneldetpelis-func-disponibles--alta{% elif f.asientos_disponibles > 0 %}paneldetpelis-func-disponibles--media{% else %}paneldetpelis-func-disponibles--baja{% endif %}">
+                                {{ f.asientos_disponibles }}/{{ f.sala.capacidad }}
+                            </span>
+                        </td>
+                        <td>
+                            <a href="{% url 'panel:funciones_detalle' f.id %}"
+                               class="btn btn-ghost paneldetpelis-func-btn-ver">
+                                Ver
+                            </a>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+            {% else %}
+            <div class="card-body paneldetpelis-vacio">
+                No hay funciones próximas programadas para esta película.
+            </div>
+            {% endif %}
+        </div>
+
+        <!-- Calificaciones y reseñas -->
+        <div class="card paneldetpelis-ratings-card">
+            <div class="card-header paneldetpelis-ratings-header">
+                <h3> Calificaciones y Reseñas de Usuarios ({{ ratings.count }})</h3>
+                <span class="paneldetpelis-ratings-promedio">★ {{ pelicula.rating_promedio }} / 5</span>
+            </div>
+            <div class="paneldetpelis-ratings-scroll">
+                {% if ratings %}
+                <table class="tabla">
+                    <thead>
+                        <tr>
+                            <th>Usuario</th>
+                            <th>Puntuación</th>
+                            <th>Comentario</th>
+                            <th>Fecha</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for r in ratings %}
+                        <tr>
+                            <td class="paneldetpelis-rating-usuario">{{ r.usuario.get_full_name|default:r.usuario.username }}</td>
+                            <td class="paneldetpelis-rating-estrellas">
+                                {% if r.puntuacion >= 1 %}★{% else %}☆{% endif %}
+                                {% if r.puntuacion >= 2 %}★{% else %}☆{% endif %}
+                                {% if r.puntuacion >= 3 %}★{% else %}☆{% endif %}
+                                {% if r.puntuacion >= 4 %}★{% else %}☆{% endif %}
+                                {% if r.puntuacion >= 5 %}★{% else %}☆{% endif %}
+                            </td>
+                            <td class="paneldetpelis-rating-comentario">{{ r.comentario|default:"—" }}</td>
+                            <td class="paneldetpelis-rating-fecha">{{ r.fecha_creacion|date:"d/m/Y H:i" }}</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+                {% else %}
+                <div class="card-body paneldetpelis-ratings-vacio">
+                    Esta película aún no tiene calificaciones ni reseñas de usuarios.
+                </div>
+                {% endif %}
+            </div>
+        </div>
+
+    </div>
+</div>
+
+{% endblock %}

@@ -1,77 +1,125 @@
 {% extends 'base.html' %}
 
+{% load static %}
+
 {% block titulo %}Mis Reservas{% endblock %}
 
 {% block contenido %}
-<div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem; flex-wrap: wrap; gap: 1rem;">
-    <h1 style="margin: 0;">Mis Reservas</h1>
-    
-    <div style="display: flex; gap: 0.5rem; flex-wrap: wrap;">
-        <a href="?mostrar_canceladas={{ mostrar_canceladas }}&mostrar_expiradas=si" 
-           style="padding: 0.5rem 1rem; {% if mostrar_expiradas == 'si' %}background-color: #007bff; color: white;{% else %}background-color: #e9ecef; color: #333;{% endif %} border-radius: 4px; text-decoration: none; font-weight: bold;">
-            Mostrar Expiradas
-        </a>
-        <a href="?mostrar_canceladas={{ mostrar_canceladas }}&mostrar_expiradas=no" 
-           style="padding: 0.5rem 1rem; {% if mostrar_expiradas == 'no' %}background-color: #007bff; color: white;{% else %}background-color: #e9ecef; color: #333;{% endif %} border-radius: 4px; text-decoration: none; font-weight: bold;">
-            Ocultar Expiradas
-        </a>
-        <a href="?mostrar_canceladas=si&mostrar_expiradas={{ mostrar_expiradas }}" 
-           style="padding: 0.5rem 1rem; {% if mostrar_canceladas == 'si' %}background-color: #007bff; color: white;{% else %}background-color: #e9ecef; color: #333;{% endif %} border-radius: 4px; text-decoration: none; font-weight: bold;">
-            Mostrar Canceladas
-        </a>
-        <a href="?mostrar_canceladas=no&mostrar_expiradas={{ mostrar_expiradas }}" 
-           style="padding: 0.5rem 1rem; {% if mostrar_canceladas == 'no' %}background-color: #007bff; color: white;{% else %}background-color: #e9ecef; color: #333;{% endif %} border-radius: 4px; text-decoration: none; font-weight: bold;">
-            Ocultar Canceladas
-        </a>
-    </div>
+{# ================================================================ #}
+{# modificado (bugfix + rediseño): card simplificado a 3 columnas.      #}
+{# Antes mostraba código/butacas/precio/combos duplicando el          #}
+{# comprobante (QR) y el detalle de la reserva -- ahora el card es    #}
+{# solo un resumen rápido (poster + título/fecha/sede/sala + estado y #}
+{# acciones); el desglose completo sigue disponible en "Ver Detalle"  #}
+{# / "Ver Comprobante QR".                                            #}
+{# ================================================================ #}
+<link rel="stylesheet" href="{% static 'css/reservas/mis_reservas.css' %}">
+
+{% comment %} <h1>Mis Reservas</h1> {% endcomment %}
+
+<!-- Filtros -->
+<div class="reserva-mr-filtros">
+    <form method="get" id="filtrosForm" class="reserva-mr-filtros-form">
+        <label class="reserva-mr-filtro-label">
+            <input type="checkbox" name="mostrar_canceladas" value="si"
+                   {% if mostrar_canceladas == 'si' %}checked{% endif %}>
+            Mostrar canceladas
+        </label>
+        <label class="reserva-mr-filtro-label">
+            <input type="checkbox" name="mostrar_expiradas" value="si"
+                   {% if mostrar_expiradas == 'si' %}checked{% endif %}>
+            Mostrar expiradas
+        </label>
+    </form>
 </div>
 
 {% if reservas %}
-    <div style="margin-top: 1.5rem;">
+    <div class="reserva-mr-lista">
         {% for reserva in reservas %}
-            <div style="background-color: white; padding: 1.5rem; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); margin-bottom: 1rem; {% if reserva.estado == 'expirada' %}opacity: 0.7; border-left: 4px solid #6c757d;{% endif %}">
-                <div style="display: flex; justify-content: space-between; align-items: start; flex-wrap: wrap; gap: 1rem;">
-                    <div style="flex: 1; min-width: 250px;">
-                        <h3 style="color: #333; margin-bottom: 0.5rem;">{{ reserva.funcion.pelicula.titulo }}</h3>
-                        <p style="color: #666; margin: 0.25rem 0;">
-                            <strong>Código:</strong> {{ reserva.codigo_reserva }}
-                        </p>
-                        <p style="color: #666; margin: 0.25rem 0;">
-                            <strong>Sala:</strong> {{ reserva.funcion.sala.nombre }}
-                        </p>
-                        <p style="color: #666; margin: 0.25rem 0;">
-                            <strong>Fecha y Hora:</strong> {{ reserva.funcion.fecha_hora|date:"d/m/Y H:i" }}
-                        </p>
-                        <p style="color: #666; margin: 0.25rem 0;">
-                            <strong>Entradas:</strong> {{ reserva.cantidad_entradas }}
-                        </p>
-                        <p style="color: #666; margin: 0.25rem 0;">
-                            <strong>Total:</strong> ${{ reserva.total }}
-                        </p>
-                        <p style="margin: 0.5rem 0;">
-                            <span style="padding: 0.25rem 0.75rem; border-radius: 4px; font-size: 0.9rem; font-weight: bold;
-                                {% if reserva.estado == 'confirmada' %}background-color: #d4edda; color: #155724;
-                                {% elif reserva.estado == 'pendiente' %}background-color: #fff3cd; color: #856404;
-                                {% elif reserva.estado == 'expirada' %}background-color: #e2e3e5; color: #383d41;
-                                {% else %}background-color: #f8d7da; color: #721c24;{% endif %}">
-                                {{ reserva.get_estado_display }}
-                            </span>
-                        </p>
+            <div class="reserva-mr-card reserva-mr-card--{{ reserva.estado }}">
+
+                <!-- Poster (El tamaño de la imagen se ajusta en static/css/reservas/mis_reservas.css en .reserva-mr-poster) -->
+                <a href="{% url 'peliculas:detalle_pelicula' reserva.funcion.pelicula.id %}" class="reserva-mr-poster">
+                    {% if reserva.funcion.pelicula.poster %}
+                        <img src="{{ reserva.funcion.pelicula.poster.url }}" alt="{{ reserva.funcion.pelicula.titulo }}">
+                    {% else %}
+                        <div class="reserva-mr-poster-placeholder">[POSTER]</div>
+                    {% endif %}
+                </a>
+
+                <!-- modificado (rediseño): resumen mínimo -- título, fecha/hora,
+                     sede y sala. Todo lo demás (código, butacas, precio, combos)
+                     se sacó de este card porque ya está en el comprobante QR /
+                     detalle de la reserva (ver botones de la columna derecha),
+                     y repetirlo acá era ruido. BUGFIX: antes esta fila solo
+                     mostraba reserva.funcion.sala.nombre, sin la sede a la que
+                     pertenece esa sala -- ahora muestra ambas
+                     (reserva.funcion.sala.sede.nombre). -->
+                <div class="reserva-mr-info">
+                    <h3 class="reserva-mr-titulo">{{ reserva.funcion.pelicula.titulo }}</h3>
+
+                    <div class="reserva-mr-meta-lista">
+                        <div class="reserva-mr-meta-fila">
+                            {{ reserva.funcion.fecha_hora|date:"d/m/Y" }} · <strong>{{ reserva.funcion.fecha_hora|date:"H:i" }} hs</strong>
+                        </div>
+                        <div class="reserva-mr-meta-fila">
+                            <strong>{{ reserva.funcion.sala.sede.nombre }}</strong> — {{ reserva.funcion.sala.nombre }}
+                        </div>
                     </div>
-                    <div style="display: flex; flex-direction: column; gap: 0.5rem;">
-                        <a href="{% url 'reservas:detalle_reserva' reserva.id %}" style="padding: 0.5rem 1rem; background-color: #007bff; color: white; border-radius: 4px; text-decoration: none; text-align: center; font-weight: bold;">
+                </div>
+
+                <!-- Columna derecha: Estado y Acciones -->
+                <div class="reserva-mr-columna-derecha">
+                    <span class="reserva-mr-badge-estado reserva-mr-badge-estado--{{ reserva.estado }}">
+                        {{ reserva.get_estado_display }}
+                    </span>
+
+                    {% if reserva.estado == 'pendiente' and reserva.tiempo_restante_pago %}
+                        <!-- BUGFIX: antes este texto cambiaba de formato apenas
+                             corría el primer tick del JS (mis_reservas.js) --
+                             el render inicial del server decía "Tiempo restante:
+                             MM:SS" y, un segundo después, el JS lo reemplazaba
+                             por "⏰ MM:SS" (perdía la etiqueta y agregaba un
+                             emoji que además iba en contra del criterio de
+                             "cero emojis" ya aplicado en el resto del panel).
+                             Ese cambio de formato daba la sensación de "dos
+                             cosas mostrándose" -- ahora el JS mantiene el mismo
+                             formato que el render inicial, sin salto visual. -->
+                        <div id="contador-{{ reserva.id }}"
+                             data-segundos="{{ reserva.tiempo_restante_pago }}"
+                             class="reserva-mr-contador">
+                            Tiempo restante: {{ reserva.tiempo_restante_formato }}
+                        </div>
+                    {% endif %}
+
+                    <div class="reserva-mr-acciones">
+                        {% if reserva.estado == 'confirmada' and reserva.pago %}
+                        <a href="{% url 'pagos:comprobante_pago' reserva.pago.id %}" class="reserva-mr-btn reserva-mr-btn--comprobante">
+                            Ver Comprobante QR
+                        </a>
+                        {% else %}
+                        <a href="{% url 'reservas:detalle_reserva' reserva.id %}" class="reserva-mr-btn reserva-mr-btn--detalle">
                             Ver Detalle
                         </a>
+                        {% endif %}
+
                         {% if reserva.estado == 'pendiente' %}
-                            <a href="{% url 'pagos:procesar_pago' reserva.id %}" style="padding: 0.5rem 1rem; background-color: #28a745; color: white; border-radius: 4px; text-decoration: none; text-align: center; font-weight: bold;">
-                                💳 Pagar Ahora
+                            <a href="{% url 'pagos:elegir_combo' reserva.id %}" class="reserva-mr-btn reserva-mr-btn--pagar">
+                                Pagar Ahora
                             </a>
-                            <a href="{% url 'reservas:cancelar_reserva' reserva.id %}" onclick="return confirm('¿Estás seguro de cancelar esta reserva?')" style="padding: 0.5rem 1rem; background-color: #ffc107; color: #333; border-radius: 4px; text-decoration: none; text-align: center; font-weight: bold;">
+                            <a href="{% url 'reservas:cancelar_reserva' reserva.id %}" class="reserva-mr-btn reserva-mr-btn--cancelar"
+                               data-confirm="¿Estás seguro de cancelar esta reserva? Esta acción no se puede deshacer."
+                               data-confirm-titulo="Cancelar reserva"
+                               data-confirm-texto="Sí, cancelar">
                                 Cancelar
                             </a>
                         {% endif %}
-                        {% if reserva.estado == 'cancelada' or reserva.estado == 'expirada' %}
-                            <a href="{% url 'reservas:eliminar_reserva' reserva.id %}" onclick="return confirm('¿Estás seguro de eliminar esta reserva del historial?')" style="padding: 0.5rem 1rem; background-color: #dc3545; color: white; border-radius: 4px; text-decoration: none; text-align: center; font-weight: bold;">
+
+                        {% if reserva.estado in 'cancelada,expirada' %}
+                            <a href="{% url 'reservas:eliminar_reserva' reserva.id %}" class="reserva-mr-btn reserva-mr-btn--eliminar"
+                               data-confirm="¿Eliminar esta reserva del historial? No vas a poder recuperarla."
+                               data-confirm-titulo="Eliminar del historial"
+                               data-confirm-texto="Sí, eliminar">
                                 Eliminar
                             </a>
                         {% endif %}
@@ -81,22 +129,13 @@
         {% endfor %}
     </div>
 {% else %}
-    <p style="background-color: #fff3cd; padding: 1rem; border-radius: 4px; border-left: 4px solid #ffc107; margin-top: 1.5rem;">
-        {% if mostrar_canceladas == 'no' or mostrar_expiradas == 'no' %}
-            No hay reservas con los filtros seleccionados. <a href="{% url 'salas:lista_funciones' %}" style="color: #007bff; font-weight: bold;">Ver funciones disponibles</a>
-        {% else %}
-            No tenés reservas todavía. <a href="{% url 'salas:lista_funciones' %}" style="color: #007bff; font-weight: bold;">Ver funciones disponibles</a>
-        {% endif %}
-    </p>
+    <div class="reserva-mr-vacio">
+        <p class="reserva-mr-vacio-texto">No tenés reservas registradas en este momento.</p>
+        <a href="{% url 'peliculas:lista_peliculas' %}" class="reserva-mr-vacio-boton">
+            Explorar Cartelera de Películas
+        </a>
+    </div>
 {% endif %}
 
-<div style="margin-top: 2rem; padding: 1rem; background-color: #e7f3ff; border-radius: 4px;">
-    <p style="margin: 0; font-size: 0.9rem; color: #004085;">
-        <strong>ℹ️ Información:</strong><br>
-        • Las reservas se marcan como <strong>expiradas</strong> automáticamente cuando la función ya pasó.<br>
-        • Podés eliminar reservas canceladas o expiradas para limpiar tu historial.<br>
-        • Solo podés cancelar reservas al menos 2 horas antes de la función.
-    </p>
-</div>
-
+<script src="{% static 'js/reservas/mis_reservas.js' %}"></script>
 {% endblock %}

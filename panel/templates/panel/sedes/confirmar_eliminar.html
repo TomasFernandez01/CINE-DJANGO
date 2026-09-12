@@ -1,0 +1,89 @@
+{% extends 'panel/base_panel.html' %}
+
+{% load static %}
+
+{% block titulo %}Confirmar eliminación — Panel{% endblock %}
+
+{% block breadcrumb %}
+<span class="sep">›</span>
+<a href="{% url 'panel:sedes_lista' %}">Sedes</a>
+<span class="sep">›</span>
+<span class="current">Confirmar eliminación</span>
+{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/panel/promociones/confirmar_eliminar.css' %}">
+{% endblock %}
+
+{% block contenido %}
+<!-- modificado (T5 - cero emojis): se sacaron los emojis del título (⚠️) y de los dos estados del botón de eliminar (🗑️ "No se puede eliminar" / 🗑️ "Sí, eliminar definitivamente"), más abajo. -->
+
+<div class="panelconfelim-wrap">
+
+    <h1 class="panelconfelim-titulo"> Confirmar eliminación</h1>
+    <p class="panelconfelim-texto">
+        Esta acción no se puede deshacer. Una sede con salas asociadas
+        <strong>no se puede eliminar</strong> — primero hay que mover o
+        borrar esas salas.
+    </p>
+
+    <div class="card panelconfelim-card">
+        <div class="card-header"><h3>Se eliminará lo siguiente</h3></div>
+        <div class="panelconfelim-tabla-wrap">
+            <table class="tabla">
+                <thead>
+                    <tr>
+                        <th>Sede</th>
+                        <th>Salas asociadas</th>
+                        <th>Reservas históricas</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for item in resumen %}
+                    <tr>
+                        <td class="panelconfelim-col-nombre">{{ item.sede.nombre }}</td>
+                        <td>
+                            {% if item.bloqueado %}
+                            <span class="panelconfelim-cantidad-warn--danger">{{ item.total_salas }} — no se puede eliminar</span>
+                            {% else %}
+                            <span class="panelconfelim-cantidad-cero">0</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            {% if item.total_reservas %}
+                            <span class="panelconfelim-cantidad-warn">{{ item.total_reservas }}</span>
+                            {% else %}
+                            <span class="panelconfelim-cantidad-cero">0</span>
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <form method="post" action="{% url 'panel:sedes_eliminar' %}">
+        {% csrf_token %}
+        {% for id in ids %}
+        <input type="hidden" name="seleccionadas" value="{{ id }}">
+        {% endfor %}
+        <input type="hidden" name="confirmado" value="1">
+
+        <div class="panelconfelim-botones">
+            {% if hay_bloqueadas %}
+            <button type="button" class="btn btn-danger panelconfelim-btn-eliminar" disabled title="Hay sedes con salas asociadas, no se puede eliminar">
+                 No se puede eliminar (hay salas asociadas)
+            </button>
+            {% else %}
+            <button type="submit" class="btn btn-danger panelconfelim-btn-eliminar">
+                 Sí, eliminar definitivamente
+            </button>
+            {% endif %}
+            <a href="{% url 'panel:sedes_lista' %}" class="btn btn-ghost">Cancelar</a>
+        </div>
+    </form>
+
+</div>
+
+{% endblock %}

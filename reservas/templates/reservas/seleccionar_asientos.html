@@ -1,0 +1,205 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block titulo %}Seleccionar Asientos - {{ funcion.pelicula.titulo }}{% endblock %}
+
+{% block contenido %}
+<link rel="stylesheet" href="{% static 'css/reservas/seleccionar_asientos.css' %}">
+<!-- modificado: contenedor de datos para el JS externo -->
+<div id="seleccionarAsientosData"
+     data-precio-entrada="{{ funcion.precio_final }}"
+     data-max-asientos="{{ max_asientos }}"
+     data-funcion-id="{{ funcion.id }}"
+     data-segundos-restantes="{{ segundos_restantes|default:'' }}"
+     data-tiempo-limite-minutos="{{ tiempo_limite_minutos }}"
+     data-url-lista-funciones="{% url 'salas:lista_funciones' %}"
+     data-url-verificar-asientos="{% url 'reservas:verificar_asientos' funcion.id %}"></div>
+<div class="reserva-sa-wrapper">
+    <h1 class="reserva-sa-titulo">Seleccionar Asientos</h1>
+    {# ============================================================ #}
+    {# BANNER COUNTDOWN (activo desde el punto 5 de revisión)       #}
+    {# La view ya pasa:                                             #}
+    {#   segundos_restantes (int)  → tiempo para elegir asientos    #}
+    {#   tiempo_limite_minutos (int) → tiempo para PAGAR después    #}
+    {#                               de confirmar (backend real)    #}
+    {# ============================================================ #}
+    {% if segundos_restantes %}
+    <div id="countdownBanner"
+         data-segundos="{{ segundos_restantes }}"
+         class="reserva-sa-countdown-banner">
+        <div class="reserva-sa-countdown-banner-label">
+            Es por Tiempo — elegí antes de que los tome otro
+        </div>
+        <div id="countdown" class="reserva-sa-countdown-banner-valor">
+            {{ segundos_restantes|floatformat:0 }}
+        </div>
+        <div class="reserva-sa-countdown-banner-nota">
+            Si se acaba este tiempo, la pantalla se reinicia y debés volver a elegir
+        </div>
+    </div>
+    {% endif %}
+    <div id="layoutAsientos" class="reserva-sa-layout">
+        {# ──────────────── COLUMNA IZQUIERDA: leyenda + pantalla + mapa ──────────────── #}
+        <div>
+            <div class="reserva-sa-leyenda">
+                <div class="reserva-sa-leyenda-lista">
+                    <div class="reserva-sa-leyenda-item">
+                        <div class="reserva-sa-leyenda-swatch reserva-sa-leyenda-swatch--disponible"></div>
+                        <span>Disponible</span>
+                    </div>
+                    <div class="reserva-sa-leyenda-item">
+                        <div class="reserva-sa-leyenda-swatch reserva-sa-leyenda-swatch--no-disponible">✕</div>
+                        <span>No disponible</span>
+                    </div>
+                    <div class="reserva-sa-leyenda-item">
+                        <div class="reserva-sa-leyenda-swatch reserva-sa-leyenda-swatch--categoria"></div>
+                        <span>Categoría especial</span>
+                    </div>
+                    <div class="reserva-sa-leyenda-item">
+                        <div class="reserva-sa-leyenda-swatch reserva-sa-leyenda-swatch--seleccionado">:)</div>
+                        <span>Seleccionado</span>
+                    </div>
+                </div>
+            </div>
+
+            {#====== PANTALLA (curva estilo Cinemark) ====== #}
+            <div class="reserva-sa-pantalla-wrap">
+                <div class="reserva-sa-pantalla-curva"></div>
+                <div class="reserva-sa-pantalla-label">
+                    {% if funcion.sala.tipo == '3d_premium' %}💎 PANTALLA IMAX/DBOX
+                    {% elif funcion.sala.tipo == '2d_premium' %}⭐ PANTALLA PREMIUM
+                    {% elif funcion.sala.tipo == '3d' %}🥽 PANTALLA 3D
+                    {% else %}PANTALLA{% endif %}
+                </div>
+            </div>
+            <div class="reserva-sa-mapa">
+                <div class="reserva-sa-mapa-inner">
+                    {% for fila in layout %}
+                        <div class="reserva-sa-fila">
+                            <div class="reserva-sa-fila-letra">
+                                {{ fila.letra }}
+                            </div>
+                            {% for asiento in fila.celdas %}
+                                {% if asiento %}
+                                <button
+                                    type="button"
+                                    class="asiento {% if asiento in asientos_ocupados %}ocupado{% else %}disponible{% endif %}"
+                                    data-asiento="{{ asiento }}"
+                                    data-motivo="{% if asiento in asientos_reservados_real %}ocupado{% elif asiento in asientos_bloqueados_mant %}mantenimiento{% elif asiento in asientos_bloqueados_reserv %}reservado{% else %}{% endif %}"
+                                    {% if asiento in asientos_ocupados %}disabled{% endif %}>
+                                    {% if asiento in asientos_ocupados %}✕{% else %}{{ asiento }}{% endif %}
+                                </button>
+                                {% else %}
+                                {# Pasillo: espacio vacío del mismo tamaño, sin botón #}
+                                <div class="reserva-sa-pasillo"></div>
+                                {% endif %}
+                            {% endfor %}
+                            <div class="reserva-sa-fila-letra">
+                                {{ fila.letra }}
+                            </div>
+                        </div>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+
+        {# ──────────────── COLUMNA DERECHA: RESUMEN (sticky) ──────────────── #}
+        <div id="sidebarResumen" class="reserva-sa-sidebar">
+
+            <div class="reserva-sa-resumen-card">
+                <div class="reserva-sa-resumen-titulo">RESUMEN</div>
+
+                {# Película #}
+                <div class="reserva-sa-resumen-pelicula">
+                    {% if funcion.pelicula.poster %}
+                    <img src="{{ funcion.pelicula.poster.url }}" alt="{{ funcion.pelicula.titulo }}" class="reserva-sa-resumen-poster">
+                    {% endif %}
+                    <div>
+                        <div class="reserva-sa-resumen-label">Película</div>
+                        <div class="reserva-sa-resumen-valor">{{ funcion.pelicula.titulo }}</div>
+                        <div class="reserva-sa-resumen-tipo-sala">
+                            {% if funcion.sala.tipo == '2d' %}2D
+                            {% elif funcion.sala.tipo == '3d' %}3D
+                            {% elif funcion.sala.tipo == '2d_premium' %}2D Premium
+                            {% elif funcion.sala.tipo == '3d_premium' %}3D Premium{% endif %}
+                        </div>
+                    </div>
+                </div>
+
+                {# Sala y horario #}
+                <div class="reserva-sa-resumen-sala">
+                    <div class="reserva-sa-resumen-label">Sala y horario</div>
+                    <div class="reserva-sa-resumen-valor">{{ sala.nombre }}</div>
+                    <div class="reserva-sa-resumen-sala-fecha">
+                        {{ funcion.fecha_hora|date:"d/m/Y" }} · {{ funcion.fecha_hora|date:"H:i" }} hs
+                    </div>
+                    <div class="reserva-sa-resumen-disponibles {% if asientos_disponibles > 10 %}reserva-sa-resumen-disponibles--alta{% elif asientos_disponibles > 0 %}reserva-sa-resumen-disponibles--media{% else %}reserva-sa-resumen-disponibles--baja{% endif %}">
+                        {{ asientos_disponibles }} disponibles
+                    </div>
+                </div>
+
+                {# modificado: la categoría especial ahora se pinta en dorado en el mapa #}
+                {% if info_categorias %}
+                <div class="reserva-sa-resumen-categoria-nota">
+                    <div class="reserva-sa-resumen-categoria-fila">
+                        <span class="reserva-sa-resumen-categoria-swatch"></span>
+                        Los asientos dorados tienen categoría especial (precio distinto)
+                    </div>
+                </div>
+                {% endif %}
+
+                {# Butacas seleccionadas #}
+                <div class="reserva-sa-resumen-butacas">
+                    <div class="reserva-sa-resumen-label">
+                        Butacas (máx. <span id="maxAsientosLabel">{{ max_asientos }}</span>)
+                    </div>
+                    <div id="asientosSeleccionadosTexto" class="reserva-sa-resumen-valor">Ninguna</div>
+                    <div id="cantidadSeleccionada" class="reserva-sa-hidden">0</div>
+                    <div id="notaCategoriasSeleccionadas" class="reserva-sa-nota-categorias"></div>
+                </div>
+
+                {# Total #}
+                <div class="reserva-sa-resumen-total-fila">
+                    <span class="reserva-sa-resumen-total-label">Total</span>
+                    <span id="totalPagar" class="reserva-sa-resumen-total-valor">$0</span>
+                </div>
+            </div>
+
+            {# ============================================================ #}
+            {# FORMULARIO                                                   #}
+            {# ============================================================ #}
+            <form method="post"
+                  action="{% url 'reservas:confirmar_reserva_asientos' funcion.id %}"
+                  id="formReserva">
+                {% csrf_token %}
+                <input type="hidden" name="asientos_seleccionados" id="asientosSeleccionadosInput" value="">
+
+                <div class="reserva-sa-form-acciones">
+                    <button type="submit" id="btnConfirmar" disabled class="reserva-sa-btn-confirmar">
+                        RESERVAR
+                    </button>
+                    <a href="{% url 'peliculas:detalle_pelicula' funcion.pelicula.id %}" class="reserva-sa-btn-cancelar">
+                        Cancelar
+                    </a>
+                </div>
+            </form>
+
+            {# modificado: versión oscura y compacta del cartel de aviso, ahora dentro del sidebar #}
+            <div class="reserva-sa-aviso">
+                <p>
+                    Seleccioná hasta <strong>{{ max_asientos }}</strong> asientos.
+                    Al confirmar tenés <strong>{{ tiempo_limite_minutos }} minutos</strong> para pagar.
+                </p>
+            </div>
+        </div>
+    </div>
+</div>
+
+{{ precios_por_asiento|json_script:"precios-por-asiento-data" }}
+{{ info_categorias|json_script:"info-categorias-data" }}
+
+{# ============================================================ #}
+{# SCRIPTS                                                      #}
+{# ============================================================ #}
+
+<script src="{% static 'js/reservas/seleccionar_asientos.js' %}"></script>
+{% endblock %}

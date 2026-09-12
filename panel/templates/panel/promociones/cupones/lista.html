@@ -1,0 +1,99 @@
+{% extends 'panel/base_panel.html' %}
+{% load static %}
+{% block titulo %}Cupones — Panel{% endblock %}
+{% block breadcrumb %}
+<span class="sep">›</span>
+<span class="current">Cupones</span>
+{% endblock %}
+
+{% block extra_css %}
+<!-- modificado: CSS separado a static/css/panel/promociones/cupones/lista.css (antes todo con style="" inline) -->
+<link rel="stylesheet" href="{% static 'css/panel/promociones/cupones/lista.css' %}">
+{% endblock %}
+
+{% block contenido %}
+<!-- modificado (T5 - cero emojis): se sacaron los emojis del título (🏷️ ... 🎟️). -->
+
+<div class="panelcupon-lista-encabezado">
+        <div>
+            <h1 class="panelcupon-lista-titulo"> Gestión de Cupones </h1><p class="panelcupon-lista-subtitulo">Activá, desactivá y consultá el historial de cada cupón</p>
+        </div>
+        <div class="panelcupon-lista-acciones">
+            <button type="submit" form="formCupones" id="btnEliminarSeleccionadas" class="btn btn-danger panelcupon-lista-btn-eliminar" disabled>Eliminar</button>
+            <a href="{% url 'panel:inicio' %}" class="btn btn-primary">INICIO</a>
+            <a href="{% url 'panel:cupones_crear' %}" class="btn btn-primary">NUEVO</a>
+            <!-- modificado (T14): apuntaba a cupones_estadisticas (retirada), ahora va a Dashboard > Promociones -->
+            <a href="{% url 'panel:dashboard_promociones' %}"class="btn btn-primary">USOS</a>
+            <!-- nuevo (T14): "Cupones Usados" salió del sidebar (grupo Operaciones,
+                 quedó reducido a Reservas/Pagos/Verificador QR). Es un listado
+                 operativo, no un gráfico, así que no encaja como sub-sección de
+                 Dashboard — se deja accesible desde acá en vez de perderla. -->
+            <a href="{% url 'panel:cupones_usados_lista' %}" class="btn btn-ghost">HISTORIAL DE USOS</a>
+        </div>
+    </div>
+
+
+<div class="card panelcupon-lista-filtros-card">
+    <div class="card-body panelcupon-lista-filtros-body">
+        <form method="get" class="panelcupon-lista-filtros-form">
+            <input type="text" name="q" value="{{ busqueda }}" class="input panelcupon-lista-filtro-busqueda"
+                   placeholder="Código o descripción...">
+            <select name="estado" class="select">
+                <option value="">Todos</option>
+                <option value="activo"   {% if estado == 'activo' %}selected{% endif %}>Activos</option>
+                <option value="inactivo" {% if estado == 'inactivo' %}selected{% endif %}>Inactivos</option>
+            </select>
+            <button type="submit" class="btn btn-dark">Filtrar</button>
+            <a href="{% url 'panel:cupones_lista' %}" class="btn btn-ghost">Limpiar</a>
+        </form>
+    </div>
+</div>
+<!-- modificado: data-eliminar-modal activa el flujo por modal de
+     static/js/panel/shared/eliminar_modal.js en vez de navegar a
+     confirmar_eliminar.html. Si JS falla, el form sigue apuntando a la
+     misma action de siempre (fallback intacto). -->
+<form method="post" action="{% url 'panel:cupones_eliminar' %}" id="formCupones" data-eliminar-modal>
+    {% csrf_token %}
+<div class="card">
+    {% if cupones %}
+    <table class="tabla">
+        <thead>
+            <tr>
+                <th class="panelcupon-lista-check-col"><input type="checkbox" id="chkTodosCupones" class="panel-checkbox"></th>
+                <th>Código</th>
+                <th>Descripción</th>
+                <th>Descuento</th>
+                <th>Vigencia</th>
+                <th>Usos</th>
+                <th>Estado</th>
+                <th></th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for c in cupones %}
+            <tr>
+                <td><input type="checkbox" name="seleccionadas" value="{{ c.id }}" class="chk-cupon panel-checkbox"></td>
+
+                <td class="panelcupon-lista-codigo">{{ c.codigo }}</td>
+                <td class="panelcupon-lista-descripcion">{{ c.descripcion }}</td>
+                <td class="panelcupon-lista-descuento">{% if c.tipo == 'porcentaje' %}{{ c.valor }}%{% else %}${{ c.valor|floatformat:0 }}{% endif %}</td>
+                <td class="panelcupon-lista-vigencia">{{ c.fecha_inicio|date:"d/m/Y" }} — {{ c.fecha_fin|date:"d/m/Y" }}</td>
+                <td class="panelcupon-lista-usos">{{ c.usos_actuales }}{% if c.usos_maximos %}/{{ c.usos_maximos }}{% else %}/∞{% endif %}</td>
+                <td>{% if c.activo %}<span class="badge badge-aprobado">Activo</span>{% else %}<span class="badge badge-cancelada">Inactivo</span>{% endif %}</td>
+                
+                <td><a href="{% url 'panel:cupones_editar' c.id %}" class="btn btn-ghost panelcupon-lista-btn-editar">EDITAR</a></td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    {% else %}
+    <div class="card-body panelcupon-lista-vacio">
+        No se encontraron cupones.
+    </div>
+    {% endif %}
+</div>
+</form>
+
+<script src="{% static 'js/panel/promociones/cupones/lista.js' %}"></script>
+
+{% endblock %}

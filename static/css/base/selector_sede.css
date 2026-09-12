@@ -1,0 +1,36 @@
+/* nuevo (Sedes - Fase 2): selector "Elegí tu cine" en la navbar. Prefijo
+   nav-selector-sede- para no pisar clases de nav.css. */
+
+.nav-selector-sede {
+    display: flex;
+    align-items: center;
+}
+
+.nav-selector-sede-select {
+    /* background-color: #1a1a1a; */
+    color: #e8e8e8;
+    /* border: 1px solid #3a3a3a; */
+    /* border-radius: 6px; */
+    padding: 0.4rem 0.6rem;
+    font-size: 0.85rem;
+    font-weight: 600;
+    cursor: pointer;
+    max-width: 180px;
+
+    background-color: #000000;
+    border: 1px solid #000000;
+}
+
+.nav-selector-sede-select:hover {
+    border-color: #e50914;
+}
+
+.nav-selector-sede-select:focus {
+    outline: none;
+    border-color: #e50914;
+}
+
+.nav-selector-sede-select option {
+    background-color: #1a1a1a;
+    color: #e8e8e8;
+}

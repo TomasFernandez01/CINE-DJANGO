@@ -1,0 +1,51 @@
+<a href="{% url 'peliculas:detalle_pelicula' pelicula.id %}" class="peli-card-link">
+    <div class="peli-card">
+        <div class="peli-card-poster-wrap">
+            {% if pelicula.poster %}
+                <img src="{{ pelicula.poster.url }}" alt="{{ pelicula.titulo }}">
+            {% else %}
+                <div class="peli-card-poster-placeholder">🎬</div>
+            {% endif %}
+
+            {% if pelicula.clasificacion %}
+                <span class="peli-card-clasificacion">{{ pelicula.get_clasificacion_display }}</span>
+            {% endif %}
+
+            {% if proximamente %}
+                <span class="peli-card-proximamente">Próximamente</span>
+            {% endif %}
+        </div>
+
+        <div class="peli-card-info">
+            <h3>{{ pelicula.titulo }}</h3>
+
+            <div class="peli-card-meta">
+                {% if pelicula.genero %}
+                    <span class="peli-card-badge">{{ pelicula.get_genero_display }}</span>
+                {% endif %}
+                {% if pelicula.duracion %}
+                    <span class="peli-card-badge peli-card-badge-gris">⏱ {{ pelicula.duracion_formato }}</span>
+                {% endif %}
+                {% if pelicula.año %}
+                    <span class="peli-card-badge peli-card-badge-gris">{{ pelicula.año }}</span>
+                {% endif %}
+            </div>
+
+            {% if pelicula.director %}
+                <p class="peli-card-director"><strong>Director:</strong> {{ pelicula.director }}</p>
+            {% endif %}
+
+            {% if pelicula.sinopsis %}
+                <p class="peli-card-sinopsis">{{ pelicula.sinopsis }}</p>
+            {% endif %}
+
+            <div class="peli-card-footer">
+                {% if proximamente and pelicula.fecha_estreno %}
+                    <p>Estreno: {{ pelicula.fecha_estreno|date:"d/m/Y" }}</p>
+                {% else %}
+                    <p>Ver funciones</p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</a>

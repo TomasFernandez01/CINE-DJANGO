@@ -67,7 +67,9 @@ class EditarPerfilForm(forms.ModelForm):
             self.fields['email'].initial = self.instance.user.email
             self.fields['first_name'].initial = self.instance.user.first_name
             self.fields['last_name'].initial = self.instance.user.last_name
-    
+        # bloque modificado: orden por defecto salía Email, Nombre, Apellido... ahora Nombre y Apellido van primero, según lo pedido
+        self.order_fields(['first_name', 'last_name', 'email', 'telefono', 'fecha_nacimiento', 'direccion'])
+
     def save(self, commit=True):
         perfil = super().save(commit=False)
         

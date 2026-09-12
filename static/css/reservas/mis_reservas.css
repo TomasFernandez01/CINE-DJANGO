@@ -1,0 +1,278 @@
+/* MEJORAS/REDISEÑO GEMINI: Estilos premium para el listado de reservas del cliente */
+
+/* nuevo (rediseño): tipografía propia para el título de película en este
+   listado -- 'Bebas Neue' (condensada, estilo cartel de cine) combina con
+   la referencia visual del proyecto (Cinemark) sin salirse de la paleta
+   dark ya establecida. Se importa acá, scopeada a este archivo, en vez de
+   agregarla a base.html, porque hoy es el único lugar del sitio que la usa. */
+@import url('https://fonts.googleapis.com/css2?family=Bebas+Neue&display=swap');
+
+.reserva-mr-filtros {
+    /* background-color: #1c1c1c; */
+    background-color: #000000;
+    padding: 1.25rem 1.5rem;
+    /* border-radius: 8px; */
+    margin-bottom: 2rem;
+    /* box-shadow: 0 4px 10px rgba(0,0,0,0.3); */
+    box-shadow: 0 4px 10px rgb(255 0 0 / 30%);
+    /* border: 1px solid #333; */
+}
+
+.reserva-mr-filtros-form {
+    display: flex;
+    gap: 2rem;
+    flex-wrap: wrap;
+    align-items: center;
+}
+
+.reserva-mr-filtro-label {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    cursor: pointer;
+    color: #dddddd;
+    font-size: 0.95rem;
+    font-weight: 500;
+    user-select: none;
+}
+
+.reserva-mr-filtro-label input[type="checkbox"] {
+    accent-color: #e50914;
+    width: 18px;
+    height: 18px;
+}
+
+.reserva-mr-lista {
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+}
+
+.reserva-mr-card {
+    display: flex;
+    gap: 1.5rem;
+    /* background-color: #1f1f1f; */
+    border-radius: 12px;
+    padding: 1.5rem;
+    /* box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4); */
+    border-left: 5px solid transparent;
+    transition: transform 0.2s ease, box-shadow 0.2s ease, background-color 0.2s ease;
+    
+    /* border: 1px solid #2e2e2e; */
+    background-color: #000000;
+    box-shadow: 0 4px 12px rgb(255 0 0);
+}
+
+.reserva-mr-card:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.6);
+    background-color: #242424;
+}
+
+/* MODIFICACION GEMINI: Color del borde izquierdo en rojo (#e50914) acorde a la paleta del sitio */
+.reserva-mr-card--confirmada { border-left-color: #e50914; border-left-width: 5px; }
+.reserva-mr-card--pendiente { border-left-color: #f1c40f; border-left-width: 5px; }
+.reserva-mr-card--expirada { border-left-color: #777777; border-left-width: 5px; }
+.reserva-mr-card--cancelada { border-left-color: #999999; border-left-width: 5px; }
+
+/* modificado (rediseño): poster un poco más grande (135px -> 160px), ahora
+   que el card quedó más simple (3 columnas: poster / info / acciones) hay
+   lugar de sobra para que respire más. */
+.reserva-mr-poster {
+    flex: 0 0 auto;
+    display: block;
+    width: 160px; /* Modificá este valor en píxeles para cambiar el ancho del póster */
+    overflow: hidden;
+    border-radius: 8px;
+}
+
+.reserva-mr-poster img {
+    width: 100%;
+    border-radius: 8px;
+    aspect-ratio: 2/3;
+    object-fit: cover;
+    display: block;
+    transition: transform 0.3s ease;
+}
+
+.reserva-mr-card:hover .reserva-mr-poster img {
+    transform: scale(1.05);
+}
+
+.reserva-mr-poster-placeholder {
+    width: 160px;
+    aspect-ratio: 2/3;
+    background: linear-gradient(135deg, #2c2c2c 0%, #141414 100%);
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #aaaaaa;
+    font-size: 1rem;
+    font-weight: bold;
+}
+
+/* Info (columna del medio) */
+/* modificado (rediseño): esta columna quedó reducida a título + fecha/sede/sala
+   (código, butacas, precio y combos se sacaron del card -- ya están en el
+   comprobante QR / detalle de la reserva). Se centra todo el contenido, como
+   pediste, y se le da más aire vertical ya que no compite con tanta info. */
+.reserva-mr-info {
+    flex: 1;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    gap: 0.6rem;
+}
+
+.reserva-mr-titulo {
+    margin: 0;
+    color: #ffffff;
+    font-family: 'Bebas Neue', 'Segoe UI', Arial, sans-serif;
+    font-size: 2rem;
+    font-weight: 400;
+    letter-spacing: 0.03em;
+    line-height: 1.05;
+}
+
+.reserva-mr-meta-lista {
+    display: flex;
+    flex-direction: column;
+    gap: 0.35rem;
+    font-size: 0.95rem;
+}
+
+.reserva-mr-meta-fila {
+    color: #cccccc;
+    letter-spacing: 0.01em;
+}
+
+.reserva-mr-meta-fila strong {
+    color: #ffffff;
+    font-weight: 600;
+}
+
+/* Acciones */
+.reserva-mr-columna-derecha {
+    flex: 0 0 auto;
+    min-width: 200px;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    justify-content: space-between;
+    gap: 1rem;
+}
+
+.reserva-mr-badge-estado {
+    padding: 0.4rem 1rem;
+    border-radius: 20px;
+    font-weight: bold;
+    font-size: 0.85rem;
+    white-space: nowrap;
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+}
+
+.reserva-mr-badge-estado--confirmada { background-color: rgba(46, 204, 113, 0.15); color: #2ecc71; border: 1px solid #2ecc71; }
+.reserva-mr-badge-estado--pendiente { background-color: rgba(241, 196, 15, 0.15); color: #f1c40f; border: 1px solid #f1c40f; }
+.reserva-mr-badge-estado--expirada { background-color: rgba(149, 165, 166, 0.15); color: #95a5a6; border: 1px solid #95a5a6; }
+.reserva-mr-badge-estado--cancelada { background-color: rgba(231, 76, 60, 0.15); color: #e74c3c; border: 1px solid #e74c3c; }
+
+.reserva-mr-contador {
+    background: linear-gradient(135deg, #e50914 0%, #c0392b 100%);
+    color: white;
+    padding: 0.5rem 1rem;
+    border-radius: 8px;
+    font-weight: bold;
+    font-size: 0.9rem;
+    text-align: center;
+    white-space: nowrap;
+    box-shadow: 0 4px 10px rgba(229, 9, 20, 0.3);
+}
+
+.reserva-mr-acciones {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    width: 100%;
+}
+
+.reserva-mr-btn {
+    padding: 0.6rem 1.2rem;
+    color: white;
+    text-decoration: none;
+    border-radius: 6px;
+    text-align: center;
+    font-weight: bold;
+    font-size: 0.9rem;
+    white-space: nowrap;
+    border: none;
+    cursor: pointer;
+    transition: background-color 0.2s ease, transform 0.15s ease;
+}
+
+.reserva-mr-btn:active {
+    transform: scale(0.98);
+}
+
+.reserva-mr-btn--detalle { background-color: #333333; }
+.reserva-mr-btn--detalle:hover { background-color: #444444; }
+
+.reserva-mr-btn--comprobante { background-color: #e50914; box-shadow: 0 4px 10px rgba(229, 9, 20, 0.3); }
+.reserva-mr-btn--comprobante:hover { background-color: #ff1f2a; }
+
+.reserva-mr-btn--pagar { background-color: #27ae60; box-shadow: 0 4px 10px rgba(39, 174, 96, 0.2); }
+.reserva-mr-btn--pagar:hover { background-color: #2ecc71; }
+
+.reserva-mr-btn--cancelar { background-color: transparent; border: 1px solid #e74c3c; color: #ff8a8a; }
+.reserva-mr-btn--cancelar:hover { background-color: rgba(231, 76, 60, 0.1); }
+
+.reserva-mr-btn--eliminar { background-color: transparent; border: 1px solid #555555; color: #bbbbbb; }
+.reserva-mr-btn--eliminar:hover { background-color: rgba(255, 255, 255, 0.05); }
+
+/* Estado vacío */
+.reserva-mr-vacio {
+    background-color: #1c1c1c;
+    padding: 4rem 2rem;
+    border-radius: 12px;
+    text-align: center;
+    border: 1px solid #333;
+}
+
+.reserva-mr-vacio-texto {
+    font-size: 1.25rem;
+    color: #bbbbbb;
+    margin: 0 0 1.75rem 0;
+}
+
+.reserva-mr-vacio-boton {
+    display: inline-block;
+    padding: 0.85rem 2rem;
+    background-color: #e50914;
+    color: white;
+    text-decoration: none;
+    border-radius: 6px;
+    font-weight: bold;
+    box-shadow: 0 4px 12px rgba(229, 9, 20, 0.3);
+    transition: background-color 0.2s, transform 0.15s;
+}
+
+.reserva-mr-vacio-boton:hover {
+    background-color: #ff1f2a;
+    transform: translateY(-1px);
+}
+
+@media (max-width: 800px) {
+    .reserva-mr-card {
+        flex-direction: column;
+        gap: 1.25rem;
+    }
+    .reserva-mr-columna-derecha {
+        align-items: stretch;
+        min-width: 0;
+        margin-top: 1rem;
+    }
+}

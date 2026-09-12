@@ -1,0 +1,216 @@
+{% extends 'panel/base_panel.html' %}
+
+{% load static %}
+
+{% block titulo %}{{ usuario_detalle.username }} — Panel{% endblock %}
+
+{% block breadcrumb %}
+<span class="sep">›</span>
+<a href="{% url 'panel:usuarios_lista' %}">Usuarios</a>
+<span class="sep">›</span>
+<span class="current">{{ usuario_detalle.username }}</span>
+{% endblock %}
+
+{% block extra_css %}
+<!-- modificado: CSS separado a static/css/panel/usuarios/detalle.css (antes todo con style="" inline) -->
+<link rel="stylesheet" href="{% static 'css/panel/usuarios/detalle.css' %}">
+{% endblock %}
+
+{% block contenido %}
+<!-- modificado (T5 - cero emojis): se sacaron los emojis de "🎫 Últimas Reservas" y "🎬 Historial de Películas Vistas", más abajo. -->
+
+<div class="paneluserdet-encabezado">
+    <div>
+        <h1 class="paneluserdet-titulo">
+            {{ usuario_detalle.get_full_name|default:usuario_detalle.username }}
+        </h1>
+        <div class="paneluserdet-username">
+            @{{ usuario_detalle.username }}
+        </div>
+    </div>
+    <!-- modificado: se saca el link comentado al admin de Django (código muerto), ya se usa panel:usuarios_editar -->
+    <a href="{% url 'panel:usuarios_editar' usuario_detalle.id %}" class="btn btn-primary">Editar User</a>
+</div>
+
+<div class="paneluserdet-grid">
+
+    <!-- Panel izquierdo -->
+    <div class="paneluserdet-columna">
+
+        <!-- Avatar + rol -->
+        <div class="card">
+            <div class="card-body paneluserdet-avatar-body">
+                <div class="paneluserdet-avatar-circle">
+                    {{ usuario_detalle.username|slice:":1"|upper }}
+                </div>
+                <div class="paneluserdet-avatar-nombre">
+                    {{ usuario_detalle.get_full_name|default:usuario_detalle.username }}
+                </div>
+                <div class="paneluserdet-avatar-email">
+                    {{ usuario_detalle.email|default:"Sin email" }}
+                </div>
+                {% if usuario_detalle.is_superuser %}
+                <span class="paneluserdet-rol-badge paneluserdet-rol-badge--super">
+                    Superusuario
+                </span>
+                {% elif usuario_detalle.is_staff %}
+                <span class="paneluserdet-rol-badge paneluserdet-rol-badge--staff">
+                    Staff
+                </span>
+                {% else %}
+                <span class="paneluserdet-rol-badge paneluserdet-rol-badge--normal">
+                    Usuario
+                </span>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- Datos del perfil -->
+        <div class="card">
+            <div class="card-header"><h3>Perfil</h3></div>
+            <div class="card-body">
+                <div class="paneluserdet-perfil-stack">
+                    {% if usuario_detalle.perfil.telefono %}
+                    <div>
+                        <div class="paneluserdet-perfil-label">Teléfono</div>
+                        <div>{{ usuario_detalle.perfil.telefono }}</div>
+                    </div>
+                    {% endif %}
+                    {% if usuario_detalle.perfil.fecha_nacimiento %}
+                    <div>
+                        <div class="paneluserdet-perfil-label">Nacimiento</div>
+                        <div>{{ usuario_detalle.perfil.fecha_nacimiento|date:"d/m/Y" }}</div>
+                    </div>
+                    {% endif %}
+                    {% if usuario_detalle.perfil.direccion %}
+                    <div>
+                        <div class="paneluserdet-perfil-label">Dirección</div>
+                        <div>{{ usuario_detalle.perfil.direccion }}</div>
+                    </div>
+                    {% endif %}
+                    <div>
+                        <div class="paneluserdet-perfil-label">Miembro desde</div>
+                        <div>{{ usuario_detalle.date_joined|date:"d/m/Y" }}</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Stats -->
+        <div class="card">
+            <div class="card-header"><h3>Resumen</h3></div>
+            <div class="card-body">
+                <div class="paneluserdet-stats-grid">
+                    <div class="paneluserdet-stat-box">
+                        <div class="paneluserdet-stat-valor">
+                            {{ total_reservas }}
+                        </div>
+                        <div class="paneluserdet-stat-label">Reservas</div>
+                    </div>
+                    <div class="paneluserdet-stat-box">
+                        <div class="paneluserdet-stat-valor--verde">
+                            ${{ total_gastado|floatformat:0 }}
+                        </div>
+                        <div class="paneluserdet-stat-label">Gastado</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+    <!-- Columna derecha: reservas + historial -->
+    <div class="paneluserdet-columna">
+
+        <!-- Últimas reservas -->
+        <div class="card">
+            <div class="card-header">
+                <h3> Últimas Reservas</h3>
+                <a href="{% url 'panel:reservas_lista' %}?q={{ usuario_detalle.username }}"
+                   class="btn btn-ghost paneluserdet-link-chico">
+                    Ver todas
+                </a>
+            </div>
+            {% if reservas %}
+            <table class="tabla">
+                <thead>
+                    <tr>
+                        <th>Código</th>
+                        <th>Película</th>
+                        <th>Función</th>
+                        <th>Asientos</th>
+                        <th>Total</th>
+                        <th>Estado</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for r in reservas %}
+                    <tr>
+                        <td>
+                            <a href="{% url 'panel:reservas_detalle' r.id %}" class="paneluserdet-codigo">
+                                {{ r.codigo_reserva }}
+                            </a>
+                        </td>
+                        <td class="paneluserdet-pelicula">
+                            {{ r.funcion.pelicula.titulo }}
+                        </td>
+                        <td class="paneluserdet-funcion">
+                            {{ r.funcion.fecha_hora|date:"d/m/Y H:i" }}
+                        </td>
+                        <td class="paneluserdet-asientos">
+                            {% if r.asientos_seleccionados %}
+                                {{ r.asientos_formateados }}
+                            {% else %}
+                                {{ r.cantidad_entradas }} entrada(s)
+                            {% endif %}
+                        </td>
+                        <td class="paneluserdet-total">
+                            ${{ r.total|floatformat:0 }}
+                        </td>
+                        <td>
+                            <span class="badge badge-{{ r.estado }}">
+                                {{ r.get_estado_display }}
+                            </span>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+            {% else %}
+            <div class="card-body paneluserdet-vacio">
+                Este usuario no tiene reservas registradas.
+            </div>
+            {% endif %}
+        </div>
+
+        <!-- nuevo: Historial de películas vistas (modelo HistorialVisto, mismo bloque que ya
+             existe del lado del cliente en usuarios/perfil.html — acá faltaba) -->
+        <div class="card">
+            <div class="card-header">
+                <h3> Historial de Películas Vistas</h3>
+            </div>
+            {% if historial %}
+                {% for entrada in historial %}
+                <a href="{% url 'panel:peliculas_detalle' entrada.pelicula.id %}" class="paneluserdet-hist-item">
+                    {% if entrada.pelicula.poster %}
+                    <img src="{{ entrada.pelicula.poster.url }}" alt="{{ entrada.pelicula.titulo }}"
+                         class="paneluserdet-hist-poster">
+                    {% endif %}
+                    <div class="paneluserdet-hist-info">
+                        <span class="paneluserdet-hist-titulo">{{ entrada.pelicula.titulo }}</span>
+                        <span class="paneluserdet-hist-fecha">Vista el {{ entrada.fecha_visto|date:"d/m/Y" }}</span>
+                    </div>
+                </a>
+                {% endfor %}
+            {% else %}
+                <div class="paneluserdet-hist-vacio">
+                    Este usuario todavía no vio ninguna película.
+                </div>
+            {% endif %}
+        </div>
+
+    </div>
+
+</div>
+
+{% endblock %}

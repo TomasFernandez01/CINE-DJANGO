@@ -1,0 +1,184 @@
+{% extends 'panel/base_panel.html' %}
+
+{% load static %}
+
+{% block titulo %}Estadísticas — Panel{% endblock %}
+
+{% block breadcrumb %}
+<span class="sep">›</span>
+<a href="{% url 'panel:pagos_lista' %}">Pagos</a>
+<span class="sep">›</span>
+<span class="current">Estadísticas</span>
+{% endblock %}
+
+{% block extra_css %}
+<!-- modificado: CSS separado a static/css/panel/pagos/estadisticas.css (antes todo con style="" inline) -->
+<link rel="stylesheet" href="{% static 'css/panel/pagos/estadisticas.css' %}">
+{% endblock %}
+
+{% block contenido %}
+
+<!-- modificado (T5 - cero emojis): se sacaron los emojis del título (📊), de los
+     encabezados "🎬 Funciones de Hoy", "💳 Últimos Pagos" y "📱 Últimos Escaneos QR", y
+     de la etiqueta "✅ Ingresó" (más abajo). Texto plano, sin ícono de reemplazo. -->
+<div class="panelpag-est-encabezado">
+    <h1 class="panelpag-est-titulo"> Estadísticas de Pagos (hoy)</h1>
+    <span class="panelpag-est-actualizado">
+        Actualizado: {{ ahora|date:"d/m/Y H:i" }} hs
+    </span>
+</div>
+<!-- modificado (T14 - reorg Dashboard): se sacó el filtro de rango de
+     fechas que había acá (Hilo 4) — era exclusivamente para ROI de
+     cupones y método de pago, y esos dos gráficos se mudaron a
+     Dashboard > Operaciones/Promociones (ver panel/views/dashboard.py).
+     Todo lo que queda en esta página (recaudado hoy, total histórico,
+     QR, funciones de hoy, últimos pagos, últimos escaneos) nunca estuvo
+     atado a ese filtro — sigue mostrando lo mismo que mostraba antes. -->
+<div class="panelpag-est-link-dashboard">
+    <a href="{% url 'panel:dashboard_operaciones' %}" class="btn btn-ghost">Ver método de pago y tiempo hasta el pago en Dashboard →</a>
+</div>
+
+<!-- Stats -->
+<div class="stat-grid">
+    <div class="stat-card green">
+        <div class="stat-label">Recaudado hoy</div>
+        <div class="stat-value">${{ recaudado_hoy|floatformat:0 }}</div>
+        <div class="stat-sub">{{ entradas_hoy }} entradas vendidas</div>
+    </div>
+    <div class="stat-card blue">
+        <div class="stat-label">Total histórico</div>
+        <div class="stat-value">${{ total_recaudado|floatformat:0 }}</div>
+        <div class="stat-sub">todos los pagos aprobados</div>
+    </div>
+    <div class="stat-card purple">
+        <div class="stat-label">QR escaneados hoy</div>
+        <div class="stat-value">{{ qr_escaneados_hoy }}</div>
+        <div class="stat-sub">{{ qr_total }} en total histórico</div>
+    </div>
+    <div class="stat-card gold">
+        <div class="stat-label">QR pendientes</div>
+        <div class="stat-value">{{ qr_pendientes }}</div>
+        <div class="stat-sub">entradas confirmadas sin escanear</div>
+    </div>
+</div>
+
+<!-- Funciones de hoy -->
+<div class="card panelpag-est-funciones-card">
+    <div class="card-header">
+        <h3> Funciones de Hoy — Ocupación</h3>
+    </div>
+    {% if funciones_con_stats %}
+    <table class="tabla">
+        <thead>
+            <tr>
+                <th>Película</th>
+                <th>Sala</th>
+                <th>Horario</th>
+                <th>Ocupación</th>
+                <th>QR Escaneados</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for item in funciones_con_stats %}
+            <tr>
+                <td class="panelpag-est-col-pelicula">{{ item.funcion.pelicula.titulo }}</td>
+                <td class="panelpag-est-col-sala">{{ item.funcion.sala.nombre }}</td>
+                <td class="panelpag-est-col-horario">{{ item.funcion.fecha_hora|date:"H:i" }} hs</td>
+                <td class="panelpag-est-col-ocupacion">
+                    <div class="panelpag-est-ocupacion-wrap">
+                        <div class="panelpag-est-ocupacion-barra-wrap">
+                            <div class="ocupacion-bar">
+                                <!-- ancho dinámico por fila, no puede ser una clase CSS fija -->
+                                <div class="ocupacion-fill
+                                    {% if item.ocupacion_pct > 75 %}lleno
+                                    {% elif item.ocupacion_pct > 40 %}medio
+                                    {% endif %}"
+                                     style="width:{{ item.ocupacion_pct }}%;"></div>
+                            </div>
+                        </div>
+                        <!-- color dinámico por fila, no puede ser una clase CSS fija -->
+                        <span class="panelpag-est-ocupacion-pct"
+                              style="color:{% if item.ocupacion_pct > 75 %}#e74c3c{% elif item.ocupacion_pct > 40 %}#f39c12{% else %}#27ae60{% endif %};">
+                            {{ item.entradas_vendidas }}/{{ item.capacidad }}
+                            ({{ item.ocupacion_pct }}%)
+                        </span>
+                    </div>
+                </td>
+                <td class="panelpag-est-col-qr">
+                    {{ item.qr_escaneados }}
+                    <span class="panelpag-est-col-qr-sub">
+                        / {{ item.entradas_vendidas }}
+                    </span>
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    {% else %}
+    <div class="card-body panelpag-est-tabla-vacio">
+        No hay funciones programadas para hoy.
+    </div>
+    {% endif %}
+</div>
+
+<!-- Dos columnas -->
+<div class="panelpag-est-2col">
+
+    <!-- Últimos pagos -->
+    <div class="card">
+        <div class="card-header">
+            <h3> Últimos Pagos</h3>
+            <a href="{% url 'panel:pagos_lista' %}" class="btn btn-ghost panelpag-est-link-chico">Ver todos</a>
+        </div>
+        {% for pago in ultimos_pagos %}
+        <div class="panelpag-est-item">
+            <div>
+                <div class="panelpag-est-item-titulo">
+                    {{ pago.reserva.usuario.get_full_name|default:pago.reserva.usuario.username }}
+                </div>
+                <div class="panelpag-est-item-sub">
+                    {{ pago.reserva.funcion.pelicula.titulo }} ·
+                    {{ pago.fecha_pago|date:"d/m H:i" }}
+                </div>
+            </div>
+            <div class="panelpag-est-item-monto">
+                ${{ pago.monto|floatformat:0 }}
+            </div>
+        </div>
+        {% empty %}
+        <div class="card-body panelpag-est-lista-vacia">Sin pagos.</div>
+        {% endfor %}
+    </div>
+
+    <!-- Últimos escaneos -->
+    <div class="card">
+        <div class="card-header">
+            <h3> Últimos Escaneos QR</h3>
+            <a href="{% url 'panel:verificador_qr' %}" class="btn btn-ghost panelpag-est-link-chico">Ir al verificador</a>
+        </div>
+        {% for pago in ultimos_escaneos %}
+        <div class="panelpag-est-item">
+            <div>
+                <div class="panelpag-est-item-titulo">
+                    {{ pago.reserva.usuario.get_full_name|default:pago.reserva.usuario.username }}
+                </div>
+                <div class="panelpag-est-item-sub">
+                    {{ pago.reserva.funcion.pelicula.titulo }} ·
+                    Sala {{ pago.reserva.funcion.sala.nombre }}
+                </div>
+            </div>
+            <div class="panelpag-est-item-derecha">
+                <div class="panelpag-est-item-ingreso"> Ingresó</div>
+                <div class="panelpag-est-item-hora">
+                    {{ pago.fecha_escaneo|date:"H:i" }} hs
+                </div>
+            </div>
+        </div>
+        {% empty %}
+        <div class="card-body panelpag-est-lista-vacia">Sin escaneos.</div>
+        {% endfor %}
+    </div>
+
+</div>
+
+{% endblock %}

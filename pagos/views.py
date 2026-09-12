@@ -1,55 +1,557 @@
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth.decorators import login_required
 from django.contrib import messages
+from django.http import JsonResponse
+from django.views.decorators.csrf import csrf_exempt
+from django.utils import timezone
+from decimal import Decimal
+from .models import Pago, ItemPago
 from reservas.models import Reserva
-from .models import Pago
+from django.db.models import Count, Q
+# modificado: se agrega logging para reemplazar los print() de debug de más abajo
+import logging
+logger = logging.getLogger(__name__)
+try:
+    from utils.email_utils import enviar_email_pago_confirmado
+    EMAIL_DISPONIBLE = True
+except ImportError:
+    EMAIL_DISPONIBLE = False
+try:
+    from utils.qr_generator import generar_qr_imagen
+    QR_DISPONIBLE = True
+except ImportError:
+    QR_DISPONIBLE = False
+    # modificado: print() reemplazado por logger.warning
+    logger.warning("Módulo qrcode no encontrado. Instalar con: pip install qrcode[pil]")
+try:
+    from promociones.models import Cupon, PromocionDia, Combo, CuponUsado
+    PROMOCIONES_DISPONIBLE = True
+except ImportError:
+    PROMOCIONES_DISPONIBLE = False
 
+# ============================================================
+# HELPERS DE PROMOCIONES
+# ============================================================
+ 
+def _obtener_promo_dia():
+    """Retorna la PromocionDia activa para hoy, o None."""
+    if not PROMOCIONES_DISPONIBLE:
+        return None
+    dia_actual = timezone.now().weekday()
+    return PromocionDia.objects.filter(dia_semana=dia_actual, activo=True).first()
+ 
+def _obtener_combos():
+    """Retorna los ítems de concesión activos (combos/bebidas/snacks/pochoclos), agrupados por categoría."""
+    if not PROMOCIONES_DISPONIBLE:
+        return {}
+    items = Combo.objects.filter(activo=True)
+    # modificado (combos múltiples): se agrupan acá (no en el template) para
+    # poder mostrar una sección por categoría en elegir_combo.html
+    agrupados = {}
+    for clave, etiqueta in Combo.CATEGORIA_CHOICES:
+        del etiqueta  # solo interesa la clave acá, la etiqueta la resuelve el template con get_categoria_display
+        agrupados[clave] = [i for i in items if i.categoria == clave]
+    return agrupados
+    """Retorna combos activos."""
+    if not PROMOCIONES_DISPONIBLE:
+        return []
+    return Combo.objects.filter(activo=True)
+ 
+def _parsear_items_seleccionados(items_crudos):
+    """
+    modificado (combos múltiples): reemplaza el viejo combo_id único por una
+    lista de {id, cantidad}. Valida cada id contra los ítems activos reales
+    y capa la cantidad entre 1 y 10 (mismo límite que tenía cantidad_combo).
+    Ítems con cantidad 0 o inválida se descartan silenciosamente (el usuario
+    los dejó en el stepper en 0, no significa que quiera "0 unidades").
+    Devuelve una lista de dicts [{'combo_id': int, 'cantidad': int}, ...]
+    lista para guardar en sesión.
+    """
+    if not PROMOCIONES_DISPONIBLE or not items_crudos:
+        return []
+    resultado = []
+    for entrada in items_crudos:
+        try:
+            combo_id = int(entrada.get('id'))
+            cantidad = int(entrada.get('cantidad', 0))
+        except (TypeError, ValueError, AttributeError):
+            continue
+        if cantidad < 1:
+            continue
+        cantidad = min(cantidad, 10)
+        if Combo.objects.filter(id=combo_id, activo=True).exists():
+            resultado.append({'combo_id': combo_id, 'cantidad': cantidad})
+    return resultado
+
+
+# def _calcular_descuentos(monto_original, cantidad_entradas, codigo_cupon, combo_id, usuario, promo_dia):
+def _calcular_descuentos(monto_original, cantidad_entradas, codigo_cupon, items_seleccionados, usuario, promo_dia, sede_id=None):
+    """
+    Calcula todos los descuentos y retorna un dict con los resultados. La promo_dia y el cupón se aplican sobre el monto de entradas.
+    Los ítems de concesión (combos/bebidas/snacks/pochoclos) son un adicional.
+    modificado (combos múltiples): `combo_id` (uno solo) pasa a ser `items_seleccionados`, una lista de {'combo_id', 'cantidad'} — puede haber varios ítems distintos, cada uno con su propia cantidad.
+    nuevo (Sedes - Fase 2): sede_id es la sede de la función de la reserva que se está pagando. Si el cupón es exclusivo de otra sede, se trata igual que un código inexistente (mismo mensaje de error).
+    """
+    descuento_promo = Decimal('0')
+    descuento_cupon_val = Decimal('0')
+    cupon_obj = None
+    # combo_obj = None
+    promo_dia_obj = None
+    error_cupon = None
+
+    # 1. Promo del día
+    if promo_dia:
+        descuento_promo = promo_dia.calcular_descuento(monto_original, cantidad_entradas)
+        promo_dia_obj = promo_dia
+ 
+    # 2. Cupón
+    if codigo_cupon and PROMOCIONES_DISPONIBLE:
+        codigo_cupon = codigo_cupon.upper().strip()
+        try:
+            cupon = Cupon.objects.get(
+                Q(sede__isnull=True) | Q(sede_id=sede_id),
+                codigo=codigo_cupon,
+            )
+            valido, msg = cupon.es_valido()
+ 
+            if not valido:
+                error_cupon = msg
+            elif cupon.monto_minimo and monto_original < cupon.monto_minimo:
+                error_cupon = f'Monto mínimo para este cupón: ${cupon.monto_minimo}'
+            elif cupon.solo_primera_compra and CuponUsado.objects.filter(usuario=usuario).exists():
+                error_cupon = 'Cupón solo válido para primera compra'
+            elif CuponUsado.objects.filter(cupon=cupon, usuario=usuario).exists():
+                error_cupon = 'Ya utilizaste este cupón'
+            else:
+                descuento_cupon_val = cupon.calcular_descuento(monto_original)
+                cupon_obj = cupon
+        except Cupon.DoesNotExist:
+            error_cupon = 'Código de cupón no encontrado'
+    # 3. Ítems de concesión (combo/bebida/snack/pochoclo) — modificado (combos múltiples)
+    items_detalle = []
+    precio_items_total = Decimal('0')
+    if items_seleccionados and PROMOCIONES_DISPONIBLE:
+        for entrada in items_seleccionados:
+            try:
+                combo_obj = Combo.objects.get(id=entrada['combo_id'], activo=True)
+            except Combo.DoesNotExist:
+                continue
+            cantidad = entrada.get('cantidad', 1)
+            subtotal = combo_obj.precio * cantidad
+            items_detalle.append({
+                'combo_obj': combo_obj,
+                'cantidad': cantidad,
+                'precio_unitario': combo_obj.precio,
+                'subtotal': subtotal,
+            })
+            precio_items_total += subtotal
+
+    descuento_total = descuento_promo + descuento_cupon_val
+    monto_final = max(monto_original - descuento_total, Decimal('0')) + precio_items_total
+
+    return {
+        'monto_original': monto_original,
+        'descuento_promo_dia': descuento_promo,
+        'descuento_cupon': descuento_cupon_val,
+        'descuento_total': descuento_total,
+        'precio_combo': precio_items_total,
+        'items_detalle': items_detalle,
+        'monto_final': monto_final,
+        'cupon_obj': cupon_obj,
+        'promo_dia_obj': promo_dia_obj,
+        'error_cupon': error_cupon,
+    }
+    # 3. Combo
+    if combo_id and PROMOCIONES_DISPONIBLE:
+        try:
+            combo_obj = Combo.objects.get(id=combo_id, activo=True)
+        except Combo.DoesNotExist:
+            combo_obj = None
+ 
+    descuento_total = descuento_promo + descuento_cupon_val
+    precio_combo = combo_obj.precio if combo_obj else Decimal('0')
+    monto_final = max(monto_original - descuento_total, Decimal('0')) + precio_combo
+ 
+    return {
+        'monto_original': monto_original,
+        'descuento_promo_dia': descuento_promo,
+        'descuento_cupon': descuento_cupon_val,
+        'descuento_total': descuento_total,
+        'precio_combo': precio_combo,
+        'monto_final': monto_final,
+        'cupon_obj': cupon_obj,
+        'combo_obj': combo_obj,
+        'promo_dia_obj': promo_dia_obj,
+        'error_cupon': error_cupon,
+    }
+
+# ============================================================
+# modificado: NUEVO — PASO 4 DEL FLUJO REORDENADO
+# Asientos -> [ESTE PASO: combo] -> Pago
+# Antes el combo se elegía adentro de procesar_pago, mezclado con el
+# método de pago. Ahora es su paso propio, como en Cinemark.
+# ============================================================
+@login_required
+def elegir_combo(request, reserva_id):
+    reserva = get_object_or_404(Reserva, id=reserva_id, usuario=request.user)
+
+    if reserva.cancelar_por_tiempo_expirado():
+        messages.error(request, '⏰ Esta reserva fue cancelada automáticamente porque expiró el tiempo de pago. Los asientos han sido liberados.')
+        return redirect('reservas:mis_reservas')
+
+    if reserva.estado != 'pendiente':
+        messages.error(request, 'Esta reserva no está pendiente de pago.')
+        return redirect('reservas:mis_reservas')
+
+    if hasattr(reserva, 'pago'):
+        messages.error(request, 'Esta reserva ya tiene un pago registrado.')
+        return redirect('reservas:detalle_reserva', reserva_id=reserva.id)
+
+    #combos = _obtener_combos()
+    items_por_categoria = _obtener_combos()
+
+    if request.method == 'POST':
+        # modificado (combos múltiples): antes venía combo_id + cantidad_combo (un solo ítem). Ahora el JS arma un JSON con todos los ítems elegidos (cada uno con su propia cantidad) en un input oculto.
+        import json
+        try:
+            items_crudos = json.loads(request.POST.get('items_json', '[]'))
+        except (json.JSONDecodeError, TypeError):
+            items_crudos = []
+        items_validados = _parsear_items_seleccionados(items_crudos)
+        # se guarda como lista (antes era un dict {combo_id, cantidad} o None)
+        request.session[f'combo_reserva_{reserva.id}'] = items_validados
+        return redirect('pagos:procesar_pago', reserva_id=reserva.id)
+        combo_id = request.POST.get('combo_id', '').strip()
+        try:
+            cantidad_combo = int(request.POST.get('cantidad_combo', 1))
+        except (TypeError, ValueError):
+            cantidad_combo = 1
+        cantidad_combo = max(1, min(cantidad_combo, 10))
+        request.session[f'combo_reserva_{reserva.id}'] = (
+            {'combo_id': combo_id, 'cantidad': cantidad_combo} if combo_id else None
+        )
+        return redirect('pagos:procesar_pago', reserva_id=reserva.id)
+    contexto = {
+        'reserva': reserva,
+        'items_por_categoria': items_por_categoria,
+        # modificado (combos múltiples): lista plana {id, nombre, precio} para el JS del carrito (elegir_combo.js), vía json_script.
+        'items_json': [
+            {'id': i.id, 'nombre': i.nombre, 'precio': float(i.precio)}
+            for lista in items_por_categoria.values() for i in lista
+        ],
+        'total_entradas': reserva.total(),
+    }
+    return render(request, 'pagos/elegir_combo.html', contexto)
+    contexto = {
+        'reserva': reserva,
+        'combos': combos,
+        'total_entradas': reserva.total(),
+    }
+    return render(request, 'pagos/elegir_combo.html', contexto)
+
+# ============================================================
+# VISTAS PRINCIPALES
+# ============================================================
 @login_required
 def procesar_pago(request, reserva_id):
     reserva = get_object_or_404(Reserva, id=reserva_id, usuario=request.user)
     
-    # Verificar que la reserva esté pendiente
+    if reserva.cancelar_por_tiempo_expirado():
+        messages.error(request, '⏰ Esta reserva fue cancelada automáticamente porque expiró el tiempo de pago. Los asientos han sido liberados.')
+        return redirect('reservas:mis_reservas')
+    
     if reserva.estado != 'pendiente':
         messages.error(request, 'Esta reserva no está pendiente de pago.')
         return redirect('reservas:mis_reservas')
     
-    # Verificar que no tenga un pago ya
     if hasattr(reserva, 'pago'):
         messages.error(request, 'Esta reserva ya tiene un pago registrado.')
-        return redirect('reservas:mis_reservas')
+        return redirect('reservas:detalle_reserva', reserva_id=reserva.id)
     
+    datos_promo = request.session.get(f'promo_reserva_{reserva.id}', {}) or {}
+    codigo_cupon = datos_promo.get('cupon_codigo') or ''
+    promo_dia = None
+    if datos_promo.get('promo_dia_id') and PROMOCIONES_DISPONIBLE:
+        promo_dia = PromocionDia.objects.filter(id=datos_promo['promo_dia_id'], activo=True).first()
+
+    # modificado (combos múltiples): combo_reserva_<id> ahora guarda una LISTA de {'combo_id', 'cantidad'} (uno por cada ítem elegido, no uno solo). Se soportan también los formatos viejos (dict único o string con un solo id) por si quedó algo en sesión de antes de este cambio.
+    datos_combo = request.session.get(f'combo_reserva_{reserva.id}')
+    if isinstance(datos_combo, list):
+        items_seleccionados = datos_combo
+    elif isinstance(datos_combo, dict):
+        items_seleccionados = [{'combo_id': datos_combo.get('combo_id'), 'cantidad': datos_combo.get('cantidad', 1) or 1}]
+    elif datos_combo:
+        items_seleccionados = [{'combo_id': datos_combo, 'cantidad': 1}]
+    else:
+        items_seleccionados = []
+    #datos_combo = request.session.get(f'combo_reserva_{reserva.id}')
+    #combo_id = None
+    #cantidad_combo = 1
+    #if isinstance(datos_combo, dict):
+    #    combo_id = datos_combo.get('combo_id')
+    #    cantidad_combo = datos_combo.get('cantidad', 1) or 1
+    #elif datos_combo:
+    #    combo_id = datos_combo
+    #combo_id = request.session.get(f'combo_reserva_{reserva.id}')
+    
+    monto_original = reserva.total()
+
+    calc = _calcular_descuentos(
+        monto_original=monto_original,
+        cantidad_entradas=reserva.cantidad_entradas,
+        codigo_cupon=codigo_cupon,
+        #combo_id=combo_id,
+        items_seleccionados=items_seleccionados,
+        usuario=request.user,
+        promo_dia=promo_dia,
+        sede_id=reserva.funcion.sala.sede_id,
+    )
+    if calc['error_cupon']:
+        messages.warning(request, f'⚠️ Cupón inválido: {calc["error_cupon"]}. El pago se procesará sin descuento por cupón.')
+        calc['descuento_cupon'] = Decimal('0')
+        calc['cupon_obj'] = None
+        calc['descuento_total'] = calc['descuento_promo_dia']
+        calc['monto_final'] = max(monto_original - calc['descuento_total'], Decimal('0')) + calc['precio_combo']
+    #---------------------------------------------------------------------
+    # modificado (combos múltiples): ya no hace falta multiplicar acá — cada ítem de calc['items_detalle'] ya viene con su propio subtotal calculado (precio_unitario x cantidad de ESE ítem en particular).
+    # modificado (Fase E): _calcular_descuentos no sabe de cantidad, calcula el precio de 1 solo combo — acá se multiplica por la cantidad elegida
+    #if calc['combo_obj']:
+    #    calc['precio_combo'] = calc['precio_combo'] * cantidad_combo
+    #    calc['monto_final'] = max(monto_original - calc['descuento_total'], Decimal('0')) + calc['precio_combo']
+    #else:
+    #    cantidad_combo = 1
+    #---------------------------------------------------------------------
     if request.method == 'POST':
+        if reserva.expiro_tiempo_pago():
+            reserva.estado = 'cancelada'
+            reserva.save()
+            messages.error(request, '⏰ Lo sentimos, el tiempo de pago expiró mientras procesabas la transacción. Por favor, creá una nueva reserva.')
+            return redirect('salas:lista_funciones')
+    #---------------------------------------------------------------------
+        # SE CREA EL PAGO
         metodo_pago = request.POST.get('metodo_pago')
         
-        # Datos opcionales de tarjeta (simulado)
-        ultimos_4 = None
-        if metodo_pago in ['tarjeta_debito', 'tarjeta_credito']:
-            numero_tarjeta = request.POST.get('numero_tarjeta', '')
-            if numero_tarjeta:
-                ultimos_4 = numero_tarjeta[-4:] if len(numero_tarjeta) >= 4 else None
+        # modificado (combos múltiples): combo/precio_combo/cantidad_combo en Pago quedan como espejo "legacy" de solo lectura — se completan con el PRIMER ítem elegido y los totales sumados, para que nada que todavía lea pago.combo directo (algún reporte viejo, el admin panel) se rompa. El detalle real y completo vive en pago.items.
+        primer_item = calc['items_detalle'][0]['combo_obj'] if calc['items_detalle'] else None
+        cantidad_items_total = sum(d['cantidad'] for d in calc['items_detalle']) or 1
         
-        # Crear el pago (automáticamente actualiza la reserva a confirmada)
         pago = Pago.objects.create(
             reserva=reserva,
             metodo_pago=metodo_pago,
-            monto=reserva.total(),
+            monto_original=monto_original,
+
+            descuento_cupon=calc['descuento_cupon'],
+            descuento_promo_dia=calc['descuento_promo_dia'],
+            descuento_total=calc['descuento_total'],
+            precio_combo=calc['precio_combo'],
+            # cantidad_combo=cantidad_combo,
+            cantidad_combo=cantidad_items_total,
+            monto=calc['monto_final'],
             estado='aprobado',
-            ultimos_4_digitos=ultimos_4
+            cupon_usado=calc['cupon_obj'],
+            #combo=calc['combo_obj'],
+            combo=primer_item,
+            promo_dia=calc['promo_dia_obj'],
         )
+        # modificado (combos múltiples): acá se crea el detalle real,
+        # un ItemPago por cada ítem distinto elegido (con su propia cantidad
+        # y el precio que tenía en el momento de la compra)
+        for detalle in calc['items_detalle']:
+            ItemPago.objects.create(
+                pago=pago,
+                combo=detalle['combo_obj'],
+                cantidad=detalle['cantidad'],
+                precio_unitario=detalle['precio_unitario'],
+            )
+        # DATOS DE TARJETA
+        if metodo_pago in ['tarjeta_debito', 'tarjeta_credito']:
+            numero_tarjeta = request.POST.get('numero_tarjeta', '')
+            if len(numero_tarjeta) >= 4:
+                pago.ultimos_4_digitos = numero_tarjeta[-4:]
+            pago.nombre_titular = request.POST.get('nombre_titular', '')
+            pago.save()
+        # Cambiar estado de la reserva a confirmada
+        reserva.estado = 'confirmada'
+        reserva.save()
+        # NUEVO: Generar código QR automáticamente
+        pago.generar_codigo_qr()
+        pago.save()
+        #-----------------------------------------------------------
+        # Registrar uso del cupón
+        if calc['cupon_obj'] and PROMOCIONES_DISPONIBLE:
+            CuponUsado.objects.create(
+                cupon=calc['cupon_obj'],
+                usuario=request.user,
+                reserva=reserva,
+                descuento_aplicado=calc['descuento_cupon'],
+            )
+            calc['cupon_obj'].usos_actuales += 1
+            calc['cupon_obj'].save(update_fields=['usos_actuales'])
+        #-----------------------------------------------------------
+        # modificado: ya no hace falta esta info en sesión, se limpia
+        request.session.pop(f'promo_reserva_{reserva.id}', None)
+        request.session.pop(f'combo_reserva_{reserva.id}', None)
+
+        if EMAIL_DISPONIBLE:
+            try:
+                enviar_email_pago_confirmado(pago, request)
+                messages.success(request, f'¡Pago procesado exitosamente! Número de transacción: {pago.numero_transaccion}. Te enviamos un email con el comprobante y código QR.')
+            except Exception as e:
+                messages.success(request, f'¡Pago procesado exitosamente! Número de transacción: {pago.numero_transaccion}')
+                messages.warning(request, 'No pudimos enviar el email, pero tu pago está confirmado.')
+        else:
+            messages.success(request, f'¡Pago procesado exitosamente! Número de transacción: {pago.numero_transaccion}')
         
-        messages.success(request, f'¡Pago procesado exitosamente! Número de transacción: {pago.numero_transaccion}')
         return redirect('pagos:comprobante_pago', pago_id=pago.id)
-    
+    #-----------------------------------------------------------
+    # GET — contexto para el template
+    # modificado (combos múltiples): ya no manda 'combos' (se eligen en el paso anterior); manda items_detalle (lista) en vez de un solo combo_obj/cantidad_combo, para poder itemizar el resumen.
     contexto = {
         'reserva': reserva,
+        'total': monto_original,
+        'promo_dia': calc['promo_dia_obj'],
+        'cupon_obj': calc['cupon_obj'],
+        'items_detalle': calc['items_detalle'],
+        'descuento_cupon': calc['descuento_cupon'],
+        'descuento_promo_dia': calc['descuento_promo_dia'],
+        'descuento_total': calc['descuento_total'],
+        'precio_combo': calc['precio_combo'],
+        #'combo_obj': calc['combo_obj'],
+        #'cantidad_combo': cantidad_combo,
+        'monto_final': calc['monto_final'],
+        # modificado: se calcula acá (no en el template) para evitar la ambigüedad de precedencia de "and/or" en {% if %} de Django
+        'mostrar_bloque_promos': PROMOCIONES_DISPONIBLE and (calc['descuento_total'] > 0 or calc['precio_combo'] > 0),
+        'promociones_disponible': PROMOCIONES_DISPONIBLE,
     }
     return render(request, 'pagos/procesar_pago.html', contexto)
+    #-----------------------------------------------------------
 
 @login_required
 def comprobante_pago(request, pago_id):
     pago = get_object_or_404(Pago, id=pago_id, reserva__usuario=request.user)
+    qr_imagen = None
+    if QR_DISPONIBLE and pago.codigo_qr:
+        try:
+            qr_imagen = generar_qr_imagen(pago.codigo_qr)
+        except Exception as e:
+            # modificado: print() de debug reemplazado por logger.error
+            logger.error(f"Error generando QR: {e}")
     
     contexto = {
         'pago': pago,
+        'reserva': pago.reserva,
+        'qr_imagen': qr_imagen,
     }
     return render(request, 'pagos/comprobante_pago.html', contexto)
+
+# ============================================
+# NUEVAS VISTAS PARA VERIFICACIÓN DE QR
+# ============================================
+# modificado (Tanda B pagos): se borró la vista verificador_qr (page-render) de
+# esta app porque estaba huérfana - panel/views.py tiene su propia versión
+# funcionando (panel:verificador_qr -> panel/templates/panel/verificador_qr.html).
+# Las APIs verificar_qr_api y marcar_qr_escaneado de ACÁ ABAJO se mantienen
+# intactas porque las sigue usando ese template de panel.
+
+@csrf_exempt  # Permitir POST desde scanner
+def verificar_qr_api(request):
+    """API para verificar un código QR.Retorna JSON con el estado del código."""
+    if request.method != 'POST':
+        return JsonResponse({'success': False, 'error': 'Método no permitido'})
+    
+    codigo_qr = request.POST.get('codigo_qr', '').strip()
+    
+    if not codigo_qr:
+        return JsonResponse({
+            'success': False,
+            'error': 'Código QR vacío'
+        })
+    
+    # Buscar el pago por código QR
+    try:
+        pago = Pago.objects.select_related(
+            'reserva', 
+            'reserva__usuario',
+            'reserva__funcion',
+            'reserva__funcion__pelicula',
+            'reserva__funcion__sala'
+        ).get(codigo_qr=codigo_qr)
+    except Pago.DoesNotExist:
+        return JsonResponse({
+            'success': False,
+            'error': 'Código QR no encontrado',
+            'valido': False
+        })
+    
+    # Verificar si puede escanearse
+    puede_escanear, mensaje = pago.puede_escanearse()
+    
+    if not puede_escanear:
+        return JsonResponse({
+            'success': True,
+            'valido': False,
+            'error': mensaje,
+            'ya_escaneado': pago.qr_escaneado,
+            'fecha_escaneo': pago.fecha_escaneo.isoformat() if pago.fecha_escaneo else None
+        })
+    
+    # Retornar información de la reserva
+    return JsonResponse({
+        'success': True,
+        'valido': True,
+        'mensaje': 'QR válido - Listo para escanear',
+        'reserva': {
+            'codigo': pago.reserva.codigo_reserva,
+            'pelicula': pago.reserva.funcion.pelicula.titulo,
+            'sala': pago.reserva.funcion.sala.nombre,
+            'fecha_hora': pago.reserva.funcion.fecha_hora.strftime('%d/%m/%Y %H:%M'),
+            'cantidad_entradas': pago.reserva.cantidad_entradas,
+            'asientos': pago.reserva.asientos_formateados() if pago.reserva.asientos_seleccionados else None,
+            'usuario': pago.reserva.usuario.get_full_name() or pago.reserva.usuario.username,
+            'total': str(pago.monto)
+        }
+    })
+
+
+@csrf_exempt
+def marcar_qr_escaneado(request):
+    """API para marcar un QR como escaneado (usado)."""
+    if request.method != 'POST':
+        return JsonResponse({'success': False, 'error': 'Método no permitido'})
+    
+    codigo_qr = request.POST.get('codigo_qr', '').strip()
+    usuario = request.POST.get('usuario', 'Personal')
+    
+    if not codigo_qr:
+        return JsonResponse({
+            'success': False,
+            'error': 'Código QR vacío'
+        })
+    
+    try:
+        pago = Pago.objects.get(codigo_qr=codigo_qr)
+    except Pago.DoesNotExist:
+        return JsonResponse({
+            'success': False,
+            'error': 'Código QR no encontrado'
+        })
+    
+    # Marcar como escaneado
+    if pago.marcar_como_escaneado(usuario):
+        return JsonResponse({
+            'success': True,
+            'mensaje': 'QR escaneado exitosamente',
+            'fecha_escaneo': pago.fecha_escaneo.isoformat()
+        })
+    else:
+        return JsonResponse({
+            'success': False,
+            'error': 'Este QR ya fue escaneado anteriormente',
+            'fecha_escaneo': pago.fecha_escaneo.isoformat() if pago.fecha_escaneo else None
+        })
+    
+# ============================================================
+# modificado (Tanda B pagos): se borró la vista estadisticas_staff completa
+# (era huérfana, sin ningún link real en el sitio) - panel/views.py tiene su
+# propia versión funcionando (panel:pagos_estadisticas).
+# ============================================================

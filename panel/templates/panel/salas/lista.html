@@ -1,0 +1,144 @@
+{% extends 'panel/base_panel.html' %}
+
+{% load static %}
+{% block titulo %}Salas — Panel{% endblock %}
+
+{% block breadcrumb %}
+<span class="sep">›</span>
+<span class="current">Salas</span>
+{% endblock %}
+
+<!-- modificado (Hilo 1): separación CSS completa (51 estilos inline -> 0), movidos a
+     static/css/panel/salas/lista.css. Se borró un bloque comment de ~85 líneas
+     al final del archivo: era una versión vieja y duplicada de esta misma grilla,
+     código muerto. -->
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/panel/salas/lista.css' %}">
+{% endblock %}
+
+{% block contenido %}
+<!-- modificado (T5 - cero emojis): se sacó el emoji 🏢 del título. -->
+
+<div class="panelsalas-header">
+    <h1 class="panelsalas-titulo"> Salas</h1>
+    <div class="panelsalas-header-acciones">
+        <button type="submit" form="formSalas" id="btnEliminarSeleccionadas" class="btn btn-danger" disabled>Eliminar</button>
+        <a href="{% url 'panel:inicio' %}" class="btn btn-primary">INICIO</a>
+        <a href="{% url 'panel:salas_crear' %}" class="btn btn-primary">NUEVA</a>
+    </div>
+</div>
+<!-- modificado: data-eliminar-modal activa el flujo por modal de
+     static/js/panel/shared/eliminar_modal.js en vez de navegar a
+     confirmar_eliminar.html. Si JS falla, el form sigue apuntando a la
+     misma action de siempre (fallback intacto). -->
+<form method="post" action="{% url 'panel:salas_eliminar' %}" id="formSalas" data-eliminar-modal>
+    {% csrf_token %}
+    <div class="panelsalas-grid">
+        {% for item in salas_con_info %}
+        {% with s=item.sala %}
+        <div class="card">
+            <div class="card-header panelsalas-card-header">
+                <label class="panelsalas-card-checkbox-label">
+                    <input type="checkbox" name="seleccionadas" value="{{ s.id }}"
+                           class="chk-sala panel-checkbox">
+                    <h3 class="panelsalas-card-nombre">{{ s.nombre }}</h3>
+                </label>
+                <span class="panelsalas-card-badge {% if s.activa %}panelsalas-card-badge--activa{% else %}panelsalas-card-badge--inactiva{% endif %}">
+                    {% if s.activa %}Activa{% else %}Inactiva{% endif %}
+                </span>
+            </div>
+            <div class="card-body">
+
+                <!-- Layout visual de la sala -->
+                <div class="panelsalas-layout-visual">
+                    <div class="panelsalas-layout-pantalla">PANTALLA</div>
+                    <div class="panelsalas-layout-asientos">
+                        {% for i in "12345" %}
+                        <div class="panelsalas-layout-fila">
+                            {% for j in "123456789012" %}
+                            <div class="panelsalas-layout-asiento"></div>
+                            {% endfor %}
+                        </div>
+                        {% endfor %}
+                    </div>
+                    <div class="panelsalas-layout-dato">
+                        {{ s.filas }} filas * {{ s.columnas }} columnas
+                    </div>
+                </div>
+
+                <div class="panelsalas-stats-grid">
+                    <div class="panelsalas-stat-box">
+                        <div class="panelsalas-stat-valor">{{ s.capacidad }}</div>
+                        <div class="panelsalas-stat-label">Asientos</div>
+                    </div>
+                    <div class="panelsalas-stat-box">
+                        <div class="panelsalas-stat-valor">{{ s.filas }}</div>
+                        <div class="panelsalas-stat-label">Filas</div>
+                    </div>
+                    <div class="panelsalas-stat-box">
+                        <div class="panelsalas-stat-valor">{{ item.funciones_hoy }}</div>
+                        <div class="panelsalas-stat-label">Hoy</div>
+                    </div>
+                </div>
+
+                <!-- modificado (T3): % de ocupación real (entradas vendidas / capacidad).
+                     Reutiliza la clase panelsalas-stat-box ya existente (sin CSS nuevo)
+                     y solo agrega color inline según umbral, para no romper el diseño. -->
+                <div class="panelsalas-stat-box" style="text-align:center; margin-bottom:10px;">
+                    <div class="panelsalas-stat-valor" style="color:{% if item.ocupacion_pct >= 80 %}#dc3545{% elif item.ocupacion_pct >= 50 %}#fd7e14{% else %}#28a745{% endif %};">
+                        {{ item.ocupacion_pct }}%
+                    </div>
+                    <div class="panelsalas-stat-label">Ocupación</div>
+                </div>
+                <!-- fin modificado (T3) -->
+
+                <div class="panelsalas-card-acciones">
+                    <a href="{% url 'panel:funciones_lista' %}?sala={{ s.id }}" class="btn btn-primary">FUNCIONES</a>
+                    <a href="{% url 'panel:salas_editar' s.id %}" class="btn btn-primary" title="Editar">EDITAR</a>
+                    <a href="{% url 'panel:salas_asientos' s.id %}" class="btn btn-primary" title="Bloquear asientos">GESTONAR</a>
+                </div>
+
+                <!-- nuevo (T12 / Hilo 2 punto 5): duplicar sala en otra sede, solo superuser -->
+                <!-- modificado (T14 - bug): esto era un <form> real, pero toda la grilla de
+                     salas ya está envuelta en <form id="formSalas"> (línea ~34, para el
+                     borrado múltiple). Un <form> no puede ir anidado dentro de otro — el
+                     HTML5 parser directamente IGNORA el <form> interno y sus campos quedan
+                     "sueltos" dentro del form externo, así que al tocar "Duplicar" el
+                     submit terminaba yendo a salas_eliminar (o quedaba interceptado por el
+                     modal de eliminar_modal.js) en vez de duplicar. Se reemplaza por un
+                     <select> + <button type="button"> que arma el POST por JS
+                     (static/js/panel/salas/duplicar.js), sin ningún <form> anidado. -->
+                {% if es_super %}
+                <details class="panelsalas-duplicar-wrap">
+                    <summary class="panelsalas-duplicar-toggle">Duplicar en otra sede</summary>
+                    <div class="panelsalas-duplicar-form" data-duplicar-sala data-url="{% url 'panel:salas_duplicar' s.id %}">
+                        <select name="sede_destino" class="panelsalas-duplicar-select">
+                            <option value="">Elegí la sede destino…</option>
+                            {% for sede in panel_sedes_disponibles %}
+                                <option value="{{ sede.id }}">{{ sede.nombre }}</option>
+                            {% endfor %}
+                        </select>
+                        <button type="button" class="btn btn-primary panelsalas-duplicar-btn">Duplicar</button>
+                    </div>
+                </details>
+                {% endif %}
+            </div>
+        </div>
+        {% endwith %}
+        {% empty %}
+        <div class="card panelsalas-vacio-card">
+            <div class="card-body panelsalas-vacio">
+                No hay salas registradas.
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+</form>
+
+{% endblock %}
+
+{% block extra_js %}
+<script src="{% static 'js/panel/salas/lista.js' %}"></script>
+<!-- nuevo (T14 - bug): ver comentario arriba en el bloque "Duplicar en otra sede" -->
+<script src="{% static 'js/panel/salas/duplicar.js' %}"></script>
+{% endblock %}

@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Confirmación de Reserva</title>
+</head>
+<!-- modificado (restyle - paleta sitio cliente): body pasa de gris claro
+     (#f4f4f4) a negro (#000000), igual que static/css/base/general.css del
+     sitio. Mismo contenido y misma estructura de tablas que antes, solo
+     cambian colores/estilos. -->
+<body style="margin: 0; padding: 0; font-family: 'Segoe UI', Arial, sans-serif; background-color: #000000;">
+    <table width="100%" cellpadding="0" cellspacing="0" style="background-color: #000000; padding: 20px;">
+        <tr>
+            <td align="center">
+                <!-- modificado: tarjeta blanca -> tarjeta oscura (#141414), con borde sutil en vez de sombra (la sombra casi no se nota sobre fondo negro) -->
+                <table width="600" cellpadding="0" cellspacing="0" style="background-color: #141414; border-radius: 8px; overflow: hidden; border: 1px solid #262626;">
+                    
+                    <!-- Header -->
+                    <!-- modificado: gradiente violeta -> rojo sólido #e50914 (acento del sitio, static/css/base/nav.css) -->
+                    <tr>
+                        <td style="background-color: #e50914; padding: 30px; text-align: center;">
+                            <h1 style="color: #ffffff; margin: 0; font-size: 28px;">🎬 DJANGO-CINE</h1>
+                            <p style="color: rgba(255,255,255,0.85); margin: 10px 0 0 0; font-size: 16px;">Tu reserva está lista</p>
+                        </td>
+                    </tr>
+                    
+                    <!-- Content -->
+                    <tr>
+                        <td style="padding: 40px 30px;">
+                            <!-- modificado: texto oscuro sobre blanco -> texto claro sobre fondo oscuro -->
+                            <h2 style="color: #f5f5f5; margin: 0 0 20px 0; font-size: 24px;">¡Reserva Confirmada!</h2>
+                            <p style="color: #b3b3b3; line-height: 1.6; margin: 0 0 30px 0; font-size: 16px;">
+                                Hola <strong style="color: #e8e8e8;">{{ usuario.first_name|default:usuario.username }}</strong>,<br><br>
+                                Tu reserva ha sido creada exitosamente. Por favor, completá el pago dentro de los próximos <strong style="color: #e8e8e8;">15 minutos</strong> para confirmar tu entrada.
+                            </p>
+                            
+                            <!-- Reservation Details -->
+                            <!-- modificado: fondo gris claro -> gris oscuro #1f1f1f -->
+                            <table width="100%" cellpadding="0" cellspacing="0" style="background-color: #1f1f1f; border-radius: 8px; overflow: hidden; margin-bottom: 30px;">
+                                <tr>
+                                    <td style="padding: 20px;">
+                                        <h3 style="color: #f5f5f5; margin: 0 0 15px 0; font-size: 18px; border-bottom: 2px solid #e50914; padding-bottom: 10px;">
+                                            📋 Detalles de la Reserva
+                                        </h3>
+                                        
+                                        <table width="100%" cellpadding="8" cellspacing="0">
+                                            <tr>
+                                                <td style="color: #999999; font-weight: bold; width: 40%;">Código de Reserva:</td>
+                                                <td style="color: #f5f5f5; font-size: 18px; font-weight: bold;">{{ reserva.codigo_reserva }}</td>
+                                            </tr>
+                                            <tr>
+                                                <td style="color: #999999; font-weight: bold;">Película:</td>
+                                                <td style="color: #e8e8e8;">{{ reserva.funcion.pelicula.titulo }}</td>
+                                            </tr>
+                                            <!-- modificado (T11 / Hilo 2 punto 2): sede, además de la sala que ya estaba -->
+                                            {% if sede %}
+                                            <tr>
+                                                <td style="color: #999999; font-weight: bold;">Sede:</td>
+                                                <td style="color: #e8e8e8;">{{ sede.nombre }} — {{ sede.direccion }}</td>
+                                            </tr>
+                                            {% endif %}
+                                            <tr>
+                                                <td style="color: #999999; font-weight: bold;">Sala:</td>
+                                                <td style="color: #e8e8e8;">{{ reserva.funcion.sala.nombre }}</td>
+                                            </tr>
+                                            <tr>
+                                                <td style="color: #999999; font-weight: bold;">Fecha:</td>
+                                                <td style="color: #e8e8e8;">{{ reserva.funcion.fecha_hora|date:"l, d 'de' F 'de' Y" }}</td>
+                                            </tr>
+                                            <tr>
+                                                <td style="color: #999999; font-weight: bold;">Horario:</td>
+                                                <td style="color: #e8e8e8;">{{ reserva.funcion.fecha_hora|date:"H:i" }} hs</td>
+                                            </tr>
+                                            <tr>
+                                                <td style="color: #999999; font-weight: bold;">Cantidad de Entradas:</td>
+                                                <td style="color: #e8e8e8;">{{ reserva.cantidad_entradas }}</td>
+                                            </tr>
+                                            <tr>
+                                                <td style="color: #999999; font-weight: bold; font-size: 18px;">Total:</td>
+                                                <!-- modificado: verde de éxito se mantiene (mismo tono que ya usa el panel para montos, #27ae60), solo se ajusta para que se lea bien sobre fondo oscuro -->
+                                                <td style="color: #2ecc71; font-size: 24px; font-weight: bold;">${{ reserva.total }}</td>
+                                            </tr>
+                                        </table>
+                                    </td>
+                                </tr>
+                            </table>
+                            
+                            <!-- Call to Action -->
+                            <table width="100%" cellpadding="0" cellspacing="0">
+                                <tr>
+                                    <td align="center" style="padding: 20px 0;">
+                                        <!-- modificado: botón verde genérico -> rojo del sitio -->
+                                        <a href="{{ domain }}{% url 'pagos:procesar_pago' reserva.id %}" style="display: inline-block; background-color: #e50914; color: #ffffff; text-decoration: none; padding: 15px 40px; border-radius: 6px; font-weight: bold; font-size: 16px;">
+                                            💳 Completar Pago
+                                        </a>
+                                    </td>
+                                </tr>
+                            </table>
+                            
+                            <!-- Warning -->
+                            <!-- modificado: aviso amarillo pastel -> ámbar oscuro (mismo idioma visual, adaptado a fondo negro) -->
+                            <table width="100%" cellpadding="0" cellspacing="0" style="background-color: #2e2410; border-radius: 6px; margin-top: 20px;">
+                                <tr>
+                                    <td style="padding: 15px; border-left: 4px solid #e0a800;">
+                                        <p style="color: #f0c674; margin: 0; font-size: 14px;">
+                                            ⚠️ <strong>Importante:</strong> Esta reserva expirará automáticamente si no completás el pago en los próximos <strong>15 minutos</strong>.
+                                        </p>
+                                    </td>
+                                </tr>
+                            </table>
+                        </td>
+                    </tr>
+                    
+                    <!-- Footer -->
+                    <!-- modificado: footer gris claro -> gris oscuro, línea divisoria más sutil -->
+                    <tr>
+                        <td style="background-color: #1a1a1a; padding: 20px 30px; text-align: center; border-top: 1px solid #262626;">
+                            <p style="color: #999999; margin: 0 0 10px 0; font-size: 14px;">
+                                ¿Necesitás ayuda? Escribinos a <a href="mailto:soporte@cineonline.com" style="color: #e50914; text-decoration: none;">soporte@cineonline.com</a>
+                            </p>
+                            <p style="color: #666666; margin: 0; font-size: 12px;">
+                                © 2026 DJANGO-CINE. Todos los derechos reservados.
+                            </p>
+                        </td>
+                    </tr>
+                </table>
+            </td>
+        </tr>
+    </table>
+</body>
+</html>

@@ -1,106 +1,274 @@
 {% extends 'base.html' %}
 
+{% load static %}
+
 {% block titulo %}Comprobante de Reserva{% endblock %}
 
 {% block contenido %}
-<div style="max-width: 600px; margin: 0 auto;">
-    <h1 style="text-align: center;">Comprobante de Reserva</h1>
-    
-    <div style="background-color: white; padding: 2rem; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); margin-top: 1.5rem;">
-        
-        <div style="text-align: center; padding: 1.5rem; background-color: #f8f9fa; border-radius: 4px; margin-bottom: 1.5rem;">
-            <h2 style="margin: 0; color: #333; font-size: 2rem;">{{ reserva.codigo_reserva }}</h2>
-            <p style="margin: 0.5rem 0 0 0; color: #666;">Código de Reserva</p>
+<!-- modificado: CSS separado a static/css/reservas/detalle_reserva.css (antes style="" inline en casi cada elemento + un <style> comentado sin uso) -->
+<link rel="stylesheet" href="{% static 'css/reservas/detalle_reserva.css' %}">
+
+<div class="reserva-dr-wrapper">
+
+    <div id="ticket" class="reserva-dr-ticket">
+
+        {# Header del ticket — mismo lenguaje visual que comprobante_pago #}
+        <div class="reserva-dr-header">
+            <div class="reserva-dr-header-icon">
+                {% if reserva.estado == 'confirmada' and reserva.pago and reserva.pago.codigo_qr %}🎫{% else %}🎬{% endif %}
+            </div>
+            <div class="reserva-dr-header-titulo">
+                {% if reserva.estado == 'confirmada' and reserva.pago and reserva.pago.codigo_qr %}TU ENTRADA{% else %}VERIFICÁ TU RESERVA{% endif %}
+            </div>
         </div>
-        
-        <div style="margin-bottom: 1.5rem;">
-            <h3 style="color: #333; border-bottom: 2px solid #007bff; padding-bottom: 0.5rem; margin-bottom: 1rem;">
-                Detalles de la Función
-            </h3>
-            <p style="margin: 0.5rem 0;"><strong>Película:</strong> {{ reserva.funcion.pelicula.titulo }}</p>
-            <p style="margin: 0.5rem 0;"><strong>Sala:</strong> {{ reserva.funcion.sala.nombre }}</p>
-            <p style="margin: 0.5rem 0;"><strong>Fecha:</strong> {{ reserva.funcion.fecha_hora|date:"l, d de F de Y" }}</p>
-            <p style="margin: 0.5rem 0;"><strong>Horario:</strong> {{ reserva.funcion.fecha_hora|date:"H:i" }} hs</p>
+
+        {# QR si está pagado (misma lógica de antes, solo re-vestida) #}
+        {% if reserva.estado == 'confirmada' and reserva.pago and reserva.pago.codigo_qr %}
+        <div class="reserva-dr-qr-section">
+            <div class="reserva-dr-qr-box">
+                <img src="{{ qr_imagen }}" alt="Código QR" id="qrImage" class="reserva-dr-qr-img" data-codigo="{{ reserva.pago.codigo_qr }}">
+            </div>
+            <!-- modificado (T15 - QR oculto): mismo criterio que comprobante_pago.html -->
+            <button type="button" class="reserva-dr-qr-toggle" data-qr-toggle>¿No se puede escanear? Mostrar código</button>
+            <div class="reserva-dr-qr-codigo" data-qr-codigo hidden>
+                {{ reserva.pago.codigo_qr }}
+            </div>
+            <p class="reserva-dr-qr-nota">Mostrá este QR al ingresar al cine</p>
         </div>
-        
-        <div style="margin-bottom: 1.5rem;">
-            <h3 style="color: #333; border-bottom: 2px solid #007bff; padding-bottom: 0.5rem; margin-bottom: 1rem;">
-                Información de la Reserva
-            </h3>
-            <p style="margin: 0.5rem 0;"><strong>Titular:</strong> {{ reserva.usuario.get_full_name|default:reserva.usuario.username }}</p>
-            <p style="margin: 0.5rem 0;"><strong>Email:</strong> {{ reserva.usuario.email }}</p>
-            <p style="margin: 0.5rem 0;"><strong>Fecha de reserva:</strong> {{ reserva.fecha_reserva|date:"d/m/Y H:i" }}</p>
-            <p style="margin: 0.5rem 0;"><strong>Cantidad de entradas:</strong> {{ reserva.cantidad_entradas }}</p>
-            <p style="margin: 0.5rem 0;"><strong>Estado:</strong> 
-                <span style="padding: 0.25rem 0.75rem; border-radius: 4px; font-weight: bold;
-                    {% if reserva.estado == 'confirmada' %}background-color: #d4edda; color: #155724;
-                    {% elif reserva.estado == 'pendiente' %}background-color: #fff3cd; color: #856404;
-                    {% elif reserva.estado == 'expirada' %}background-color: #e2e3e5; color: #383d41;
-                    {% else %}background-color: #f8d7da; color: #721c24;{% endif %}">
+        {% endif %}
+
+        <div class="reserva-dr-separador"></div>
+
+        <div class="reserva-dr-body">
+
+            {# Código de reserva #}
+            <div class="reserva-dr-codigo-box">
+                <div class="reserva-dr-codigo-label">CÓDIGO DE RESERVA</div>
+                <div class="reserva-dr-codigo-valor">
+                    {{ reserva.codigo_reserva }}
+                </div>
+            </div>
+
+            {# Contador regresivo para pendientes (sin cambios de lógica) #}
+            {% if reserva.estado == 'pendiente' and reserva.tiempo_restante_pago %}
+            <div id="countdownContainer" class="reserva-dr-countdown">
+                <div class="reserva-dr-countdown-label">Tiempo restante para completar el pago:</div>
+                <div id="countdown" class="reserva-dr-countdown-valor" data-tiempo="{{ reserva.tiempo_restante_pago }}">
+                    {{ reserva.tiempo_restante_formato }}
+                </div>
+                <div class="reserva-dr-countdown-nota">La reserva se cancelará si no pagás a tiempo</div>
+            </div>
+            {% endif %}
+
+            {# Grid de detalles de función — mismo patrón visual que comprobante_pago #}
+            <div class="reserva-dr-grid">
+                <div class="reserva-dr-grid-item reserva-dr-grid-item--azul">
+                    <div class="reserva-dr-grid-item-label">PELÍCULA</div>
+                    <div class="reserva-dr-grid-item-valor">{{ reserva.funcion.pelicula.titulo }}</div>
+                </div>
+                <div class="reserva-dr-grid-item reserva-dr-grid-item--azul">
+                    <div class="reserva-dr-grid-item-label">SEDE</div>
+                    <div class="reserva-dr-grid-item-valor">📍 {{ reserva.funcion.sala.sede.nombre }}</div>
+                </div>
+                <div class="reserva-dr-grid-item reserva-dr-grid-item--azul">
+                    <div class="reserva-dr-grid-item-label">SALA</div>
+                    <div class="reserva-dr-grid-item-valor">{{ reserva.funcion.sala.nombre }}</div>
+                </div>
+                <div class="reserva-dr-grid-item reserva-dr-grid-item--verde">
+                    <div class="reserva-dr-grid-item-label">FECHA Y HORARIO</div>
+                    <div class="reserva-dr-grid-item-valor reserva-dr-grid-item-valor--sm">{{ reserva.funcion.fecha_hora|date:"d/m/Y" }} · {{ reserva.funcion.fecha_hora|date:"H:i" }} hs</div>
+                </div>
+                <div class="reserva-dr-grid-item reserva-dr-grid-item--verde">
+                    <div class="reserva-dr-grid-item-label">ENTRADAS</div>
+                    <div class="reserva-dr-grid-item-valor">{{ reserva.cantidad_entradas }}</div>
+                </div>
+            </div>
+
+            {# Asientos si aplica #}
+            {% if reserva.asientos_seleccionados %}
+            <div class="reserva-dr-asientos-box">
+                <div class="reserva-dr-asientos-label">ASIENTOS</div>
+                <div class="reserva-dr-asientos-lista">
+                    {% for asiento in reserva.lista_asientos %}
+                        <span class="reserva-dr-asiento-chip">
+                            {{ asiento }}
+                        </span>
+                    {% endfor %}
+                </div>
+            </div>
+            {% endif %}
+
+            {# Datos del comprador #}
+            <div class="reserva-dr-comprador-grid">
+                <div>
+                    <div class="reserva-dr-comprador-label">TITULAR</div>
+                    <div class="reserva-dr-comprador-valor">{{ reserva.usuario.get_full_name|default:reserva.usuario.username }}</div>
+                </div>
+                <div>
+                    <div class="reserva-dr-comprador-label">EMAIL</div>
+                    <div class="reserva-dr-comprador-valor">{{ reserva.usuario.email|default:"—" }}</div>
+                </div>
+                <div>
+                    <div class="reserva-dr-comprador-label">FECHA DE RESERVA</div>
+                    <div class="reserva-dr-comprador-valor">{{ reserva.fecha_reserva|date:"d/m/Y H:i" }}</div>
+                </div>
+            </div>
+
+            {# Estado #}
+            <div class="reserva-dr-estado-wrap">
+                <span class="reserva-dr-badge-estado reserva-dr-badge-estado--{{ reserva.estado }}">
                     {{ reserva.get_estado_display }}
                 </span>
-            </p>
-        </div>
-        
-        <div style="background-color: #e7f3ff; padding: 1.5rem; border-radius: 4px; margin-bottom: 1.5rem;">
-            <p style="margin: 0 0 0.5rem 0; font-size: 0.9rem; color: #666;">Precio por entrada: ${{ reserva.funcion.precio }}</p>
-            <p style="margin: 0; font-size: 1.5rem; font-weight: bold; color: #333;">
-                Total: ${{ reserva.total }}
-            </p>
-        </div>
-        
-        {% if reserva.estado == 'pendiente' %}
-            <div style="background-color: #fff3cd; padding: 1rem; border-radius: 4px; border-left: 4px solid #ffc107; margin-bottom: 1rem;">
-                <p style="margin: 0; color: #856404;">
-                    <strong>⚠️ Reserva pendiente de pago</strong><br>
-                    Completá el pago para confirmar tu reserva.
+            </div>
+
+            {# ===== DESGLOSE DEL TOTAL (misma lógica, re-vestido) ===== #}
+            <div class="reserva-dr-desglose">
+                <h3 class="reserva-dr-desglose-titulo">Detalles</h3>
+                <div class="reserva-dr-desglose-lista">
+                {% if reserva.estado == 'confirmada' and reserva.pago %}
+                    {# Reserva pagada: mostrar desglose completo #}
+                    {% if reserva.tiene_precios_mixtos %}
+                        {% for item in reserva.desglose_precios_asientos %}
+                            <div class="reserva-dr-desglose-fila">
+                                <span>Asiento {{ item.codigo }}</span>
+                                <span>${{ item.precio }}</span>
+                            </div>
+                        {% endfor %}
+                        <div class="reserva-dr-desglose-fila reserva-dr-desglose-subtotal">
+                            <span>Subtotal ({{ reserva.cantidad_entradas }} entradas)</span>
+                            <span>${{ reserva.pago.monto_original }}</span>
+                        </div>
+                    {% else %}
+                        <div class="reserva-dr-desglose-fila">
+                            <span>Subtotal ({{ reserva.cantidad_entradas }} × ${{ reserva.funcion.precio_final }})</span>
+                            <span>${{ reserva.pago.monto_original }}</span>
+                        </div>
+                    {% endif %}
+
+                    {% if reserva.pago.promo_dia %}
+                        <div class="reserva-dr-desglose-fila reserva-dr-desglose-promo">
+                            <span>🎉 {{ reserva.pago.promo_dia.nombre }}</span>
+                            <span>-${{ reserva.pago.descuento_promo_dia }}</span>
+                        </div>
+                    {% endif %}
+
+                    {% if reserva.pago.cupon_usado %}
+                        <div class="reserva-dr-desglose-fila reserva-dr-desglose-cupon">
+                            <span>🏷️ Cupón {{ reserva.pago.cupon_usado.codigo }}</span>
+                            <span>-${{ reserva.pago.descuento_cupon }}</span>
+                        </div>
+                    {% endif %}
+                    {# modificado (combos múltiples): se itera reserva.pago.items (el detalle real). Fallback a pago.combo legacy para pagos viejos sin ItemPago #}
+                    {% if reserva.pago.items.all %}
+                        {% for item in reserva.pago.items.all %}
+                        <div class="reserva-dr-desglose-fila reserva-dr-desglose-combo">
+                            <span>🍿 {% if item.cantidad > 1 %}{{ item.cantidad }}x {% endif %}{{ item.combo.nombre|default:"Ítem eliminado" }}</span>
+                            <span>+${{ item.subtotal }}</span>
+                        </div>
+                        {% endfor %}
+                    {% elif reserva.pago.combo %}
+                        <div class="reserva-dr-desglose-fila reserva-dr-desglose-combo">
+                            <span>🍿 {% if reserva.pago.cantidad_combo > 1 %}{{ reserva.pago.cantidad_combo }}x {% endif %}{{ reserva.pago.combo.nombre }}</span>
+                            <span>+${{ reserva.pago.precio_combo }}</span>
+                        </div>
+                    {% endif %}
+                    {% comment %} {% if reserva.pago.combo %}
+                        <div class="reserva-dr-desglose-fila reserva-dr-desglose-combo">
+                            <span>🍿 {% if reserva.pago.cantidad_combo > 1 %}{{ reserva.pago.cantidad_combo }}x {% endif %}{{ reserva.pago.combo.nombre }}</span>
+                            <span>+${{ reserva.pago.precio_combo }}</span>
+                        </div>
+                    {% endif %} {% endcomment %}
+
+                    <div class="reserva-dr-desglose-total">
+                        <span class="reserva-dr-desglose-total-label">Total pagado</span>
+                        <span class="reserva-dr-desglose-total-valor reserva-dr-desglose-total-valor--pagado">${{ reserva.pago.monto }}</span>
+                    </div>
+
+                    {% if reserva.pago.descuento_total > 0 %}
+                        <div class="reserva-dr-desglose-ahorro">
+                            💸 Ahorraste ${{ reserva.pago.descuento_total }}
+                        </div>
+                    {% endif %}
+                {% else %}
+                    {# Pendiente: mostrar total estimado #}
+                    {% if reserva.tiene_precios_mixtos %}
+                        {% for item in reserva.desglose_precios_asientos %}
+                        <div class="reserva-dr-desglose-fila reserva-dr-desglose-fila--sm">
+                            <span>Asiento {{ item.codigo }}</span><span>${{ item.precio }}</span>
+                        </div>
+                        {% endfor %}
+                    {% else %}
+                        <div class="reserva-dr-desglose-fila">
+                            <span>Precio por entrada</span><span>${{ reserva.funcion.precio_final }}</span>
+                        </div>
+                    {% endif %}
+                    <div class="reserva-dr-desglose-total">
+                        <span class="reserva-dr-desglose-total-label">Total estimado</span>
+                        <span class="reserva-dr-desglose-total-valor reserva-dr-desglose-total-valor--estimado">${{ reserva.total }}</span>
+                    </div>
+                    <p class="reserva-dr-desglose-nota">
+                        Los descuentos se aplicarán al momento del pago.
+                    </p>
+                {% endif %}
+                </div>
+            </div>
+
+            {# Mensajes de estado (misma lógica) #}
+            {% if reserva.estado == 'pendiente' %}
+            <div class="reserva-dr-mensaje-estado reserva-dr-mensaje-estado--pendiente">
+                <p>
+                    <strong>Reserva pendiente de pago</strong><br>
+                    Completá el pago antes de que expire el tiempo.
                 </p>
             </div>
-            
-            <div style="margin-bottom: 1.5rem;">
-                <a href="{% url 'pagos:procesar_pago' reserva.id %}" style="display: block; padding: 1rem; background-color: #28a745; color: white; border-radius: 4px; text-decoration: none; text-align: center; font-weight: bold; font-size: 1.1rem;">
+            <div class="reserva-dr-btn-pagar-wrap">
+                <a href="{% url 'pagos:elegir_combo' reserva.id %}" id="pagarBtn" class="reserva-dr-btn-pagar">
                     💳 Pagar Ahora
                 </a>
             </div>
-        {% endif %}
-        
-        {% if reserva.estado == 'expirada' %}
-            <div style="background-color: #e2e3e5; padding: 1rem; border-radius: 4px; border-left: 4px solid #6c757d; margin-bottom: 1rem;">
-                <p style="margin: 0; color: #383d41;">
-                    <strong>⏱️ Reserva expirada</strong><br>
-                    Esta función ya pasó. La reserva expiró automáticamente.
+            {% elif reserva.estado == 'confirmada' %}
+            <div class="reserva-dr-mensaje-estado reserva-dr-mensaje-estado--confirmada">
+                <p>
+                    <strong>Reserva confirmada</strong><br>
+                    Tu pago fue procesado. Mostrá el código QR al ingresar al cine.
+                    {% if reserva.pago.combo %}Retirá tu <strong>{{ reserva.pago.combo.nombre }}</strong> en el mostrador de combos.{% endif %}
                 </p>
             </div>
-        {% endif %}
-        
-        {% if reserva.estado == 'cancelada' %}
-            <div style="background-color: #f8d7da; padding: 1rem; border-radius: 4px; border-left: 4px solid #dc3545; margin-bottom: 1rem;">
-                <p style="margin: 0; color: #721c24;">
-                    <strong>❌ Reserva cancelada</strong><br>
-                    Esta reserva fue cancelada.
-                </p>
+            {% elif reserva.estado == 'expirada' %}
+            <div class="reserva-dr-mensaje-estado reserva-dr-mensaje-estado--expirada">
+                <p><strong>⏱ Reserva expirada</strong><br>La función ya pasó.</p>
             </div>
-        {% endif %}
-        
-        <div style="margin-top: 1.5rem; display: flex; gap: 1rem; flex-wrap: wrap;">
-            <a href="{% url 'reservas:mis_reservas' %}" style="flex: 1; min-width: 150px; padding: 0.75rem; background-color: #007bff; color: white; border-radius: 4px; text-decoration: none; text-align: center; font-weight: bold;">
-                Mis Reservas
-            </a>
-            {% if reserva.estado == 'confirmada' or reserva.estado == 'pendiente' %}
-                <button onclick="window.print()" style="flex: 1; min-width: 150px; padding: 0.75rem; background-color: #28a745; color: white; border: none; border-radius: 4px; font-weight: bold; cursor: pointer;">
-                    Imprimir
-                </button>
+            {% elif reserva.estado == 'cancelada' %}
+            <div class="reserva-dr-mensaje-estado reserva-dr-mensaje-estado--cancelada">
+                <p><strong>Reserva cancelada</strong></p>
+            </div>
             {% endif %}
         </div>
     </div>
+
+    {# Botones — fuera del "ticket", como en comprobante_pago #}
+    <div class="reserva-dr-acciones">
+        <a href="{% url 'reservas:mis_reservas' %}" class="reserva-dr-accion-btn reserva-dr-accion-btn--misreservas">
+            🎫 Mis Reservas
+        </a>
+        {% if reserva.estado == 'confirmada' %}
+        <a href="{% url 'pagos:comprobante_pago' reserva.pago.id %}" class="reserva-dr-accion-btn reserva-dr-accion-btn--comprobante">
+            📄 Ver Comprobante
+        </a>
+        {% endif %}
+    </div>
 </div>
 
-<style>
-    @media print {
-        nav, .container > h1:first-child, button {
-            display: none !important;
-        }
-    }
-</style>
+{# modificado: se eliminaron los bloques {% comment %} con CSS/JS muertos (ya viven en detalle_reserva.css / detalle_reserva.js) #}
+{% if reserva.estado == 'pendiente' and reserva.tiempo_restante_pago %}
+<script src="{% static 'js/reservas/detalle_reserva.js' %}"></script>
+{% endif %}
+
+{% if reserva.estado == 'confirmada' and reserva.pago and reserva.pago.codigo_qr %}
+<script src="https://cdn.jsdelivr.net/npm/qrcode@1.5.3/build/qrcode.min.js"></script>
+<script src="{% static 'js/reservas/detalle_reserva_qr.js' %}"></script>
+<!-- nuevo (T15 - QR oculto) -->
+<script src="{% static 'js/shared/qr_toggle.js' %}"></script>
+{% endif %}
 
 {% endblock %}

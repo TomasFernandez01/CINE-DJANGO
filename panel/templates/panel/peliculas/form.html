@@ -1,0 +1,257 @@
+{% extends 'panel/base_panel.html' %}
+
+{% load static %}
+{% block titulo %}{{ titulo_pagina }} — Panel{% endblock %}
+
+{% block breadcrumb %}
+<span class="sep">›</span>
+<a href="{% url 'panel:peliculas_lista' %}">Películas</a>
+{% if objeto %}
+<span class="sep">›</span>
+<a href="{% url 'panel:peliculas_detalle' objeto.id %}">{{ objeto.titulo }}</a>
+{% endif %}
+<span class="sep">›</span>
+<span class="current">{% if accion == 'crear' %}Agregar{% else %}Editar{% endif %}</span>
+{% endblock %}
+
+<!-- modificado (Hilo 1): separación CSS completa (22 estilos inline -> 0), movidos a
+     static/css/panel/peliculas/form.css. -->
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/panel/peliculas/form.css' %}">
+{% endblock %}
+
+{% block contenido %}
+{% include 'panel/_form_styles.html' %}
+
+<div class="panelpelisform-wrapper">
+
+    <div class="panelpelisform-header">
+        <div>
+            <h1 class="panelpelisform-titulo">{{ titulo_pagina }}</h1>
+            {% if not es_super and accion == 'editar' %}
+
+            <!-- modificado (T10): style="" inline movido a .panelpelisform-aviso-staff en form.css -->
+            <div class="panelpelisform-aviso-staff">
+                <strong>Rol Staff:</strong> Podés actualizar el estado de cartelera y fecha de estreno local. Los metadatos generales del catálogo son administrados por el SuperUser (HQ).
+            <!-- modificado (Hilo 4 - Claude): texto del aviso actualizado -- Staff
+                 ya no controla en_cartelera (ver panel/views/peliculas.py::peliculas_editar). -->
+            <div style="background: rgba(229, 9, 20, 0.15); border-left: 4px solid #e50914; padding: 0.75rem 1rem; border-radius: 4px; margin-top: 0.5rem; color: #ffffff; font-size: 0.9rem;">
+                <strong>Rol Staff:</strong> Podés actualizar la fecha de estreno local. El estado de cartelera (global, afecta a todas las sedes) y los metadatos generales del catálogo son administrados por el SuperUser (HQ). Para tu sede, la película aparece "en cartelera" automáticamente en cuanto le programás una función.
+            </div>
+            {% endif %}
+            {% if accion == 'crear' %}
+            <p class="panelpelisform-subtitulo">
+                También podés
+                <a href="{% url 'panel:peliculas_buscar_tmdb' %}" class="panelpelisform-link-tmdb">buscar en TMDB</a>
+                para importar datos automáticamente.
+            </p>
+            {% endif %}
+        </div>
+        {% if objeto %}
+        <a href="{% url 'panel:peliculas_detalle' objeto.id %}" class="btn btn-danger">
+            ATRAS
+        </a>
+        {% else %}
+        <a href="{% url 'panel:peliculas_lista' %}" class="btn btn-danger">ATRAS</a>
+        {% endif %}
+    </div>
+
+    <form method="post" enctype="multipart/form-data" id="formPelicula"
+    action="{% if accion == 'editar' and objeto %}
+                {% url 'panel:peliculas_editar' objeto.id %}
+            {% else %}
+                {% url 'panel:peliculas_crear' %}
+            {% endif %}">
+        {% csrf_token %}
+        {% if poster_url_tmdb %}
+        <input type="hidden" name="poster_url_tmdb" value="{{ poster_url_tmdb }}">
+        {% endif %}
+
+        <div class="panelpelisform-grid">
+
+            <!-- Columna principal -->
+            <div class="panelpelisform-col-principal">
+
+                <!-- Info básica -->
+                <div class="card">
+                    <div class="card-header"><h3>Información Básica</h3></div>
+                    <div class="card-body panelpelisform-info-body">
+
+                        <!-- Título -->
+                        <div>
+                            <label class="form-label">
+                                Título <span class="required">*</span>
+                            </label>
+                            {{ form.titulo }}
+                            {% if form.titulo.errors %}
+                            <div class="field-error">{{ form.titulo.errors.0 }}</div>
+                            {% endif %}
+                        </div>
+
+                        <!-- Sinopsis -->
+                        <div>
+                            <label class="form-label">Sinopsis</label>
+                            {{ form.sinopsis }}
+                            {% if form.sinopsis.errors %}
+                            <div class="field-error">{{ form.sinopsis.errors.0 }}</div>
+                            {% endif %}
+                        </div>
+
+                        <!-- Fila: género + clasificación + duración -->
+                        <div class="panelpelisform-fila-3">
+                            <div>
+                                <label class="form-label">Género</label>
+                                {{ form.genero }}
+                                {% if form.genero.errors %}
+                                <div class="field-error">{{ form.genero.errors.0 }}</div>
+                                {% endif %}
+                            </div>
+                            <div>
+                                <label class="form-label">Clasificación</label>
+                                {{ form.clasificacion }}
+                            </div>
+                            <div>
+                                <label class="form-label">Duración (min)</label>
+                                {{ form.duracion }}
+                            </div>
+                        </div>
+
+                        <!-- Fila: director + año -->
+                        <div class="panelpelisform-fila-2-1">
+                            <div>
+                                <label class="form-label">Director</label>
+                                {{ form.director }}
+                            </div>
+                            <div>
+                                <label class="form-label">Año</label>
+                                {{ form.año }}
+                            </div>
+                        </div>
+
+                        <!-- Actores -->
+                        <div>
+                            <label class="form-label">Actores principales</label>
+                            {{ form.actores }}
+                            <div class="form-help">Separar con comas</div>
+                        </div>
+
+                        <!-- Fila: fecha estreno + en cartelera -->
+                        <div class="panelpelisform-fila-cartelera">
+                            <div>
+                                <label class="form-label">Fecha de estreno</label>
+                                {{ form.fecha_estreno }}
+                            </div>
+                            <!-- modificado (Hilo 4 - Claude): en_cartelera ya no es editable
+                                 por Staff (ver TODO resuelto en peliculas_editar) -- se muestra
+                                 de solo lectura con el mismo badge que ya usa peliculas/lista.html,
+                                 en vez de un checkbox que el backend iba a ignorar igual. -->
+                            {% if es_super %}
+                            <div class="checkbox-row">
+                                {{ form.en_cartelera }}
+                                <label for="{{ form.en_cartelera.id_for_label }}">
+                                    Mostrar en cartelera
+                                </label>
+                            </div>
+                            {% else %}
+                            <div>
+                                <label class="form-label">En cartelera (global)</label>
+                                <span class="panelpelis-card-badge {% if objeto.en_cartelera %}panelpelis-card-badge--activa{% else %}panelpelis-card-badge--inactiva{% endif %} panelpelisform-badge-estatico">
+                                    {% if objeto.en_cartelera %}En cartelera{% else %}Fuera de cartelera{% endif %}
+                                </span>
+                            </div>
+                            {% endif %}
+                        </div>
+
+                    </div>
+                </div>
+
+            </div>
+
+            <!-- Columna lateral: poster -->
+            <div>
+                <div class="card">
+                    <div class="card-header"><h3>Poster</h3></div>
+                    <div class="card-body">
+
+                        <!-- Preview del poster actual -->
+                        {% if objeto and objeto.poster %}
+                        <div class="panelpelisform-poster-preview-wrap">
+                            <img src="{{ objeto.poster.url }}" alt="poster" id="posterPreview" class="panelpelisform-poster-img">
+                        </div>
+
+                        {% elif poster_url_tmdb %}
+                        <div class="panelpelisform-poster-preview-wrap panelpelisform-poster-preview-wrap--tmdb">
+                            <img src="{{ poster_url_tmdb }}" alt="poster TMDB" id="posterPreview" class="panelpelisform-poster-img">
+                        </div>
+                        <div class="form-help panelpelisform-poster-help-tmdb">Poster de TMDB. Descarga al guardar, salvo que subas otro acá abajo.</div>
+
+                        {% else %}
+                        <div id="posterPlaceholder" class="panelpelisform-poster-placeholder">[POSTER]</div>
+                        <img id="posterPreview" class="panelpelisform-poster-img panelpelisform-poster-img--oculta">
+                        {% endif %}
+
+                        {{ form.poster }}
+                        {% if form.poster.errors %}
+                        <div class="field-error">{{ form.poster.errors.0 }}</div>
+                        {% endif %}
+                        <div class="form-help panelpelisform-poster-help">Formatos: JPG, PNG. Recomendado: proporción 2:3</div>
+
+                        <!-- nuevo (Trailer): ID de YouTube del tráiler, no el video en sí.
+                             Se completa solo al importar desde TMDB (si tenía tráiler
+                             cargado ahí); también se puede pegar/corregir a mano. -->
+                        <div class="panelpelisform-trailer-wrap">
+                            <label for="{{ form.trailer_youtube_id.id_for_label }}">{{ form.trailer_youtube_id.label }}</label>
+                            {{ form.trailer_youtube_id }}
+                            {% if form.trailer_youtube_id.errors %}
+                            <div class="field-error">{{ form.trailer_youtube_id.errors.0 }}</div>
+                            {% endif %}
+                            <div class="form-help">
+                                Los 11 caracteres que van después de "v=" en la URL del video de
+                                YouTube. Ej: en youtube.com/watch?v=<strong>dQw4w9WgXcQ</strong>,
+                                el ID es <strong>dQw4w9WgXcQ</strong>.
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Errores generales -->
+        {% if form.non_field_errors %}
+        <div class="panelpelisform-errores-generales">
+            {% for error in form.non_field_errors %}<p class="panelpelisform-error-linea">{{ error }}</p>{% endfor %}
+        </div>
+        {% endif %}
+        <!-- Botones -->
+        <div class="panelpelisform-botones">
+            <button type="submit" class="btn btn-primary">
+                {% if accion == 'crear' %}CREAR{% else %}MODIFICAR{% endif %}
+            </button>
+            <button type="submit" name="guardar_y_agregar_otro" value="1" class="btn btn-primary">CARGAR</button>
+
+            {% if objeto %}
+            <a href="{% url 'panel:peliculas_detalle' objeto.id %}" class="btn btn-primary">Cancelar</a>
+                {% if accion == 'editar' %}
+                <button type="submit" form="formEliminarPelicula" class="btn btn-danger">Eliminar</button>
+                {% endif %}
+            {% else %}
+            <a href="{% url 'panel:peliculas_lista' %}" class="btn btn-primary">Cancelar</a>
+            {% endif %}
+        </div>
+    </form>
+
+    {% if objeto and accion == 'editar' %}
+    <!-- Form separado (no puede anidarse dentro del form principal) que reutiliza el mismo endpoint de borrado masivo, pasando un solo id. -->
+    <form method="post" action="{% url 'panel:peliculas_eliminar' %}" id="formEliminarPelicula">
+        {% csrf_token %}
+        <input type="hidden" name="seleccionadas" value="{{ objeto.id }}">
+    </form>
+    {% endif %}
+
+</div>
+
+{% endblock %}
+
+{% block extra_js %}
+<script src="{% static 'js/panel/peliculas/form.js' %}"></script>
+{% endblock %}

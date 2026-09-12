@@ -1,0 +1,253 @@
+{% extends 'panel/base_panel.html' %}
+
+{% load static %}
+{% block titulo %}{{ titulo_pagina }} — Panel{% endblock %}
+
+{% block breadcrumb %}
+<span class="sep">›</span>
+<a href="{% url 'panel:salas_lista' %}">Salas</a>
+<span class="sep">›</span>
+<span class="current">{% if accion == 'crear' %}Agregar{% else %}Editar{% endif %}</span>
+{% endblock %}
+
+<!-- modificado (Hilo 1): separación CSS completa (29 estilos inline -> 0), movidos a
+     static/css/panel/salas/form.css. Se borraron: un bloque {% comment %} de ~18 líneas
+     con una versión vieja duplicada de "Capacidad Calculada", dos marcadores
+     {% comment %} {% endcomment %} vacíos sin contenido, y un <script> comentado
+     duplicado al final - todo código muerto. -->
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/panel/salas/form.css' %}">
+{% endblock %}
+
+{% block contenido %}
+<!-- modificado (T5 - cero emojis): se sacó el emoji 📍 de la etiqueta de sede fija, más abajo en este archivo. -->
+{% include 'panel/_form_styles.html' %}
+
+<div class="panelsalasform-wrapper">
+
+    <div class="panelsalasform-header">
+        <h1 class="panelsalasform-titulo">{{ titulo_pagina }}</h1>
+        <a href="{% url 'panel:salas_lista' %}" class="btn btn-danger">ATRAS</a>
+    </div>
+
+    <form method="post" id="formSala">
+        {% csrf_token %}
+
+        <div class="panelsalasform-grid">
+
+            <!-- Formulario -->
+            <div class="card panelsalasform-full">
+                <div class="card-header"><h3>Datos de la Sala</h3></div>
+                <div class="card-body panelsalasform-info-body">
+
+                    <div>
+                        <label class="form-label">
+                            Sede <span class="required">*</span>
+                        </label>
+                        {% if sede_fija %}
+                        {# nuevo (Sedes - Fase 3): staff restringido a una sede — no elige, se muestra fijo #}
+                        <div class="panelsalasform-sede-fija"> {{ sede_fija.nombre }}</div>
+                        <div class="form-help">Tu cuenta administra únicamente esta sede.</div>
+                        {% else %}
+                        {{ form.sede }}
+                        <div class="form-help">{{ form.sede.help_text }}</div>
+                        {% if form.sede.errors %}
+                        <div class="field-error">{{ form.sede.errors.0 }}</div>
+                        {% endif %}
+                        {% endif %}
+                    </div>
+
+                    <div>
+                        <label class="form-label">
+                            Nombre <span class="required">*</span>
+                        </label>
+                        {{ form.nombre }}
+                        {% if form.nombre.errors %}
+                        <div class="field-error">{{ form.nombre.errors.0 }}</div>
+                        {% endif %}
+                    </div>
+
+                    <div class="panelsalasform-fila-2">
+                        <div>
+                            <label class="form-label">
+                                Tipo de sala <span class="required">*</span>
+                            </label>
+                            {{ form.tipo }}
+                            <div class="form-help">{{ form.tipo.help_text }}</div>
+                            {% if form.tipo.errors %}
+                            <div class="field-error">{{ form.tipo.errors.0 }}</div>
+                            {% endif %}
+                        </div>
+                        <div>
+                            <label class="form-label">
+                                Multiplicador de precio <span class="required">*</span>
+                            </label>
+                            {{ form.multiplicador_precio }}
+                            <div class="form-help">{{ form.multiplicador_precio.help_text }}</div>
+                            {% if form.multiplicador_precio.errors %}
+                            <div class="field-error">{{ form.multiplicador_precio.errors.0 }}</div>
+                            {% endif %}
+                        </div>
+                    </div>
+
+                    <div class="panelsalasform-fila-2">
+                        <div>
+                            <label class="form-label">
+                                Filas <span class="required">*</span>
+                            </label>
+                            {{ form.filas }}
+                            <div class="form-help">{{ form.filas.help_text }}</div>
+                            {% if form.filas.errors %}
+                            <div class="field-error">{{ form.filas.errors.0 }}</div>
+                            {% endif %}
+                        </div>
+                        <div>
+                            <label class="form-label">
+                                Columnas <span class="required">*</span>
+                            </label>
+                            {{ form.columnas }}
+                            <div class="form-help">{{ form.columnas.help_text }}</div>
+                            {% if form.columnas.errors %}
+                            <div class="field-error">{{ form.columnas.errors.0 }}</div>
+                            {% endif %}
+                        </div>
+                    </div>
+
+                    <div class="checkbox-row">
+                        {{ form.activa }}
+                        <label for="{{ form.activa.id_for_label }}">
+                            Sala activa (visible para reservas)
+                        </label>
+                    </div>
+
+                </div>
+            </div>
+
+            <!-- Secciones de la sala -->
+            <div class="card panelsalasform-full">
+                <div class="card-header panelsalasform-secciones-header">
+                    <h3>Secciones de la Sala</h3>
+                    <button type="button" id="btnAgregarSeccion" class="btn btn-ghost panelsalasform-btn-agregar">
+                        Nueva sección
+                    </button>
+                </div>
+                <div class="card-body">
+                    <p class="panelsalasform-secciones-ayuda">
+                        Cada sección es un rectángulo dentro del lienzo total (Filas × Columnas de arriba).
+                        Las celdas que ninguna sección cubra quedan como pasillo. Si no cargás ninguna
+                        sección, la sala funciona como una grilla uniforme completa (comportamiento anterior).
+                    </p>
+
+                    {{ formset.management_form }}
+                    {% if formset.non_form_errors %}
+                    <div class="panelsalasform-errores-generales">
+                        {% for error in formset.non_form_errors %}
+                        <p class="panelsalasform-error-linea">{{ error }}</p>
+                        {% endfor %}
+                    </div>
+                    {% endif %}
+
+                    <div class="panelsalasform-tabla-wrap">
+                        <table class="tabla" id="tablaSecciones">
+                            <thead>
+                                <tr>
+                                    <th>Nombre</th>
+                                    <th>Fila inicio</th>
+                                    <th>Fila fin</th>
+                                    <th>Col. inicio</th>
+                                    <th>Col. fin</th>
+                                    <th>Quitar</th>
+                                </tr>
+                            </thead>
+                            <tbody id="seccionesBody">
+                                {% for seccion_form in formset %}
+                                <tr class="fila-seccion">
+                                    <td>{{ seccion_form.id }}{{ seccion_form.nombre }}</td>
+                                    <td>{{ seccion_form.fila_inicio }}</td>
+                                    <td>{{ seccion_form.fila_fin }}</td>
+                                    <td>{{ seccion_form.columna_inicio }}</td>
+                                    <td>{{ seccion_form.columna_fin }}</td>
+                                    <td class="panelsalasform-celda-centro">
+                                        {% if seccion_form.DELETE %}
+                                        <label class="panelsalasform-delete-label">
+                                            {{ seccion_form.DELETE }}
+                                            Eliminar
+                                        </label>
+                                        {% endif %}
+                                    </td>
+                                </tr>
+                                {% if seccion_form.errors %}
+                                <tr>
+                                    <td colspan="6" class="panelsalasform-fila-error">
+                                        {% for field, errores in seccion_form.errors.items %}
+                                            {% for error in errores %}{{ error }} {% endfor %}
+                                        {% endfor %}
+                                    </td>
+                                </tr>
+                                {% endif %}
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <!-- Fila plantilla, oculta, usada por JS para clonar al agregar sección -->
+                    <table class="panelsalasform-tabla-oculta">
+                        <tbody>
+                            <tr id="filaSeccionPlantilla">
+                                <td>{{ formset.empty_form.nombre }}</td>
+                                <td>{{ formset.empty_form.fila_inicio }}</td>
+                                <td>{{ formset.empty_form.fila_fin }}</td>
+                                <td>{{ formset.empty_form.columna_inicio }}</td>
+                                <td>{{ formset.empty_form.columna_fin }}</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Preview calculado -->
+            <div class="card panelsalasform-full">
+                <div class="card-header"><h3>Capacidad Calculada</h3></div>
+                <div class="card-body panelsalasform-capacidad-body">
+                    <div class="panelsalasform-capacidad-valor" id="capacidadCalc">
+                        {% if objeto %}{{ objeto.capacidad }}{% else %}—{% endif %}
+                    </div>
+                    <div class="panelsalasform-capacidad-detalle" id="capacidadDetalle">
+                        <span id="filasVal">{% if objeto %}{{ objeto.filas }}{% else %}?{% endif %}</span> filas *
+                        <span id="colsVal">{% if objeto %}{{ objeto.columnas }}{% else %}?{% endif %}</span> columnas de lienzo total
+                    </div>
+                </div>
+            </div>
+
+        </div>
+
+        {% if form.non_field_errors %}
+        <div class="panelsalasform-errores-generales panelsalasform-errores-generales--top">
+            {% for error in form.non_field_errors %}
+            <p class="panelsalasform-error-linea">{{ error }}</p>
+            {% endfor %}
+        </div>
+        {% endif %}
+        <div class="panelsalasform-botones">
+            <button type="submit" class="btn btn-primary"> {% if accion == 'crear' %}CREAR{% else %}ACTUALIZAR{% endif %}</button>
+            <button type="submit" name="guardar_y_agregar_otro" value="1" class="btn btn-primary">CARGAR</button>
+            <a href="{% url 'panel:salas_lista' %}" class="btn btn-primary">Cancelar</a>
+            {% if objeto and accion == 'editar' %}
+            <button type="submit" form="formEliminarSala" class="btn btn-danger">BORRAR</button>
+            {% endif %}
+        </div>
+    </form>
+    {% if objeto and accion == 'editar' %}
+    <!-- Reutiliza el endpoint de borrado masivo ya existente (salas_eliminar), pasando un solo id, para no duplicar la lógica de confirmación con cascada. -->
+    <form method="post" action="{% url 'panel:salas_eliminar' %}" id="formEliminarSala">
+        {% csrf_token %}
+        <input type="hidden" name="seleccionadas" value="{{ objeto.id }}">
+    </form>
+    {% endif %}
+</div>
+
+{% endblock %}
+
+{% block extra_js %}
+<script src="{% static 'js/panel/salas/form.js' %}"></script>
+{% endblock %}

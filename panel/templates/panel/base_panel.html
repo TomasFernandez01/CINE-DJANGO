@@ -1,0 +1,289 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block titulo %}Panel — Cine Online{% endblock %}</title>
+    <link rel="stylesheet" href="{% static 'css/panel/base_panel.css' %}">
+    <!-- nuevo (Hilo 1): componentes base (.card, .btn y variantes, .input, .select) que se
+         usan en 36 de los 38 templates de Panel pero no estaban definidos en ningún CSS -
+         renderizaban con el estilo default del navegador. Se linkea acá, global, para no
+         tener que acordarse de incluirlo en cada template nuevo. -->
+    <link rel="stylesheet" href="{% static 'css/panel/components.css' %}">
+    <!-- nuevo: modal de confirmación del Panel (reemplaza confirm() nativo), estilizado
+         con la paleta de variables de acá arriba para que sea uniforme con el resto. -->
+    <link rel="stylesheet" href="{% static 'css/panel/modal_confirmacion.css' %}">
+    <!-- modificado: faltaba este link. El HTML del selector de sede activa (.panel-topbar-sede-fija /
+         .panel-topbar-selector-sede, más abajo en este mismo archivo) ya existía pero su CSS
+         nunca se cargaba, así que se veía sin estilo. -->
+    <link rel="stylesheet" href="{% static 'css/panel/selector_sede_panel.css' %}">
+    <!-- nuevo: bloque extra_css, hacía falta para que cada vista de Panel pueda cargar su propio
+         CSS separado (hasta ahora todo estaba con style="" inline en los templates). Cambio
+         mínimo y compatible, no afecta nada de lo existente. -->
+    {% block extra_css %}{% endblock %}
+</head>
+<body>
+
+<!-- nuevo: modal de confirmación compartido de todo el Panel (reemplaza confirm()
+     nativo). Vive una sola vez acá, lo completan/muestran los scripts de
+     static/js/panel/shared/ vía window.mostrarModalConfirmacion(...). -->
+<div id="modalConfirmacion" class="modal-confirmacion oculto" role="dialog" aria-modal="true" aria-hidden="true">
+    <div class="modal-confirmacion-fondo" data-modal-cerrar></div>
+    <div class="modal-confirmacion-caja">
+        <h3 id="modalConfirmacionTitulo" class="modal-confirmacion-titulo"></h3>
+        <p id="modalConfirmacionMensaje" class="modal-confirmacion-mensaje"></p>
+        <!-- modificado: contenedores para el modo "resumen" (lista con viñetas +
+             aviso destacado aparte), en vez de todo mezclado en un solo párrafo de
+             texto plano. Ver mostrarModalConfirmacion() en modal_confirmacion.js -->
+        <ul id="modalConfirmacionLista" class="modal-confirmacion-lista oculto"></ul>
+        <p id="modalConfirmacionAdvertencia" class="modal-confirmacion-advertencia oculto"></p>
+        <div class="modal-confirmacion-acciones">
+            <button type="button" id="modalConfirmacionCancelar" class="modal-confirmacion-btn modal-confirmacion-btn--cancelar"></button>
+            <button type="button" id="modalConfirmacionConfirmar" class="modal-confirmacion-btn modal-confirmacion-btn--confirmar"></button>
+        </div>
+    </div>
+</div>
+
+<!-- ============================================================ -->
+<!-- SIDEBAR                                                       -->
+<!-- ============================================================ -->
+<aside id="sidebar">
+    <div class="sidebar-logo">
+        <!-- modificado (T5 - cero emojis): se sacó el emoji 🎬 del logo. No hay librería de
+             íconos cargada en este template, así que se deja solo el texto, sin ícono. -->
+        <div class="logo-title"> Cine Online</div>
+        <div class="logo-sub">Panel de Gestión</div>
+    </div>
+
+    <nav>
+        <!-- modificado (T14 - reorg sidebar): 5 grupos según lo confirmado con
+             Tomás. "Estadísticas" (pagos_estadisticas) y "Cupones Usados" ya no
+             tienen link propio acá — sus gráficos/tablas de análisis viven en
+             Dashboard, y lo puramente operativo de cada una quedó accesible
+             desde adentro de Pagos y Cupones respectivamente (ver botones en
+             esos templates). "Configuración General" se mudó de Operaciones a
+             Administración y pasó a ser 100% SuperUser (ver panel/views/config_general.py).
+             El botón de "Django Admin" se sacó del todo — sigue andando por URL
+             directa (/admin/), pero ya no tiene entrada en este menú. -->
+
+        <!-- Dashboard -->
+        <div class="sidebar-section">
+            <a href="{% url 'panel:inicio' %}" 
+                class="sidebar-link {% if seccion_activa == 'dashboard' %}active{% endif %}">
+                <span class="icon"></span> Dashboard
+            </a>
+        </div>
+        
+        <hr class="sidebar-divider">
+
+        <!-- Catálogo -->
+        <div class="sidebar-section">
+            <div class="sidebar-section-label">Catálogo</div>
+            <a href="{% url 'panel:peliculas_lista' %}" 
+                class="sidebar-link {% if seccion_activa == 'peliculas' %}active{% endif %}">
+                <span class="icon"></span> Películas
+            </a>
+            <a href="{% url 'panel:salas_lista' %}" 
+                class="sidebar-link {% if seccion_activa == 'salas' %}active{% endif %}">
+                <span class="icon"></span> Salas
+            </a>
+            <a href="{% url 'panel:funciones_lista' %}" 
+                class="sidebar-link {% if seccion_activa == 'funciones' %}active{% endif %}">
+                <span class="icon"></span> Funciones
+            </a>
+        </div>
+
+        <hr class="sidebar-divider">
+
+        <!-- Promociones -->
+        <div class="sidebar-section">
+            <div class="sidebar-section-label">Promociones</div>
+            <a href="{% url 'panel:combos_lista' %}"
+                class="sidebar-link {% if seccion_activa == 'combos' %}active{% endif %}">
+                <span class="icon"></span>Combos
+            </a>
+            <a href="{% url 'panel:cupones_lista' %}"
+                class="sidebar-link {% if seccion_activa == 'cupones' %}active{% endif %}">
+                <span class="icon"></span>Cupones
+            </a>
+            <a href="{% url 'panel:promodia_lista' %}"
+                class="sidebar-link {% if seccion_activa == 'promodia' %}active{% endif %}">
+                <span class="icon"></span>Descuentos
+            </a>
+        </div>
+
+        <hr class="sidebar-divider">
+
+        <!-- Operaciones -->
+        <div class="sidebar-section">
+            <div class="sidebar-section-label">Operaciones</div>
+            <a href="{% url 'panel:reservas_lista' %}"
+               class="sidebar-link {% if seccion_activa == 'reservas' %}active{% endif %}">
+                <span class="icon"></span> Reservas
+            </a>
+            <a href="{% url 'panel:pagos_lista' %}"
+               class="sidebar-link {% if seccion_activa == 'pagos' %}active{% endif %}">
+                <span class="icon"></span> Pagos
+            </a>
+            <a href="{% url 'panel:verificador_qr' %}"
+               class="sidebar-link {% if seccion_activa == 'verificador' %}active{% endif %}">
+                <span class="icon"></span> Verificador QR
+            </a>
+        </div>
+
+        {% if user.is_superuser %}
+        <hr class="sidebar-divider">
+        <!-- Solo superuser -->
+        <div class="sidebar-section">
+            <div class="sidebar-section-label">Administración</div>
+            <a href="{% url 'panel:usuarios_lista' %}"
+               class="sidebar-link {% if seccion_activa == 'usuarios' %}active{% endif %}">
+                <span class="icon"></span> Usuarios
+                <span class="badge-admin">Admin</span>
+            </a>
+            <a href="{% url 'panel:sedes_lista' %}"
+               class="sidebar-link {% if seccion_activa == 'sedes' %}active{% endif %}">
+                <span class="icon"></span> Sedes
+                <span class="badge-admin">Admin</span>
+            </a>
+            <!-- modificado (T14): Configuración General se mudó acá desde Operaciones,
+                 y pasó a ser 100% SuperUser (ver panel/views/config_general.py) -->
+            <a href="{% url 'panel:configuracion_general' %}"
+               class="sidebar-link {% if seccion_activa == 'configuracion' %}active{% endif %}">
+                <span class="icon"></span> Configuración General
+                <span class="badge-admin">Admin</span>
+            </a>
+            <!-- modificado (T14): botón "Django Admin" retirado del sidebar. Sigue
+                 accesible por URL directa (/admin/) para quien la conozca — pedido
+                 explícito: que deje de ser un acceso visible desde el Panel. -->
+        </div>
+        {% endif %}
+    </nav>
+
+    <div class="sidebar-footer">
+        <div class="sidebar-user">
+            <strong>{{ user.get_full_name|default:user.username }}</strong>
+            {% if user.is_superuser %}
+                <span class="role-badge role-super">Superusuario</span>
+            {% elif user.is_staff %}
+                <span class="role-badge role-staff">Staff</span>
+            {% endif %}
+        </div>
+        <a href="{% url 'peliculas:inicio' %}" class="btn-sitio">
+            PAGINA PRINCIPAL
+        </a>
+    </div>
+</aside>
+
+<!-- ============================================================ -->
+<!-- MAIN                                                          -->
+<!-- ============================================================ -->
+<div id="main">
+
+    <!-- Topbar -->
+    <header id="topbar">
+        <nav class="topbar-breadcrumb">
+            <a href="{% url 'panel:inicio' %}">Panel</a>
+            {% block breadcrumb %}{% endblock %}
+        </nav>
+        <div class="topbar-actions">
+            <!-- nuevo (Sedes - Fase 3): sede activa del staff en el Panel -->
+            <!-- modificado (T5 - cero emojis): se sacó el emoji 📍 de las 3 apariciones de
+                 "sede" acá abajo (sede fija, opción "Todas las sedes" y cada <option> del
+                 select). Texto plano, sin ícono de reemplazo. -->
+            {% if panel_sede_fija %}
+            <span class="panel-topbar-sede-fija" title="Tu cuenta administra únicamente esta sede">
+                 {{ panel_sede_fija.nombre }}
+            </span>
+            {% elif user.is_staff %}
+            <form method="post" action="{% url 'panel:cambiar_sede_panel' %}" id="formPanelSelectorSede" class="panel-topbar-selector-sede">
+                {% csrf_token %}
+                <input type="hidden" name="next" value="{{ request.path }}">
+                <select name="sede_id" id="panelSelectorSede" aria-label="Sede activa del Panel">
+                    <option value="" {% if not panel_sede_activa %}selected{% endif %}> Todas las sedes</option>
+                    {% for sede in panel_sedes_disponibles %}
+                    <option value="{{ sede.id }}" {% if panel_sede_activa and panel_sede_activa.id == sede.id %}selected{% endif %}>
+                         {{ sede.nombre }}
+                    </option>
+                    {% endfor %}
+                </select>
+            </form>
+            {% endif %}
+            <span class="topbar-time" id="reloj"></span>
+            <!-- modificado (T10): style="font-size:0.8rem;" movido a .panelbase-topbar-logout en base_panel.css -->
+            <a href="{% url 'usuarios:logout' %}" class="btn btn-ghost panelbase-topbar-logout">
+                Cerrar sesión
+            </a>
+        </div>
+    </header>
+
+    <!-- Toast container -->
+    <div class="toast-container" id="toastContainer"></div>
+
+    <!-- Contenido -->
+    <main id="content">
+        {% block contenido %}{% endblock %}
+    </main>
+</div>
+
+<script>
+// Reloj en topbar
+function actualizarReloj() {
+    const now = new Date();
+    document.getElementById('reloj').textContent =
+        now.toLocaleTimeString('es-AR', { hour: '2-digit', minute: '2-digit' });
+}
+actualizarReloj();
+setInterval(actualizarReloj, 1000);
+
+// Toast system
+class Toast {
+    constructor() { this.container = document.getElementById('toastContainer'); }
+    show(msg, type = 'info', ms = 5000) {
+        // modificado (T5 - cero emojis): antes cada tipo de toast tenía un emoji
+        // (success:'✅', error:'❌', warning:'⚠️', info:'ℹ️'). Se vaciaron los 4 valores;
+        // el <span> que los envuelve queda vacío pero se conserva (no se tocó la
+        // estructura), y el color/estado del toast lo sigue dando la clase `type`
+        // (success/error/warning/info) sobre `.toast`, igual que en los badges de
+        // estado del resto del Panel que ya funcionan solo con clases CSS.
+        const icons = { success:'', error:'', warning:'', info:'' };
+        const el = document.createElement('div');
+        el.className = `toast ${type}`;
+        el.innerHTML = `<span>${icons[type]}</span><span class="toast-msg">${msg}</span><button class="toast-close" onclick="this.parentElement.remove()">×</button>`;
+        this.container.appendChild(el);
+        setTimeout(() => { el.style.opacity='0'; el.style.transition='opacity 0.3s'; setTimeout(()=>el.remove(),300); }, ms);
+    }
+}
+const toast = new Toast();
+
+document.addEventListener('DOMContentLoaded', () => {
+    {% if messages %}
+        {% for message in messages %}
+            toast.show("{{ message|escapejs }}",
+                "{% if message.tags %}{{ message.tags }}{% else %}info{% endif %}");
+        {% endfor %}
+    {% endif %}
+});
+
+// Sidebar mobile toggle
+function toggleSidebar() {
+    document.getElementById('sidebar').classList.toggle('open');
+}
+</script>
+
+<!-- nuevo: JS del modal de confirmación compartido (mismo motor que el del sitio
+     cliente, solo cambia el CSS). Cargados acá, global, para que cualquier
+     template de Panel pueda usar data-confirm o data-eliminar-modal sin
+     tener que acordarse de incluir los scripts. -->
+<script src="{% static 'js/shared/modal_confirmacion.js' %}"></script>
+<script src="{% static 'js/panel/shared/confirmaciones.js' %}"></script>
+<script src="{% static 'js/panel/shared/eliminar_modal.js' %}"></script>
+<!-- modificado: faltaba este script. Sin él, el <select id="panelSelectorSede"> de la topbar
+     (ver arriba, #formPanelSelectorSede) no hacía autosubmit al cambiar de sede: no pasaba nada
+     hasta que el usuario recargaba la página a mano. -->
+<script src="{% static 'js/panel/selector_sede_panel.js' %}"></script>
+
+{% block extra_js %}{% endblock %}
+</body>
+</html>

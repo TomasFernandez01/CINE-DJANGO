@@ -1,0 +1,109 @@
+/* modificado (Fase 3): "libre" pasa de verde a blanco para que combine
+   con el mapa del cliente. mantenimiento/reservado/vendido quedan con
+   los mismos colores que ya tenían (gris/azul/gris oscuro), que ya
+   era exactamente lo que se pedía para el admin. */
+/* modificado (Hilo 1): se agregó la base de .asiento-btn (tamaño/tipografía, antes
+   inline en cada botón), el <style> que estaba embebido en el template (selección
+   múltiple), y todas las clases nuevas para separar los 73 estilos inline que tenía
+   asientos.html. */
+
+.asiento-btn {
+    width: 28px; height: 24px; border-radius: 6px; font-size: 8px;
+    border: 1px solid rgba(255,255,255,0.15); font-weight: 700; color: white;
+    cursor: pointer; transition: transform 0.12s;
+}
+.asiento-btn.libre     { background:#ffffff; color:#111111 !important; border-color:#cccccc !important; }
+.asiento-btn.mantenimiento { background:#6c757d; }
+.asiento-btn.reservado     { background:#007bff; }
+.asiento-btn.vendido       { background:#495057; cursor:not-allowed; opacity:0.75; }
+.asiento-btn:hover:not(.vendido) { transform:scale(1.15); }
+.asiento-btn.seleccionado {
+    /* modificado: el dorado (#e2b96f) es el mismo tono que usan las categorías
+       especiales por defecto (ver inputCategoriaColor en asientos.js, #f1c40f
+       es muy parecido) y el acento general del panel, así que un asiento
+       "seleccionado" se confundía visualmente con un asiento de categoría
+       especial o con crema/marrón sobre el mapa oscuro. Se cambia a azul
+       (--info: #2980b9), que no se usa en ningún estado de asiento ni en
+       colores de categoría típicos, y queda inequívoco como "selección activa".
+    */
+    box-shadow: 0 0 0 3px #2980b9 !important;
+    transform: scale(1.12);
+    z-index: 5;
+}
+.leyenda-color[data-motivo="mantenimiento"] { background:#6c757d; }
+.leyenda-color[data-motivo="reservado"]     { background:#007bff; }
+
+.btn-modo-seleccion {
+    background: #2a2a2a; color: #ccc; border: 1px solid #444; font-size: 0.8rem;
+    padding: 0.4rem 0.8rem; border-radius: 6px; cursor: pointer;
+    display: flex; align-items: center; gap: 6px; transition: all 0.2s;
+}
+.btn-modo-seleccion:hover { background: #3a3a3a; color: #fff; }
+.btn-modo-seleccion.activo { background: #e2b96f; color: #0f0f1a; border-color: #e2b96f; font-weight: 600; }
+
+/* ---- Layout general ---- */
+.panelasientos-header { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem; margin-bottom: 1.5rem; }
+.panelasientos-titulo { font-size: 1.4rem; color: #1a1a2e; margin: 0; }
+.panelasientos-header-desc { color: #666; font-size: 0.9rem; margin-top: 0.25rem; }
+
+.panelasientos-modo-card { margin-bottom: 1.25rem; }
+.panelasientos-modo-body { display: flex; align-items: center; gap: 1rem; flex-wrap: wrap; }
+.panelasientos-modo-label { margin: 0; }
+.panelasientos-modo-select { min-width: 280px; }
+.panelasientos-modo-nota { font-size: 0.8rem; color: #999; }
+
+.panelasientos-grid { display: grid; grid-template-columns: 2fr 1fr; gap: 1.5rem; align-items: start; }
+
+/* ---- Card del mapa (fondo oscuro, combina con el mapa del cliente) ---- */
+.panelasientos-mapa-card { background-color: #0f0f0f; border-color: #2a2a2a; }
+.panelasientos-mapa-header {
+    background-color: #0f0f0f; border-color: #2a2a2a; color: #fff;
+    display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 0.5rem;
+}
+.panelasientos-mapa-header--leyenda { padding-top: 0.5rem; }
+.panelasientos-mapa-header-titulo { color: #fff; margin: 0; }
+.panelasientos-leyenda { display: flex; gap: 0.6rem; font-size: 0.72rem; flex-wrap: wrap; align-items: center; color: #ccc; }
+.panelasientos-leyenda-item { display: flex; align-items: center; gap: 4px; }
+.panelasientos-leyenda-swatch { width: 12px; height: 12px; border-radius: 2px; display: inline-block; }
+.panelasientos-leyenda-swatch--libre { background: #ffffff; border: 1px solid #cccccc; }
+.panelasientos-leyenda-swatch--categoria { background: linear-gradient(135deg, #f1c40f, #e67e22); }
+.panelasientos-leyenda-swatch--vendido { background: #495057; }
+
+.panelasientos-mapa-body { overflow-x: auto; background-color: #0f0f0f; }
+.panelasientos-pantalla-wrap { text-align: center; margin-bottom: 1.5rem; }
+.panelasientos-pantalla-curva {
+    width: 60%; max-width: 420px; height: 16px; margin: 0 auto; border-radius: 50%;
+    background: radial-gradient(ellipse at center, #6b6b6b 0%, #2a2a2a 75%, transparent 100%);
+}
+.panelasientos-pantalla-label { color: #9a9a9a; letter-spacing: 0.3em; font-size: 0.65rem; font-weight: bold; margin-top: 0.5rem; }
+
+.panelasientos-mapa { display: flex; flex-direction: column; gap: 5px; align-items: center; }
+.panelasientos-fila { display: flex; gap: 5px; align-items: center; }
+.panelasientos-fila-letra { width: 20px; font-size: 0.7rem; color: #d9a441; text-align: center; font-weight: 600; }
+.panelasientos-celda-vacia { width: 28px; height: 24px; }
+
+/* ---- Panel lateral ---- */
+.panelasientos-lateral { display: flex; flex-direction: column; gap: 1.25rem; }
+.panelasientos-oculto { display: none; }
+.panelasientos-vacio-chico { text-align: center; color: #999; font-size: 0.875rem; }
+.panelasientos-lista-scroll { max-height: 360px; overflow-y: auto; }
+
+.panelasientos-td-fuerte { font-weight: 600; }
+.panelasientos-td-chica { font-size: 0.8rem; }
+.panelasientos-td-alcance { font-size: 0.75rem; color: #666; }
+.panelasientos-btn-quitar { font-size: 0.7rem; padding: 0.25rem 0.5rem; }
+.panelasientos-color-swatch-chico { width: 10px; height: 10px; border-radius: 2px; display: inline-block; margin-right: 4px; }
+
+/* ---- Paneles dinámicos armados por JS (asientos.js) ---- */
+.panelasientos-panel-col { display: flex; flex-direction: column; }
+.panelasientos-panel-col--80 { gap: 0.8rem; }
+.panelasientos-panel-col--60 { gap: 0.6rem; font-size: 0.875rem; }
+.panelasientos-label-espaciada { margin-top: 0.6rem; }
+.panelasientos-nota-chica { font-size: 0.75rem; color: #999; margin-top: 0.5rem; }
+.panelasientos-subform-oculto { display: none; }
+.panelasientos-color-input { width: 100%; height: 38px; padding: 2px; }
+.panelasientos-color-preview { width: 14px; height: 14px; border-radius: 3px; display: inline-block; vertical-align: middle; margin-left: 4px; }
+.panelasientos-panel-botones { display: flex; gap: 0.5rem; margin-top: 0.5rem; }
+.panelasientos-btn-flex1 { flex: 1; }
+.panelasientos-error-chica { color: #e74c3c; font-size: 0.8rem; display: none; }
+.panelasientos-texto-alerta { color: #e74c3c; font-weight: 600; }

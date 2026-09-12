@@ -1,0 +1,203 @@
+{% extends 'panel/base_panel.html' %}
+
+{% load static %}
+
+{% block titulo %}{{ titulo_pagina }} — Panel{% endblock %}
+
+{% block breadcrumb %}
+<span class="sep">›</span>
+<a href="{% url 'panel:usuarios_lista' %}">Usuarios</a>
+{% if objeto %}
+<span class="sep">›</span>
+<a href="{% url 'panel:usuarios_detalle' objeto.id %}">{{ objeto.username }}</a>
+{% endif %}
+<span class="sep">›</span>
+<span class="current">{% if accion == 'crear' %}Crear{% else %}Editar{% endif %}</span>
+{% endblock %}
+
+{% block extra_css %}
+<!-- modificado: CSS separado a static/css/panel/usuarios/form.css (antes todo con style="" inline) -->
+<link rel="stylesheet" href="{% static 'css/panel/usuarios/form.css' %}">
+{% endblock %}
+
+{% block contenido %}
+<!-- modificado (T5 - cero emojis): se sacaron los emojis de "🔒 Solo visible para administradores", los encabezados "👤 Datos del Usuario", "🔑 Contraseña", "🛡️ Permisos", "📍 Sede", del aviso "Superusuario ⚠️" y del botón "✅ Crear Usuario / 💾 Guardar Cambios", todos más abajo. La flecha "←" de los links "Volver" no se tocó (no es emoji). -->
+{% include 'panel/_form_styles.html' %}
+
+<div class="paneluserform-wrap">
+
+    <div class="paneluserform-encabezado">
+        <div>
+            <h1 class="paneluserform-titulo">{{ titulo_pagina }}</h1>
+            <div class="paneluserform-solo-admin">
+                 Solo visible para administradores
+            </div>
+        </div>
+        {% if objeto %}
+        <a href="{% url 'panel:usuarios_detalle' objeto.id %}" class="btn btn-ghost">← Volver</a>
+        {% else %}
+        <a href="{% url 'panel:usuarios_lista' %}" class="btn btn-ghost">← Volver</a>
+        {% endif %}
+    </div>
+
+    <form method="post">
+        {% csrf_token %}
+
+        <div class="paneluserform-stack">
+
+            <!-- Datos personales -->
+            <div class="card">
+                <div class="card-header"><h3> Datos del Usuario</h3></div>
+                <div class="card-body paneluserform-card-body-stack">
+
+                    <div>
+                        <label class="form-label">
+                            Nombre de usuario <span class="required">*</span>
+                        </label>
+                        {{ form.username }}
+                        {% if form.username.errors %}
+                        <div class="field-error">{{ form.username.errors.0 }}</div>
+                        {% endif %}
+                    </div>
+
+                    <div class="paneluserform-2col">
+                        <div>
+                            <label class="form-label">Nombre</label>
+                            {{ form.first_name }}
+                        </div>
+                        <div>
+                            <label class="form-label">Apellido</label>
+                            {{ form.last_name }}
+                        </div>
+                    </div>
+
+                    <div>
+                        <label class="form-label">Email</label>
+                        {{ form.email }}
+                        {% if form.email.errors %}
+                        <div class="field-error">{{ form.email.errors.0 }}</div>
+                        {% endif %}
+                    </div>
+
+                </div>
+            </div>
+
+            <!-- Contraseña (solo al crear) -->
+            {% if accion == 'crear' %}
+            <div class="card">
+                <div class="card-header"><h3> Contraseña</h3></div>
+                <div class="card-body paneluserform-card-body-stack">
+                    <div>
+                        <label class="form-label">
+                            Contraseña <span class="required">*</span>
+                        </label>
+                        {{ form.password1 }}
+                        {% if form.password1.errors %}
+                        <div class="field-error">{{ form.password1.errors.0 }}</div>
+                        {% endif %}
+                        <div class="form-help">
+                            Mínimo 8 caracteres. No puede ser solo numérica.
+                        </div>
+                    </div>
+                    <div>
+                        <label class="form-label">
+                            Confirmar contraseña <span class="required">*</span>
+                        </label>
+                        {{ form.password2 }}
+                        {% if form.password2.errors %}
+                        <div class="field-error">{{ form.password2.errors.0 }}</div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+            {% endif %}
+
+            <!-- Permisos -->
+            <div class="card">
+                <div class="card-header"><h3> Permisos</h3></div>
+                <div class="card-body paneluserform-permisos-stack">
+
+                    <div class="checkbox-row paneluserform-checkbox-row">
+                        {{ form.is_active }}
+                        <div>
+                            <label for="{{ form.is_active.id_for_label }}" class="paneluserform-checkbox-label">
+                                Cuenta activa
+                            </label>
+                            <div class="paneluserform-checkbox-help">
+                                Si no está activa, el usuario no puede iniciar sesión
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="checkbox-row paneluserform-checkbox-row">
+                        {{ form.is_staff }}
+                        <div>
+                            <label for="{{ form.is_staff.id_for_label }}" class="paneluserform-checkbox-label">
+                                Staff — acceso al panel
+                            </label>
+                            <div class="paneluserform-checkbox-help">
+                                Puede acceder al panel de gestión del cine
+                            </div>
+                        </div>
+                    </div>
+
+                    {% if form.is_superuser %}
+                    <div class="checkbox-row paneluserform-checkbox-row--super">
+                        {{ form.is_superuser }}
+                        <div>
+                            <label for="{{ form.is_superuser.id_for_label }}" class="paneluserform-checkbox-label--super">
+                                Superusuario 
+                            </label>
+                            <div class="paneluserform-checkbox-help">
+                                Acceso total al sistema incluyendo sección de usuarios.
+                                Usá con precaución.
+                            </div>
+                        </div>
+                    </div>
+                    {% endif %}
+
+                </div>
+            </div>
+
+            <!-- nuevo (Sedes - Fase 3) -->
+            <div class="card">
+                <div class="card-header"><h3> Sede</h3></div>
+                <div class="card-body paneluserform-permisos-stack">
+                    <div>
+                        <label class="form-label">Sede que administra</label>
+                        {{ form.sede_administrada }}
+                        <div class="form-help">{{ form.sede_administrada.help_text }}</div>
+                        {% if form.sede_administrada.errors %}
+                        <div class="field-error">{{ form.sede_administrada.errors.0 }}</div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+
+        </div>
+
+        {% if form.non_field_errors %}
+        <div class="paneluserform-error-box">
+            {% for error in form.non_field_errors %}
+            <p>{{ error }}</p>
+            {% endfor %}
+        </div>
+        {% endif %}
+
+        <div class="paneluserform-botones">
+            <button type="submit" class="btn btn-success paneluserform-btn-guardar">
+                {% if accion == 'crear' %} Crear Usuario{% else %} Guardar Cambios{% endif %}
+            </button>
+            {% if objeto %}
+            <a href="{% url 'panel:usuarios_detalle' objeto.id %}" class="btn btn-ghost">
+                Cancelar
+            </a>
+            {% else %}
+            <a href="{% url 'panel:usuarios_lista' %}" class="btn btn-ghost">Cancelar</a>
+            {% endif %}
+        </div>
+
+    </form>
+</div>
+
+{% endblock %}

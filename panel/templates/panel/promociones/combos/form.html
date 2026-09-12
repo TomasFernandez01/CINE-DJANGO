@@ -1,0 +1,148 @@
+{% extends 'panel/base_panel.html' %}
+
+{% load static %}
+
+{% block titulo %}{{ titulo_pagina }} — Panel{% endblock %}
+
+{% block breadcrumb %}
+<span class="sep">›</span>
+<a href="{% url 'panel:combos_lista' %}">Combos</a>
+<span class="sep">›</span>
+<span class="current">{% if accion == 'crear' %}Agregar{% else %}Editar{% endif %}</span>
+{% endblock %}
+
+{% block extra_css %}
+<!-- modificado: CSS compartido entre los 3 form.html (combos/cupones/promodia) -->
+<link rel="stylesheet" href="{% static 'css/panel/promociones/form.css' %}">
+{% endblock %}
+
+{% block contenido %}
+<!-- modificado (T5 - cero emojis): se sacó el emoji 🍿 del encabezado "Datos del Combo". -->
+{% include 'panel/_form_styles.html' %}
+
+<div class="panelpromoform-wrap">
+
+    <div class="panelpromoform-encabezado">
+        <h1 class="panelpromoform-titulo">{{ titulo_pagina }}</h1>
+        <a href="{% url 'panel:combos_lista' %}" class="btn btn-ghost">ATRAS</a>
+    </div>
+
+    <form method="post" enctype="multipart/form-data">
+        {% csrf_token %}
+        <div class="card">
+            <div class="card-header"><h3> Datos del Combo</h3></div>
+            <div class="card-body panelpromoform-card-body-stack">
+
+                <!-- modificado (Hilo 4 - Claude): antes estos 5 campos se mostraban
+                     como inputs editables para Staff aunque panel/views/promociones.py
+                     ::combos_editar los pisa con los valores originales antes de
+                     guardar (T1: Staff solo puede tocar 'activo'). El usuario Staff
+                     podía cambiar el precio en el form, mandarlo, y verlo "revertido"
+                     sin ningún aviso -- confuso. Ahora, si es Staff editando (no
+                     accion=='crear', que ya es @superuser_required y nunca llega
+                     acá para Staff), esos 5 campos se muestran de solo lectura con
+                     el valor ya guardado, y el mensaje de abajo explica por qué. -->
+                {% if accion == 'editar' and not es_super %}
+                <div class="panelpromoform-aviso-staff">
+                    Como Staff, solo podés activar o desactivar este combo. El resto
+                    de los datos los administra un SuperUser.
+                </div>
+                <div>
+                    <label class="form-label">Nombre</label>
+                    <p class="panelpromoform-campo-sololectura">{{ objeto.nombre }}</p>
+                </div>
+                <div>
+                    <label class="form-label">Descripción</label>
+                    <p class="panelpromoform-campo-sololectura">{{ objeto.descripcion }}</p>
+                </div>
+                <div>
+                    <label class="form-label">Precio ($)</label>
+                    <p class="panelpromoform-campo-sololectura">${{ objeto.precio|floatformat:0 }}</p>
+                </div>
+                <div>
+                    <label class="form-label">Categoría</label>
+                    <p class="panelpromoform-campo-sololectura">{{ objeto.categoria }}</p>
+                </div>
+                {% if objeto.imagen %}
+                <div>
+                    <label class="form-label">Imagen</label>
+                    <img src="{{ objeto.imagen.url }}" class="panelpromoform-imagen-preview">
+                </div>
+                {% endif %}
+                {% else %}
+                <div>
+                    <label class="form-label">Nombre <span class="required">*</span></label>
+                    {{ form.nombre }}
+                    {% if form.nombre.errors %}<div class="field-error">{{ form.nombre.errors.0 }}</div>{% endif %}
+                </div>
+
+                <div>
+                    <label class="form-label">Descripción <span class="required">*</span></label>
+                    {{ form.descripcion }}
+                    {% if form.descripcion.errors %}<div class="field-error">{{ form.descripcion.errors.0 }}</div>{% endif %}
+                </div>
+
+                <div>
+                    <label class="form-label">Precio ($) <span class="required">*</span></label>
+                    {{ form.precio }}
+                    {% if form.precio.errors %}<div class="field-error">{{ form.precio.errors.0 }}</div>{% endif %}
+                </div>
+
+                <!-- modificado (combos múltiples): categoría del ítem -->
+                <!-- modificado (T13 — bug categoría libre): el campo pasó de <select> fijo a
+                     texto libre con sugerencias vía <datalist>, para poder cargar una
+                     categoría nueva (ej: "merch") sin tocar el modelo ni migraciones.
+                     Ver ComboForm.__init__ en panel/forms.py para el detalle. Estaba
+                     comentado por error (no hacía falta migración) — reactivado. -->
+                <div>
+                    <label class="form-label">Categoría <span class="required">*</span></label>
+                    {{ form.categoria }}
+                    <datalist id="categorias-combo-datalist">
+                        {% for c in form.categorias_sugeridas %}
+                        <option value="{{ c }}"></option>
+                        {% endfor %}
+                    </datalist>
+                    {% if form.categoria.errors %}<div class="field-error">{{ form.categoria.errors.0 }}</div>{% endif %}
+                </div>
+
+                <div>
+                    <label class="form-label">Imagen</label>
+                    {% if objeto and objeto.imagen %}
+                    <img src="{{ objeto.imagen.url }}" class="panelpromoform-imagen-preview">
+                    {% endif %}
+                    {{ form.imagen }}
+                </div>
+                {% endif %}
+
+                <div class="checkbox-row">
+                    {{ form.activo }}
+                    <label for="{{ form.activo.id_for_label }}">Combo activo</label>
+                </div>
+
+            </div>
+        </div>
+
+        <div class="panelpromoform-botones">
+            <button type="submit" class="btn btn-primary">{% if accion == 'crear' %}GUARDAR{% else %}MODIFICAR{% endif %}</button>
+            <button type="submit" name="guardar_y_agregar_otro" value="1" class="btn btn-primary">CARGAR</button>
+            <a href="{% url 'panel:combos_lista' %}" class="btn btn-primary">Cancelar</a>
+
+            <!-- modificado (Hilo 4 - Claude): botón BORRAR oculto para Staff --
+                 combos_eliminar es @superuser_required desde T1, mostrárselo a
+                 Staff era otro botón que solo iba a rechazar el pedido. -->
+            {% if objeto and accion == 'editar' and es_super %}
+            <button type="submit" form="formEliminarCombo" class="btn btn-danger">BORRAR</button>
+            {% endif %}
+
+        </div>
+    </form>
+    {% if objeto and accion == 'editar' and es_super %}
+    <form method="post" action="{% url 'panel:combos_eliminar' %}" id="formEliminarCombo">
+        {% csrf_token %}
+        <input type="hidden" name="seleccionadas" value="{{ objeto.id }}">
+    </form>
+    {% endif %}
+
+</div>
+
+{% endblock %}

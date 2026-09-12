@@ -1,0 +1,249 @@
+{% extends 'panel/base_panel.html' %}
+
+{% load static %}
+{% block titulo %}Editar Reserva {{ reserva.codigo_reserva }} — Panel{% endblock %}
+
+{% block breadcrumb %}
+<span class="sep">›</span>
+<a href="{% url 'panel:reservas_lista' %}">Reservas</a>
+<span class="sep">›</span>
+<a href="{% url 'panel:reservas_detalle' reserva.id %}">{{ reserva.codigo_reserva }}</a>
+<span class="sep">›</span>
+<span class="current">Editar</span>
+{% endblock %}
+
+{% block extra_css %}
+<!-- modificado: CSS separado a static/css/panel/reservas/form.css (antes todo con style="" inline) -->
+<link rel="stylesheet" href="{% static 'css/panel/reservas/form.css' %}">
+{% endblock %}
+
+{% block contenido %}
+<!-- modificado (T5 - cero emojis): se sacaron los emojis de los encabezados "🔄 Estado",
+     "🪑 Asientos", "📋 Datos (solo lectura)", "💳 Pago" y "⏰ Tiempo de Pago", del botón
+     "💾 Guardar Cambios" y de los badges "✅ Escaneado" / "⏳ Sin escanear", todos más abajo
+     en este archivo. La flecha "←" de "Volver al detalle" NO se tocó: no es un emoji
+     decorativo, es una flecha de navegación de texto plano. -->
+{% include 'panel/_form_styles.html' %}
+
+<div class="panelresform-wrap">
+
+    <div class="panelresform-encabezado">
+        <div>
+            <h1 class="panelresform-titulo">
+                Editar Reserva
+                <span class="panelresform-titulo-codigo">{{ reserva.codigo_reserva }}</span>
+            </h1>
+            <div class="panelresform-badge-wrap">
+                <span class="badge badge-{{ reserva.estado }}">
+                    Estado actual: {{ reserva.get_estado_display }}
+                </span>
+            </div>
+        </div>
+        <a href="{% url 'panel:reservas_detalle' reserva.id %}" class="btn btn-ghost">
+            ← Volver al detalle
+        </a>
+    </div>
+
+    <div class="panelresform-grid">
+
+        <!-- Formulario -->
+        <form method="post" id="formReserva">
+            {% csrf_token %}
+
+            <div class="panelresform-stack">
+
+                <!-- Estado -->
+                <div class="card">
+                    <div class="card-header"><h3> Estado</h3></div>
+                    <div class="card-body">
+                        <label class="form-label">
+                            Estado de la reserva <span class="required">*</span>
+                        </label>
+                        {{ form.estado }}
+                        {% if form.estado.errors %}
+                        <div class="field-error">{{ form.estado.errors.0 }}</div>
+                        {% endif %}
+
+                        <!-- Alertas según estado seleccionado -->
+                        <div id="alertaEstado" class="panelresform-alerta-estado"></div>
+                    </div>
+                </div>
+
+                <!-- Asientos -->
+                <div class="card">
+                    <div class="card-header">
+                        <h3> Asientos</h3>
+                        <span class="panelresform-funcion-info">
+                            Función: {{ reserva.funcion.pelicula.titulo }}
+                            · {{ reserva.funcion.fecha_hora|date:"d/m H:i" }}
+                        </span>
+                    </div>
+                    <div class="card-body">
+                        <label class="form-label">Asientos seleccionados</label>
+                        {{ form.asientos_seleccionados }}
+                        <div class="form-help">{{ form.asientos_seleccionados.help_text }}</div>
+                        {% if form.asientos_seleccionados.errors %}
+                        <div class="field-error">{{ form.asientos_seleccionados.errors.0 }}</div>
+                        {% endif %}
+
+                        <!-- Asientos actuales como badges -->
+                        {% if reserva.asientos_seleccionados %}
+                        <div class="panelresform-asientos-actuales-wrap">
+                            <div class="panelresform-asientos-actuales-label">
+                                Asientos actuales:
+                            </div>
+                            <div class="panelresform-asientos-chips">
+                                {% for asiento in reserva.lista_asientos %}
+                                <span class="panelresform-asiento-chip"
+                                      title="Clic para copiar"
+                                      onclick="copiarAsiento('{{ asiento }}')">
+                                    {{ asiento }}
+                                </span>
+                                {% endfor %}
+                            </div>
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+
+                <!-- Fecha límite de pago -->
+                <div class="card">
+                    <div class="card-header"><h3>Tiempo de Pago</h3></div>
+                    <div class="card-body">
+                        <label class="form-label">Fecha límite para completar el pago</label>
+                        {{ form.fecha_limite_pago }}
+                        <div class="form-help">{{ form.fecha_limite_pago.help_text }}</div>
+                        {% if form.fecha_limite_pago.errors %}
+                        <div class="field-error">{{ form.fecha_limite_pago.errors.0 }}</div>
+                        {% endif %}
+
+                        <!-- Botón de extender tiempo rápido -->
+                        <div class="panelresform-extender-wrap">
+                            <button type="button" onclick="extenderTiempo(5)"
+                                    class="btn btn-ghost panelresform-btn-extender">
+                                +5 min
+                            </button>
+                            <button type="button" onclick="extenderTiempo(15)"
+                                    class="btn btn-ghost panelresform-btn-extender">
+                                +15 min
+                            </button>
+                            <button type="button" onclick="extenderTiempo(30)"
+                                    class="btn btn-ghost panelresform-btn-extender">
+                                +30 min
+                            </button>
+                            <button type="button" onclick="extenderTiempo(60)"
+                                    class="btn btn-ghost panelresform-btn-extender">
+                                +1 hora
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                {% if form.non_field_errors %}
+                <div class="panelresform-error-box">
+                    {% for error in form.non_field_errors %}
+                    <p>{{ error }}</p>
+                    {% endfor %}
+                </div>
+                {% endif %}
+
+                <!-- Botones -->
+                <div class="panelresform-botones">
+                    <button type="submit" class="btn btn-success panelresform-btn-guardar">
+                         Guardar Cambios
+                    </button>
+                    <a href="{% url 'panel:reservas_detalle' reserva.id %}"
+                       class="btn btn-ghost">
+                        Cancelar
+                    </a>
+                </div>
+
+            </div>
+        </form>
+
+        <!-- Panel lateral: info de solo lectura -->
+        <div class="panelresform-stack">
+
+            <!-- Datos de la reserva (lectura) -->
+            <div class="card">
+                <div class="card-header"><h3> Datos (solo lectura)</h3></div>
+                <div class="card-body panelresform-card-body-sm">
+                    <div class="panelresform-lectura-stack">
+                        <div>
+                            <div class="panelresform-lectura-label">Usuario</div>
+                            <div class="panelresform-lectura-valor-bold">
+                                {{ reserva.usuario.get_full_name|default:reserva.usuario.username }}
+                            </div>
+                        </div>
+                        <div>
+                            <div class="panelresform-lectura-label">Película</div>
+                            <div class="panelresform-lectura-valor-bold">{{ reserva.funcion.pelicula.titulo }}</div>
+                        </div>
+                        <div>
+                            <div class="panelresform-lectura-label">Función</div>
+                            <div>{{ reserva.funcion.fecha_hora|date:"d/m/Y H:i" }} hs</div>
+                        </div>
+                        <div>
+                            <div class="panelresform-lectura-label">Sala</div>
+                            <div>{{ reserva.funcion.sala.nombre }}</div>
+                        </div>
+                        <div>
+                            <div class="panelresform-lectura-label">Entradas</div>
+                            <div class="panelresform-lectura-valor-bold">{{ reserva.cantidad_entradas }}</div>
+                        </div>
+                        <div>
+                            <div class="panelresform-lectura-label">Total</div>
+                            <div class="panelresform-lectura-total">
+                                ${{ reserva.total|floatformat:0 }}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Pago asociado (lectura) -->
+            <div class="card">
+                <div class="card-header"><h3> Pago</h3></div>
+                <div class="card-body panelresform-card-body-sm">
+                    {% if pago %}
+                    <div class="panelresform-lectura-stack">
+                        <div>
+                            <div class="panelresform-lectura-label">Transacción</div>
+                            <div class="panelresform-pago-transaccion">{{ pago.numero_transaccion }}</div>
+                        </div>
+                        <div>
+                            <div class="panelresform-lectura-label">Estado</div>
+                            <span class="badge badge-{{ pago.estado }}">{{ pago.get_estado_display }}</span>
+                        </div>
+                        <div>
+                            <div class="panelresform-lectura-label">Monto</div>
+                            <div class="panelresform-pago-monto">${{ pago.monto|floatformat:0 }}</div>
+                        </div>
+                        <div>
+                            <div class="panelresform-lectura-label">QR</div>
+                            <div>
+                                {% if pago.qr_escaneado %}
+                                <span class="panelresform-qr-ok"> Escaneado</span>
+                                {% elif pago.codigo_qr %}
+                                <span class="panelresform-qr-pendiente">Sin escanear</span>
+                                {% else %}
+                                <span class="panelresform-qr-sin">— Sin QR</span>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                    {% else %}
+                    <div class="panelresform-pago-vacio">
+                        Sin pago registrado
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+
+        </div>
+    </div>
+</div>
+
+<script src="{% static 'js/panel/reservas/form.js' %}"></script>
+
+{% endblock %}

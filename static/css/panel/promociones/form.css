@@ -1,0 +1,75 @@
+/* modificado (Panel > Promociones, Hilo 2): CSS extraído de los 3 templates form.html
+   (combos, cupones, promodia) — comparten la misma estructura, así que comparten este
+   único archivo en vez de 3 CSS casi duplicados. */
+
+.panelpromoform-wrap {
+    max-width: 640px;
+}
+
+.panelpromoform-wrap--ancho {
+    max-width: 680px;
+}
+
+.panelpromoform-encabezado {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1.5rem;
+}
+
+.panelpromoform-titulo {
+    font-size: 1.4rem;
+    color: #1a1a2e;
+    margin: 0;
+}
+
+.panelpromoform-card-body-stack {
+    display: flex;
+    flex-direction: column;
+    gap: 1.1rem;
+}
+
+.panelpromoform-2col {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1rem;
+}
+
+.panelpromoform-imagen-preview {
+    max-width: 150px;
+    border-radius: 8px;
+    margin-bottom: 0.5rem;
+    display: block;
+}
+
+.panelpromoform-botones {
+    display: flex;
+    gap: 1rem;
+    margin-top: 1.5rem;
+    flex-wrap: wrap;
+}
+
+/* nuevo (Hilo 4 - Claude): campos de solo lectura para Staff editando un Combo
+   (o Cupón/PromocionDia si en el futuro se reusa el mismo patrón) — mismo look
+   que un input deshabilitado, sin ser un <input> real (evita que el navegador
+   lo mande igual en el POST). Reutiliza los mismos tonos que .panel-input de
+   form_base.css para que no se note que es un elemento distinto. */
+.panelpromoform-campo-sololectura {
+    width: 100%;
+    margin: 0;
+    padding: 0.6rem 0.85rem;
+    border: 1.5px solid #e0e0e0;
+    border-radius: 7px;
+    font-size: 0.9rem;
+    background: #f4f4f4;
+    color: #555;
+}
+
+.panelpromoform-aviso-staff {
+    background: #fff8e6;
+    border-left: 4px solid #e2b96f;
+    border-radius: 6px;
+    padding: 0.75rem 1rem;
+    font-size: 0.85rem;
+    color: #6b5730;
+}

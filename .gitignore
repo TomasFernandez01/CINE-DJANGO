@@ -1,21 +1,39 @@
-# utilies
-.venv
-manage.py
-db.sqlite3
+# Secretos -- NUNCA subir esto
+.env
 
-# cache
-__pycache__
+# Entorno virtual
+.venv/
+venv/
+env/
+.venv
+
+# Python
 __pycache__/
+*.pyc
+*.pyo
+__pycache__
 .pyc
 
-# settings 
-configuracion
+# Base de datos local (SQLite) -- cada uno corre sus propias migraciones
+db.sqlite3
 
-# app que no funcionan todavia
-# templates
-# peliculas
-# salas
-# reservas
-# usuarios
-borradores
+# Archivos subidos por usuarios en desarrollo (posters, imágenes de combos, etc.)
+media/
 media
+
+# Django
+*.log
+staticfiles/
+
+# Editor / SO
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+
+
+# ARCHIVOS EXTERNOS
+.ias
+reportes
+Zecrets
+

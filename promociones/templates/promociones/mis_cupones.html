@@ -1,0 +1,53 @@
+{% extends 'base.html' %}
+{% load static %}
+<!-- modificado: etiquetado descriptivo (Tanda A promociones) - clases promociones-estilo-N reemplazadas por nombres semánticos cupones-* -->
+
+{% block titulo %}Mis Cupones{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/promociones/mis_cupones.css' %}">
+{% endblock %}
+
+{% block contenido %}
+<!-- MODIFICACION GEMINI: Rediseño de cupones alineado a la paleta rojo/negro/gris (estilos en static/css/promociones/mis_cupones.css) -->
+<div class="cupones-page">
+    <h1 class="cupones-titulo">Historial de Cupones</h1>
+    <p class="cupones-subtitulo">Cupones de descuento aplicados en tus compras anteriores</p>
+
+    {% if historial %}
+    <div class="cupones-lista">
+        {% for uso in historial %}
+        <div class="cupones-card">
+            <div class="cupones-card-header">
+                <div>
+                    <div class="cupones-card-codigo-linea">
+                        <span class="cupones-card-codigo">
+                            {{ uso.cupon.codigo }}
+                        </span>
+                        <span class="cupones-card-descuento">Descuento -${{ uso.descuento_aplicado }}</span>
+                    </div>
+                    <p class="cupones-card-descripcion">{{ uso.cupon.descripcion }}</p>
+                    {% if uso.reserva %}
+                    <p class="cupones-card-reserva-info">
+                        Película: <strong>{{ uso.reserva.funcion.pelicula.titulo }}</strong> —
+                        Reserva: <strong>{{ uso.reserva.codigo_reserva }}</strong>
+                    </p>
+                    {% endif %}
+                </div>
+                <div class="cupones-card-fecha">
+                    Usado el: {{ uso.fecha_uso|date:"d/m/Y H:i" }}
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+    {% else %}
+    <div class="cupones-vacio">
+        <p class="cupones-vacio-texto">Todavía no usaste ningún cupón de descuento.</p>
+        <a href="{% url 'peliculas:lista_peliculas' %}" class="cupones-vacio-btn">
+            Explorar Cartelera
+        </a>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}

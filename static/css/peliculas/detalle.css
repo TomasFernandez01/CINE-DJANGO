@@ -1,0 +1,468 @@
+/* bloque modificado (rediseño full-width): antes .detalle-layout era una grilla de
+   320px/1fr que metía TODO adentro (poster, titulo, badges, sinopsis, director,
+   actores y rating apretados en la columna angosta de 320px, al lado del poster).
+   Ahora esa grilla (renombrada .detalle-top-grid) solo tiene el poster y los
+   horarios. Todo el resto vive en .detalle-info-completa, un bloque debajo que
+   ocupa el ancho total de la página — así el título, los badges, la sinopsis,
+   los info-box de director/actores y el bloque de calificaciones ya no quedan
+   amontonados a la izquierda. */
+
+.detalle-top-grid {
+    display: grid;
+    grid-template-columns: 320px 1fr;
+    gap: 2.5rem;
+    margin-bottom: 2.5rem;
+    align-items: start;
+}
+
+@media (max-width: 800px) {
+    .detalle-top-grid {
+        grid-template-columns: 1fr;
+    }
+}
+
+/* ===== Poster ===== */
+.detalle-poster {
+    position: relative; /* nuevo (Trailer): ancla el botón de play y el iframe */
+}
+
+.detalle-poster img {
+    width: 100%;
+    border-radius: 12px;
+    box-shadow: 0 8px 24px rgba(0,0,0,0.5);
+    display: block;
+}
+
+.detalle-poster-placeholder {
+    width: 100%;
+    aspect-ratio: 2/3;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-size: 4rem;
+}
+
+/* nuevo (Trailer): botón de play flotante sobre el poster. Visible siempre en pantallas
+   táctiles (no hay :hover confiable) y con fade-in al pasar el mouse en desktop. */
+.detalle-trailer-play-btn {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    margin: auto;
+    width: 64px;
+    height: 64px;
+    border-radius: 50%;
+    border: none;
+    background: rgba(0, 0, 0, 0.55);
+    color: #fff;
+    font-size: 1.5rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    opacity: 0.85;
+    transition: opacity 0.2s, transform 0.2s, background 0.2s;
+}
+
+.detalle-poster-con-trailer:hover .detalle-trailer-play-btn {
+    opacity: 1;
+    background: rgba(229, 9, 20, 0.85);
+    transform: scale(1.08);
+}
+
+/* nuevo (Trailer): mientras el iframe no existe, el botón se ve; una vez que se hace
+   click y se agrega el iframe (mismo contenedor position:relative), lo tapamos por
+   completo — no hace falta destruirlo, con esto alcanza. */
+.detalle-poster-reproduciendo .detalle-trailer-play-btn {
+    display: none;
+}
+
+.detalle-trailer-iframe {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    width: 100%;
+    height: 100%;
+    border-radius: 12px;
+    border: none;
+}
+
+/* ===== Bloque de abajo: título, badges, sinopsis, director/actores, rating ===== */
+.detalle-info-completa {
+    margin-bottom: 3rem;
+}
+
+.detalle-titulo {
+    color: #f5f5f5;
+    font-size: 2.25rem;
+    margin: 0 0 0.85rem;
+}
+
+.detalle-badges {
+    margin-bottom: 1.5rem;
+}
+
+/* modificado: la sinopsis ahora usa la misma clase .detalle-info-box que Director/Actores
+   (mismo look de card), en vez de ser un bloque de texto suelto sin fondo */
+.detalle-sinopsis.detalle-info-box {
+    margin-bottom: 1.25rem;
+}
+
+.detalle-sinopsis h3 {
+    color: #f5f5f5;
+    margin: 0 0 0.6rem;
+    font-size: 1.1rem;
+}
+
+.detalle-sinopsis p {
+    color: #ccc;
+    line-height: 1.7;
+    text-align: justify;
+    margin: 0;
+}
+
+/* nuevo: fila de Director + Actores lado a lado, ocupando todo el ancho disponible
+   (antes eran dos cards angostos apilados en la columna de 320px) */
+.detalle-info-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1rem;
+    margin-bottom: 1.25rem;
+}
+
+@media (max-width: 600px) {
+    .detalle-info-row {
+        grid-template-columns: 1fr;
+    }
+}
+
+.detalle-info-box {
+    padding: 1.1rem 1.25rem;
+    background-color: #1c1c1c;
+    border-radius: 8px;
+    border-left: 3px solid #e50914;
+}
+
+.detalle-info-box-label {
+    font-size: 0.8rem;
+    color: #999;
+    margin-bottom: 0.3rem;
+}
+
+.detalle-info-box-valor {
+    font-weight: bold;
+    color: #eee;
+}
+
+/* ===== Columna derecha: horarios ===== */
+.detalle-horarios h2 {
+    color: #f5f5f5;
+    margin-bottom: 1rem;
+}
+
+/* ===== También en cartelera ===== */
+.tambien-cartelera-titulo {
+    color: #f5f5f5;
+    font-size: 1.4rem;
+    margin: 1rem 0 1.25rem;
+}
+
+/* nuevo: carrusel horizontal de "también en cartelera" (antes eran <img> sin ningún
+   estilo, una abajo de la otra, porque usaban clases de un CSS que esta página nunca
+   cargaba). Mismo lenguaje visual que el carrusel de fechas de arriba: flechas
+   circulares (.fecha-flecha, ya definida en shared/fechas_carrusel.css) + tira
+   horizontal con scroll suave. */
+.relacionadas-carrusel-wrap {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    margin-bottom: 3rem;
+}
+
+.relacionadas-carrusel {
+    display: flex;
+    gap: 1rem;
+    overflow-x: auto;
+    scroll-behavior: smooth;
+    padding-bottom: 0.25rem;
+    scrollbar-width: thin;
+}
+
+.relacionada-card {
+    flex: 0 0 auto;
+    width: 160px;
+    text-decoration: none;
+    color: inherit;
+    display: block;
+    transition: transform 0.2s;
+}
+
+.relacionada-card:hover {
+    transform: translateY(-4px);
+}
+
+/* nuevo: wrapper del poster de cada card relacionada, para poder anclar el badge
+   (rating o fecha de estreno) con position:absolute en una esquina */
+.relacionada-card-poster-wrap {
+    position: relative;
+}
+
+.relacionada-card-poster {
+    width: 160px;
+    height: 240px;
+    object-fit: cover;
+    border-radius: 10px;
+    box-shadow: 0 4px 14px rgba(0,0,0,0.4);
+    display: block;
+}
+
+.relacionada-card-poster-placeholder {
+    width: 160px;
+    height: 240px;
+    border-radius: 10px;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-size: 2.5rem;
+}
+
+/* nuevo: badge de rating (⭐ 4.2) en las cards de "también en cartelera", o de fecha
+   de estreno en las de "próximos estrenos" — misma posición/estilo base, distinto
+   color de fondo para diferenciarlos de un vistazo. */
+.relacionada-card-badge {
+    position: absolute;
+    top: 8px;
+    right: 8px;
+    background: rgba(0, 0, 0, 0.75);
+    color: #f1c40f;
+    font-size: 0.75rem;
+    font-weight: 700;
+    padding: 0.2rem 0.5rem;
+    border-radius: 20px;
+    letter-spacing: 0.02rem;
+}
+
+.relacionada-card-badge-estreno {
+    color: #fff;
+    background: rgba(229, 9, 20, 0.85);
+}
+
+.relacionada-card-titulo {
+    color: #ddd;
+    font-size: 0.85rem;
+    margin-top: 0.5rem;
+    line-height: 1.3;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+}
+
+/* modificado: bloque de Calificaciones y Reseñas — ahora vive dentro de
+   .detalle-info-completa (todo el ancho), antes estaba apretado en la columna de
+   320px. Se agrandaron un poco los tamaños (resumen y estrellas) para que no se
+   vea desproporcionadamente chico con tanto más espacio horizontal disponible, y
+   se unificó el tamaño de las estrellas del resumen y de cada reseña (antes eran
+   1.2rem y 0.8rem respectivamente, ahora las dos usan la misma escala). */
+.detalle-rating-bloque {
+    max-width: 720px;
+    margin-top: 1rem;
+    border-top: 1px solid rgba(255, 255, 255, 0.1);
+    padding-top: 1.5rem;
+}
+
+.detalle-rating-bloque h3 {
+    color: #f5f5f5;
+    font-size: 1.2rem;
+    margin: 0 0 1.25rem;
+}
+
+.detalle-rating-resumen {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    margin-bottom: 1.5rem;
+}
+
+.detalle-rating-resumen-numero {
+    font-size: 2.75rem;
+    font-weight: 700;
+    color: #f1c40f;
+    line-height: 1;
+}
+
+.detalle-rating-resumen-estrellas {
+    color: #f1c40f;
+    font-size: 1.4rem;
+    letter-spacing: 0.1rem;
+}
+
+.detalle-rating-resumen-total {
+    font-size: 0.85rem;
+    color: #999;
+    margin-top: 0.2rem;
+}
+
+.detalle-rating-form {
+    background: rgba(255, 255, 255, 0.04);
+    padding: 1.25rem;
+    border-radius: 12px;
+    margin-bottom: 1.5rem;
+    border: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.detalle-rating-form-titulo {
+    margin: 0 0 0.75rem 0;
+    font-size: 0.95rem;
+    color: #eee;
+}
+
+.detalle-rating-estrellas-input {
+    display: flex;
+    gap: 0.4rem;
+    font-size: 1.75rem;
+    color: #888;
+    cursor: pointer;
+    margin-bottom: 0.85rem;
+}
+
+.detalle-rating-estrellas-input .estrella-btn {
+    transition: color 0.2s;
+    color: #888;
+}
+
+.detalle-rating-estrellas-input .estrella-btn.detalle-rating-estrella-activa {
+    color: #f1c40f;
+}
+
+/* modificado: textarea "tipo chat" — antes era un textbox de altura fija
+   (min-height: 80px, resize: vertical). Ahora arranca como una sola línea (forma
+   de píldora, como un input de mensajes) y se agranda sola a medida que se
+   escribe (ver ajustarAlturaComentario() en rating.js), hasta un máximo de ~7
+   líneas, a partir del cual empieza a scrollear internamente en vez de seguir
+   creciendo — mismo comportamiento que el campo de texto de WhatsApp/chat. */
+.detalle-rating-textarea {
+    background: rgba(0, 0, 0, 0.3);
+    border: 1px solid rgba(255, 255, 255, 0.15);
+    color: #fff;
+    border-radius: 22px;
+    padding: 0.7rem 1.1rem;
+    width: 100%;
+    font-size: 0.9rem;
+    margin-bottom: 0.85rem;
+    resize: none;
+    overflow-y: hidden;
+    max-height: 160px;
+    font-family: inherit;
+    line-height: 1.4;
+    transition: border-color 0.2s;
+}
+
+.detalle-rating-textarea:focus {
+    outline: none;
+    border-color: #e50914;
+}
+
+.detalle-rating-submit-btn {
+    font-size: 0.85rem;
+    padding: 0.55rem 1.3rem;
+    border-radius: 6px;
+    background: #ff5c5c;
+    border: none;
+    color: white;
+    font-weight: 600;
+    cursor: pointer;
+    transition: opacity 0.2s;
+}
+
+.detalle-rating-bloqueado {
+    background: rgba(255, 255, 255, 0.02);
+    border-left: 3px solid #ff5c5c;
+    padding: 0.75rem 1rem;
+    border-radius: 8px;
+    font-size: 0.85rem;
+    color: #bbb;
+    margin-bottom: 1.5rem;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.detalle-rating-reviews-wrap {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+    margin-top: 1rem;
+}
+
+.detalle-rating-reviews-titulo {
+    margin: 0;
+    font-size: 0.95rem;
+    color: #ccc;
+}
+
+.detalle-rating-review-card {
+    background: rgba(255, 255, 255, 0.02);
+    padding: 0.85rem 1rem;
+    border-radius: 8px;
+    border: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.detalle-rating-review-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 0.3rem;
+}
+
+.detalle-rating-review-autor {
+    font-size: 0.9rem;
+    color: #eee;
+}
+
+.detalle-rating-review-estrellas {
+    color: #f1c40f;
+    font-size: 0.9rem;
+    letter-spacing: 0.08rem;
+}
+
+.detalle-rating-review-comentario {
+    margin: 0;
+    font-size: 0.85rem;
+    color: #bbb;
+    line-height: 1.5;
+}
+
+.detalle-rating-review-fecha {
+    font-size: 0.75rem;
+    color: #666;
+    margin-top: 0.4rem;
+    text-align: right;
+}
+
+.detalle-rating-review-vacio {
+    font-size: 0.85rem;
+    color: #666;
+    font-style: italic;
+}
+
+/* modificado: link "Cartelera" al pie de la pagina, tenia estilo inline */
+.detalle-volver-wrap {
+    margin-top: 2rem;
+}
+
+.detalle-volver-link {
+    color: #ff5c5c;
+    text-decoration: none;
+    font-weight: bold;
+}

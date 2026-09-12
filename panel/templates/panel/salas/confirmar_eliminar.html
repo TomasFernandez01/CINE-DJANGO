@@ -1,0 +1,83 @@
+{% extends 'panel/base_panel.html' %}
+{% load static %}
+
+{% block titulo %}Confirmar eliminación — Panel{% endblock %}
+
+{% block breadcrumb %}
+<span class="sep">›</span>
+<a href="{% url 'panel:salas_lista' %}">Salas</a>
+<span class="sep">›</span>
+<span class="current">Confirmar eliminación</span>
+{% endblock %}
+
+<!-- modificado (Hilo 1): separación CSS completa (12 estilos inline -> 0), movidos a
+     static/css/panel/salas/confirmar_eliminar.css. -->
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/panel/salas/confirmar_eliminar.css' %}">
+{% endblock %}
+
+{% block contenido %}
+<!-- modificado (T5 - cero emojis): se sacaron los emojis del título (⚠️) y del botón "🗑️ Sí, eliminar definitivamente" (más abajo). -->
+
+<div class="panelsalasconf-wrapper">
+
+    <h1 class="panelsalasconf-titulo"> Confirmar eliminación</h1>
+    <p class="panelsalasconf-desc">
+        Esta acción no se puede deshacer. Al borrar una sala, también se borran
+        <strong>en cascada</strong> todas sus funciones y las reservas asociadas a esas funciones.
+    </p>
+
+    <div class="card panelsalasconf-card">
+        <div class="card-header"><h3>Se eliminará lo siguiente</h3></div>
+        <div class="panelsalasconf-tabla-wrap">
+            <table class="tabla">
+                <thead>
+                    <tr>
+                        <th>Sala</th>
+                        <th>Funciones que se borran</th>
+                        <th>Reservas que se borran</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for item in resumen %}
+                    <tr>
+                        <td class="panelsalasconf-nombre-sala">{{ item.sala.nombre }}</td>
+                        <td>
+                            {% if item.total_funciones %}
+                            <span class="panelsalasconf-cantidad">{{ item.total_funciones }}</span>
+                            {% else %}
+                            <span class="panelsalasconf-cero">0</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            {% if item.total_reservas %}
+                            <span class="panelsalasconf-cantidad">{{ item.total_reservas }}</span>
+                            {% else %}
+                            <span class="panelsalasconf-cero">0</span>
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <form method="post" action="{% url 'panel:salas_eliminar' %}">
+        {% csrf_token %}
+        {% for id in ids %}
+        <input type="hidden" name="seleccionadas" value="{{ id }}">
+        {% endfor %}
+        <input type="hidden" name="confirmado" value="1">
+
+        <div class="panelsalasconf-botones">
+            <button type="submit" class="btn btn-danger panelsalasconf-btn-eliminar">
+                 Sí, eliminar definitivamente
+            </button>
+            <a href="{% url 'panel:salas_lista' %}" class="btn btn-ghost">Cancelar</a>
+        </div>
+    </form>
+
+</div>
+
+{% endblock %}

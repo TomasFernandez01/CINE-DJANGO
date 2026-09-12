@@ -1,0 +1,115 @@
+/* modificado (Panel > Promociones > Combos, Hilo 2): CSS extraído de combos/lista.html,
+   antes todo con style="" inline. Mismos valores, sin cambios de diseño. */
+
+.panelcombo-lista-encabezado {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1.5rem;
+    flex-wrap: wrap;
+    gap: 1rem;
+}
+
+.panelcombo-lista-titulo {
+    margin: 0;
+    color: #333;
+}
+
+.panelcombo-lista-subtitulo {
+    margin: 0.25rem 0 0 0;
+    color: #666;
+}
+
+.panelcombo-lista-acciones {
+    display: flex;
+    gap: 0.75rem;
+}
+
+.panelcombo-lista-btn-eliminar[disabled] {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+.panelcombo-lista-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+    gap: 1rem;
+}
+
+.panelcombo-lista-imagen {
+    width: 100%;
+    height: 140px;
+    object-fit: cover;
+}
+
+.panelcombo-lista-imagen-placeholder {
+    width: 100%;
+    height: 140px;
+    background: #f0f2f5;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 2.5rem;
+}
+
+.panelcombo-lista-check-label {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    cursor: pointer;
+    margin: 0;
+}
+
+.panelcombo-lista-nombre {
+    margin: 0;
+}
+
+/* estado activo/inactivo: es un valor binario (2 estados fijos), sí se puede resolver con clases */
+.panelcombo-lista-badge {
+    font-size: 0.75rem;
+    padding: 0.2rem 0.6rem;
+    border-radius: 20px;
+    font-weight: 600;
+}
+
+.panelcombo-lista-badge--activo {
+    background: #d4edda;
+    color: #155724;
+}
+
+.panelcombo-lista-badge--inactivo {
+    background: #f8d7da;
+    color: #721c24;
+}
+
+.panelcombo-lista-descripcion {
+    color: #666;
+    font-size: 0.85rem;
+    margin: 0 0 1rem;
+}
+
+.panelcombo-lista-precio-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.panelcombo-lista-precio {
+    font-size: 1.4rem;
+    font-weight: 700;
+    color: #27ae60;
+}
+
+.panelcombo-lista-btn-editar {
+    font-size: 0.8rem;
+}
+
+.panelcombo-lista-vacio-card {
+    grid-column: 1 / -1;
+}
+
+.panelcombo-lista-vacio {
+    text-align: center;
+    padding: 3rem;
+    color: #999;
+}
