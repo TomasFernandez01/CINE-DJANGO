@@ -60,11 +60,26 @@ INSTALLED_APPS = [
     'django.contrib.contenttypes',
     'django.contrib.sessions',
     'django.contrib.messages',
-    # modificado (Hilo 3 - Deploy): cloudinary_storage y cloudinary van ANTES
-    # de django.contrib.staticfiles -- es el orden que pide la librería
-    # django-cloudinary-storage para que funcione el storage de media.
-    'cloudinary_storage',
+    # modificado (Fix Render - collectstatic): ANTES cloudinary_storage
+    # estaba primero, pensando que ese orden lo pide la libreria. Eso es
+    # cierto SOLO si tambien queres subir los estaticos a Cloudinary. Este
+    # proyecto usa Cloudinary nada mas para MEDIA (ver STORAGES['default']
+    # mas abajo) y Whitenoise para STATIC -- para ese caso la propia
+    # documentacion de django-cloudinary-storage pide el orden inverso:
+    # django.contrib.staticfiles PRIMERO.
+    # Motivo tecnico del crash en Render (collectstatic con
+    # AttributeError: 'Settings' object has no attribute
+    # 'STATICFILES_STORAGE'): django-cloudinary-storage pisa (override) el
+    # comando collectstatic de Django. Cuando queda antes en INSTALLED_APPS,
+    # se ejecuta SU version de collectstatic en vez de la de Django/
+    # Whitenoise. Esa version del paquete (0.3.0, nunca actualizada para el
+    # STORAGES nuevo de Django) hace `settings.STATICFILES_STORAGE == ...`
+    # a pelo -- y como este proyecto ya no define esa variable vieja (usa
+    # STORAGES, ver mas abajo), el atributo no existe y explota. Con
+    # staticfiles primero, Django resuelve collectstatic con SU propio
+    # comando (bien, usando Whitenoise via STORAGES) y el problema desaparece.
     'django.contrib.staticfiles',
+    'cloudinary_storage',
     'cloudinary',
     # modificado (Hilo 2 - Google Sign-In): django.contrib.sites es requisito
     # de allauth (usa SITE_ID más abajo). Las 4 siguientes son allauth en sí
