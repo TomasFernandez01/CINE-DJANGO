@@ -257,14 +257,45 @@ CLOUDINARY_STORAGE = {
 # 'default' = storage para los ImageField/FileField subidos por usuarios
 # (Cloudinary, ver CLOUDINARY_STORAGE arriba). 'staticfiles' = storage para
 # collectstatic (Whitenoise, comprimido + con hash para cache-busting).
-STORAGES = {
-    'default': {
-        'BACKEND': 'cloudinary_storage.storage.MediaCloudinaryStorage',
-    },
-    'staticfiles': {
-        'BACKEND': 'whitenoise.storage.CompressedManifestStaticFilesStorage',
-    },
-}
+#
+# modificado (Fix local - ValueError "Must supply cloud_name"): esto ANTES
+# apuntaba a Cloudinary siempre, sin importar el entorno. En Render está
+# bien (ahí SÍ hay CLOUDINARY_CLOUD_NAME/API_KEY/API_SECRET en las env
+# vars), pero en desarrollo local esas variables no existen -- entonces
+# cualquier template que pida `pelicula.poster.url` (o cualquier otro
+# ImageField/FileField) explota con "Must supply cloud_name in tag or in
+# configuration", porque intenta armar una URL de Cloudinary sin
+# credenciales. Ahora se elige el backend según DEBUG: local (DEBUG=True)
+# usa FileSystemStorage normal, guardando y leyendo de MEDIA_ROOT/MEDIA_URL
+# (ver esas dos variables arriba, y configuracion/urls.py que ya las sirve
+# cuando DEBUG=True) -- que es exactamente lo que se pidió: en local usar
+# sqlite + imágenes locales, sin tocar Cloudinary para nada. En producción
+# (DEBUG=False en Render) sigue yendo todo a Cloudinary como antes, sin
+# ningún cambio de comportamiento ahí.
+if DEBUG:
+    STORAGES = {
+        'default': {
+            'BACKEND': 'django.core.files.storage.FileSystemStorage',
+        },
+        # nuevo (Fix local): storage simple sin hash de nombre de archivo.
+        # El de Whitenoise (ManifestStaticFilesStorage) exige haber corrido
+        # `collectstatic` para generar el manifiesto -- cosa que no se hace
+        # en desarrollo, porque `runserver` sirve los estáticos directo
+        # desde STATICFILES_DIRS igual. Sin este cambio, el tag {% static %}
+        # también rompería en local buscando un manifiesto que no existe.
+        'staticfiles': {
+            'BACKEND': 'django.contrib.staticfiles.storage.StaticFilesStorage',
+        },
+    }
+else:
+    STORAGES = {
+        'default': {
+            'BACKEND': 'cloudinary_storage.storage.MediaCloudinaryStorage',
+        },
+        'staticfiles': {
+            'BACKEND': 'whitenoise.storage.CompressedManifestStaticFilesStorage',
+        },
+    }
 
 # ============================================
 # CONFIGURACIÓN DE EMAIL - Agregar al final de settings.py
