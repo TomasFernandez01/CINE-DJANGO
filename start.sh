@@ -12,20 +12,15 @@
 # como fallido en vez de levantar un sitio roto silenciosamente.
 set -o errexit
 
-# DIAGNOSTICO TEMPORAL (Hilo 3 - Deploy): esto es solo para averiguar por
-# que collectstatic reporta 0 archivos a pesar de que estan trackeados en
-# git. Muestra cuantos archivos llegaron REALMENTE al filesystem de Render
-# dentro de static/ antes de que Django intente juntarlos. Se saca en
-# cuanto encontremos la causa.
-echo "== DIAGNOSTICO: contenido de static/ segun el filesystem de Render =="
-pwd
-ls -la
-echo "-- archivos dentro de static/ --"
-find static -type f | wc -l
-find static -type f | head -5
+# DIAGNOSTICO TEMPORAL v2 (Hilo 3 - Deploy): ya confirmamos que los 118
+# archivos SI estan en el filesystem de Render dentro de static/. Ahora
+# corremos collectstatic en modo mas detallado (-v 3) para ver que
+# directorios revisa Django internamente y por que no encuentra nada ahi.
+echo "== DIAGNOSTICO: collectstatic en modo verbose =="
+python manage.py collectstatic --noinput -v 3
 echo "== FIN DIAGNOSTICO =="
 
-echo "== collectstatic =="
+echo "== collectstatic (normal) =="
 python manage.py collectstatic --noinput
 
 echo "== migrate =="
