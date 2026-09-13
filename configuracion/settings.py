@@ -169,7 +169,9 @@ USE_I18N = True
 
 USE_TZ = True
 
-STATIC_URL = 'static/'
+# STATIC_URL = 'static/'
+STATIC_URL = '/static/'
+
 # nuevo: se registra la carpeta static/ del proyecto para poder separar CSS/JS de los templates
 STATICFILES_DIRS = [BASE_DIR / 'static']
 
@@ -177,7 +179,9 @@ STATICFILES_DIRS = [BASE_DIR / 'static']
 # estáticos del proyecto para producción -- no confundir con
 # STATICFILES_DIRS de arriba (esa es la carpeta de origen del código
 # fuente, esta es la de destino generada). Ya está en .gitignore.
-STATIC_ROOT = BASE_DIR / 'staticfiles'
+
+# STATIC_ROOT = BASE_DIR / 'staticfiles'
+STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles') 
 
 # nuevo (Hilo 3 - Deploy): storage recomendado por la propia documentación
 # de Whitenoise para producción -- sirve los estáticos comprimidos y con
