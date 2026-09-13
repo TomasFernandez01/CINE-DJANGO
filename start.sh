@@ -12,15 +12,34 @@
 # como fallido en vez de levantar un sitio roto silenciosamente.
 set -o errexit
 
-# DIAGNOSTICO TEMPORAL v2 (Hilo 3 - Deploy): ya confirmamos que los 118
-# archivos SI estan en el filesystem de Render dentro de static/. Ahora
-# corremos collectstatic en modo mas detallado (-v 3) para ver que
-# directorios revisa Django internamente y por que no encuentra nada ahi.
-echo "== DIAGNOSTICO: collectstatic en modo verbose =="
-python manage.py collectstatic --noinput -v 3
+# DIAGNOSTICO TEMPORAL v3 (Hilo 3 - Deploy): -v 3 no mostro nada nuevo
+# porque no hay nada que "copiar" si los finders no encuentran ningun
+# archivo -- el problema es ANTES de esa etapa. Ahora inspeccionamos
+# directamente que valor tiene STATICFILES_DIRS en tiempo real dentro de
+# Django, y que devuelve cada finder por separado.
+echo "== DIAGNOSTICO: inspeccion directa de finders =="
+python manage.py shell -c "
+from django.conf import settings
+from django.contrib.staticfiles.finders import get_finders
+print('STATICFILES_DIRS =', settings.STATICFILES_DIRS)
+print('STATIC_ROOT =', settings.STATIC_ROOT)
+print('STATICFILES_STORAGE =', getattr(settings, 'STATICFILES_STORAGE', None))
+print('STORAGES =', getattr(settings, 'STORAGES', None))
+total = 0
+for finder in get_finders():
+    print('--- Finder:', finder.__class__.__module__ + '.' + finder.__class__.__name__)
+    count = 0
+    for path, storage in finder.list(None):
+        count += 1
+        if count <= 5:
+            print('   ->', path)
+    print('   total encontrados por este finder:', count)
+    total += count
+print('TOTAL GENERAL:', total)
+"
 echo "== FIN DIAGNOSTICO =="
 
-echo "== collectstatic (normal) =="
+echo "== collectstatic =="
 python manage.py collectstatic --noinput
 
 echo "== migrate =="
