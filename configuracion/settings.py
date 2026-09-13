@@ -169,9 +169,7 @@ USE_I18N = True
 
 USE_TZ = True
 
-# STATIC_URL = 'static/'
-STATIC_URL = '/static/'
-
+STATIC_URL = 'static/'
 # nuevo: se registra la carpeta static/ del proyecto para poder separar CSS/JS de los templates
 STATICFILES_DIRS = [BASE_DIR / 'static']
 
@@ -179,14 +177,17 @@ STATICFILES_DIRS = [BASE_DIR / 'static']
 # estáticos del proyecto para producción -- no confundir con
 # STATICFILES_DIRS de arriba (esa es la carpeta de origen del código
 # fuente, esta es la de destino generada). Ya está en .gitignore.
+STATIC_ROOT = BASE_DIR / 'staticfiles'
 
-# STATIC_ROOT = BASE_DIR / 'staticfiles'
-STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles') 
-
-# nuevo (Hilo 3 - Deploy): storage recomendado por la propia documentación
-# de Whitenoise para producción -- sirve los estáticos comprimidos y con
-# un hash en el nombre de archivo (cache-busting automático al cambiar CSS/JS).
-STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
+# nuevo (Hilo 3 - Deploy): el storage real (Whitenoise) se define mas
+# abajo en la variable STORAGES, junto con el storage de media -- ver esa
+# seccion para la explicacion completa. Ya NO se usa STATICFILES_STORAGE
+# aca: en Django 6.0 detectamos (Hilo 3, deploy en Render) que la
+# sincronizacion automatica de STATICFILES_STORAGE -> STORAGES no estaba
+# aplicando el backend de Whitenoise como corresponde. Ademas, Django no
+# permite definir las dos variables juntas (tira "STATICFILES_STORAGE/
+# STORAGES are mutually exclusive"), asi que hay que elegir una sola forma
+# -- se elige STORAGES por ser la no deprecada.
 
 # para que en los modelos no tenga q especificar ID auto incremental
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
@@ -232,7 +233,23 @@ CLOUDINARY_STORAGE = {
     'API_SECRET': os.environ.get('CLOUDINARY_API_SECRET'),
 }
 
-DEFAULT_FILE_STORAGE = 'cloudinary_storage.storage.MediaCloudinaryStorage'
+# modificado (Hilo 3 - Deploy): antes esto estaba separado en dos
+# variables viejas (DEFAULT_FILE_STORAGE aca + STATICFILES_STORAGE arriba,
+# en la sección STATIC). Django las viene deprecando desde la 4.2 a favor
+# de este diccionario unico STORAGES -- y en Django 6.0.3 (version usada
+# en este proyecto) notamos que la sincronizacion automatica vieja ya no
+# aplicaba bien el backend de Whitenoise, asi que se unifica todo aca:
+# 'default' = storage para los ImageField/FileField subidos por usuarios
+# (Cloudinary, ver CLOUDINARY_STORAGE arriba). 'staticfiles' = storage para
+# collectstatic (Whitenoise, comprimido + con hash para cache-busting).
+STORAGES = {
+    'default': {
+        'BACKEND': 'cloudinary_storage.storage.MediaCloudinaryStorage',
+    },
+    'staticfiles': {
+        'BACKEND': 'whitenoise.storage.CompressedManifestStaticFilesStorage',
+    },
+}
 
 # ============================================
 # CONFIGURACIÓN DE EMAIL - Agregar al final de settings.py

@@ -12,42 +12,8 @@
 # como fallido en vez de levantar un sitio roto silenciosamente.
 set -o errexit
 
-# DIAGNOSTICO TEMPORAL v4 (Hilo 3 - Deploy): los finders SI encuentran 258
-# archivos llamados directamente (sin ignore_patterns). El comando real
-# collectstatic los pasa siempre a traves de self.ignore_patterns -- si
-# ese valor esta mal armado en algun lado (por ejemplo un patron '*' de
-# mas), podria estar filtrando TODO sin que el test anterior lo detectara.
-# Corremos el Command real en dry-run (no modifica nada) para ver el
-# ignore_patterns real y el resultado de collect() tal cual lo hace
-# Django internamente.
-echo "== DIAGNOSTICO: Command real de collectstatic en dry-run =="
-python manage.py shell -c "
-from django.contrib.staticfiles.management.commands.collectstatic import Command
-c = Command()
-c.set_options(
-    interactive=False,
-    verbosity=3,
-    ignore_patterns=[],
-    dry_run=True,
-    clear=False,
-    link=False,
-    use_default_ignore_patterns=True,
-    post_process=False,
-)
-print('ignore_patterns real que usa el comando:', c.ignore_patterns)
-print('storage real que usa el comando:', c.storage)
-print('destination_storage location:', getattr(c.storage, 'location', None))
-stats = c.collect()
-print('modified (copiados):', len(stats['modified']))
-print('unmodified (sin cambios):', len(stats['unmodified']))
-print('post_processed:', len(stats['post_processed']))
-if stats['modified']:
-    print('ejemplos:', stats['modified'][:5])
-"
-echo "== FIN DIAGNOSTICO =="
-
 echo "== collectstatic =="
-python manage.py collectstatic --noinput
+python manage.py collectstatic --noinput -v 2
 
 echo "== migrate =="
 python manage.py migrate --noinput
